@@ -1,0 +1,34 @@
+{
+  "name": "luxmsbi-lpe",
+  "version": "1.0.0",
+  "description": "Lux Path Expressions Lexer and Parser implementation in Javascript",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --reporter spec",
+    "cli": "node -e \"console.log(JSON.stringify(require('./dist/lpe').parse(require('fs').readFileSync('/dev/stdin').toString())))\"",
+    "eval": "node -e \"var lpep=require('./dist/lpe');console.log(JSON.stringify(lpep.evaluate(lpep.parse(require('fs').readFileSync('/dev/stdin').toString()))))\"",
+    "build": "webpack",
+    "watch": "webpack -w"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@gito.luxms.com:luxmsbi/luxmsbi-lpe.git"
+  },
+  "keywords": [
+    "Pratt",
+    "parser",
+    "lpe"
+  ],
+  "author": "Dmitry Dorofeev",
+  "license": "MIT",
+  "devDependencies": {
+    "args-parser": "^1.1.0",
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.4",
+    "babel-preset-env": "^1.6.1",
+    "mocha": "^3.2.0",
+    "webpack": "^2.7.0",
+    "webpack-auto-inject-version": "^1.2.2"
+  }
+}
