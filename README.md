@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/luxms/luxmsbi-lpe.svg?branch=master)](https://travis-ci.org/luxms/luxmsbi-lpe)
+
 # LPE parser
 
 ## Two grammars
