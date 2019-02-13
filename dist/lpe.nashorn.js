@@ -223,15 +223,6 @@ var STDLIB = {
   }
 };
 
-function eval_context(ast, ctx) {
-  var _ctx = {};
-  for (var key in STDLIB) {
-    _ctx[key] = STDLIB[key];
-  }for (var key in ctx) {
-    _ctx[key] = ctx[key];
-  }return EVAL(ast, _ctx);
-}
-
 STDLIB["macroexpand"] = function (a) {
   return macroexpand(a, STDLIB);
 };
@@ -537,7 +528,6 @@ function EVAL(ast, ctx) {
 
 
 function eval_context(ast, ctx) {
-  debugger;
   var _ctx = {};
   for (var key in STDLIB) {
     _ctx[key] = STDLIB[key];
