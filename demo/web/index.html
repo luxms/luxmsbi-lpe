@@ -79,6 +79,8 @@
         var lisp = lpe.parse(lpeInput.value);
         lispInput.value = JSON.stringify(lisp, null, 2);
       } catch (err) {
+        console.error(err);
+        console.error(err.stack);
         lispInput.value = err.message;
       }
       window.localStorage.setItem('lisp', lispInput.value);
@@ -90,6 +92,8 @@
         var result = lpe.eval_lisp(lisp);
         resultInput.value = JSON.stringify(result, null, 2);
       } catch (err) {
+        console.error(err);
+        console.error(err.stack);
         resultInput.value = err.message;
       }
     }

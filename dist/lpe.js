@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2019/02/15 17:09:01 */ 
+/** [LPE]  Version: 1.0.0 - 2019/02/15 17:22:27 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -329,6 +329,8 @@ var STDLIB = {
   // js specific
   'true': true,
   'false': false,
+  'Array': Array,
+  'Object': Object,
   // built-in function
   '=': function _() {
     for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {

@@ -125,6 +125,8 @@ const STDLIB = {
   'null': null,                                                                 // js specific
   'true': true,
   'false': false,
+  'Array': Array,
+  'Object': Object,
 
   // built-in function
   '=': (...args) => args.every(v => v === args[0]),
