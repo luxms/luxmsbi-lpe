@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2019/02/15 18:48:04 */ 
+/** [LPE]  Version: 1.0.0 - 2019/02/15 19:57:38 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -111,10 +111,6 @@ function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.
 
 function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
 
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 /**
@@ -213,26 +209,32 @@ function makeMacro(fn, ast) {
   return fn;
 }
 
-function aListToHashTable(alist) {
+function makeLetBindings(ast, ctx, rs) {
   var result = {};
-  alist.forEach(function (pair) {
-    return result[pair[0]] = pair[1];
-  });
-  return result;
-}
 
-function makeLetBindings(bindings) {
-  if (isHash(bindings)) return _objectSpread({}, bindings);
-  if (isArray(bindings) && isString(bindings[0])) return _defineProperty({}, bindings[0], bindings[1]);
-  if (isArray(bindings)) return aListToHashTable(bindings);
-  if (isFunction(bindings)) return bindings;
-  throw new Error('LISP: let expression invalid form in ' + ast);
+  if (isHash(ast)) {
+    for (var varName in ast) {
+      result[varName] = EVAL(ast[varName], ctx, rs);
+    }
+  } else if (isArray(ast) && isString(ast[0])) {
+    result[ast[0]] = EVAL(ast[1], ctx, rs);
+  } else if (isArray(ast)) {
+    ast.forEach(function (pair) {
+      return result[pair[0]] = EVAL(pair[1], ctx, rs);
+    });
+  } else if (isFunction(ast)) {
+    return ast;
+  } else {
+    throw new Error('LISP: let expression invalid form in ' + ast);
+  }
+
+  return result;
 }
 
 var SPECIAL_FORMS = {
   // built-in special forms
   'let': function _let(ast, ctx, rs) {
-    return EVAL(['begin'].concat(_toConsumableArray(ast.slice(1))), [makeLetBindings(ast[0]), ctx], rs);
+    return EVAL(['begin'].concat(_toConsumableArray(ast.slice(1))), [makeLetBindings(ast[0], ctx, rs), ctx], rs);
   },
   '`': function _(ast, ctx) {
     return ast[0];
@@ -331,7 +333,11 @@ var STDLIB = {
   'true': true,
   'false': false,
   'Array': Array,
+  // TODO: consider removing these properties
   'Object': Object,
+  'Date': Date,
+  'console': __WEBPACK_IMPORTED_MODULE_0__console_console__["a" /* default */],
+  'JSON': JSON,
   // built-in function
   '=': function _() {
     for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
@@ -387,6 +393,45 @@ var STDLIB = {
       return i === 0 ? true : args[i - 1] < args[i];
     });
   },
+  '>': function _() {
+    for (var _len8 = arguments.length, args = new Array(_len8), _key8 = 0; _key8 < _len8; _key8++) {
+      args[_key8] = arguments[_key8];
+    }
+
+    return args.every(function (v, i) {
+      return i === 0 ? true : args[i - 1] > args[i];
+    });
+  },
+  '<=': function _() {
+    for (var _len9 = arguments.length, args = new Array(_len9), _key9 = 0; _key9 < _len9; _key9++) {
+      args[_key9] = arguments[_key9];
+    }
+
+    return args.every(function (v, i) {
+      return i === 0 ? true : args[i - 1] <= args[i];
+    });
+  },
+  '>=': function _() {
+    for (var _len10 = arguments.length, args = new Array(_len10), _key10 = 0; _key10 < _len10; _key10++) {
+      args[_key10] = arguments[_key10];
+    }
+
+    return args.every(function (v, i) {
+      return i === 0 ? true : args[i - 1] >= args[i];
+    });
+  },
+  '!=': function _() {
+    for (var _len11 = arguments.length, args = new Array(_len11), _key11 = 0; _key11 < _len11; _key11++) {
+      args[_key11] = arguments[_key11];
+    }
+
+    return !args.every(function (v) {
+      return v === args[0];
+    });
+  },
+  'not': function not(a) {
+    return !a;
+  },
   'isa': function isa(a, b) {
     return a instanceof b;
   },
@@ -394,8 +439,10 @@ var STDLIB = {
     return _typeof(a);
   },
   'new': function _new() {
-    for (var _len8 = arguments.length, args = new Array(_len8), _key8 = 0; _key8 < _len8; _key8++) {
-      args[_key8] = arguments[_key8];
+    debugger;
+
+    for (var _len12 = arguments.length, args = new Array(_len12), _key12 = 0; _key12 < _len12; _key12++) {
+      args[_key12] = arguments[_key12];
     }
 
     return new (args[0].bind.apply(args[0], args))();
@@ -404,22 +451,22 @@ var STDLIB = {
     return delete a[b];
   },
   'list': function list() {
-    for (var _len9 = arguments.length, args = new Array(_len9), _key9 = 0; _key9 < _len9; _key9++) {
-      args[_key9] = arguments[_key9];
+    for (var _len13 = arguments.length, args = new Array(_len13), _key13 = 0; _key13 < _len13; _key13++) {
+      args[_key13] = arguments[_key13];
     }
 
     return args;
   },
   'vector': function vector() {
-    for (var _len10 = arguments.length, args = new Array(_len10), _key10 = 0; _key10 < _len10; _key10++) {
-      args[_key10] = arguments[_key10];
+    for (var _len14 = arguments.length, args = new Array(_len14), _key14 = 0; _key14 < _len14; _key14++) {
+      args[_key14] = arguments[_key14];
     }
 
     return args;
   },
   '[': function _() {
-    for (var _len11 = arguments.length, args = new Array(_len11), _key11 = 0; _key11 < _len11; _key11++) {
-      args[_key11] = arguments[_key11];
+    for (var _len15 = arguments.length, args = new Array(_len15), _key15 = 0; _key15 < _len15; _key15++) {
+      args[_key15] = arguments[_key15];
     }
 
     return args;
@@ -450,8 +497,8 @@ var STDLIB = {
 
     return RegExp;
   }(function () {
-    for (var _len12 = arguments.length, args = new Array(_len12), _key12 = 0; _key12 < _len12; _key12++) {
-      args[_key12] = arguments[_key12];
+    for (var _len16 = arguments.length, args = new Array(_len16), _key16 = 0; _key16 < _len16; _key16++) {
+      args[_key16] = arguments[_key16];
     }
 
     return RegExp.apply(RegExp, args);
@@ -463,6 +510,45 @@ var STDLIB = {
     return JSON.stringify(EVAL(JSON.parse(a), STDLIB));
   },
   // TODO: fix ctx and rs arguments
+  'null?': function _null(a) {
+    return a === null || a === undefined;
+  },
+  // ??? add [] ???
+  'true?': function _true(a) {
+    return a === true;
+  },
+  'false?': function _false(a) {
+    return a === false;
+  },
+  'string?': isString,
+  'list?': isArray,
+  'contains?': function contains(a, b) {
+    return a.hasOwnProperty(b);
+  },
+  'str': function str() {
+    for (var _len17 = arguments.length, args = new Array(_len17), _key17 = 0; _key17 < _len17; _key17++) {
+      args[_key17] = arguments[_key17];
+    }
+
+    return args.map(function (x) {
+      return isString(x) ? x : JSON.stringify(x);
+    }).join('');
+  },
+  'count': function count(a) {
+    return a.length;
+  },
+  'get': function get(a, b) {
+    return a.hasOwnProperty(b) ? a[b] : undefined;
+  },
+  'set': function set(a, b, c) {
+    return a[b] = c, a;
+  },
+  'keys': function keys(a) {
+    return Object.keys(a);
+  },
+  'vals': function vals(a) {
+    return Object.values(a);
+  },
   // not implemented yet
   // 'hash-table->alist'
   // macros
@@ -473,16 +559,16 @@ var STDLIB = {
     return a.toString();
   }),
   '()': makeMacro(function () {
-    for (var _len13 = arguments.length, args = new Array(_len13), _key13 = 0; _key13 < _len13; _key13++) {
-      args[_key13] = arguments[_key13];
+    for (var _len18 = arguments.length, args = new Array(_len18), _key18 = 0; _key18 < _len18; _key18++) {
+      args[_key18] = arguments[_key18];
     }
 
     return args;
   }),
   // ???
   '->': makeMacro(function (acc) {
-    for (var _len14 = arguments.length, ast = new Array(_len14 > 1 ? _len14 - 1 : 0), _key14 = 1; _key14 < _len14; _key14++) {
-      ast[_key14 - 1] = arguments[_key14];
+    for (var _len19 = arguments.length, ast = new Array(_len19 > 1 ? _len19 - 1 : 0), _key19 = 1; _key19 < _len19; _key19++) {
+      ast[_key19 - 1] = arguments[_key19];
     }
 
     // thread first macro
@@ -505,8 +591,8 @@ var STDLIB = {
     return acc;
   }),
   '->>': makeMacro(function (acc) {
-    for (var _len15 = arguments.length, ast = new Array(_len15 > 1 ? _len15 - 1 : 0), _key15 = 1; _key15 < _len15; _key15++) {
-      ast[_key15 - 1] = arguments[_key15];
+    for (var _len20 = arguments.length, ast = new Array(_len20 > 1 ? _len20 - 1 : 0), _key20 = 1; _key20 < _len20; _key20++) {
+      ast[_key20 - 1] = arguments[_key20];
     }
 
     // thread last macro
@@ -521,8 +607,8 @@ var STDLIB = {
     return acc;
   }),
   'invoke': makeMacro(function () {
-    for (var _len16 = arguments.length, ast = new Array(_len16), _key16 = 0; _key16 < _len16; _key16++) {
-      ast[_key16] = arguments[_key16];
+    for (var _len21 = arguments.length, ast = new Array(_len21), _key21 = 0; _key21 < _len21; _key21++) {
+      ast[_key21] = arguments[_key21];
     }
 
     /// мы не можем использовать точку в LPE для вызова метода объекта, так как она уже замаплена на ->
@@ -531,18 +617,33 @@ var STDLIB = {
     ast.splice(0, 0, ".");
     return ast;
   }),
+  'and': makeMacro(function () {
+    for (var _len22 = arguments.length, ast = new Array(_len22), _key22 = 0; _key22 < _len22; _key22++) {
+      ast[_key22] = arguments[_key22];
+    }
+
+    if (ast.length === 0) return true;
+    if (ast.length === 1) return ast[0];
+    return ["let", ["__and", ast[0]], ["if", "__and", ["and"].concat(ast.slice(1)), "__and"]];
+  }),
+  'or': makeMacro(function () {
+    for (var _len23 = arguments.length, ast = new Array(_len23), _key23 = 0; _key23 < _len23; _key23++) {
+      ast[_key23] = arguments[_key23];
+    }
+
+    if (ast.length === 0) return false;
+    if (ast.length === 1) return ast[0];
+    return ["let", ["__or", ast[0]], ["if", "__or", "__or", ["or"].concat(ast.slice(1))]];
+  }),
   // system functions & objects
   // 'js': eval,
   eval_context: eval_context,
   // TODO: remove
-  JSON: JSON,
-  console: __WEBPACK_IMPORTED_MODULE_0__console_console__["a" /* default */],
   eval: function _eval(a) {
     return EVAL(a, STDLIB);
   }
 };
-var minimal = ["begin", // этот new ждёт на вход функцию a - создать regExp из строчки "RegExp" не выйдет
-["def", "new", ["fn", ["a", "&", "b"], [".", "Reflect", ["`", "construct"], "a", "b"]]], ["def", "del", ["fn", ["a", "b"], [".", "Reflect", ["`", "deleteProperty"], "a", "b"]]], ["def", "map", ["fn", ["a", "b"], [".", "b", ["`", "map"], ["fn", ["x"], ["a", "x"]]]]], ["def", "list", ["fn", ["&", "a"], "a"]], ["def", ">=", ["fn", ["a", "b"], ["if", ["<", "a", "b"], false, true]]], ["def", ">", ["fn", ["a", "b"], ["if", [">=", "a", "b"], ["if", ["=", "a", "b"], false, true], false]]], ["def", "<=", ["fn", ["a", "b"], ["if", [">", "a", "b"], false, true]]], ["def", "classOf", ["fn", ["a"], [".", [".-", [".-", "Object", ["`", "prototype"]], ["`", "toString"]], ["`", "call"], "a"]]], ["def", "not", ["fn", ["a"], ["if", "a", false, true]]], ["def", "null?", ["fn", ["a"], ["=", null, "a"]]], ["def", "true?", ["fn", ["a"], ["=", true, "a"]]], ["def", "false?", ["fn", ["a"], ["=", false, "a"]]], ["def", "string?", ["fn", ["a"], ["if", ["=", "a", null], false, ["=", ["`", "String"], [".-", [".-", "a", ["`", "constructor"]], ["`", "name"]]]]]], ["def", "pr-str", ["fn", ["&", "a"], [".", ["map", [".-", "JSON", ["`", "stringify"]], "a"], ["`", "join"], ["`", " "]]]], ["def", "str", ["fn", ["&", "a"], [".", ["map", ["fn", ["x"], ["if", ["string?", "x"], "x", [".", "JSON", ["`", "stringify"], "x"]]], "a"], ["`", "join"], ["`", ""]]]], ["def", "prn", ["fn", ["&", "a"], ["begin", [".", "console", ["`", "log"], [".", ["map", [".-", "JSON", ["`", "stringify"]], "a"], ["`", "join"], ["`", " "]]], null]]], ["def", "println", ["fn", ["&", "a"], ["begin", [".", "console", ["`", "log"], [".", ["map", ["fn", ["x"], ["if", ["string?", "x"], "x", [".", "JSON", ["`", "stringify"], "x"]]], "a"], ["`", "join"], ["`", " "]]], null]]], ["def", "list?", ["fn", ["a"], [".", "Array", ["`", "isArray"], "a"]]], ["def", "contains?", ["fn", ["a", "b"], [".", "a", ["`", "hasOwnProperty"], "b"]]], ["def", "get", ["fn", ["a", "b"], ["if", ["contains?", "a", "b"], [".-", "a", "b"], null]]], ["def", "set", ["fn", ["a", "b", "c"], ["begin", [".-", "a", "b", "c"], "a"]]], ["def", "keys", ["fn", ["a"], [".", "Object", ["`", "keys"], "a"]]], ["def", "vals", ["fn", ["a"], [".", "Object", ["`", "values"], "a"]]], ["def", "cons", ["fn", ["a", "b"], [".", ["`", []], ["`", "concat"], ["list", "a"], "b"]]], ["def", "concat", ["fn", ["&", "a"], [".", [".-", ["list"], ["`", "concat"]], ["`", "apply"], ["list"], "a"]]], ["def", "nth", "get"], ["def", "first", ["fn", ["a"], ["if", [">", [".-", "a", ["`", "length"]], 0], ["nth", "a", 0], null]]], ["def", "last", ["fn", ["a"], ["nth", "a", ["-", [".-", "a", ["`", "length"]], 1]]]], ["def", "count", ["fn", ["a"], [".-", "a", ["`", "length"]]]], ["def", "empty?", ["fn", ["a"], ["if", ["list?", "a"], ["=", 0, [".-", "a", ["`", "length"]]], ["=", "a", null]]]], ["def", "slice", ["fn", ["a", "b", "&", "end"], [".", "a", ["`", "slice"], "b", ["if", [">", [".-", "end", ["`", "length"]], 0], ["get", "end", 0], [".-", "a", ["`", "length"]]]]]], ["def", "rest", ["fn", ["a"], ["slice", "a", 1]]], ["def", "apply", ["fn", ["f", "&", "b"], [".", "f", ["`", "apply"], "f", ["concat", ["slice", "b", 0, -1], ["last", "b"]]]]], ["def", "and", ["~", ["fn", ["&", "xs"], ["if", ["empty?", "xs"], true, ["if", ["=", 1, [".-", "xs", ["`", "length"]]], ["first", "xs"], ["list", ["`", "let"], ["list", ["`", "__and"], ["first", "xs"]], ["list", ["`", "if"], ["`", "__and"], ["concat", ["`", ["and"]], ["rest", "xs"]], ["`", "__and"]]]]]]]], ["def", "or", ["~", ["fn", ["&", "xs"], ["if", ["empty?", "xs"], null, ["if", ["=", 1, [".-", "xs", ["`", "length"]]], ["first", "xs"], ["list", ["`", "let"], ["list", ["`", "__or"], ["first", "xs"]], ["list", ["`", "if"], ["`", "__or"], ["`", "__or"], ["concat", ["`", ["or"]], ["rest", "xs"]]]]]]]]], null];
+var minimal = ["begin", ["def", "del", ["fn", ["a", "b"], [".", "Reflect", ["`", "deleteProperty"], "a", "b"]]], ["def", "map", ["fn", ["a", "b"], [".", "b", ["`", "map"], ["fn", ["x"], ["a", "x"]]]]], ["def", "classOf", ["fn", ["a"], [".", [".-", [".-", "Object", ["`", "prototype"]], ["`", "toString"]], ["`", "call"], "a"]]], ["def", "pr-str", ["fn", ["&", "a"], [".", ["map", [".-", "JSON", ["`", "stringify"]], "a"], ["`", "join"], ["`", " "]]]], ["def", "prn", ["fn", ["&", "a"], ["begin", [".", "console", ["`", "log"], [".", ["map", [".-", "JSON", ["`", "stringify"]], "a"], ["`", "join"], ["`", " "]]], null]]], ["def", "println", ["fn", ["&", "a"], ["begin", [".", "console", ["`", "log"], [".", ["map", ["fn", ["x"], ["if", ["string?", "x"], "x", [".", "JSON", ["`", "stringify"], "x"]]], "a"], ["`", "join"], ["`", " "]]], null]]], ["def", "cons", ["fn", ["a", "b"], [".", ["`", []], ["`", "concat"], ["list", "a"], "b"]]], ["def", "concat", ["fn", ["&", "a"], [".", [".-", ["list"], ["`", "concat"]], ["`", "apply"], ["list"], "a"]]], ["def", "nth", "get"], ["def", "first", ["fn", ["a"], ["if", [">", [".-", "a", ["`", "length"]], 0], ["nth", "a", 0], null]]], ["def", "last", ["fn", ["a"], ["nth", "a", ["-", [".-", "a", ["`", "length"]], 1]]]], ["def", "empty?", ["fn", ["a"], ["if", ["list?", "a"], ["=", 0, [".-", "a", ["`", "length"]]], ["=", "a", null]]]], ["def", "slice", ["fn", ["a", "b", "&", "end"], [".", "a", ["`", "slice"], "b", ["if", [">", [".-", "end", ["`", "length"]], 0], ["get", "end", 0], [".-", "a", ["`", "length"]]]]]], ["def", "rest", ["fn", ["a"], ["slice", "a", 1]]], ["def", "apply", ["fn", ["f", "&", "b"], [".", "f", ["`", "apply"], "f", ["concat", ["slice", "b", 0, -1], ["last", "b"]]]]], null];
 EVAL(minimal, STDLIB);
 
 function macroexpand(ast, ctx) {
@@ -683,6 +784,7 @@ function evaluate(ast, ctx) {
 /* harmony export (immutable) */ __webpack_exports__["a"] = parse;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__console_console__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__lpel__ = __webpack_require__(6);
+/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return __WEBPACK_IMPORTED_MODULE_1__lpel__["c"]; });
 /**
  * LuxPath expressions parser
  *
@@ -1273,6 +1375,7 @@ function parse(str) {
     throw err;
   }
 }
+
 
 /***/ }),
 /* 3 */
@@ -2090,7 +2193,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__sql_where__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__sql_context__ = __webpack_require__(4);
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "parse", function() { return __WEBPACK_IMPORTED_MODULE_1__lpep__["a"]; });
-/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "LPESyntaxError", function() { return __WEBPACK_IMPORTED_MODULE_1__lpep__["LPESyntaxError"]; });
+/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "LPESyntaxError", function() { return __WEBPACK_IMPORTED_MODULE_1__lpep__["b"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "evaluate", function() { return __WEBPACK_IMPORTED_MODULE_2__lisp__["b"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "eval_lisp", function() { return __WEBPACK_IMPORTED_MODULE_2__lisp__["a"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "eval_sql_where", function() { return __WEBPACK_IMPORTED_MODULE_3__sql_where__["a"]; });
@@ -2121,7 +2224,7 @@ function eval_lpe(lpe, ctx) {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* unused harmony export LPESyntaxError */
+/* harmony export (immutable) */ __webpack_exports__["c"] = LPESyntaxError;
 /* harmony export (immutable) */ __webpack_exports__["a"] = makeError;
 /* harmony export (immutable) */ __webpack_exports__["b"] = tokenize;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__console_console__ = __webpack_require__(0);

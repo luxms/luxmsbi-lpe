@@ -20,6 +20,7 @@ describe('LISP tests', function() {
   it('should run let special form', function() {
     assert.deepEqual(lpe.eval_lisp(["let", {"foo": 2}, "foo"]), 2);
     assert.deepEqual(lpe.eval_lisp(["let", [["foo", 2]], "foo"]), 2);
+    assert.deepEqual(lpe.eval_lisp(["let", ["foo", 2], "foo"]), 2);
   });
 
   it('operator =', function() {

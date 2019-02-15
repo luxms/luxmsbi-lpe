@@ -56,24 +56,27 @@ function makeMacro(fn, ast) {
 }
 
 
-function aListToHashTable(alist) {
+function makeLetBindings(ast, ctx, rs) {
   let result = {};
-  alist.forEach(pair => result[pair[0]] = pair[1]);
+  if (isHash(ast)) {
+    for (let varName in ast) {
+      result[varName] = EVAL(ast[varName], ctx, rs);
+    }
+  } else if (isArray(ast) && isString(ast[0])) {
+    result[ast[0]] = EVAL(ast[1], ctx, rs);
+  } else if (isArray(ast)) {
+    ast.forEach(pair => result[pair[0]] = EVAL(pair[1], ctx, rs));
+  } else if (isFunction(ast)) {
+    return ast;
+  } else {
+    throw new Error('LISP: let expression invalid form in ' + ast);
+  }
   return result;
 }
 
 
-function makeLetBindings(bindings) {
-  if (isHash(bindings)) return {...bindings};
-  if (isArray(bindings) && isString(bindings[0])) return {[bindings[0]]: bindings[1]};
-  if (isArray(bindings)) return aListToHashTable(bindings);
-  if (isFunction(bindings)) return bindings;
-  throw new Error('LISP: let expression invalid form in ' + ast);
-}
-
-
 const SPECIAL_FORMS = {                                                         // built-in special forms
-  'let': (ast, ctx, rs) => EVAL(['begin', ...ast.slice(1)], [makeLetBindings(ast[0]), ctx], rs),
+  'let': (ast, ctx, rs) => EVAL(['begin', ...ast.slice(1)], [makeLetBindings(ast[0], ctx, rs), ctx], rs),
   '`': (ast, ctx) => ast[0],                                                    // quote
   'macroexpand': macroexpand,
   'begin': (ast, ctx) => ast.reduce((acc, astItem) => EVAL(astItem, ctx), null),
@@ -126,8 +129,11 @@ const STDLIB = {
   'null': null,                                                                 // js specific
   'true': true,
   'false': false,
-  'Array': Array,
+  'Array': Array,                                                               // TODO: consider removing these properties
   'Object': Object,
+  'Date': Date,
+  'console': console,
+  'JSON': JSON,
 
   // built-in function
   '=': (...args) => args.every(v => v === args[0]),
@@ -136,9 +142,17 @@ const STDLIB = {
   '*': (...args) => args.reduce((a, b) => a * b),
   '/': (...args) => args.length === 1 ? 1 / args[0] : args.reduce((a, b) => a / b),
   '<': (...args) => args.every((v, i) => i === 0 ? true : args[i-1] < args[i]),
+  '>': (...args) => args.every((v, i) => i === 0 ? true : args[i-1] > args[i]),
+  '<=': (...args) => args.every((v, i) => i === 0 ? true : args[i-1] <= args[i]),
+  '>=': (...args) => args.every((v, i) => i === 0 ? true : args[i-1] >= args[i]),
+  '!=': (...args) => !args.every(v => v === args[0]),
+  'not': a => !a,
   'isa': (a, b) => a instanceof b,
   'type': a => typeof a,
-  'new': (...args) => new (args[0].bind.apply(args[0], args)),
+  'new': (...args) => {
+    debugger;
+    return new (args[0].bind.apply(args[0], args));
+  },
   'del': (a, b) => delete a[b],
   'list': (...args) => args,
   'vector': (...args) => args,
@@ -150,6 +164,18 @@ const STDLIB = {
   'RegExp': (...args) => RegExp.apply(RegExp, args),
   'read-string': a => JSON.parse(a),
   'rep': (a) => JSON.stringify(EVAL(JSON.parse(a), STDLIB)),                    // TODO: fix ctx and rs arguments
+  'null?': (a) => a === null || a === undefined,                                // ??? add [] ???
+  'true?': (a) => a === true,
+  'false?': (a) => a === false,
+  'string?': isString,
+  'list?': isArray,
+  'contains?': (a, b) =>  a.hasOwnProperty(b),
+  'str': (...args) => args.map(x => isString(x) ? x : JSON.stringify(x)).join(''),
+  'count': (a) => a.length,
+  'get': (a, b) => a.hasOwnProperty(b) ? a[b] : undefined,
+  'set': (a, b, c) => (a[b] = c, a),
+  'keys': (a) => Object.keys(a),
+  'vals': (a) => Object.values(a),
 
   // not implemented yet
   // 'hash-table->alist'
@@ -189,60 +215,44 @@ const STDLIB = {
     ast.splice(0, 0, ".");
     return ast;
   }),
+  'and': makeMacro((...ast) => {
+    if (ast.length === 0) return true;
+    if (ast.length === 1) return ast[0];
+    return ["let", ["__and", ast[0]],
+                   ["if", "__and",
+                          ["and"].concat(ast.slice(1)),
+                          "__and"]];
+  }),
+  'or': makeMacro((...ast) => {
+    if (ast.length === 0) return false;
+    if (ast.length === 1) return ast[0];
+    return ["let", ["__or", ast[0]],
+                   ["if", "__or",
+                          "__or",
+                          ["or"].concat(ast.slice(1))]];
+  }),
+
 
   // system functions & objects
   // 'js': eval,
   eval_context: eval_context,                           // TODO: remove
-  JSON: JSON,
-  console: console,
   eval: (a) => EVAL(a, STDLIB),
 };
 
 
 var minimal = ["begin",
-  // этот new ждёт на вход функцию a - создать regExp из строчки "RegExp" не выйдет
-  ["def", "new", ["fn", ["a", "&", "b"],
-    [".", "Reflect", ["`", "construct"], "a", "b"]]],
   ["def", "del", ["fn", ["a", "b"],
     [".", "Reflect", ["`", "deleteProperty"], "a", "b"]]],
   ["def", "map", ["fn", ["a", "b"],
     [".", "b", ["`", "map"], ["fn", ["x"], ["a", "x"]]]]],
-  ["def", "list", ["fn", ["&", "a"], "a"]],
-  ["def", ">=", ["fn", ["a", "b"],
-    ["if", ["<", "a", "b"], false, true]]],
-  ["def", ">", ["fn", ["a", "b"],
-    ["if", [">=", "a", "b"],
-      ["if", ["=", "a", "b"], false, true],
-      false]]],
-  ["def", "<=", ["fn", ["a", "b"],
-    ["if", [">", "a", "b"], false, true]]],
-
   ["def", "classOf", ["fn", ["a"],
     [".", [".-", [".-", "Object", ["`", "prototype"]], ["`", "toString"]],
       ["`", "call"], "a"]]],
 
-  ["def", "not", ["fn", ["a"], ["if", "a", false, true]]],
-
-  ["def", "null?", ["fn", ["a"], ["=", null, "a"]]],
-  ["def", "true?", ["fn", ["a"], ["=", true, "a"]]],
-  ["def", "false?", ["fn", ["a"], ["=", false, "a"]]],
-  ["def", "string?", ["fn", ["a"],
-    ["if", ["=", "a", null],
-      false,
-      ["=", ["`", "String"],
-        [".-", [".-", "a", ["`", "constructor"]],
-          ["`", "name"]]]]]],
-
   ["def", "pr-str", ["fn", ["&", "a"],
     [".", ["map", [".-", "JSON", ["`", "stringify"]], "a"],
       ["`", "join"], ["`", " "]]]],
-  ["def", "str", ["fn", ["&", "a"],
-    [".", ["map", ["fn", ["x"],
-      ["if", ["string?", "x"],
-        "x",
-        [".", "JSON", ["`", "stringify"], "x"]]],
-      "a"],
-      ["`", "join"], ["`", ""]]]],
+
   ["def", "prn", ["fn", ["&", "a"],
     ["begin",
       [".", "console", ["`", "log"],
@@ -259,19 +269,6 @@ var minimal = ["begin",
         ["`", "join"], ["`", " "]]],
       null]]],
 
-  ["def", "list?", ["fn", ["a"],
-    [".", "Array", ["`", "isArray"], "a"]]],
-  ["def", "contains?", ["fn", ["a", "b"],
-    [".", "a", ["`", "hasOwnProperty"], "b"]]],
-  ["def", "get", ["fn", ["a", "b"],
-    ["if", ["contains?", "a", "b"], [".-", "a", "b"], null]]],
-  ["def", "set", ["fn", ["a", "b", "c"],
-    ["begin", [".-", "a", "b", "c"], "a"]]],
-  ["def", "keys", ["fn", ["a"],
-    [".", "Object", ["`", "keys"], "a"]]],
-  ["def", "vals", ["fn", ["a"],
-    [".", "Object", ["`", "values"], "a"]]],
-
   ["def", "cons", ["fn", ["a", "b"],
     [".", ["`", []],
       ["`", "concat"], ["list", "a"], "b"]]],
@@ -285,8 +282,7 @@ var minimal = ["begin",
       null]]],
   ["def", "last", ["fn", ["a"],
     ["nth", "a", ["-", [".-", "a", ["`", "length"]], 1]]]],
-  ["def", "count", ["fn", ["a"],
-    [".-", "a", ["`", "length"]]]],
+
   ["def", "empty?", ["fn", ["a"],
     ["if", ["list?", "a"],
       ["=", 0, [".-", "a", ["`", "length"]]],
@@ -302,25 +298,6 @@ var minimal = ["begin",
     [".", "f", ["`", "apply"], "f",
       ["concat", ["slice", "b", 0, -1], ["last", "b"]]]]],
 
-  ["def", "and", ["~", ["fn", ["&", "xs"],
-    ["if", ["empty?", "xs"],
-      true,
-      ["if", ["=", 1, [".-", "xs", ["`", "length"]]],
-        ["first", "xs"],
-        ["list", ["`", "let"], ["list", ["`", "__and"], ["first", "xs"]],
-          ["list", ["`", "if"], ["`", "__and"],
-            ["concat", ["`", ["and"]], ["rest", "xs"]],
-            ["`", "__and"]]]]]]]],
-
-  ["def", "or", ["~", ["fn", ["&", "xs"],
-    ["if", ["empty?", "xs"],
-      null,
-      ["if", ["=", 1, [".-", "xs", ["`", "length"]]],
-        ["first", "xs"],
-        ["list", ["`", "let"], ["list", ["`", "__or"], ["first", "xs"]],
-          ["list", ["`", "if"], ["`", "__or"],
-            ["`", "__or"],
-            ["concat", ["`", ["or"]], ["rest", "xs"]]]]]]]]],
   null
 ];
 
