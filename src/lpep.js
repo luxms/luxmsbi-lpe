@@ -20,8 +20,7 @@
 
 
 import console from './console/console';
-import tokenize from './lpel';
-
+import {tokenize, makeError, LPESyntaxError} from './lpel';
 
 
 var make_parse = function () {
@@ -38,7 +37,7 @@ var make_parse = function () {
 
   var operator_alias = function(from, to) {
     operator_aliases[from] = to;
-  }
+  };
 
   var itself = function () {
     return this;
@@ -79,60 +78,65 @@ var make_parse = function () {
   };
 
   var advance = function (id) {
-        var a, o, t, v;
-        if (id && token.id !== id) {
-            makeError(token, "Got " + token.value + " but expected '" + id + "'.");
-        }
-        if (token_nr >= tokens.length) {
-            token = symbol_table["(end)"];
-            return;
-        }
-        t = tokens[token_nr];
-        token_nr += 1;
-        v = t.value;
-        a = t.type;
-        if (a === "name") {
-            if (expr_scope.tp == "logical") {
-              if (v === "or" || v === "and" || v === "not" || v === "in" || v === "is") {
-                a = "operator";
-                o = symbol_table[v];
-                if (!o) {
-                    makeError(t, "Unknown logical operator.");
-                }
-              } else {
-                o = scope.find(v);
-              }
-            } else {
-              o = scope.find(v);
-            }
-        } else if (a === "operator") {
-            o = symbol_table[v];
-            if (!o) {
-                makeError(t, "Unknown operator.");
-            }
-        } else if (a === "string_double") {
-            o = symbol_table["(string_literal_double)"];
-            a = "literal";
-        } else if (a === "string_single") {
-            o = symbol_table["(string_literal_single)"];
-            a = "literal";
-        } else if (a ===  "number") {
-            o = symbol_table["(number_literal)"];
-            a = "literal";
+    var a, o, t, v;
+    if (id && token.id !== id) {
+      makeError(token, "Got " + token.value + " but expected '" + id + "'.");
+    }
+    if (token_nr >= tokens.length) {
+      token = symbol_table["(end)"];
+      return;
+    }
+    t = tokens[token_nr];
+    token_nr += 1;
+    v = t.value;
+    a = t.type;
+
+    if (a === "name") {
+
+      if (v === 'true' || v === 'false' || v === 'null') {
+        o = symbol_table[v];
+        a = "literal";
+      } else if (expr_scope.tp == "logical") {
+        if (v === "or" || v === "and" || v === "not" || v === "in" || v === "is") {
+          a = "operator";
+          o = symbol_table[v];
+          if (!o) {
+            makeError(t, "Unknown logical operator.");
+          }
         } else {
-            makeError(t, "Unexpected token.");
+          o = scope.find(v);
         }
-        token = Object.create(o);
-        token.from  = t.from;
-        token.to    = t.to;
-        token.value = v;
-        token.arity = a;
-        if (a == "operator") {
-            token.sexpr = operator_aliases[v];
-        } else {
-          token.sexpr = v; // by dima
-        }
-        return token;
+      } else {
+        o = scope.find(v);
+      }
+    } else if (a === "operator") {
+      o = symbol_table[v];
+      if (!o) {
+        makeError(t, "Unknown operator.");
+      }
+    } else if (a === "string_double") {
+      o = symbol_table["(string_literal_double)"];
+      a = "literal";
+    } else if (a === "string_single") {
+      o = symbol_table["(string_literal_single)"];
+      a = "literal";
+    } else if (a === "number") {
+      o = symbol_table["(number_literal)"];
+      a = "literal";
+    } else {
+      makeError(t, "Unexpected token.");
+    }
+    token = Object.create(o);
+    token.from = t.from;
+    token.to = t.to;
+    token.value = v;
+    token.arity = a;
+    if (a == "operator") {
+      token.sexpr = operator_aliases[v];
+    } else {
+      token.sexpr = v; // by dima
+    }
+    return token;
   };
 
   var statement = function () {
@@ -258,6 +262,10 @@ var make_parse = function () {
   symbol(")");
   symbol("]");
   symbol("}");
+
+  symbol("true").nud = function () { this.sexpr = true; return this; };
+  symbol("false").nud = function () { this.sexpr = false; return this; };
+  symbol("null").nud = function () { this.sexpr = null; return this; };
 
   // allow to skip values in function calls....
   var comma = symbol(",");
@@ -535,28 +543,6 @@ var make_parse = function () {
 };
 
 
-// Transform a token object into an exception object and throw it.
-export function LPESyntaxError(message) {
-  this.constructor.prototype.__proto__ = Error.prototype;
-  Error.call(this);
-  Error.captureStackTrace(this, this.constructor);
-  this.name = this.constructor.name;
-  this.message = message;
-  // this.stack = (new Error()).stack;
-}
-
-
-function makeError(t, message) {
-  t.message = message;
-
-  const errorDescription = JSON.stringify(
-    t, 
-    ['name', 'message', 'from', 'to', 'key', 'value', 'arity', 'first', 'second', 'third', 'fourth'], 
-    4);
-
-  throw new LPESyntaxError(errorDescription);
-}
-
 
 const parser = make_parse();
 // console.log('LPE Parser initialized')
@@ -573,3 +559,5 @@ export function parse(str) {
     throw err;
   }
 }
+
+export {LPESyntaxError};

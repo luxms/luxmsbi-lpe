@@ -262,6 +262,7 @@ function aListToHashTable(alist) {
 
 function makeLetBindings(bindings) {
   if (isHash(bindings)) return _objectSpread({}, bindings);
+  if (isArray(bindings) && isString(bindings[0])) return _defineProperty({}, bindings[0], bindings[1]);
   if (isArray(bindings)) return aListToHashTable(bindings);
   if (isFunction(bindings)) return bindings;
   throw new Error('LISP: let expression invalid form in ' + ast);
@@ -718,7 +719,6 @@ function evaluate(ast, ctx) {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony export (immutable) */ __webpack_exports__["b"] = LPESyntaxError;
 /* harmony export (immutable) */ __webpack_exports__["a"] = parse;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__console_console__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__lpel__ = __webpack_require__(5);
@@ -801,7 +801,7 @@ var make_parse = function make_parse() {
     var a, o, t, v;
 
     if (id && token.id !== id) {
-      makeError(token, "Got " + token.value + " but expected '" + id + "'.");
+      __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__lpel__["a" /* makeError */])(token, "Got " + token.value + " but expected '" + id + "'.");
     }
 
     if (token_nr >= tokens.length) {
@@ -815,13 +815,16 @@ var make_parse = function make_parse() {
     a = t.type;
 
     if (a === "name") {
-      if (expr_scope.tp == "logical") {
+      if (v === 'true' || v === 'false' || v === 'null') {
+        o = symbol_table[v];
+        a = "literal";
+      } else if (expr_scope.tp == "logical") {
         if (v === "or" || v === "and" || v === "not" || v === "in" || v === "is") {
           a = "operator";
           o = symbol_table[v];
 
           if (!o) {
-            makeError(t, "Unknown logical operator.");
+            __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__lpel__["a" /* makeError */])(t, "Unknown logical operator.");
           }
         } else {
           o = scope.find(v);
@@ -833,7 +836,7 @@ var make_parse = function make_parse() {
       o = symbol_table[v];
 
       if (!o) {
-        makeError(t, "Unknown operator.");
+        __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__lpel__["a" /* makeError */])(t, "Unknown operator.");
       }
     } else if (a === "string_double") {
       o = symbol_table["(string_literal_double)"];
@@ -845,7 +848,7 @@ var make_parse = function make_parse() {
       o = symbol_table["(number_literal)"];
       a = "literal";
     } else {
-      makeError(t, "Unexpected token.");
+      __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__lpel__["a" /* makeError */])(t, "Unexpected token.");
     }
 
     token = Object.create(o);
@@ -928,10 +931,10 @@ var make_parse = function make_parse() {
 
   var original_symbol = {
     nud: function nud() {
-      makeError(this, "Undefined.");
+      __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__lpel__["a" /* makeError */])(this, "Undefined.");
     },
     led: function led(left) {
-      makeError(this, "Missing operator.");
+      __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__lpel__["a" /* makeError */])(this, "Missing operator.");
     }
   };
 
@@ -1006,7 +1009,23 @@ var make_parse = function make_parse() {
   symbol(";");
   symbol(")");
   symbol("]");
-  symbol("}"); // allow to skip values in function calls....
+  symbol("}");
+
+  symbol("true").nud = function () {
+    this.sexpr = true;
+    return this;
+  };
+
+  symbol("false").nud = function () {
+    this.sexpr = false;
+    return this;
+  };
+
+  symbol("null").nud = function () {
+    this.sexpr = null;
+    return this;
+  }; // allow to skip values in function calls....
+
 
   var comma = symbol(",");
 
@@ -1093,7 +1112,7 @@ var make_parse = function make_parse() {
       this.second = a;
 
       if ((left.arity !== "unary" || left.id !== "function") && left.arity !== "name" && left.id !== "(" && left.id !== "&&" && left.id !== "||" && left.id !== "?") {
-        makeError(left, "Expected a variable name.");
+        __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__lpel__["a" /* makeError */])(left, "Expected a variable name.");
       }
     } // dima support for missed function arguments...
 
@@ -1216,7 +1235,7 @@ var make_parse = function make_parse() {
     var v = expression(70);
 
     if (v.value !== "(") {
-      makeError(v, "Only functions may have dot (.) unary operator.");
+      __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__lpel__["a" /* makeError */])(v, "Only functions may have dot (.) unary operator.");
     } // this.first = v;
     // this.arity = "unary";
     // return this;
@@ -1270,7 +1289,7 @@ var make_parse = function make_parse() {
     return this;
   });
   return function (source) {
-    tokens = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__lpel__["a" /* default */])(source, '=<>!+-*&|/%^:.', '=<>&|:.');
+    tokens = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__lpel__["b" /* tokenize */])(source, '=<>!+-*&|/%^:.', '=<>&|:.');
     token_nr = 0;
     advance();
     var s = statements(); // var s = expression(0);
@@ -1278,22 +1297,7 @@ var make_parse = function make_parse() {
     advance("(end)");
     return s;
   };
-}; // Transform a token object into an exception object and throw it.
-
-
-function LPESyntaxError(message) {
-  this.constructor.prototype.__proto__ = Error.prototype;
-  Error.call(this);
-  Error.captureStackTrace(this, this.constructor);
-  this.name = this.constructor.name;
-  this.message = message; // this.stack = (new Error()).stack;
-}
-
-function makeError(t, message) {
-  t.message = message;
-  var errorDescription = JSON.stringify(t, ['name', 'message', 'from', 'to', 'key', 'value', 'arity', 'first', 'second', 'third', 'fourth'], 4);
-  throw new LPESyntaxError(errorDescription);
-}
+};
 
 var parser = make_parse(); // console.log('LPE Parser initialized')
 
@@ -1760,7 +1764,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__lisp__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__sql_where__ = __webpack_require__(3);
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "parse", function() { return __WEBPACK_IMPORTED_MODULE_1__lpep__["a"]; });
-/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "LPESyntaxError", function() { return __WEBPACK_IMPORTED_MODULE_1__lpep__["b"]; });
+/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "LPESyntaxError", function() { return __WEBPACK_IMPORTED_MODULE_1__lpep__["LPESyntaxError"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "evaluate", function() { return __WEBPACK_IMPORTED_MODULE_2__lisp__["b"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "eval_lisp", function() { return __WEBPACK_IMPORTED_MODULE_2__lisp__["a"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "eval_sql_where", function() { return __WEBPACK_IMPORTED_MODULE_3__sql_where__["a"]; });
@@ -1781,7 +1785,9 @@ function eval_lpe(lpe, ctx) {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony export (immutable) */ __webpack_exports__["a"] = tokenize;
+/* unused harmony export LPESyntaxError */
+/* harmony export (immutable) */ __webpack_exports__["a"] = makeError;
+/* harmony export (immutable) */ __webpack_exports__["b"] = tokenize;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__console_console__ = __webpack_require__(0);
 // http://javascript.crockford.com/tdop/tdop.html
 // 2010-02-23
@@ -1804,8 +1810,21 @@ function eval_lpe(lpe, ctx) {
 
 var isDigit = function isDigit(c) {
   return c >= '0' && c <= '9';
-};
+}; // Transform a token object into an exception object and throw it.
 
+
+function LPESyntaxError(message) {
+  this.constructor.prototype.__proto__ = Error.prototype;
+  Error.call(this);
+  Error.captureStackTrace(this, this.constructor);
+  this.name = this.constructor.name;
+  this.message = message; // this.stack = (new Error()).stack;
+}
+function makeError(t, message) {
+  t.message = message;
+  var errorDescription = JSON.stringify(t, ['name', 'message', 'from', 'to', 'key', 'value', 'arity', 'first', 'second', 'third', 'fourth'], 4);
+  throw new LPESyntaxError(errorDescription);
+}
 function tokenize(s) {
   var prefix = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '<>+-&';
   var suffix = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : '=>&:';
@@ -2053,7 +2072,7 @@ function tokenize(s) {
 
   return result;
 }
-;
+/* unused harmony default export */ var _unused_webpack_default_export = (tokenize);
 
 /***/ }),
 /* 6 */

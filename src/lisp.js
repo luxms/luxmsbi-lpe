@@ -65,6 +65,7 @@ function aListToHashTable(alist) {
 
 function makeLetBindings(bindings) {
   if (isHash(bindings)) return {...bindings};
+  if (isArray(bindings) && isString(bindings[0])) return {[bindings[0]]: bindings[1]};
   if (isArray(bindings)) return aListToHashTable(bindings);
   if (isFunction(bindings)) return bindings;
   throw new Error('LISP: let expression invalid form in ' + ast);

@@ -26,7 +26,31 @@ import console from './console/console';
 
 const isDigit = (c) => c >= '0' && c <= '9';
 
-export default function tokenize(s, prefix = '<>+-&', suffix = '=>&:') {
+
+// Transform a token object into an exception object and throw it.
+export function LPESyntaxError(message) {
+  this.constructor.prototype.__proto__ = Error.prototype;
+  Error.call(this);
+  Error.captureStackTrace(this, this.constructor);
+  this.name = this.constructor.name;
+  this.message = message;
+  // this.stack = (new Error()).stack;
+}
+
+
+export function makeError(t, message) {
+  t.message = message;
+
+  const errorDescription = JSON.stringify(
+      t,
+      ['name', 'message', 'from', 'to', 'key', 'value', 'arity', 'first', 'second', 'third', 'fourth'],
+      4);
+
+  throw new LPESyntaxError(errorDescription);
+}
+
+
+export function tokenize(s, prefix = '<>+-&', suffix = '=>&:') {
   let c;                      // The current character.
   let from;                   // The index of the start of the token.
   let i = 0;                  // The index of the current character.
@@ -246,4 +270,6 @@ export default function tokenize(s, prefix = '<>+-&', suffix = '=>&:') {
     }
   }
   return result;
-};
+}
+
+export default tokenize;
