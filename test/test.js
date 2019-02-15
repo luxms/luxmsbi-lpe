@@ -42,7 +42,6 @@ describe('LPE tests', function() {
       assert.deepEqual(lpe.parse('1≥2'), ['>=', 1, 2]);
     });
 
-
     it('should parse arithmetics priority', function() {
       assert.deepEqual(lpe.parse('1*2+3'), ['+', ['*', 1, 2], 3]);
       assert.deepEqual(lpe.parse('1+2*3'), ['+', 1, ['*', 2, 3]]);
@@ -93,7 +92,6 @@ describe('LPE tests', function() {
       assert.deepEqual(lpe.parse("mlp([1,2,3],[3,4,5],[20,33,4422274183274832676487168124214]).djl(3,title~'по названиям')"), ["->",["mlp",["[","1","2","3"],["[","3","4","5"],["[","20","33","4422274183274832676487168124214"]],["djl","3",["~","title",["'","по названиям"]]]] );
     });
 
-
     it('should parse named logical expressions a.k.a. where expressions', function() {
       assert.deepEqual(lpe.parse('where(id=[12,3] and title~"abc" or id=2 and id=3241324132)'), ["where",["and",["=","id",["[","12","3"]],["or",["~","title",['"',"abc"]],["and",["=","id","2"],["=","id","3241324132"]]]]]);
 
@@ -106,7 +104,6 @@ describe('LPE tests', function() {
       );
     });
 
-
     it('should parse if expressions with grouping', function() {
         // if evaluation works as in LISP !!! Here is just tests for parser
         assert.deepEqual(lpe.parse('if(a=b).yes().no()'), ["->",["if",["=","a","b"]],["yes"],["no"]]);
@@ -117,37 +114,33 @@ describe('LPE tests', function() {
     });
 
     it('should eval if expressions', function() {
-        assert.equal(lpe.eval_lisp(lpe.parse('do(1,2,3)'),{}), '3');
+        assert.equal(lpe.eval_lpe('begin(1,2,3)', {}), '3');
 
         // lisp evaluate to [1,2,'3'] потому что использует new String(3), который кавычит в одинарные кавычки
         // но JSON.parse  понимает тольео двойные!!!
-        assert.deepEqual(JSON.parse(JSON.stringify(eval(lpe.evaluate(lpe.parse('list(1,2,"3")'),{"a":1,"b":2})))), [1,2,"3"]);
+        assert.deepEqual(JSON.parse(JSON.stringify(eval(lpe.eval_lpe('list(1,2,"3")', {"a":1,"b":2})))), [1,2,"3"]);
 
-        assert.equal(lpe.evaluate(lpe.parse('if(true,1,2)'),{}), '1');
+        assert.equal(lpe.eval_lpe('if(true,1,2)', {}), '1');
 
-        assert.equal(lpe.evaluate(lpe.parse('if(count(ar)=3,"count=3","oops")'),{"ar":[1,2,1]}), 'count=3');
-        assert.equal(lpe.evaluate(lpe.parse('if(count(ar)>5,"count=3",str([1,2,3]))'),{"ar":[1,2,1]}), '[1,2,3]');
+        assert.equal(lpe.eval_lpe('if(count(ar)=3,"count=3","oops")', {"ar":[1,2,1]}), 'count=3');
+        assert.equal(lpe.eval_lpe('if(count(ar)>5,"count=3",str([1,2,3]))', {"ar":[1,2,1]}), '[1,2,3]');
 
-        assert.equal(lpe.evaluate(lpe.parse('if ( true, "cool".str(yo), "cool"..str(yo) )'),{}), 'coolyo');
+        assert.equal(lpe.eval_lpe('if ( true, "cool".str(yo), "cool"..str(yo) )', {}), 'coolyo');
 
-        assert.equal(lpe.evaluate(lpe.parse('if ( 0, "cool".str(yo), "cool"..str(yo) )'),{}), 'yocool');
-        
+        assert.equal(lpe.eval_lpe('if ( 0, "cool".str(yo), "cool"..str(yo) )', {}), 'yocool');
     });
 
-
     it('should eval Javascript RegExp with context', function() {
-        assert.equal(lpe.evaluate( ['.', ['RegExp', 'delete','i'], 'test', [".-","context","sql"]]  ,{"context":{"sql":"deleTe"}}), true);
-        assert.equal(lpe.evaluate( ['.', ['RegExp', 'delete','i'], 'test', [".-","context","sql"]]  ,{"context":{"sql":"abc\nselect or update or deleTe"}}), true);
-        assert.equal(lpe.evaluate( ['false?', ['.', ['RegExp', 'update|drop|truncate|insert|alter|grant|delete','i'], 'test', [".-","context","sql"]]], {"context":{"sql":"abc\nselect or update or deleTe"}}), false);
-        assert.equal(lpe.evaluate( ['false?', ['.', ['RegExp', 'update|drop|truncate|insert|alter|grant|delete','i'], 'test', [".-","context","sql"]]], {"context":{"sql":"abc\nselect * from table where a is not null"}}), true);
+        assert.equal(lpe.eval_lisp( ['.', ['RegExp', 'delete','i'], 'test', [".-","context","sql"]]  ,{"context":{"sql":"deleTe"}}), true);
+        assert.equal(lpe.eval_lisp( ['.', ['RegExp', 'delete','i'], 'test', [".-","context","sql"]]  ,{"context":{"sql":"abc\nselect or update or deleTe"}}), true);
+        assert.equal(lpe.eval_lisp( ['false?', ['.', ['RegExp', 'update|drop|truncate|insert|alter|grant|delete','i'], 'test', [".-","context","sql"]]], {"context":{"sql":"abc\nselect or update or deleTe"}}), false);
+        assert.equal(lpe.eval_lisp( ['false?', ['.', ['RegExp', 'update|drop|truncate|insert|alter|grant|delete','i'], 'test', [".-","context","sql"]]], {"context":{"sql":"abc\nselect * from table where a is not null"}}), true);
     });
 
     it('should eval Javascript RegExp with context (LPE)', function() {
-        assert.equal(lpe.evaluate(lpe.parse('RegExp("delete","i").invoke(test, context.sql)')  ,{"context":{"sql":"deleTe"}}), true);
-        assert.equal(lpe.evaluate(lpe.parse('RegExp("delete","i").invoke(test, context.sql).not()')  ,{"context":{"sql":"deleTe"}}), false);
+        assert.equal(lpe.eval_lisp(lpe.parse('RegExp("delete","i").invoke(test, context.sql)')  ,{"context":{"sql":"deleTe"}}), true);
+        assert.equal(lpe.eval_lisp(lpe.parse('RegExp("delete","i").invoke(test, context.sql).not()')  ,{"context":{"sql":"deleTe"}}), false);
     });
-
-
 
     it('should eval SQL where expressions', function() {
         assert.equal( lpe.eval_sql_where( 
@@ -285,8 +278,6 @@ describe('LPE tests', function() {
             "end": {"qty": 1, "start_time": "2018-12-10T18:16:00+03:00", "period_type": 1}}}),
             "WHERE '3 month'::interval or '2 day'::interval or '3 day'::interval"
         );
-
-        
     });
 
 /* NOT YET READY !!!

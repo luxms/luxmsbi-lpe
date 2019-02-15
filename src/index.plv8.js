@@ -35,6 +35,12 @@ console.log('LPE initialised!');
 // console.log(result);
 
 
+function eval_lpe(lpe, ctx) {
+  const ast = parse(lpe);
+  return eval_lisp(ast, ctx);
+}
+
+
 // exports to plv8.lpe due to webpack config
 export {
   // lpe
@@ -42,12 +48,13 @@ export {
   LPESyntaxError,
   evaluate,
   eval_lisp,
+  eval_lpe,
   // sql_where
   sql_where_context,
   eval_sql_where,
   // sql_context
   sql_context,
-  parse_sql_expr
+  parse_sql_expr,
 };
 
 

@@ -5,14 +5,21 @@ import {sql_where_context, eval_sql_where} from './sql_where';
 import {sql_context, parse_sql_expr, parse_sql_apidb_expr} from './sql_context';
 
 
+function eval_lpe(lpe, ctx) {
+  const ast = parse(lpe);
+  return eval_lisp(ast, ctx);
+}
+
+
 export {
   parse,
   LPESyntaxError,
+  evaluate,                         // deprecated
+  eval_lisp,
+  eval_lpe,
   eval_sql_where,
   parse_sql_expr,
   parse_sql_apidb_expr,
-  evaluate,                         // deprecated
-  eval_lisp,
 };
 
 

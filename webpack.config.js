@@ -14,6 +14,13 @@ var WebpackAutoInject = require('webpack-auto-inject-version');
 var args = require('args-parser')(process.argv);
 var host = args['env.host'];                            // where to deploy postgres
 
+const NODE_ENV = process.env.NODE_ENV || 'production';
+console.log(NODE_ENV);
+
+const isDev = (NODE_ENV === 'development');
+const isProduction = (NODE_ENV === 'production');
+const isTest = (NODE_ENV === 'test');
+
 module.exports = [
   {
     entry: "./src/index.js",
@@ -56,7 +63,8 @@ module.exports = [
           },
         },
       }),
-    ]
+    ],
+    devtool: isDev ? 'eval-inline-source-map' : 'sourcemap',
   }, 
   {
     entry: "./src/index.nashorn.js",

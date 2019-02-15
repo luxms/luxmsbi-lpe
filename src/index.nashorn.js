@@ -4,14 +4,21 @@ import {eval_lisp, evaluate} from './lisp';
 import {sql_where_context, eval_sql_where} from './sql_where';
 
 
+function eval_lpe(lpe, ctx) {
+  const ast = parse(lpe);
+  return eval_lisp(ast, ctx);
+}
+
+
 export {
   parse,
   LPESyntaxError,
+  evaluate,
+  eval_lisp,
+  eval_lpe,
   eval_sql_where,
   //parse_sql_expr,
   //parse_sql_apidb_expr,
-  evaluate,
-  eval_lisp,
 };
 
 // Java call require('./lpe.nashorn').parse('mlp([1,2,3])')

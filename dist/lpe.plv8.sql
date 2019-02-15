@@ -79,19 +79,15 @@ plv8 = typeof plv8 === "object" ? plv8 : {}; plv8["lpe"] =
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
 function prepareOutput() {
   var res = '';
+
   for (var i = 0; i < arguments.length; i++) {
     var arg = arguments[i];
+
     if (typeof arg == 'string') {
       res += arg;
     } else {
@@ -102,10 +98,11 @@ function prepareOutput() {
       }
     }
   }
+
   return res;
 }
 
-exports.default = {
+/* harmony default export */ __webpack_exports__["a"] = ({
   log: function log() {
     var message = prepareOutput.apply(this, arguments);
     plv8.elog(NOTICE, message);
@@ -118,52 +115,83 @@ exports.default = {
     var message = prepareOutput.apply(this, arguments);
     plv8.elog(ERROR, message);
   }
-};
+});
 
 /***/ }),
 /* 1 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
+/* unused harmony export init_lisp */
+/* harmony export (immutable) */ __webpack_exports__["a"] = eval_lisp;
+/* harmony export (immutable) */ __webpack_exports__["b"] = evaluate;
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__console_console__ = __webpack_require__(0);
+function _toArray(arr) { return _arrayWithHoles(arr) || _iterableToArray(arr) || _nonIterableRest(); }
 
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; /**
-                                                                                                                                                                                                                                                                               *  miniMAL lisp interpreter
-                                                                                                                                                                                                                                                                               *  Copyright (C) 2014 Joel Martin
-                                                                                                                                                                                                                                                                               *  Licensed under MPL 2.0
-                                                                                                                                                                                                                                                                               *  https://github.com/kanaka/mal
-                                                                                                                                                                                                                                                                               * 
-                                                                                                                                                                                                                                                                               */
+function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+
+function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
+
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
+
+function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
+
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+/**
+ *  miniMAL lisp interpreter
+ *  Copyright (C) 2014 Joel Martin
+ *  Licensed under MPL 2.0
+ *  https://github.com/kanaka/mal
+ * 
+ */
+
 /**
  *  The code has been reworked to suite LuxmsBI needs
  *  by esix & Dmitry Dorofeev
  *  2017-2019
  */
 
-exports.init_lisp = init_lisp;
-exports.eval_lisp = eval_lisp;
-exports.evaluate = evaluate;
-
-var _console = __webpack_require__(0);
-
-var _console2 = _interopRequireDefault(_console);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var isArray = function isArray(arg) {
   return Object.prototype.toString.call(arg) === '[object Array]';
 };
 
+var isString = function isString(arg) {
+  return typeof arg === 'string';
+};
+
+var isNumber = function isNumber(arg) {
+  return typeof arg === 'number';
+};
+
+var isHash = function isHash(arg) {
+  return _typeof(arg) === 'object' && arg !== null && !isArray(arg);
+};
+
+var isFunction = function isFunction(arg) {
+  return typeof arg === 'function';
+};
 /**
  * Get or Set variable in context
  * @param {*} ctx - array, hashmap or function that stores variables 
  * @param {*} varName - the name of variable
  * @param {*} value - optional value to set (undefied if get)
  */
+
+
 function $var$(ctx, varName, value) {
   if (isArray(ctx)) {
     // contexts chain
@@ -174,10 +202,11 @@ function $var$(ctx, varName, value) {
     try {
       for (var _iterator = ctx[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
         var theCtx = _step.value;
-
         var result = $var$(theCtx, varName);
         if (result === undefined) continue; // no such var in context
+
         if (value === undefined) return result; // get => we've got a result
+
         return $var$(theCtx, varName, value); // set => redirect 'set' to context with variable.
       }
     } catch (err) {
@@ -185,7 +214,7 @@ function $var$(ctx, varName, value) {
       _iteratorError = err;
     } finally {
       try {
-        if (!_iteratorNormalCompletion && _iterator.return) {
+        if (!_iteratorNormalCompletion && _iterator.return != null) {
           _iterator.return();
         }
       } finally {
@@ -196,225 +225,402 @@ function $var$(ctx, varName, value) {
     }
 
     if (value === undefined) return undefined; // get => variable not found in all contexts
+
     if (ctx.length) $var$(ctx[0], varName, value); // set => set variable to HEAD context
+
     return undefined; // ??? ctx.length = 0
   }
 
-  if (typeof ctx === 'function') return ctx(varName, value);
+  if (isFunction(ctx)) return ctx(varName, value);
 
-  if ((typeof ctx === 'undefined' ? 'undefined' : _typeof(ctx)) === 'object' && ctx !== null) {
+  if (isHash(ctx)) {
     return value === undefined ? ctx[varName] : ctx[varName] = value;
   }
 
   return undefined;
 }
 
+function makeMacro(fn, ast) {
+  fn.ast = ast || [[], {}, [], 1]; // mark as macro
+
+  return fn;
+}
+
+function aListToHashTable(alist) {
+  var result = {};
+  alist.forEach(function (pair) {
+    return result[pair[0]] = pair[1];
+  });
+  return result;
+}
+
+function makeLetBindings(bindings) {
+  if (isHash(bindings)) return _objectSpread({}, bindings);
+  if (isArray(bindings)) return aListToHashTable(bindings);
+  if (isFunction(bindings)) return bindings;
+  throw new Error('LISP: let expression invalid form in ' + ast);
+}
+
+var SPECIAL_FORMS = {
+  // built-in special forms
+  'let': function _let(ast, ctx, rs) {
+    return EVAL(['begin'].concat(_toConsumableArray(ast.slice(1))), [makeLetBindings(ast[0]), ctx], rs);
+  },
+  '`': function _(ast, ctx) {
+    return ast[0];
+  },
+  // quote
+  'macroexpand': macroexpand,
+  'begin': function begin(ast, ctx) {
+    return ast.reduce(function (acc, astItem) {
+      return EVAL(astItem, ctx);
+    }, null);
+  },
+  'do': function _do(ast, ctx) {
+    throw new Error('DO not implemented');
+  },
+  'if': function _if(ast, ctx, rs) {
+    return EVAL(ast[0], ctx, false) ? EVAL(ast[1], ctx, rs) : EVAL(ast[2], ctx, rs);
+  },
+  '~': function _(ast, ctx, rs) {
+    // mark as macro
+    var f = EVAL(ast[0], ctx, rs); // eval regular function
+
+    f.ast.push(1); // mark as macro
+
+    return f;
+  },
+  '.-': function _(ast, ctx, rs) {
+    // get or set attribute
+    var _eval_ast = eval_ast(ast, ctx, rs),
+        _eval_ast2 = _slicedToArray(_eval_ast, 3),
+        obj = _eval_ast2[0],
+        propertyName = _eval_ast2[1],
+        value = _eval_ast2[2];
+
+    return value !== undefined ? obj[propertyName] = value : obj[propertyName];
+  },
+  '.': function _(ast, ctx, rs) {
+    // call object method
+    var _eval_ast3 = eval_ast(ast, ctx, rs),
+        _eval_ast4 = _toArray(_eval_ast3),
+        obj = _eval_ast4[0],
+        methodName = _eval_ast4[1],
+        args = _eval_ast4.slice(2);
+
+    var fn = obj[methodName];
+    return fn.apply(obj, args);
+  },
+  'try': function _try(ast, ctx, rs) {
+    // try/catch
+    try {
+      return EVAL(ast[0], ctx, rs);
+    } catch (e) {
+      var errCtx = env_bind([ast[1][0]], ctx, [e]);
+      return EVAL(ast[1][1], errCtx, rs);
+    }
+  },
+  '||': function _(ast, ctx, rs) {
+    return ast.some(function (a) {
+      return !!EVAL(a, ctx, rs);
+    });
+  },
+  // logical or
+  '&&': function _(ast, ctx, rs) {
+    return ast.every(function (a) {
+      return !!EVAL(a, ctx, rs);
+    });
+  },
+  // logical and
+  'fn': function fn(ast, ctx, rs) {
+    // define new function (lambda)
+    var f = function f() {
+      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
+      }
+
+      return EVAL(ast[1], env_bind(ast[0], ctx, args), rs);
+    };
+
+    f.ast = [ast[1], ctx, ast[0]]; // f.ast compresses more than f.data
+
+    return f;
+  },
+  'def': function def(ast, ctx, rs) {
+    // update current environment
+    var value = EVAL(ast[1], ctx, rs);
+    var result = $var$(ctx, ast[0], value);
+    return result;
+  }
+};
 var STDLIB = {
+  // built-in constants
+  '#t': true,
+  '#f': false,
+  'NIL': null,
+  'null': null,
+  // js specific
+  'true': true,
+  'false': false,
+  // built-in function
+  '=': function _() {
+    for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+      args[_key2] = arguments[_key2];
+    }
+
+    return args.every(function (v) {
+      return v === args[0];
+    });
+  },
+  '+': function _() {
+    for (var _len3 = arguments.length, args = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+      args[_key3] = arguments[_key3];
+    }
+
+    return args.reduce(function (a, b) {
+      return a + b;
+    });
+  },
+  '-': function _() {
+    for (var _len4 = arguments.length, args = new Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+      args[_key4] = arguments[_key4];
+    }
+
+    return args.length === 1 ? -args[0] : args.reduce(function (a, b) {
+      return a - b;
+    });
+  },
+  '*': function _() {
+    for (var _len5 = arguments.length, args = new Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
+      args[_key5] = arguments[_key5];
+    }
+
+    return args.reduce(function (a, b) {
+      return a * b;
+    });
+  },
+  '/': function _() {
+    for (var _len6 = arguments.length, args = new Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
+      args[_key6] = arguments[_key6];
+    }
+
+    return args.length === 1 ? 1 / args[0] : args.reduce(function (a, b) {
+      return a / b;
+    });
+  },
+  '<': function _() {
+    for (var _len7 = arguments.length, args = new Array(_len7), _key7 = 0; _key7 < _len7; _key7++) {
+      args[_key7] = arguments[_key7];
+    }
+
+    return args.every(function (v, i) {
+      return i === 0 ? true : args[i - 1] < args[i];
+    });
+  },
+  'isa': function isa(a, b) {
+    return a instanceof b;
+  },
+  'type': function type(a) {
+    return _typeof(a);
+  },
+  'new': function _new() {
+    for (var _len8 = arguments.length, args = new Array(_len8), _key8 = 0; _key8 < _len8; _key8++) {
+      args[_key8] = arguments[_key8];
+    }
+
+    return new (args[0].bind.apply(args[0], args))();
+  },
+  'del': function del(a, b) {
+    return delete a[b];
+  },
+  'list': function list() {
+    for (var _len9 = arguments.length, args = new Array(_len9), _key9 = 0; _key9 < _len9; _key9++) {
+      args[_key9] = arguments[_key9];
+    }
+
+    return args;
+  },
+  'vector': function vector() {
+    for (var _len10 = arguments.length, args = new Array(_len10), _key10 = 0; _key10 < _len10; _key10++) {
+      args[_key10] = arguments[_key10];
+    }
+
+    return args;
+  },
+  '[': function _() {
+    for (var _len11 = arguments.length, args = new Array(_len11), _key11 = 0; _key11 < _len11; _key11++) {
+      args[_key11] = arguments[_key11];
+    }
+
+    return args;
+  },
+  'map': function map(a, b) {
+    return b.map(a);
+  },
+  'throw': function _throw(a) {
+    throw a;
+  },
+  'identity': function identity(a) {
+    return a;
+  },
+  'pluck': function pluck(c, k) {
+    return c.map(function (el) {
+      return el[k];
+    });
+  },
+  // for each array element, get property value, present result as array.
+  'RegExp': function (_RegExp) {
+    function RegExp() {
+      return _RegExp.apply(this, arguments);
+    }
+
+    RegExp.toString = function () {
+      return _RegExp.toString();
+    };
+
+    return RegExp;
+  }(function () {
+    for (var _len12 = arguments.length, args = new Array(_len12), _key12 = 0; _key12 < _len12; _key12++) {
+      args[_key12] = arguments[_key12];
+    }
+
+    return RegExp.apply(RegExp, args);
+  }),
+  'read-string': function readString(a) {
+    return JSON.parse(a);
+  },
+  'rep': function rep(a) {
+    return JSON.stringify(EVAL(JSON.parse(a), STDLIB));
+  },
+  // TODO: fix ctx and rs arguments
+  // not implemented yet
+  // 'hash-table->alist'
+  // macros
+  '\'': makeMacro(function (a) {
+    return a.toString();
+  }),
+  '"': makeMacro(function (a) {
+    return a.toString();
+  }),
+  '()': makeMacro(function () {
+    for (var _len13 = arguments.length, args = new Array(_len13), _key13 = 0; _key13 < _len13; _key13++) {
+      args[_key13] = arguments[_key13];
+    }
+
+    return args;
+  }),
+  // ???
+  '->': makeMacro(function (acc) {
+    for (var _len14 = arguments.length, ast = new Array(_len14 > 1 ? _len14 - 1 : 0), _key14 = 1; _key14 < _len14; _key14++) {
+      ast[_key14 - 1] = arguments[_key14];
+    }
+
+    // thread first macro
+    // императивная лапша для макроса ->
+    // надо вот так: https://clojuredocs.org/clojure.core/-%3E%3E
+    for (var _i2 = 0; _i2 < ast.length; _i2++) {
+      var arr = ast[_i2];
+
+      if (!isArray(arr)) {
+        arr = [".-", acc, arr]; // это может быть обращение к хэшу или массиву через индекс или ключ....
+      } else if (arr[0] === "()" && arr.length === 2 && (isString(arr[1]) || isNumber(arr[1]))) {
+        arr = [".-", acc, arr[1]];
+      } else {
+        arr.splice(1, 0, acc); // подставляем "вычисленное" ранее значение в качестве первого аргумента... классика thread first
+      }
+
+      acc = arr;
+    }
+
+    return acc;
+  }),
+  '->>': makeMacro(function (acc) {
+    for (var _len15 = arguments.length, ast = new Array(_len15 > 1 ? _len15 - 1 : 0), _key15 = 1; _key15 < _len15; _key15++) {
+      ast[_key15 - 1] = arguments[_key15];
+    }
+
+    // thread last macro
+    // императивная лапша для макроса ->>
+    // надо вот так: https://clojuredocs.org/clojure.core/-%3E%3E
+    for (var _i3 = 0; _i3 < ast.length; _i3++) {
+      var arr = ast[_i3];
+      arr.push(acc);
+      acc = arr;
+    }
+
+    return acc;
+  }),
+  'invoke': makeMacro(function () {
+    for (var _len16 = arguments.length, ast = new Array(_len16), _key16 = 0; _key16 < _len16; _key16++) {
+      ast[_key16] = arguments[_key16];
+    }
+
+    /// мы не можем использовать точку в LPE для вызова метода объекта, так как она уже замаплена на ->
+    /// поэтому для фанатов ООП пришлось добавить макрос invoke - вызов метода по его текстовому названию.
+    /// invoke хорошо стыкуется с ->
+    ast.splice(0, 0, ".");
+    return ast;
+  }),
+  // system functions & objects
   // 'js': eval,
-  eval_context: eval_context, // TODO: remove
+  eval_context: eval_context,
+  // TODO: remove
   JSON: JSON,
-  console: _console2.default,
+  console: __WEBPACK_IMPORTED_MODULE_0__console_console__["a" /* default */],
   eval: function _eval(a) {
     return EVAL(a, STDLIB);
   }
 };
-
-STDLIB["macroexpand"] = function (a) {
-  return macroexpand(a, STDLIB);
-};
-
-// These could all also be interop
-STDLIB["="] = function (a, b) {
-  return a === b;
-};
-STDLIB["<"] = function (a, b) {
-  return a < b;
-};
-STDLIB[">"] = function (a, b) {
-  return a > b;
-};
-STDLIB["+"] = function () {
-  return Array.prototype.reduce.call(arguments, function (a, b) {
-    return a + b;
-  });
-};
-STDLIB["-"] = function (a, b) {
-  return b === undefined ? -a : a - b;
-};
-STDLIB["*"] = function () {
-  return Array.prototype.reduce.call(arguments, function (a, b) {
-    return a * b;
-  });
-};
-STDLIB["/"] = function (a, b) {
-  return a / b;
-};
-STDLIB["isa"] = function (a, b) {
-  return a instanceof b;
-};
-STDLIB["type"] = function (a) {
-  return typeof a === 'undefined' ? 'undefined' : _typeof(a);
-};
-// new expecting real object as a argument, can not process string names...
-STDLIB["new"] = function (a) {
-  return new (a.bind.apply(a, arguments))();
-};
-STDLIB["del"] = function (a, b) {
-  return delete a[b];
-};
-STDLIB["list"] = function () {
-  return Array.prototype.slice.call(arguments);
-};
-STDLIB["vector"] = function () {
-  for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-    args[_key] = arguments[_key];
-  }
-
-  return args;
-}, STDLIB["map"] = function (a, b) {
-  return b.map(a);
-};
-STDLIB["throw"] = function (a) {
-  throw a;
-};
-STDLIB["identity"] = function (a) {
-  return a;
-};
-
-// for each array element, get property value, present result as array.
-STDLIB["pluck"] = function (c, k) {
-  return c.map(function (el) {
-    return el[k];
-  });
-};
-
-// Shortcut for using RegExp
-STDLIB["RegExp"] = function (a) {
-  return RegExp.apply(null, arguments);
-};
-
-STDLIB["'"] = function (a) {
-  return a.toString();
-};
-STDLIB['"'] = function (a) {
-  return a.toString();
-};
-STDLIB["["] = function () {
-  return Array.prototype.slice.call(arguments);
-};
-
-STDLIB["read-string"] = function (a) {
-  return JSON.parse(a);
-};
-// E["slurp"] = function(a)   { return require('fs').readFileSync(a,'utf-8'); }
-// E["load-file"] = function(a) { return EVAL(JSON.parse(E["slurp"](a)),E);  }
-
-
-STDLIB["rep"] = function (a) {
-  return JSON.stringify(EVAL(JSON.parse(a), STDLIB));
-};
-
-STDLIB["()"] = function () {
-  return Array.prototype.slice.call(arguments).splice(1);
-};
-STDLIB["()"].ast = [[], {}, [], 1]; // mark as macro
-
-
-STDLIB["->"] = function () {
-  // thread first macro
-  // императивная лапша для макроса ->
-  // надо вот так: https://clojuredocs.org/clojure.core/-%3E%3E
-  var acc = arguments[0];
-  var ast = Array.prototype.slice.call(arguments);
-  for (var i = 1; i < ast.length; i++) {
-    var arr = ast[i];
-    if (!Array.isArray(arr)) {
-      //это может быть обращение к хэшу или массиву через индекс или ключ....
-      arr = [".-", acc, arr];
-    } else if (arr[0] === "()" && arr.length == 2 && (typeof arr[1] === "string" || typeof arr[1] === "number")) {
-      arr = [".-", acc, arr[1]];
-    } else {
-      // подставляем "вычисленное" ранее значение в качестве первого аргумента... классика thread first
-      arr.splice(1, 0, acc);
-    }
-    acc = arr;
-    // console.log("->", JSON.stringify(acc));
-  }
-  return acc;
-  /// end of thread first macro
-};
-STDLIB["->"].ast = [[], {}, [], 1]; // mark as macro
-
-
-STDLIB["->>"] = function () {
-  // thread last macro
-  // императивная лапша для макроса ->>
-  // надо вот так: https://clojuredocs.org/clojure.core/-%3E%3E
-  var acc = arguments[0];
-  var ast = Array.prototype.slice.call(arguments);
-  for (var i = 1; i < ast.length; i++) {
-    ast[i].push(acc);
-    acc = ast[i];
-    //console.log("->>", JSON.stringify(acc));
-  }
-  return acc;
-  /// end of thread first macro
-};
-STDLIB["->>"].ast = [[], {}, [], 1]; // mark as macro
-
-
-/// мы не можем использовать точку в LPE для вызова метода объекта, так как она уже замаплена на ->
-/// поэтому для фанатов ООП пришлось добавить макрос invoke - вызов метода по его текстовому названию.
-/// invoke хорошо стыкуется с ->
-STDLIB["invoke"] = function () {
-  var ast = Array.prototype.slice.call(arguments);
-  ast.splice(0, 0, ".");
-  return ast;
-};
-STDLIB["invoke"].ast = [[], {}, [], 1]; // mark as macro
-
-
-var minimal = ["do",
-// этот new ждёт на вход функцию a - создать regExp из строчки "RegExp" не выйдет
-["def", "new", ["fn", ["a", "&", "b"], [".", "Reflect", ["`", "construct"], "a", "b"]]], ["def", "del", ["fn", ["a", "b"], [".", "Reflect", ["`", "deleteProperty"], "a", "b"]]], ["def", "map", ["fn", ["a", "b"], [".", "b", ["`", "map"], ["fn", ["x"], ["a", "x"]]]]], ["def", "list", ["fn", ["&", "a"], "a"]], ["def", ">=", ["fn", ["a", "b"], ["if", ["<", "a", "b"], false, true]]], ["def", ">", ["fn", ["a", "b"], ["if", [">=", "a", "b"], ["if", ["=", "a", "b"], false, true], false]]], ["def", "<=", ["fn", ["a", "b"], ["if", [">", "a", "b"], false, true]]], ["def", "classOf", ["fn", ["a"], [".", [".-", [".-", "Object", ["`", "prototype"]], ["`", "toString"]], ["`", "call"], "a"]]], ["def", "not", ["fn", ["a"], ["if", "a", false, true]]], ["def", "null?", ["fn", ["a"], ["=", null, "a"]]], ["def", "true?", ["fn", ["a"], ["=", true, "a"]]], ["def", "false?", ["fn", ["a"], ["=", false, "a"]]], ["def", "string?", ["fn", ["a"], ["if", ["=", "a", null], false, ["=", ["`", "String"], [".-", [".-", "a", ["`", "constructor"]], ["`", "name"]]]]]], ["def", "pr-str", ["fn", ["&", "a"], [".", ["map", [".-", "JSON", ["`", "stringify"]], "a"], ["`", "join"], ["`", " "]]]], ["def", "str", ["fn", ["&", "a"], [".", ["map", ["fn", ["x"], ["if", ["string?", "x"], "x", [".", "JSON", ["`", "stringify"], "x"]]], "a"], ["`", "join"], ["`", ""]]]], ["def", "prn", ["fn", ["&", "a"], ["do", [".", "console", ["`", "log"], [".", ["map", [".-", "JSON", ["`", "stringify"]], "a"], ["`", "join"], ["`", " "]]], null]]], ["def", "println", ["fn", ["&", "a"], ["do", [".", "console", ["`", "log"], [".", ["map", ["fn", ["x"], ["if", ["string?", "x"], "x", [".", "JSON", ["`", "stringify"], "x"]]], "a"], ["`", "join"], ["`", " "]]], null]]], ["def", "list?", ["fn", ["a"], [".", "Array", ["`", "isArray"], "a"]]], ["def", "contains?", ["fn", ["a", "b"], [".", "a", ["`", "hasOwnProperty"], "b"]]], ["def", "get", ["fn", ["a", "b"], ["if", ["contains?", "a", "b"], [".-", "a", "b"], null]]], ["def", "set", ["fn", ["a", "b", "c"], ["do", [".-", "a", "b", "c"], "a"]]], ["def", "keys", ["fn", ["a"], [".", "Object", ["`", "keys"], "a"]]], ["def", "vals", ["fn", ["a"], [".", "Object", ["`", "values"], "a"]]], ["def", "cons", ["fn", ["a", "b"], [".", ["`", []], ["`", "concat"], ["list", "a"], "b"]]], ["def", "concat", ["fn", ["&", "a"], [".", [".-", ["list"], ["`", "concat"]], ["`", "apply"], ["list"], "a"]]], ["def", "nth", "get"], ["def", "first", ["fn", ["a"], ["if", [">", [".-", "a", ["`", "length"]], 0], ["nth", "a", 0], null]]], ["def", "last", ["fn", ["a"], ["nth", "a", ["-", [".-", "a", ["`", "length"]], 1]]]], ["def", "count", ["fn", ["a"], [".-", "a", ["`", "length"]]]], ["def", "empty?", ["fn", ["a"], ["if", ["list?", "a"], ["=", 0, [".-", "a", ["`", "length"]]], ["=", "a", null]]]], ["def", "slice", ["fn", ["a", "b", "&", "end"], [".", "a", ["`", "slice"], "b", ["if", [">", [".-", "end", ["`", "length"]], 0], ["get", "end", 0], [".-", "a", ["`", "length"]]]]]], ["def", "rest", ["fn", ["a"], ["slice", "a", 1]]], ["def", "apply", ["fn", ["f", "&", "b"], [".", "f", ["`", "apply"], "f", ["concat", ["slice", "b", 0, -1], ["last", "b"]]]]], ["def", "and", ["~", ["fn", ["&", "xs"], ["if", ["empty?", "xs"], true, ["if", ["=", 1, [".-", "xs", ["`", "length"]]], ["first", "xs"], ["list", ["`", "let"], ["list", ["`", "__and"], ["first", "xs"]], ["list", ["`", "if"], ["`", "__and"], ["concat", ["`", ["and"]], ["rest", "xs"]], ["`", "__and"]]]]]]]], ["def", "or", ["~", ["fn", ["&", "xs"], ["if", ["empty?", "xs"], null, ["if", ["=", 1, [".-", "xs", ["`", "length"]]], ["first", "xs"], ["list", ["`", "let"], ["list", ["`", "__or"], ["first", "xs"]], ["list", ["`", "if"], ["`", "__or"], ["`", "__or"], ["concat", ["`", ["or"]], ["rest", "xs"]]]]]]]]], null];
-
+var minimal = ["begin", // этот new ждёт на вход функцию a - создать regExp из строчки "RegExp" не выйдет
+["def", "new", ["fn", ["a", "&", "b"], [".", "Reflect", ["`", "construct"], "a", "b"]]], ["def", "del", ["fn", ["a", "b"], [".", "Reflect", ["`", "deleteProperty"], "a", "b"]]], ["def", "map", ["fn", ["a", "b"], [".", "b", ["`", "map"], ["fn", ["x"], ["a", "x"]]]]], ["def", "list", ["fn", ["&", "a"], "a"]], ["def", ">=", ["fn", ["a", "b"], ["if", ["<", "a", "b"], false, true]]], ["def", ">", ["fn", ["a", "b"], ["if", [">=", "a", "b"], ["if", ["=", "a", "b"], false, true], false]]], ["def", "<=", ["fn", ["a", "b"], ["if", [">", "a", "b"], false, true]]], ["def", "classOf", ["fn", ["a"], [".", [".-", [".-", "Object", ["`", "prototype"]], ["`", "toString"]], ["`", "call"], "a"]]], ["def", "not", ["fn", ["a"], ["if", "a", false, true]]], ["def", "null?", ["fn", ["a"], ["=", null, "a"]]], ["def", "true?", ["fn", ["a"], ["=", true, "a"]]], ["def", "false?", ["fn", ["a"], ["=", false, "a"]]], ["def", "string?", ["fn", ["a"], ["if", ["=", "a", null], false, ["=", ["`", "String"], [".-", [".-", "a", ["`", "constructor"]], ["`", "name"]]]]]], ["def", "pr-str", ["fn", ["&", "a"], [".", ["map", [".-", "JSON", ["`", "stringify"]], "a"], ["`", "join"], ["`", " "]]]], ["def", "str", ["fn", ["&", "a"], [".", ["map", ["fn", ["x"], ["if", ["string?", "x"], "x", [".", "JSON", ["`", "stringify"], "x"]]], "a"], ["`", "join"], ["`", ""]]]], ["def", "prn", ["fn", ["&", "a"], ["begin", [".", "console", ["`", "log"], [".", ["map", [".-", "JSON", ["`", "stringify"]], "a"], ["`", "join"], ["`", " "]]], null]]], ["def", "println", ["fn", ["&", "a"], ["begin", [".", "console", ["`", "log"], [".", ["map", ["fn", ["x"], ["if", ["string?", "x"], "x", [".", "JSON", ["`", "stringify"], "x"]]], "a"], ["`", "join"], ["`", " "]]], null]]], ["def", "list?", ["fn", ["a"], [".", "Array", ["`", "isArray"], "a"]]], ["def", "contains?", ["fn", ["a", "b"], [".", "a", ["`", "hasOwnProperty"], "b"]]], ["def", "get", ["fn", ["a", "b"], ["if", ["contains?", "a", "b"], [".-", "a", "b"], null]]], ["def", "set", ["fn", ["a", "b", "c"], ["begin", [".-", "a", "b", "c"], "a"]]], ["def", "keys", ["fn", ["a"], [".", "Object", ["`", "keys"], "a"]]], ["def", "vals", ["fn", ["a"], [".", "Object", ["`", "values"], "a"]]], ["def", "cons", ["fn", ["a", "b"], [".", ["`", []], ["`", "concat"], ["list", "a"], "b"]]], ["def", "concat", ["fn", ["&", "a"], [".", [".-", ["list"], ["`", "concat"]], ["`", "apply"], ["list"], "a"]]], ["def", "nth", "get"], ["def", "first", ["fn", ["a"], ["if", [">", [".-", "a", ["`", "length"]], 0], ["nth", "a", 0], null]]], ["def", "last", ["fn", ["a"], ["nth", "a", ["-", [".-", "a", ["`", "length"]], 1]]]], ["def", "count", ["fn", ["a"], [".-", "a", ["`", "length"]]]], ["def", "empty?", ["fn", ["a"], ["if", ["list?", "a"], ["=", 0, [".-", "a", ["`", "length"]]], ["=", "a", null]]]], ["def", "slice", ["fn", ["a", "b", "&", "end"], [".", "a", ["`", "slice"], "b", ["if", [">", [".-", "end", ["`", "length"]], 0], ["get", "end", 0], [".-", "a", ["`", "length"]]]]]], ["def", "rest", ["fn", ["a"], ["slice", "a", 1]]], ["def", "apply", ["fn", ["f", "&", "b"], [".", "f", ["`", "apply"], "f", ["concat", ["slice", "b", 0, -1], ["last", "b"]]]]], ["def", "and", ["~", ["fn", ["&", "xs"], ["if", ["empty?", "xs"], true, ["if", ["=", 1, [".-", "xs", ["`", "length"]]], ["first", "xs"], ["list", ["`", "let"], ["list", ["`", "__and"], ["first", "xs"]], ["list", ["`", "if"], ["`", "__and"], ["concat", ["`", ["and"]], ["rest", "xs"]], ["`", "__and"]]]]]]]], ["def", "or", ["~", ["fn", ["&", "xs"], ["if", ["empty?", "xs"], null, ["if", ["=", 1, [".-", "xs", ["`", "length"]]], ["first", "xs"], ["list", ["`", "let"], ["list", ["`", "__or"], ["first", "xs"]], ["list", ["`", "if"], ["`", "__or"], ["`", "__or"], ["concat", ["`", ["or"]], ["rest", "xs"]]]]]]]]], null];
 EVAL(minimal, STDLIB);
 
 function macroexpand(ast, ctx) {
-  while (Array.isArray(ast) && typeof ast[0] == "string" && ast[0] in ctx && ctx[ast[0]].ast && ctx[ast[0]].ast[3]) {
-    // Это макрос! 3-й элемент макроса установлен в 1 через push
-    //console.log("MACRO-Expand ast0: " + JSON.stringify(ast[0]));
-    ast = ctx[ast[0]].apply(ctx[ast[0]], ast.slice(1));
-    //console.log( "MACRO-Expand: " + JSON.stringify(ast));
+  var resolveString = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+
+  while (true) {
+    if (!isArray(ast)) break;
+    if (typeof ast[0] !== "string") break;
+    var v = $var$(ctx, ast[0]);
+    if (!isFunction(v)) break;
+    if (!isArray(v.ast)) break;
+    if (!v.ast[3]) break; // Это макрос! 3-й элемент макроса установлен в 1 через push
+
+    ast = v.apply(v, ast.slice(1));
   }
+
   return ast;
 }
 
 function env_bind(ast, ctx, exprs) {
-  // Return new Env with symbols in ast bound to
+  // Return new ctx with symbols in ast bound to
   // corresponding values in exprs
-  ctx = Object.create(ctx);
+  var newCtx = {};
+
   for (var i = 0; i < ast.length; i++) {
-    if (ast[i] == "&") {
+    if (ast[i] === "&") {
       // variable length arguments
-      ctx[ast[i + 1]] = Array.prototype.slice.call(exprs, i);
+      newCtx[ast[i + 1]] = Array.prototype.slice.call(exprs, i);
       break;
     } else {
-      ctx[ast[i]] = exprs[i];
+      newCtx[ast[i]] = exprs[i];
     }
   }
-  return ctx;
+
+  return [newCtx, ctx];
 }
 
 function eval_ast(ast, ctx) {
-  if (Array.isArray(ast)) {
+  var resolveString = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+
+  if (isArray(ast)) {
     // list?
     return ast.map(function (e) {
-      return EVAL(e, ctx);
+      return EVAL(e, ctx, resolveString);
     });
   }
 
-  if (typeof ast == 'string') {
+  if (isString(ast)) {
     var value = $var$(ctx, ast);
 
     if (value !== undefined) {
@@ -422,117 +628,53 @@ function eval_ast(ast, ctx) {
       return value;
     }
 
-    // if string and not in ctx:
-    return ast;
+    return resolveString ? ast : undefined; // if string and not in ctx:
   }
 
   return ast;
 }
 
 function EVAL(ast, ctx) {
-  while (true) {
-    if (!Array.isArray(ast)) return eval_ast(ast, ctx);
-    // apply
-    ast = macroexpand(ast, ctx);
-    if (!Array.isArray(ast)) return ast;
+  var resolveString = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
 
-    if (ast[0] === "def") {
-      // update current environment
-      return ctx[ast[1]] = EVAL(ast[2], ctx);
-    } else if (ast[0] === "~") {
-      // mark as macro
-      var f = EVAL(ast[1], ctx); // eval regular function
-      f.ast.push(1); // mark as macro
-      return f;
-    } else if (ast[0] === "let") {
-      // new environment with bindings
-      ctx = Object.create(ctx);
-      for (var i in ast[1]) {
-        if (i % 2) {
-          ctx[ast[1][i - 1]] = EVAL(ast[1][i], ctx);
-        }
-      }
-      ast = ast[2]; // TCO
-    } else if (ast[0] === "`") {
-      // quote (unevaluated)
-      return ast[1];
-    } else if (ast[0] === ".-") {
-      // get or set attribute
-      //console.log(".-", JSON.stringify(ast));
-      var el = eval_ast(ast.slice(1), ctx);
-      //console.log(".- AFTER eval", JSON.stringify(el));
-      var x = el[0][el[1]];
-      return 2 in el ? el[0][el[1]] = el[2] : x;
-    } else if (ast[0] == ".") {
-      // call object method
-      var el = eval_ast(ast.slice(1), ctx);
-      var x = el[0][el[1]];
-      //console.dir(el);
-      //console.dir(ast);
-      //console.log(x);
-      return x.apply(el[0], el.slice(2));
-    } else if (ast[0] == "try") {
-      // try/catch
-      try {
-        return EVAL(ast[1], ctx);
-      } catch (e) {
-        return EVAL(ast[2][2], env_bind([ast[2][1]], ctx, [e]));
-      }
-    } else if (ast[0] == "do") {
-      // multiple forms (for side-effects)
-      var el = eval_ast(ast.slice(1, ast.length - 1), ctx);
-      ast = ast[ast.length - 1]; // TCO
-    } else if (ast[0] == "if") {
-      // branching conditional
-      ast = EVAL(ast[1], ctx) ? ast[2] : ast[3]; // TCO
-    } else if (ast[0] == "fn") {
-      // define new function (lambda)
-      var f = function f() {
-        return EVAL(ast[2], env_bind(ast[1], ctx, arguments));
-      };
-      f.ast = [ast[2], ctx, ast[1]]; // f.ast compresses more than f.data
-      return f;
-    } else if (ast[0] == "||") {
-      // logical or/ returns true or false
-      for (var i = 1; i < ast.length; i++) {
-        if (EVAL(ast[i], ctx)) {
-          return true;
-        }
-      }
-      return false;
-    } else if (ast[0] == "&&") {
-      // logical and/ returns true or false
-      for (var i = 1; i < ast.length; i++) {
-        if (!EVAL(ast[i], ctx)) {
-          return false;
-        }
-      }
-      return true;
+  while (true) {
+    if (!isArray(ast)) {
+      return eval_ast(ast, ctx, resolveString);
+    } // apply
+
+
+    ast = macroexpand(ast, ctx);
+    if (!Array.isArray(ast)) return ast; // do we need eval here?
+
+    if (ast.length === 0) return null; // [] => empty list (or, maybe return vector [])
+
+    var op = ast[0];
+
+    if (isString(op) && op in SPECIAL_FORMS) {
+      return SPECIAL_FORMS[op](ast.slice(1), ctx, resolveString);
+    }
+
+    var el = ast.map(function (ast) {
+      return EVAL(ast, ctx, resolveString);
+    });
+    var f = el[0];
+
+    if (f.ast) {
+      ast = f.ast[0];
+      ctx = env_bind(f.ast[2], f.ast[1], el.slice(1)); // TCO
     } else {
-      // invoke list form
-      var el = eval_ast(ast, ctx);
-      var f = el[0];
-      if (f.ast) {
-        ast = f.ast[0];
-        ctx = env_bind(f.ast[2], f.ast[1], el.slice(1)); // TCO
-      } else {
-        return f.apply(f, el.slice(1));
-      }
+      return f.apply(f, el.slice(1));
     }
   }
 } // EVAL
 
 
 function eval_context(ast, ctx) {
-  var _ctx = {};
-  for (var key in STDLIB) {
-    _ctx[key] = STDLIB[key];
-  }for (var key in ctx) {
-    _ctx[key] = ctx[key];
-  }return EVAL(ast, _ctx);
-}
+  var result = EVAL(ast, [ctx || {}, STDLIB]);
+  return result;
+} // Use with care
 
-// Use with care
+
 function init_lisp(ctx) {
   ctx = [ctx || {}, STDLIB];
   return {
@@ -544,7 +686,6 @@ function init_lisp(ctx) {
     }
   };
 }
-
 function eval_lisp(ast, ctx) {
   var result = eval_context(ast, ctx);
 
@@ -554,34 +695,19 @@ function eval_lisp(ast, ctx) {
     return result;
   }
 }
-
 function evaluate(ast, ctx) {
   return eval_lisp(ast, ctx);
 }
 
 /***/ }),
 /* 2 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.LPESyntaxError = LPESyntaxError;
-exports.parse = parse;
-
-var _console = __webpack_require__(0);
-
-var _console2 = _interopRequireDefault(_console);
-
-var _lpel = __webpack_require__(6);
-
-var _lpel2 = _interopRequireDefault(_lpel);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
+/* harmony export (immutable) */ __webpack_exports__["b"] = LPESyntaxError;
+/* harmony export (immutable) */ __webpack_exports__["a"] = parse;
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__console_console__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__lpel__ = __webpack_require__(6);
 /**
  * LuxPath expressions parser
  *
@@ -591,7 +717,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  *      arity and first, second etc will be removed
  * 
  */
-
 // Parser for Simplified JavaScript written in Simplified JavaScript
 // From Top Down Operator Precedence
 // http://javascript.crockford.com/tdop/index.html
@@ -603,16 +728,18 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 // 2017-01-20
 
 
+
 var make_parse = function make_parse() {
   var symbol_table = {};
   var token;
   var tokens;
-  var token_nr;
+  var token_nr; // стэк для типов выражений
 
-  // стэк для типов выражений
-  var expr_scope = { pop: function pop() {} }; // для разбора логических выражений типа (A and B or C)
-
+  var expr_scope = {
+    pop: function pop() {}
+  }; // для разбора логических выражений типа (A and B or C)
   // для хранения алиасов для операций
+
   var operator_aliases = {};
 
   var operator_alias = function operator_alias(from, to) {
@@ -634,7 +761,6 @@ var make_parse = function make_parse() {
       return s;
     }
   };
-
   var expr_logical_scope = {
     pop: function pop() {
       expr_scope = this.parent;
@@ -642,7 +768,6 @@ var make_parse = function make_parse() {
     parent: null,
     tp: "logical"
   };
-
   var expr_lpe_scope = {
     pop: function pop() {
       expr_scope = this.parent;
@@ -660,22 +785,27 @@ var make_parse = function make_parse() {
 
   var advance = function advance(id) {
     var a, o, t, v;
+
     if (id && token.id !== id) {
       makeError(token, "Got " + token.value + " but expected '" + id + "'.");
     }
+
     if (token_nr >= tokens.length) {
       token = symbol_table["(end)"];
       return;
     }
+
     t = tokens[token_nr];
     token_nr += 1;
     v = t.value;
     a = t.type;
+
     if (a === "name") {
       if (expr_scope.tp == "logical") {
         if (v === "or" || v === "and" || v === "not" || v === "in" || v === "is") {
           a = "operator";
           o = symbol_table[v];
+
           if (!o) {
             makeError(t, "Unknown logical operator.");
           }
@@ -687,6 +817,7 @@ var make_parse = function make_parse() {
       }
     } else if (a === "operator") {
       o = symbol_table[v];
+
       if (!o) {
         makeError(t, "Unknown operator.");
       }
@@ -702,16 +833,19 @@ var make_parse = function make_parse() {
     } else {
       makeError(t, "Unexpected token.");
     }
+
     token = Object.create(o);
     token.from = t.from;
     token.to = t.to;
     token.value = v;
     token.arity = a;
+
     if (a == "operator") {
       token.sexpr = operator_aliases[v];
     } else {
       token.sexpr = v; // by dima
     }
+
     return token;
   };
 
@@ -720,23 +854,26 @@ var make_parse = function make_parse() {
         v;
 
     if (n.std) {
-      advance();
-      //scope.reserve(n);
+      advance(); //scope.reserve(n);
+
       return n.std();
     }
-    v = expression(0);
-    //if (!v.assignment && v.id !== "(") {
+
+    v = expression(0); //if (!v.assignment && v.id !== "(") {
+
     /*  if (v.id !== "(" && v.id !== "name" && v.id !== "number") {
         console.log(v);
         v.error("Bad expression statement.");
     }*/
     //advance(";");
+
     return v;
   };
 
   var statements = function statements() {
     var a = [],
         s;
+
     while (true) {
       //console.log(token);
       if (token.id === "(end)") {
@@ -745,15 +882,19 @@ var make_parse = function make_parse() {
         // skip optional ;
         advance();
       }
-      s = statement();
-      //console.log("STATEMENT ", s);
+
+      s = statement(); //console.log("STATEMENT ", s);
+
       if (s) {
         a.push(s);
       }
     }
-    return a.length === 0 ? null : a.length === 1 ? a[0] : { "sexpr": ["do"].concat(a.map(function (el) {
+
+    return a.length === 0 ? null : a.length === 1 ? a[0] : {
+      "sexpr": ["do"].concat(a.map(function (el) {
         return el["sexpr"];
-      })) };
+      }))
+    };
   };
 
   var expression = function expression(rbp) {
@@ -761,11 +902,13 @@ var make_parse = function make_parse() {
     var t = token;
     advance();
     left = t.nud();
+
     while (rbp < token.lbp) {
       t = token;
       advance();
       left = t.led(left);
     }
+
     return left;
   };
 
@@ -781,6 +924,7 @@ var make_parse = function make_parse() {
   var symbol = function symbol(id, bp) {
     var s = symbol_table[id];
     bp = bp || 0;
+
     if (s) {
       if (bp >= s.lbp) {
         s.lbp = bp;
@@ -791,12 +935,14 @@ var make_parse = function make_parse() {
       s.lbp = bp;
       symbol_table[id] = s;
     }
+
     operator_alias(id, id);
     return s;
   };
 
   var infix = function infix(id, bp, led) {
     var s = symbol(id, bp);
+
     s.led = led || function (left) {
       this.first = left;
       var right = expression(bp);
@@ -805,11 +951,13 @@ var make_parse = function make_parse() {
       this.sexpr = [this.sexpr, left.sexpr, right.sexpr];
       return this;
     };
+
     return s;
   };
 
   var infixr = function infixr(id, bp, led) {
     var s = symbol(id, bp);
+
     s.led = led || function (left) {
       this.first = left;
       var right = expression(bp - 1);
@@ -818,11 +966,13 @@ var make_parse = function make_parse() {
       this.sexpr = [this.sexpr, left.sexpr, right.sexpr];
       return this;
     };
+
     return s;
   };
 
   var prefix = function prefix(id, nud) {
     var s = symbol(id);
+
     s.nud = nud || function () {
       // scope.reserve(this);
       var expr = expression(70);
@@ -831,6 +981,7 @@ var make_parse = function make_parse() {
       this.sexpr = [this.sexpr, expr.sexpr];
       return this;
     };
+
     return s;
   };
 
@@ -841,9 +992,8 @@ var make_parse = function make_parse() {
   symbol(";");
   symbol(")");
   symbol("]");
-  symbol("}");
+  symbol("}"); // allow to skip values in function calls....
 
-  // allow to skip values in function calls....
   var comma = symbol(",");
 
   symbol("(string_literal_double)").nud = function () {
@@ -861,7 +1011,6 @@ var make_parse = function make_parse() {
   };
 
   symbol("(number_literal)").nud = itself;
-
   infix("?", 20, function (left) {
     // FIXME TODO - need sexpr !!!
     this.first = left;
@@ -871,32 +1020,26 @@ var make_parse = function make_parse() {
     this.arity = "ternary";
     return this;
   });
-
   infixr("&&", 30);
   infixr("∧", 30);
   operator_alias("&&", "and");
   operator_alias("∧", "and");
-
   infixr("||", 30);
   infixr("∨", 30);
-
   operator_alias("||", "or");
   operator_alias("∨", "or");
-
   /* will be used in logical scope */
+
   infixr("and", 30);
-  infixr("or", 30);
-  // required for SQL logical scope where a in (1,2,3)
+  infixr("or", 30); // required for SQL logical scope where a in (1,2,3)
+
   infixr("in", 30);
   infixr("is", 30);
-  prefix("not");
+  prefix("not"); // for SQL types: '10'::BIGINT
 
-  // for SQL types: '10'::BIGINT
-  infixr("::", 90);
+  infixr("::", 90); // for SQL as
 
-  // for SQL as
   infixr(":", 80);
-
   infixr('~', 40);
   infixr('!~', 40);
   infixr('=', 40);
@@ -910,21 +1053,18 @@ var make_parse = function make_parse() {
   infixr('<=', 40);
   infixr('≤', 40);
   operator_alias('≤', '<=');
-
   infixr(">", 40);
   infixr(">=", 40);
   infixr("≥", 40);
   operator_alias("≥", ">=");
   infixr("<>", 40);
-
   infix("+", 50);
   infix("-", 50);
-
   infix("*", 60);
   infix("/", 60);
-
   infix("(", 80, function (left) {
     var a = [];
+
     if (left.id === "[") {
       // FIXME TODO
       this.arity = "ternary";
@@ -935,12 +1075,15 @@ var make_parse = function make_parse() {
       this.arity = "binary";
       this.first = left;
       this.value = "("; // it was '(' by dima
+
       this.second = a;
+
       if ((left.arity !== "unary" || left.id !== "function") && left.arity !== "name" && left.id !== "(" && left.id !== "&&" && left.id !== "||" && left.id !== "?") {
         makeError(left, "Expected a variable name.");
       }
-    }
-    // dima support for missed function arguments...
+    } // dima support for missed function arguments...
+
+
     if (token.id !== ")") {
       if (false) {
         // специальный парсер для where - logical expression.
@@ -951,6 +1094,7 @@ var make_parse = function make_parse() {
         a.push(e);
       } else {
         new_expression_scope("lpe");
+
         while (true) {
           // console.log(">" + token.arity + " NAME:" + left.value);
           if (token.id === ',') {
@@ -968,15 +1112,18 @@ var make_parse = function make_parse() {
           } else {
             new_expression_scope("logical");
             var e = expression(0);
-            expr_scope.pop();
-            // var e = statements();
+            expr_scope.pop(); // var e = statements();
+
             a.push(e);
+
             if (token.id !== ",") {
               break;
             }
+
             advance(",");
           }
         }
+
         expr_scope.pop();
       }
     }
@@ -1023,52 +1170,50 @@ var make_parse = function make_parse() {
   }
 
   infix(".", 70, function (left) {
-    this.first = left;
-    // this.second = expression(0);
+    this.first = left; // this.second = expression(0);
+
     this.second = expression(70);
     this.arity = "binary";
     this.value = "->";
     this.sexpr = ["->"].concat(lift_funseq(this));
     return this;
   });
-
   infix("..", 70, function (left) {
-    this.first = left;
-    // this.second = expression(0);
+    this.first = left; // this.second = expression(0);
+
     this.second = expression(70);
     this.arity = "binary";
     this.value = "->>";
     this.sexpr = ["->>"].concat(lift_funseq_2(this));
     return this;
-  });
-
-  // WARNING HACK FIXME DIMA - добавил чтобы писать order_by(+a)
+  }); // WARNING HACK FIXME DIMA - добавил чтобы писать order_by(+a)
   // А также замена /table на +table в htSQL
-  prefix("+");
 
+  prefix("+");
   prefix("!");
   prefix("not"); // will be used in logical scope
+
   prefix("¬");
   operator_alias("!", "not");
-  operator_alias("¬", "not");
+  operator_alias("¬", "not"); // trying to optimize, when we have negated -number
 
-  // trying to optimize, when we have negated -number
   prefix("-");
-
   prefix(".", function () {
     var v = expression(70);
+
     if (v.value !== "(") {
       makeError(v, "Only functions may have dot (.) unary operator.");
-    }
-    // this.first = v;
+    } // this.first = v;
     // this.arity = "unary";
     // return this;
     // skip unary dot !!!
+
+
     return v;
   });
-
   prefix("(", function () {
     var e = expression(0);
+
     if (expr_scope.tp == "logical") {
       // we should remember all brackets to restore original user expression
       e.sexpr = ["()", e.sexpr];
@@ -1083,22 +1228,25 @@ var make_parse = function make_parse() {
         };
       }
     }
+
     advance(")");
     return e;
   });
-
   prefix("[", function () {
     var a = [];
+
     if (token.id !== "]") {
       while (true) {
-        a.push(expression(0));
-        // a.push(statements());
+        a.push(expression(0)); // a.push(statements());
+
         if (token.id !== ",") {
           break;
         }
+
         advance(",");
       }
     }
+
     advance("]");
     this.first = a;
     this.arity = "unary";
@@ -1107,98 +1255,83 @@ var make_parse = function make_parse() {
     }));
     return this;
   });
-
   return function (source) {
-    tokens = (0, _lpel2.default)(source, '=<>!+-*&|/%^:.', '=<>&|:.');
+    tokens = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__lpel__["a" /* default */])(source, '=<>!+-*&|/%^:.', '=<>&|:.');
     token_nr = 0;
     advance();
-    var s = statements();
-    // var s = expression(0);
+    var s = statements(); // var s = expression(0);
+
     advance("(end)");
     return s;
   };
-};
+}; // Transform a token object into an exception object and throw it.
 
-// Transform a token object into an exception object and throw it.
+
 function LPESyntaxError(message) {
   this.constructor.prototype.__proto__ = Error.prototype;
   Error.call(this);
   Error.captureStackTrace(this, this.constructor);
   this.name = this.constructor.name;
-  this.message = message;
-  // this.stack = (new Error()).stack;
+  this.message = message; // this.stack = (new Error()).stack;
 }
 
 function makeError(t, message) {
   t.message = message;
-
   var errorDescription = JSON.stringify(t, ['name', 'message', 'from', 'to', 'key', 'value', 'arity', 'first', 'second', 'third', 'fourth'], 4);
-
   throw new LPESyntaxError(errorDescription);
 }
 
-var parser = make_parse();
-// console.log('LPE Parser initialized')
-
+var parser = make_parse(); // console.log('LPE Parser initialized')
 
 function parse(str) {
   try {
     var parseResult = parser(str); // from, to, value, arity, sexpr
+
     return parseResult.sexpr;
   } catch (err) {
-    _console2.default.error("Error", err.message);
-    _console2.default.error("Error", err.stack);
+    __WEBPACK_IMPORTED_MODULE_0__console_console__["a" /* default */].error("Error", err.message);
+    __WEBPACK_IMPORTED_MODULE_0__console_console__["a" /* default */].error("Error", err.stack);
     throw err;
   }
 }
 
 /***/ }),
 /* 3 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
+/* harmony export (immutable) */ __webpack_exports__["a"] = sql_where_context;
+/* harmony export (immutable) */ __webpack_exports__["b"] = eval_sql_where;
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__console_console__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__lpep__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__utils_utils__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__lisp__ = __webpack_require__(1);
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+/**
+ Copyright (c) 2019 Luxms Inc.
+
+ Permission is hereby granted, free of charge, to any person obtaining
+ a copy of this software and associated documentation files (the "Software"),
+ to deal in the Software without restriction, including without limitation
+ the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ and/or sell copies of the Software, and to permit persons to whom the Software
+ is furnished to do so, subject to the following conditions:
+
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+ OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
 
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; /**
-                                                                                                                                                                                                                                                                               Copyright (c) 2019 Luxms Inc.
-                                                                                                                                                                                                                                                                              
-                                                                                                                                                                                                                                                                               Permission is hereby granted, free of charge, to any person obtaining
-                                                                                                                                                                                                                                                                               a copy of this software and associated documentation files (the "Software"),
-                                                                                                                                                                                                                                                                               to deal in the Software without restriction, including without limitation
-                                                                                                                                                                                                                                                                               the rights to use, copy, modify, merge, publish, distribute, sublicense,
-                                                                                                                                                                                                                                                                               and/or sell copies of the Software, and to permit persons to whom the Software
-                                                                                                                                                                                                                                                                               is furnished to do so, subject to the following conditions:
-                                                                                                                                                                                                                                                                              
-                                                                                                                                                                                                                                                                               The above copyright notice and this permission notice shall be included in
-                                                                                                                                                                                                                                                                               all copies or substantial portions of the Software.
-                                                                                                                                                                                                                                                                              
-                                                                                                                                                                                                                                                                               THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-                                                                                                                                                                                                                                                                               EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-                                                                                                                                                                                                                                                                               OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-                                                                                                                                                                                                                                                                               IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-                                                                                                                                                                                                                                                                               CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-                                                                                                                                                                                                                                                                               TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
-                                                                                                                                                                                                                                                                               OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-                                                                                                                                                                                                                                                                               */
-
-exports.sql_where_context = sql_where_context;
-exports.eval_sql_where = eval_sql_where;
-
-var _console = __webpack_require__(0);
-
-var _console2 = _interopRequireDefault(_console);
-
-var _lpep = __webpack_require__(2);
-
-var _utils = __webpack_require__(7);
-
-var _lisp = __webpack_require__(1);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /*
 where - всегда возвращает слово WHERE, а потом условия. На пустом вхоже вернёт WHERE TRUE
@@ -1211,68 +1344,80 @@ function sql_where_context(_vars) {
   var try_to_quote_column = function try_to_quote_column(colname) {
     if (_typeof(_vars['_columns']) == 'object') {
       var h = _vars['_columns'][colname];
-      if ((typeof h === 'undefined' ? 'undefined' : _typeof(h)) == "object") {
-        h = h['name'].toString();
-        // console.log("-: try_to_quote_column " + JSON.stringify(h));
+
+      if (_typeof(h) == "object") {
+        h = h['name'].toString(); // console.log("-: try_to_quote_column " + JSON.stringify(h));
         // console.log("-: try_to_quote_column " + (typeof h));
+
         if (h.length > 0) {
           // return '"' + h + '"';
           return h;
         }
       }
     }
+
     return colname.toString();
   };
 
   var try_to_quote_order_by_column = function try_to_quote_order_by_column(colname) {
     if (_typeof(_vars['_columns']) == 'object') {
       var h = _vars['_columns'][colname];
-      if ((typeof h === 'undefined' ? 'undefined' : _typeof(h)) == "object") {
+
+      if (_typeof(h) == "object") {
         var o = h['order'];
+
         if (o === undefined) {
           o = h['name'];
         }
-        _console2.default.log("-: try_to_quote_order_by_column " + JSON.stringify(o));
-        _console2.default.log("-: try_to_quote_order_by_column " + (typeof o === 'undefined' ? 'undefined' : _typeof(o)));
+
+        __WEBPACK_IMPORTED_MODULE_0__console_console__["a" /* default */].log("-: try_to_quote_order_by_column " + JSON.stringify(o));
+        __WEBPACK_IMPORTED_MODULE_0__console_console__["a" /* default */].log("-: try_to_quote_order_by_column " + _typeof(o));
+
         if (o !== undefined && o.length > 0) {
           //return '"' + o.toString() + '"';
           return o.toString();
         }
       }
     }
+
     return colname.toString();
   };
 
   var resolve_literal = function resolve_literal(lit) {
-    _console2.default.log('LITERAL ', lit, '  CONTEXT:', _vars[lit]);
+    __WEBPACK_IMPORTED_MODULE_0__console_console__["a" /* default */].log('LITERAL ', lit, '  CONTEXT:', _vars[lit]);
+
     if (_vars[lit] == undefined) {
       return try_to_quote_column(lit);
     } else {
       // есть возможность переименовать имена столбцов! или сделать ещё какие-то подстановки
-      return (0, _lisp.eval_lisp)(lit, _vars);
+      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_3__lisp__["a" /* eval_lisp */])(lit, _vars);
     }
   };
 
   var resolve_order_by_literal = function resolve_order_by_literal(lit) {
-    _console2.default.log('OB LITERAL ', lit, ' CONTEXT:', _vars[lit]);
+    __WEBPACK_IMPORTED_MODULE_0__console_console__["a" /* default */].log('OB LITERAL ', lit, ' CONTEXT:', _vars[lit]);
 
     if (_vars[lit] === undefined) {
       return try_to_quote_order_by_column(lit);
     } else {
       // есть возможность переименовать имена столбцов! или сделать ещё какие-то подстановки
-      return (0, _lisp.eval_lisp)(lit, _vars);
+      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_3__lisp__["a" /* eval_lisp */])(lit, _vars);
     }
   };
-
   /* заполняем контекст функциями и макросами, заточенными на SQL */
+
+
   _context['order_by'] = function () {
     var ret = [];
     var ctx = {};
+
     for (var key in _vars) {
       ctx[key] = _vars[key];
     } // так как order_by будет выполнять eval_lisp, когда встретит имя стольба с минусом -a, то мы
     // с помощью макросов + и - в этом случае перехватим вызов и сделаем обработку.
     // а вот когда работает обработчик аргументов where - там eval_lisp почти никогда не вызывается...
+
+
     ctx['+'] = function (a) {
       if (a instanceof Array) {
         throw "recursive +..-";
@@ -1280,6 +1425,7 @@ function sql_where_context(_vars) {
         return resolve_order_by_literal(a);
       }
     };
+
     ctx['+'].ast = [[], {}, [], 1]; // mark as macro
 
     ctx['-'] = function (a) {
@@ -1290,11 +1436,12 @@ function sql_where_context(_vars) {
         return resolve_order_by_literal(a) + ' ' + 'DESC';
       }
     };
+
     ctx['-'].ast = [[], {}, [], 1]; // mark as macro
 
     for (var i = 0; i < arguments.length; i++) {
       if (arguments[i] instanceof Array) {
-        ret.push((0, _lisp.eval_lisp)(arguments[i], ctx));
+        ret.push(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_3__lisp__["a" /* eval_lisp */])(arguments[i], ctx));
       } else {
         // try_to_quote_column берёт текст в двойные кавычки для известных столбцов!!!
         ret.push(resolve_order_by_literal(arguments[i].toString()));
@@ -1310,9 +1457,9 @@ function sql_where_context(_vars) {
 
   _context['order_by'].ast = [[], {}, [], 1]; // mark as macro
 
-
   _context['pg_interval'] = function (cnt, period_type) {
     var pt;
+
     if (period_type instanceof Object) {
       pt = period_type["unit"];
     } else {
@@ -1323,21 +1470,37 @@ function sql_where_context(_vars) {
       // all numbers....
       switch (pt) {
         case 1:
-          pt = 'second';break;
+          pt = 'second';
+          break;
+
         case 2:
-          pt = 'minute';break;
+          pt = 'minute';
+          break;
+
         case 3:
-          pt = 'hour';break;
+          pt = 'hour';
+          break;
+
         case 4:
-          pt = 'day';break;
+          pt = 'day';
+          break;
+
         case 5:
-          pt = 'week';break;
+          pt = 'week';
+          break;
+
         case 6:
-          pt = 'month';break;
+          pt = 'month';
+          break;
+
         case 7:
-          pt = 'quarter';break;
+          pt = 'quarter';
+          break;
+
         case 8:
-          pt = 'year';break;
+          pt = 'year';
+          break;
+
         default:
           throw "wrong period type:" + pt;
       }
@@ -1347,21 +1510,26 @@ function sql_where_context(_vars) {
     }
 
     var regExp = new RegExp(/quarter/, "i");
+
     if (regExp.test(pt)) {
       return "'" + cnt * 3 + " month'::interval";
     }
-    return "'" + cnt + " " + pt + "'::interval";
-  };
 
-  // filter
+    return "'" + cnt + " " + pt + "'::interval";
+  }; // filter
+
+
   _context['filter'] = function () {
     var ctx = {};
+
     for (var key in _vars) {
       ctx[key] = _vars[key];
-    }var prnt = function prnt(ar) {
+    }
+
+    var prnt = function prnt(ar) {
       if (ar instanceof Array) {
         if (ar[0] === '$' || ar[0] === '"' || ar[0] === "'" || ar[0] === "[" || ar[0] === 'parse_kv' || ar[0] === "=" || ar[0] === "pg_interval") {
-          return (0, _lisp.eval_lisp)(ar, ctx);
+          return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_3__lisp__["a" /* eval_lisp */])(ar, ctx);
         } else {
           if (ar.length == 2) {
             // unary
@@ -1416,49 +1584,51 @@ function sql_where_context(_vars) {
           return prnt(el);
         }).join(',') + ")";
       }
+
       return prnt(l) + " = " + prnt(r);
     };
-    ctx['='].ast = [[], {}, [], 1]; // mark as macro
 
+    ctx['='].ast = [[], {}, [], 1]; // mark as macro
     // $(name) will quote text elements !!! suitable for generating things like WHERE title in ('a','b','c')
     // also, we should evaluate expression, if any.
+
     ctx['$'] = function (inexpr) {
-      var expr = (0, _lisp.eval_lisp)(inexpr, _context); // evaluate in a normal LISP context without vars, not in WHERE context
+      var expr = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_3__lisp__["a" /* eval_lisp */])(inexpr, _context); // evaluate in a normal LISP context without vars, not in WHERE context
+
       if (expr instanceof Array) {
         // try to print using quotes, use plv8 !!!
         return expr.map(function (el) {
           if (typeof el === "string") {
-            return (0, _utils.db_quote_literal)(el);
+            return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__utils_utils__["a" /* db_quote_literal */])(el);
           } else if (typeof el === "number") {
             return el;
           } else {
-            return (0, _utils.db_quote_literal)(JSON.stringify(el));
+            return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__utils_utils__["a" /* db_quote_literal */])(JSON.stringify(el));
           }
         }).join(',');
       }
-      return (0, _utils.db_quote_literal)(expr);
-    };
-    ctx['$'].ast = [[], {}, [], 1]; // mark as macro
 
+      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__utils_utils__["a" /* db_quote_literal */])(expr);
+    };
+
+    ctx['$'].ast = [[], {}, [], 1]; // mark as macro
     //  пока что считаем что у нас ОДИН аргумент и мы его интерпретируем как таблица.столбец
+
     ctx['parse_kv'] = function (expr) {
       if (expr instanceof Array) {
         if (expr[0] === '->') {
           var sql = 'select "' + expr[2] + '" from "' + expr[1] + '" where id = $1::INT';
-          var id_val = resolve_literal(expr[1].replace(/.$/, "_id"));
+          var id_val = resolve_literal(expr[1].replace(/.$/, "_id")); //console.log('SQL: ', sql, " val:", id_val);
 
-          //console.log('SQL: ', sql, " val:", id_val);
+          var res_json = plv8.execute(sql, [id_val]); //var res_json = [{"src_id":"$a:Вася:$b:Петя"}];
 
-          var res_json = plv8.execute(sql, [id_val]);
-          //var res_json = [{"src_id":"$a:Вася:$b:Петя"}];
-          var frst = res_json[0];
-
-          //console.log('SQL RES: ', frst);
+          var frst = res_json[0]; //console.log('SQL RES: ', frst);
 
           if (frst !== undefined && frst[expr[2]] !== null && frst[expr[2]].length > 0) {
             var axis_condition = function axis_condition(e) {
               var result = e.split(':').map(function (e2) {
                 e2 = e2.replace(/\'/g, "''"); //' be safe
+
                 return e2.indexOf('$') == 0 ? ' AND ' + e2.substr(1) + '=' : "'" + e2 + "'";
               }).join('').substr(5);
               return result;
@@ -1470,12 +1640,13 @@ function sql_where_context(_vars) {
           }
         }
       }
+
       return '(/*parse_kv EMPTY*/ 1=0)';
     };
+
     ctx['parse_kv'].ast = [[], {}, [], 1]; // mark as macro
 
-    var ret = [];
-    //console.log("where IN: ", JSON.stringify(Array.prototype.slice.call(arguments)));
+    var ret = []; //console.log("where IN: ", JSON.stringify(Array.prototype.slice.call(arguments)));
 
     var fts = _vars['fts'];
     var tree = arguments;
@@ -1483,17 +1654,14 @@ function sql_where_context(_vars) {
     if (fts !== undefined && fts.length > 0) {
       fts = fts.replace(/\'/g, "''"); //' be safe
       // Full Text Search based on column_list
+
       if (_typeof(_vars['_columns']) == 'object') {
-
         //console.log("FTS: ",  JSON.stringify(fts));
-
         var ilike = Object.values(_vars['_columns']).map(function (col) {
           col["search"] !== undefined ? ["ilike", col["search"], ["str", '%' + fts + '%']] : null;
         }).reduce(function (ac, el) {
           el == null ? ac : ['or', ac, el];
-        });
-
-        //console.log( "FTS PARSED: ",  JSON.stringify(ilike));
+        }); //console.log( "FTS PARSED: ",  JSON.stringify(ilike));
 
         if (ilike !== undefined && ilike.length > 0) {
           // добавляем корень AND с нашим поиском
@@ -1508,23 +1676,27 @@ function sql_where_context(_vars) {
     }
 
     var r = ret[0]; // у нас только один результат должен быть !!!
+
     if (r == undefined) {
       r = '';
     }
+
     return r;
   };
+
   _context['filter'].ast = [[], {}, [], 1]; // mark as macro
-
-
   // where - we should not eval arguments, so we must mark where as macro!!!
+
   _context['where'] = function () {
     // we should always get ONE argument, for example: ["=",["$",["->","period","title"]],3]
     // BUT if we get two, or more arguments, we eval them one by one, AND combine later with AND operand, skipping empty results...
     var tree = arguments;
     var ret = [];
+
     for (var i = 0; i < tree.length; i++) {
       // console.log("array ", JSON.stringify(Array.prototype.slice.call(tree[i])));
-      var r = (0, _lisp.eval_lisp)(["filter", tree[i]], _context); // r should be string
+      var r = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_3__lisp__["a" /* eval_lisp */])(["filter", tree[i]], _context); // r should be string
+
       if (r.length > 0) {
         ret.push(r);
       }
@@ -1540,60 +1712,40 @@ function sql_where_context(_vars) {
       return 'WHERE TRUE';
     }
   };
+
   _context['where'].ast = [[], {}, [], 1]; // mark as macro
 
   return _context;
 }
-
 function eval_sql_where(_expr, _vars) {
   if (typeof _vars === 'string') _vars = JSON.parse(_vars);
+  var sexpr = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__lpep__["a" /* parse */])(_expr);
+  __WEBPACK_IMPORTED_MODULE_0__console_console__["a" /* default */].log('sql_where parse: ', JSON.stringify(sexpr));
 
-  var sexpr = (0, _lpep.parse)(_expr);
-
-  _console2.default.log('sql_where parse: ', JSON.stringify(sexpr));
-
-  if (sexpr instanceof Array && (sexpr[0] === 'filter' && sexpr.length <= 2 || sexpr[0] === 'order_by' || sexpr[0] === 'if' || sexpr[0] === 'where')) {
-    // ok
+  if (sexpr instanceof Array && (sexpr[0] === 'filter' && sexpr.length <= 2 || sexpr[0] === 'order_by' || sexpr[0] === 'if' || sexpr[0] === 'where')) {// ok
   } else {
     throw "only single where() or order_by() could be evaluated.";
   }
 
   var _context = sql_where_context(_vars);
 
-  var ret = (0, _lisp.eval_lisp)(sexpr, _context);
+  var ret = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_3__lisp__["a" /* eval_lisp */])(sexpr, _context); // console.log('ret: ',  JSON.stringify(ret));
 
-  // console.log('ret: ',  JSON.stringify(ret));
   return ret;
 }
 
 /***/ }),
 /* 4 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.sql_context = sql_context;
-exports.parse_sql_expr = parse_sql_expr;
-exports.parse_sql_apidb_expr = parse_sql_apidb_expr;
-
-var _console = __webpack_require__(0);
-
-var _console2 = _interopRequireDefault(_console);
-
-var _lisp = __webpack_require__(1);
-
-var _sql_where = __webpack_require__(3);
-
-var _lpep = __webpack_require__(2);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-// polyfill = remove in 2020 !!!
-
+/* harmony export (immutable) */ __webpack_exports__["a"] = sql_context;
+/* harmony export (immutable) */ __webpack_exports__["b"] = parse_sql_expr;
+/* unused harmony export parse_sql_apidb_expr */
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__console_console__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__lisp__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__sql_where__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__lpep__ = __webpack_require__(2);
 /**
     Copyright (c) 2019 Luxms Inc.
 
@@ -1616,14 +1768,20 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
     OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
+
+
+ // polyfill = remove in 2020 !!!
+
 if (!Array.prototype.find) {
   Array.prototype.find = function (predicate) {
     if (this == null) {
       throw new TypeError('Array.prototype.find called on null or undefined');
     }
+
     if (typeof predicate !== 'function') {
       throw new TypeError('predicate must be a function');
     }
+
     var list = Object(this);
     var length = list.length >>> 0;
     var thisArg = arguments[1];
@@ -1631,22 +1789,26 @@ if (!Array.prototype.find) {
 
     for (var i = 0; i < length; i++) {
       value = list[i];
+
       if (predicate.call(thisArg, value, i, list)) {
         return value;
       }
     }
+
     return undefined;
   };
 }
 
 function sql_context(_vars) {
-  var _context = (0, _sql_where.sql_where_context)(_vars);
-
+  var _context = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__sql_where__["a" /* sql_where_context */])(_vars);
   /* заполняем контекст функциями и макросами, заточенными на SQL */
+
+
   _context['sql'] = function () {
     var q; // resulting sql
+
     var args = Array.prototype.slice.call(arguments);
-    _console2.default.log('SQL IN: ', args);
+    __WEBPACK_IMPORTED_MODULE_0__console_console__["a" /* default */].log('SQL IN: ', args);
 
     var find_part = function find_part(p) {
       return args.find(function (el) {
@@ -1655,31 +1817,33 @@ function sql_context(_vars) {
     };
 
     var sel = find_part('select');
-    _console2.default.log('FOUND select: ', sel);
-    q = (0, _lisp.eval_lisp)(sel, _context);
-
+    __WEBPACK_IMPORTED_MODULE_0__console_console__["a" /* default */].log('FOUND select: ', sel);
+    q = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__lisp__["a" /* eval_lisp */])(sel, _context);
     var from = find_part('from');
-    _console2.default.log('FOUND from: ', from);
-    q = q + ' ' + (0, _lisp.eval_lisp)(from, _context);
-
+    __WEBPACK_IMPORTED_MODULE_0__console_console__["a" /* default */].log('FOUND from: ', from);
+    q = q + ' ' + __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__lisp__["a" /* eval_lisp */])(from, _context);
     var where = find_part('where');
-    _console2.default.log("FOUND where: ", where);
+    __WEBPACK_IMPORTED_MODULE_0__console_console__["a" /* default */].log("FOUND where: ", where);
+
     if (where instanceof Array && where.length > 1) {
-      q = q + ' ' + (0, _lisp.eval_lisp)(where, _context);
+      q = q + ' ' + __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__lisp__["a" /* eval_lisp */])(where, _context);
     }
 
     var srt = find_part('sort');
-    _console2.default.log('FOUND sort: ', srt);
+    __WEBPACK_IMPORTED_MODULE_0__console_console__["a" /* default */].log('FOUND sort: ', srt);
+
     if (srt instanceof Array && srt.length > 1) {
-      q = q + ' ' + (0, _lisp.eval_lisp)(srt, _context);
+      q = q + ' ' + __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__lisp__["a" /* eval_lisp */])(srt, _context);
     }
 
     return q;
   };
+
   _context['sql'].ast = [[], {}, [], 1]; // mark as macro
 
   function prnt(a) {
-    _console2.default.log('prnt IN: ', a);
+    __WEBPACK_IMPORTED_MODULE_0__console_console__["a" /* default */].log('prnt IN: ', a);
+
     if (a instanceof Array) {
       if (a.length > 0) {
         if (a[0] === '::' && a.length == 3) {
@@ -1697,34 +1861,37 @@ function sql_context(_vars) {
     } else {
       return a;
     }
-  }
+  } // должен вернуть СТРОКУ
 
-  // должен вернуть СТРОКУ
+
   _context['select'] = function () {
     var a = Array.prototype.slice.call(arguments);
-    _console2.default.log("select IN: ", JSON.stringify(a));
+    __WEBPACK_IMPORTED_MODULE_0__console_console__["a" /* default */].log("select IN: ", JSON.stringify(a));
+
     if (a.length < 1) {
       return "SELECT *";
     } else {
       return "SELECT " + a.map(prnt).join(',');
     }
   };
+
   _context['select'].ast = [[], {}, [], 1]; // mark as macro
 
   _context['from'] = function () {
     var a = Array.prototype.slice.call(arguments);
-    _console2.default.log('from IN: ', a);
+    __WEBPACK_IMPORTED_MODULE_0__console_console__["a" /* default */].log('from IN: ', a);
+
     if (a.length < 1) {
       return "";
     } else {
       return "FROM " + a.map(prnt).join(',');
     }
   };
+
   _context['from'].ast = [[], {}, [], 1]; // mark as macro
 
   return _context;
 }
-
 /*
 Это не дописано!!! Идея была сделать синтаксис, похожий на htSQL. типа +table(col1,col2).where(col1>3)
 но например, как указать схему? сейчас парсер фигню выдаёт, так как точка не всегда корректно отрабатывает +sch.table(col1,col2)
@@ -1746,36 +1913,33 @@ select lpe.parse_sql_expr($$metrics(id).where(id='abcd')$$);
 
 function parse_sql_expr(_expr, _vars) {
   var ctx = sql_context(_vars);
-  var _context = ctx;
-  // for(var key in _vars) _context[key] = _vars[key];
+  var _context = ctx; // for(var key in _vars) _context[key] = _vars[key];
 
   _context['->'] = function () {
     var ret = [];
 
     for (var i = 0; i < arguments.length; i++) {
-      ret.push((0, _lisp.eval_lisp)(arguments[i], _context));
+      ret.push(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__lisp__["a" /* eval_lisp */])(arguments[i], _context));
     }
 
     return ret.join(',');
   };
+
   _context['->'].ast = [[], {}, [], 1]; // mark as macro
 
-  var sexpr = (0, _lpep.parse)(_expr);
-  _console2.default.log("IN: ", sexpr);
-
+  var sexpr = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_3__lpep__["a" /* parse */])(_expr);
+  __WEBPACK_IMPORTED_MODULE_0__console_console__["a" /* default */].log("IN: ", sexpr);
   /*
   if (ctx.hasOwnProperty('where')){
     console.log('W O W');
   }
   */
-
   // точка входа всегда должна быть ->, так как мы определили -> как макроc чтобы иметь возможность
   // перекодировать имена таблиц в вызов .from()
+
   if (sexpr[0] !== '->') {
     sexpr = ['->', sexpr];
-  }
-
-  // теперь нужно пройтись по списку вызовов и привести к нормальной форме.
+  } // теперь нужно пройтись по списку вызовов и привести к нормальной форме.
   // в нормальной форме всё выглядит вот так: (seq sql(select() from()) sql(...) sql(...) )
   // ["seq",["metrics","a","d",["max","c"]],["where"]]
   // ["seq",["+",["metrics","a","d",["max","c"]]],["where"]]
@@ -1786,34 +1950,48 @@ function parse_sql_expr(_expr, _vars) {
     ["seq",["sql",["select","a","d",["max","c"]],["from","metrics"],["filter",["and",[">","a","1"],["<","i","4"]]]],["sql",["select"],["from","periods"],["filter",[">","a","4"]]]]
   */
 
+
   var sql = ['sql'];
+
   var do_select_from = function do_select_from(sel) {
     if (!(sel instanceof Array)) {
       sel = [sel];
     }
+
     var fr = sel[0];
     var p = false;
+
     if (fr != 'where' && fr != 'select' && fr != 'sort' && fr != 'filter' && fr != 'from') {
       sel[0] = 'select';
       p = true;
     }
+
     sql.push(sel);
+
     if (p) {
       sql.push(["from", fr]);
     }
-    _console2.default.log("parse do_select_from: ", sql);
+
+    __WEBPACK_IMPORTED_MODULE_0__console_console__["a" /* default */].log("parse do_select_from: ", sql);
   };
 
   for (var i = 1; i < sexpr.length; i++) {
     var expr = sexpr[i];
+
     if (expr instanceof Array) {
       // expr: ["metrics","a","d",["max","c"]]
       if (expr[0] === 'order_by') {
         expr[0] = 'sort';
-      };
+      }
+
+      ;
+
       if (expr[0] === 'where') {
         expr[0] = 'where';
-      };
+      }
+
+      ;
+
       if (expr[0] === '+') {
         // expr: ["+",["metrics","a","d",["max","c"]]]
         do_select_from(expr[1]);
@@ -1834,28 +2012,22 @@ function parse_sql_expr(_expr, _vars) {
     }
   }
 
-  _console2.default.log('parse: ', sql);
-
-  var ret = (0, _lisp.eval_lisp)(sql, _context);
-  // console.log("parse: ", ret);
+  __WEBPACK_IMPORTED_MODULE_0__console_console__["a" /* default */].log('parse: ', sql);
+  var ret = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__lisp__["a" /* eval_lisp */])(sql, _context); // console.log("parse: ", ret);
 
   return ret;
 }
-
 function parse_sql_apidb_expr(_expr, _vars, _forced_table, _forced_where) {
   var ctx = sql_context(_vars);
-  var _context = ctx;
-  // for(var key in _vars) _context[key] = _vars[key];
+  var _context = ctx; // for(var key in _vars) _context[key] = _vars[key];
 
-  var sexpr = (0, _lpep.parse)(_expr);
-  _console2.default.log("DBAPI IN: ", sexpr);
-
+  var sexpr = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_3__lpep__["a" /* parse */])(_expr);
+  __WEBPACK_IMPORTED_MODULE_0__console_console__["a" /* default */].log("DBAPI IN: ", sexpr);
   /*
   if (ctx.hasOwnProperty('where')){
     console.log('W O W');
   }
   */
-
   // теперь нужно пройтись по списку вызовов и привести к нормальной форме.
   // в нормальной форме у нас должен быть один вызов sql() а внутри select().from().where()
   // причём 
@@ -1866,15 +2038,25 @@ function parse_sql_apidb_expr(_expr, _vars, _forced_table, _forced_where) {
   // в последнем случае берётся последний from, а все первые игнорятся !!!!
 
   var sql = ['sql']; // wrapped by sql call...
-  var cache = { "where": [], "select": [], "order_by": [], "from": [] };
+
+  var cache = {
+    "where": [],
+    "select": [],
+    "order_by": [],
+    "from": []
+  };
+
   for (var i = 1; i < sexpr.length; i++) {
     var expr = sexpr[i];
+
     if (expr instanceof Array) {
       var fr = expr[0];
+
       if (fr != 'where' && fr != 'select' && fr != 'order_by' && fr != 'from' && fr != ':') {
         throw 'unexpected func: ' + JSON.stringify(fr);
-      }
-      // have no idea how to support aliases for selects...
+      } // have no idea how to support aliases for selects...
+
+
       if (fr === ':' && expr[1][0] === 'select') {
         cache["select"].push(expr[1]);
       } else {
@@ -1893,16 +2075,16 @@ function parse_sql_apidb_expr(_expr, _vars, _forced_table, _forced_where) {
     return ar.slice(1);
   });
   var sel = [].concat.apply(["select"], args); //flat
+
   sql.push(sel);
-
   sql.push(cache["from"].pop());
-
   args = cache["where"].map(function (ar) {
     return ar.slice(1);
   });
   args = [].concat.apply([], args); //flat
 
   var w = ["()", args[0]];
+
   if (args.length > 1) {
     for (var i = 1; i < args.length; i++) {
       w = ["and", w, ["()", args[i]]];
@@ -1910,72 +2092,56 @@ function parse_sql_apidb_expr(_expr, _vars, _forced_table, _forced_where) {
   }
 
   sql.push(["where", w]);
-
-  _console2.default.log("WHERE", JSON.stringify(w));
-
-  _console2.default.log('DBAPI parse: ', sql);
-
-  var ret = (0, _lisp.eval_lisp)(sql, _context);
-
+  __WEBPACK_IMPORTED_MODULE_0__console_console__["a" /* default */].log("WHERE", JSON.stringify(w));
+  __WEBPACK_IMPORTED_MODULE_0__console_console__["a" /* default */].log('DBAPI parse: ', sql);
+  var ret = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__lisp__["a" /* eval_lisp */])(sql, _context);
   return ret;
 }
 
 /***/ }),
 /* 5 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "eval_lpe", function() { return eval_lpe; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__console_console__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__lpep__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__lisp__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__sql_where__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__sql_context__ = __webpack_require__(4);
+/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "parse", function() { return __WEBPACK_IMPORTED_MODULE_1__lpep__["a"]; });
+/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "LPESyntaxError", function() { return __WEBPACK_IMPORTED_MODULE_1__lpep__["b"]; });
+/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "evaluate", function() { return __WEBPACK_IMPORTED_MODULE_2__lisp__["b"]; });
+/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "eval_lisp", function() { return __WEBPACK_IMPORTED_MODULE_2__lisp__["a"]; });
+/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "sql_where_context", function() { return __WEBPACK_IMPORTED_MODULE_3__sql_where__["a"]; });
+/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "eval_sql_where", function() { return __WEBPACK_IMPORTED_MODULE_3__sql_where__["b"]; });
+/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "sql_context", function() { return __WEBPACK_IMPORTED_MODULE_4__sql_context__["a"]; });
+/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "parse_sql_expr", function() { return __WEBPACK_IMPORTED_MODULE_4__sql_context__["b"]; });
 
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.parse_sql_expr = exports.sql_context = exports.eval_sql_where = exports.sql_where_context = exports.eval_lisp = exports.evaluate = exports.LPESyntaxError = exports.parse = undefined;
 
-var _console = __webpack_require__(0);
 
-var _console2 = _interopRequireDefault(_console);
-
-var _lpep = __webpack_require__(2);
-
-var _lisp = __webpack_require__(1);
-
-var _sql_where = __webpack_require__(3);
-
-var _sql_context = __webpack_require__(4);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-// test:
+ // test:
 // var ast = parse('2+2*2');
 // console.log(ast);
 // var res = evaluate(ast, []);
 // console.log(res);
 
-
 var logo = ['\x1b[0;100m \x1b[48;5;0m', '\x1b[48;5;0m  \x1b[48;5;0m\x1b[48;5;130m  \x1b[48;5;0m\x1b[48;5;0m  \x1b[48;5;0m\x1b[48;5;0m  \x1b[48;5;0m\x1b[48;5;0m  \x1b[48;5;0m', '\x1b[48;5;0m  \x1b[48;5;0m\x1b[48;5;130m  \x1b[48;5;0m\x1b[48;5;32m  \x1b[48;5;0m\x1b[48;5;0m  \x1b[48;5;0m\x1b[48;5;0m  \x1b[48;5;0m', '\x1b[48;5;34m  \x1b[48;5;0m\x1b[48;5;130m  \x1b[48;5;0m\x1b[48;5;32m  \x1b[48;5;0m\x1b[48;5;11m  \x1b[48;5;0m\x1b[48;5;0m  \x1b[48;5;0m', '\x1b[48;5;34m  \x1b[48;5;0m\x1b[48;5;130m  \x1b[48;5;0m\x1b[48;5;32m  \x1b[48;5;32m\x1b[48;5;11m  \x1b[48;5;0m\x1b[48;5;200m  \x1b[48;5;0m', '\x1b[48;5;34m  \x1b[48;5;0m\x1b[48;5;130m  \x1b[48;5;0m\x1b[48;5;32m  \x1b[48;5;32m\x1b[48;5;11m  \x1b[48;5;0m\x1b[48;5;200m  \x1b[48;5;0m', '\x1b[38;5;15m\x1b[48;5;16m Luxms BI \x1b[0m', '\x1b[0m'].join('\n');
-
-_console2.default.log(logo);
-
-// example
+__WEBPACK_IMPORTED_MODULE_0__console_console__["a" /* default */].log(logo); // example
 // global helper: should not use it so
-plv8.console = _console2.default;
 
-_console2.default.log('LPE initialised!');
-
-// var result = eval_sql_where("where(id=[1,2,3,4] and metric.tree_level(id) = 3 and max(id)=now() and $metric_id = 3)", {"$metric_id":"COOL","id":"ID"});
+plv8.console = __WEBPACK_IMPORTED_MODULE_0__console_console__["a" /* default */];
+__WEBPACK_IMPORTED_MODULE_0__console_console__["a" /* default */].log('LPE initialised!'); // var result = eval_sql_where("where(id=[1,2,3,4] and metric.tree_level(id) = 3 and max(id)=now() and $metric_id = 3)", {"$metric_id":"COOL","id":"ID"});
 // console.log(result);
 
+function eval_lpe(lpe, ctx) {
+  var ast = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__lpep__["a" /* parse */])(lpe);
+  return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__lisp__["a" /* eval_lisp */])(ast, ctx);
+} // exports to plv8.lpe due to webpack config
 
-// exports to plv8.lpe due to webpack config
-exports.parse = _lpep.parse;
-exports.LPESyntaxError = _lpep.LPESyntaxError;
-exports.evaluate = _lisp.evaluate;
-exports.eval_lisp = _lisp.eval_lisp;
-exports.sql_where_context = _sql_where.sql_where_context;
-exports.eval_sql_where = _sql_where.eval_sql_where;
-exports.sql_context = _sql_context.sql_context;
-exports.parse_sql_expr = _sql_context.parse_sql_expr;
+
 
 /*
 CREATE OR REPLACE FUNCTION
@@ -1989,7 +2155,6 @@ lpe.eval(ast JSONB, context JSONB DEFAULT '{}')
 RETURNS JSONB
 */
 // lpe.eval = function (ast, context) {
-
 
 /*
 CREATE OR REPLACE FUNCTION
@@ -2006,7 +2171,6 @@ RETURNS VOID
 //   plv8.lpe.sql_where_context = sql_where_context;
 // }
 
-
 /*
 CREATE OR REPLACE FUNCTION
 lpe.init_sql_context()
@@ -2021,40 +2185,21 @@ RETURNS TEXT
 
 /***/ }),
 /* 6 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = tokenize;
-
-var _console = __webpack_require__(0);
-
-var _console2 = _interopRequireDefault(_console);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-var isDigit = function isDigit(c) {
-  return c >= '0' && c <= '9';
-};
+/* harmony export (immutable) */ __webpack_exports__["a"] = tokenize;
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__console_console__ = __webpack_require__(0);
 // http://javascript.crockford.com/tdop/tdop.html
-
 // 2010-02-23
-
 // (c) 2006 Douglas Crockford
-
 // Produce an array of simple token objects from a string.
 // A simple token object contains these members:
 //      type: 'name', 'string', 'number', 'operator'
 //      value: string or number value of the token
 //      from: index of first character of the token
 //      to: index of the last character + 1
-
 // Comments of the // type are ignored.
-
 // Operators are by default single characters. Multicharacter
 // operators can be made by supplying a string of prefix and
 // suffix characters.
@@ -2063,43 +2208,60 @@ var isDigit = function isDigit(c) {
 // will match any of these:
 //      <=  >>  >>>  <>  >=  +: -: &: &&: &&
 
+
+var isDigit = function isDigit(c) {
+  return c >= '0' && c <= '9';
+};
+
 function tokenize(s) {
   var prefix = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '<>+-&';
   var suffix = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : '=>&:';
+  var c; // The current character.
 
-  var c = void 0; // The current character.
-  var from = void 0; // The index of the start of the token.
+  var from; // The index of the start of the token.
+
   var i = 0; // The index of the current character.
-  var length = s.length;
-  var n = void 0; // The number value.
-  var q = void 0; // The quote character.
-  var str = void 0; // The string value.
-  var result = []; // An array to hold the results.
-  var make = function make(type, value) {
-    return { type: type, value: value, from: from, to: i };
-  }; // Make a token object.
 
+  var length = s.length;
+  var n; // The number value.
+
+  var q; // The quote character.
+
+  var str; // The string value.
+
+  var result = []; // An array to hold the results.
+
+  var make = function make(type, value) {
+    return {
+      type: type,
+      value: value,
+      from: from,
+      to: i
+    };
+  }; // Make a token object.
   // If the source string is empty, return nothing.
+
+
   if (!s) {
     return [];
-  }
+  } // Loop through this text, one character at a time.
 
-  // Loop through this text, one character at a time.
+
   c = s.charAt(i);
-  while (c) {
-    from = i;
 
-    // Ignore whitespace.
+  while (c) {
+    from = i; // Ignore whitespace.
+
     if (c <= ' ') {
       i += 1;
-      c = s.charAt(i);
-
-      // name.
+      c = s.charAt(i); // name.
     } else if (c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c === '$' || c === '#') {
       str = c;
       i += 1;
+
       for (;;) {
         c = s.charAt(i);
+
         if (c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9' || c === '_' || c === '$') {
           str += c;
           i += 1;
@@ -2108,194 +2270,206 @@ function tokenize(s) {
         }
       }
 
-      result.push(make('name', str));
-      // number.
-
+      result.push(make('name', str)); // number.
       // A number cannot start with a decimal point. It must start with a digit,
       // possibly '0'.
     } else if (c >= '0' && c <= '9') {
       str = c;
-      i += 1;
-
-      // Look for more digits.
+      i += 1; // Look for more digits.
 
       for (;;) {
         c = s.charAt(i);
+
         if (c < '0' || c > '9') {
           break;
         }
+
         i += 1;
         str += c;
-      }
+      } // Look for a decimal fraction part.
 
-      // Look for a decimal fraction part.
 
       if (c === '.') {
         i += 1;
         str += c;
+
         for (;;) {
           c = s.charAt(i);
+
           if (c < '0' || c > '9') {
             break;
           }
+
           i += 1;
           str += c;
         }
-      }
+      } // Look for an exponent part.
 
-      // Look for an exponent part.
+
       if (c === 'e' || c === 'E') {
         i += 1;
         str += c;
         c = s.charAt(i);
+
         if (c === '-' || c === '+') {
           i += 1;
           str += c;
           c = s.charAt(i);
         }
+
         if (c < '0' || c > '9') {
           makeError(make('number', str), "Bad exponent");
         }
+
         do {
           i += 1;
           str += c;
           c = s.charAt(i);
         } while (c >= '0' && c <= '9');
-      }
+      } // Make sure the next character is not a letter.
 
-      // Make sure the next character is not a letter.
 
       if (c >= 'a' && c <= 'z') {
         str += c;
         i += 1;
         makeError(make('number', str), "Bad number");
-      }
-
-      // Don't convert the string value to a number. If it is finite, then it is a good
+      } // Don't convert the string value to a number. If it is finite, then it is a good
       // token.
       // result.push(make('number', parseFloat(str)));
       // result.push(make('number', str));
 
 
       n = +str;
+
       if (isFinite(n)) {
         result.push(make('number', n));
       } else {
         makeError(make('number', str), "Bad number");
-      }
+      } // string
 
-      // string
     } else if (c === '\'' || c === '"') {
       str = '';
       q = c;
       i += 1;
+
       for (;;) {
         c = s.charAt(i);
+
         if (c < ' ') {
           // make('string', str).error(c === '\n' || c === '\r' || c === '' ?
           //     "Unterminated string." :
           //     "Control character in string.", make('', str));
           makeError(make('', str) || make(q === '"' ? 'string_double' : 'string_single', str), c === '\n' || c === '\r' || c === '' ? "Unterminated string." : "Control character in string.");
-        }
+        } // Look for the closing quote.
 
-        // Look for the closing quote.
 
         if (c === q) {
           break;
-        }
+        } // Look for escapement.
 
-        // Look for escapement.
 
         if (c === '\\') {
           i += 1;
+
           if (i >= length) {
             makeError(make(q === '"' ? 'string_double' : 'string_single', str), "Unterminated string");
           }
+
           c = s.charAt(i);
+
           switch (c) {
             case 'b':
               c = '\b';
               break;
+
             case 'f':
               c = '\f';
               break;
+
             case 'n':
               c = '\n';
               break;
+
             case 'r':
               c = '\r';
               break;
+
             case 't':
               c = '\t';
               break;
+
             case 'u':
               if (i >= length) {
                 makeError(make(q === '"' ? 'string_double' : 'string_single', str), "Unterminated string");
               }
+
               c = parseInt(s.substr(i + 1, 4), 16);
+
               if (!isFinite(c) || c < 0) {
                 makeError(make(q === '"' ? 'string_double' : 'string_single', str), "Unterminated string");
               }
+
               c = String.fromCharCode(c);
               i += 4;
               break;
           }
         }
+
         str += c;
         i += 1;
       }
+
       i += 1;
       result.push(make(q === '"' ? 'string_double' : 'string_single', str));
-      c = s.charAt(i);
-
-      // comment.
+      c = s.charAt(i); // comment.
     } else if (c === '/' && s.charAt(i + 1) === '/') {
       i += 1;
+
       for (;;) {
         c = s.charAt(i);
+
         if (c === '\n' || c === '\r' || c === '') {
           break;
         }
-        i += 1;
-      }
 
-      // combining
+        i += 1;
+      } // combining
+
     } else if (prefix.indexOf(c) >= 0) {
       str = c;
       i += 1;
+
       while (true) {
         c = s.charAt(i);
+
         if (i >= length || suffix.indexOf(c) < 0) {
           break;
         }
+
         str += c;
         i += 1;
       }
-      result.push(make('operator', str));
 
-      // single-character operator
+      result.push(make('operator', str)); // single-character operator
     } else {
       i += 1;
       result.push(make('operator', c));
       c = s.charAt(i);
     }
   }
+
   return result;
-};
+}
+;
 
 /***/ }),
 /* 7 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-       value: true
-});
-exports.db_quote_literal = db_quote_literal;
+/* harmony export (immutable) */ __webpack_exports__["a"] = db_quote_literal;
 function db_quote_literal(intxt) {
-       return plv8.quote_literal(intxt);
+  return plv8.quote_literal(intxt);
 }
 
 /***/ })

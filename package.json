@@ -9,7 +9,8 @@
     "cli": "node -e \"console.log(JSON.stringify(require('./dist/lpe').parse(require('fs').readFileSync('/dev/stdin').toString())))\"",
     "eval": "node -e \"var lpep=require('./dist/lpe');console.log(JSON.stringify(lpep.evaluate(lpep.parse(require('fs').readFileSync('/dev/stdin').toString()))))\"",
     "build": "webpack",
-    "watch": "webpack -w"
+    "watch": "webpack -w",
+    "dev": "NODE_ENV=development nodemon -x 'npm run build && npm run test || exit 1' --watch src --watch test"
   },
   "repository": {
     "type": "git",
@@ -23,11 +24,10 @@
   "author": "Dmitry Dorofeev",
   "license": "MIT",
   "devDependencies": {
+    "@babel/core": "^7.0.0",
+    "@babel/preset-env": "^7.0.0",
     "args-parser": "^1.1.0",
-    "babel-cli": "^6.26.0",
-    "babel-core": "^6.26.0",
-    "babel-loader": "^7.1.4",
-    "babel-preset-env": "^1.6.1",
+    "babel-loader": "^8.0.0",
     "mocha": "^3.2.0",
     "webpack": "^2.7.0",
     "webpack-auto-inject-version": "^1.2.2"

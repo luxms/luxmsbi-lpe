@@ -3,16 +3,135 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width">
-  <title>QUnit Example</title>
+  <title>LPE demo</title>
   <link rel="stylesheet" href="https://code.jquery.com/qunit/qunit-2.6.0.css">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Tahoma, Geneva, sans-serif;
+      font-size: 14px;
+      background: aliceblue;
+      color: #333333;
+    }
+    main {
+      display: flex;
+      flex-direction: column;
+      width: 100vw;
+      padding-left: 10vw;
+      padding-right: 10vw;
+    }
+    .input-title {
+      margin-bottom: 10px;
+    }
+    textarea {
+      font-size: 14px;
+      height: 100px;
+      font-family: "Lucida Console", Monaco, monospace;
+      color: black;
+      padding: 4px;
+    }
+    #lpe-input-title {
+
+    }
+    button {
+      margin-top: 10px;
+      margin-bottom: 10px;
+      height: 40px;
+      width: 120px;
+      align-self: center;
+    }
+  </style>
 </head>
 <body>
-  <div id="qunit"></div>
-  <div id="qunit-fixture"></div>
+  <main>
 
-  <script src="https://code.jquery.com/qunit/qunit-2.6.0.js"></script>
-  <script src="../../console.js"></script>
-  <script src="../../lpe.js"></script>
-  <script src="main.js"></script>
+    <span id="lpe-input-title" class="input-title">LPE expression:</span>
+    <textarea id="lpe-input"></textarea>
+
+    <button id="lpe-action">Parse</button>
+
+    <span id="lisp-input-title" class="input-title">LPE expression:</span>
+    <textarea id="lisp-input"></textarea>
+
+    <button id="lisp-action">Execute</button>
+
+    <span id="result-input-title" class="input-title">LPE expression:</span>
+    <textarea id="result-input" readonly></textarea>
+
+  </main>
+
+  <script src="../../dist/lpe.js"></script>
+  <script>
+    var lpeInput = document.getElementById('lpe-input');
+    var lispInput = document.getElementById('lisp-input');
+    var resultInput = document.getElementById('result-input');
+    var lpeAction = document.getElementById('lpe-action');
+    var lispAction = document.getElementById('lisp-action');
+
+    lpeInput.value = window.localStorage.getItem('lpe') || '';
+    lispInput.value = window.localStorage.getItem('lisp') || '';
+
+    function runLPEAction() {
+      try {
+        var lisp = lpe.parse(lpeInput.value);
+        lispInput.value = JSON.stringify(lisp, null, 2);
+      } catch (err) {
+        lispInput.value = err.message;
+      }
+      window.localStorage.setItem('lisp', lispInput.value);
+    }
+
+    function runLispAction() {
+      try {
+        var lisp = JSON.parse(lispInput.value);
+        var result = lpe.eval_lisp(lisp);
+        resultInput.value = JSON.stringify(result, null, 2);
+      } catch (err) {
+        resultInput.value = err.message;
+      }
+    }
+
+    lpeInput.addEventListener('input', function (e) {
+      window.localStorage.setItem('lpe', lpeInput.value);
+    }, false);
+
+    lpeInput.addEventListener('keydown', function (e) {
+      var keyCode = e.keyCode || e.which;
+      if (event.ctrlKey && keyCode === 13) {
+        runLPEAction();
+      }
+    }, false);
+
+    lispInput.addEventListener('input', function (e) {
+      window.localStorage.setItem('lisp', lispInput.value);
+    }, false);
+
+    lispInput.addEventListener('keydown', function (e) {
+      var keyCode = e.keyCode || e.which;
+      if (e.ctrlKey && keyCode === 13) {
+        runLispAction();
+      }
+      if (keyCode === 9) {
+        e.preventDefault();
+        var start = this.selectionStart;
+        var end = this.selectionEnd;
+
+        // set textarea value to: text before caret + tab + text after caret
+        e.target.value = e.target.value.substring(0, start) + "\t" + e.target.value.substring(end);
+
+        // put caret at right position again
+        this.selectionStart = this.selectionEnd = start + 1;
+      }
+
+    }, false);
+
+    lpeAction.addEventListener('click', runLPEAction, false);
+
+    lispAction.addEventListener('click', runLispAction, false);
+
+  </script>
 </body>
 </html>
