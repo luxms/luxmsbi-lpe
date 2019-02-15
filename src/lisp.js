@@ -335,16 +335,21 @@ function macroexpand(ast, ctx, resolveString = true) {
     if (!isArray(v.ast)) break;
     if (!v.ast[3]) break;
 
-    // Это макрос! 3-й элемент макроса установлен в 1 через push
-    ast = v.apply(v, ast.slice(1));
+    ast = v.apply(v, ast.slice(1));                                             // Это макрос! 3-й элемент макроса установлен в 1 через push
   }
   return ast;
 }
 
 
+/**
+ * Return new ctx with symbols in ast bound to
+ * corresponding values in exprs
+ * @param ast
+ * @param ctx
+ * @param exprs
+ * @returns {*[]}
+ */
 function env_bind(ast, ctx, exprs) {
-  // Return new ctx with symbols in ast bound to
-  // corresponding values in exprs
   let newCtx = {};
   for (var i = 0; i < ast.length; i++) {
     if (ast[i] === "&") {
@@ -399,9 +404,9 @@ function EVAL(ast, ctx, resolveString = true) {
     const f = el[0];
     if (f.ast) {
       ast = f.ast[0];
-      ctx = env_bind(f.ast[2], f.ast[1], el.slice(1)); // TCO
+      ctx = env_bind(f.ast[2], f.ast[1], el.slice(1));                          // TCO
     } else {
-      return f.apply(f, el.slice(1))
+      return f.apply(f, el.slice(1));
     }
   }
 } // EVAL
@@ -418,7 +423,7 @@ export function init_lisp(ctx) {
   ctx = [ctx || {}, STDLIB];
   return {
     eval: (ast) => eval_context(ast, ctx),
-    val: (varName, value) => $var$(varName, value),
+    val: (varName, value) => $var$(ctx, varName, value),
   }
 }
 
@@ -426,7 +431,7 @@ export function init_lisp(ctx) {
 export function eval_lisp(ast, ctx) {
   const result = eval_context(ast, ctx);
 
-  if (typeof(result) == "function") {
+  if (isFunction(result)) {
     return '["function"]';
   } else {
     return result;

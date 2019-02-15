@@ -584,17 +584,23 @@ function macroexpand(ast, ctx) {
     var v = $var$(ctx, ast[0]);
     if (!isFunction(v)) break;
     if (!isArray(v.ast)) break;
-    if (!v.ast[3]) break; // Это макрос! 3-й элемент макроса установлен в 1 через push
-
-    ast = v.apply(v, ast.slice(1));
+    if (!v.ast[3]) break;
+    ast = v.apply(v, ast.slice(1)); // Это макрос! 3-й элемент макроса установлен в 1 через push
   }
 
   return ast;
 }
+/**
+ * Return new ctx with symbols in ast bound to
+ * corresponding values in exprs
+ * @param ast
+ * @param ctx
+ * @param exprs
+ * @returns {*[]}
+ */
+
 
 function env_bind(ast, ctx, exprs) {
-  // Return new ctx with symbols in ast bound to
-  // corresponding values in exprs
   var newCtx = {};
 
   for (var i = 0; i < ast.length; i++) {
@@ -682,14 +688,14 @@ function init_lisp(ctx) {
       return eval_context(ast, ctx);
     },
     val: function val(varName, value) {
-      return $var$(varName, value);
+      return $var$(ctx, varName, value);
     }
   };
 }
 function eval_lisp(ast, ctx) {
   var result = eval_context(ast, ctx);
 
-  if (typeof result == "function") {
+  if (isFunction(result)) {
     return '["function"]';
   } else {
     return result;
