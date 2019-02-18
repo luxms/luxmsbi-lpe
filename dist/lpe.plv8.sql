@@ -1004,7 +1004,7 @@ var make_parse = function make_parse() {
     }
 
     return a.length === 0 ? null : a.length === 1 ? a[0] : {
-      "sexpr": ["do"].concat(a.map(function (el) {
+      "sexpr": ["begin"].concat(a.map(function (el) {
         return el["sexpr"];
       }))
     };

@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2019/02/15 19:57:38 */ 
+/** [LPE]  Version: 1.0.0 - 2019/02/18 15:50:49 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -971,7 +971,7 @@ var make_parse = function make_parse() {
     }
 
     return a.length === 0 ? null : a.length === 1 ? a[0] : {
-      "sexpr": ["do"].concat(a.map(function (el) {
+      "sexpr": ["begin"].concat(a.map(function (el) {
         return el["sexpr"];
       }))
     };
