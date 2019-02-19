@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2019/02/18 15:50:49 */ 
+/** [LPE]  Version: 1.0.0 - 2019/02/19 14:14:57 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -207,6 +207,12 @@ function makeMacro(fn, ast) {
   fn.ast = ast || [[], {}, [], 1]; // mark as macro
 
   return fn;
+}
+
+function isMacro(fn) {
+  if (!isFunction(fn)) return false;
+  if (!isArray(fn.ast)) return false;
+  return !!fn.ast[3];
 }
 
 function makeLetBindings(ast, ctx, rs) {
@@ -651,11 +657,10 @@ function macroexpand(ast, ctx) {
 
   while (true) {
     if (!isArray(ast)) break;
-    if (typeof ast[0] !== "string") break;
+    if (!isString(ast[0])) break;
     var v = $var$(ctx, ast[0]);
     if (!isFunction(v)) break;
-    if (!isArray(v.ast)) break;
-    if (!v.ast[3]) break;
+    if (!isMacro(v)) break;
     ast = v.apply(v, ast.slice(1)); // Это макрос! 3-й элемент макроса установлен в 1 через push
   }
 

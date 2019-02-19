@@ -51,8 +51,14 @@ function $var$(ctx, varName, value) {
 
 
 function makeMacro(fn, ast) {
-  fn.ast = ast || [[],{},[],1]; // mark as macro
+  fn.ast = ast || [[], {}, [], 1]; // mark as macro
   return fn;
+}
+
+function isMacro(fn) {
+  if (!isFunction(fn)) return false;
+  if (!isArray(fn.ast)) return false;
+  return !!fn.ast[3];
 }
 
 
@@ -307,13 +313,12 @@ EVAL(minimal, STDLIB);
 function macroexpand(ast, ctx, resolveString = true) {
   while (true) {
     if (!isArray(ast)) break;
-    if (typeof ast[0] !== "string") break;
+    if (!isString(ast[0])) break;
 
     const v = $var$(ctx, ast[0]);
     if (!isFunction(v)) break;
 
-    if (!isArray(v.ast)) break;
-    if (!v.ast[3]) break;
+    if (!isMacro(v)) break;
 
     ast = v.apply(v, ast.slice(1));                                             // Это макрос! 3-й элемент макроса установлен в 1 через push
   }
