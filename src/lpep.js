@@ -72,7 +72,7 @@ var make_parse = function () {
 
   var new_expression_scope = function (tp) {
     var s = expr_scope;
-    expr_scope = Object.create(tp == "logical"?expr_logical_scope:expr_lpe_scope);
+    expr_scope = Object.create(tp === "logical" ? expr_logical_scope : expr_lpe_scope);
     expr_scope.parent = s;
     return expr_scope;
   };
@@ -286,13 +286,27 @@ var make_parse = function () {
 
   symbol("(number_literal)").nud = itself;
 
-  infix("?", 20, function (left) {
-    // FIXME TODO - need sexpr !!!
+  // [esix]: commented as in conflict with SQL operator ':'
+  // infix("?", 20, function (left) {
+  //   this.first = left;
+  //   this.second = expression(0);
+  //   advance(":");
+  //   this.third = expression(0);
+  //   this.arity = "ternary";
+  //   this.sexpr = ["if", this.first.sexpr, this.second.sexpr, this.third.sexpr];
+  //   return this;
+  // });
+
+  // [esix]: ternary operator with no conflict on ':' operator
+  infix('?', 20, function (left) {
     this.first = left;
     this.second = expression(0);
-    advance(":");
-    this.third = expression(0);
-    this.arity = "ternary";
+    this.arity = 'binary';
+    if (this.second.arity === 'binary' && this.second.value === ':') {
+      this.sexpr = ["if", this.first.sexpr, this.second.sexpr[1], this.second.sexpr[2]];
+    } else {
+      makeError(this.second, "Invalid ternary operator.");
+    }
     return this;
   });
 
@@ -303,9 +317,14 @@ var make_parse = function () {
 
   infixr("||", 30);
   infixr("∨", 30);
-
   operator_alias("||","or");
   operator_alias("∨","or");
+
+  infixr('⍱', 30); operator_alias('⍱', 'nor');
+  infixr('⍲', 30); operator_alias('⍲', 'nand');
+
+  infixr('⊣', 30); operator_alias('⊣', 'car');
+  infixr('⊢', 30); operator_alias('⊢', 'cdr');
 
   /* will be used in logical scope */
   infixr("and", 30);
@@ -323,6 +342,7 @@ var make_parse = function () {
 
   infixr('~', 40);
   infixr('!~', 40);
+
   infixr('=', 40);
   infixr('≠', 40);
   operator_alias('≠', '!='); // from to canonical form;

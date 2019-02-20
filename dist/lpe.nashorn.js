@@ -980,7 +980,7 @@ var make_parse = function make_parse() {
 
   var new_expression_scope = function new_expression_scope(tp) {
     var s = expr_scope;
-    expr_scope = Object.create(tp == "logical" ? expr_logical_scope : expr_lpe_scope);
+    expr_scope = Object.create(tp === "logical" ? expr_logical_scope : expr_lpe_scope);
     expr_scope.parent = s;
     return expr_scope;
   };
@@ -1231,14 +1231,29 @@ var make_parse = function make_parse() {
     return this;
   };
 
-  symbol("(number_literal)").nud = itself;
-  infix("?", 20, function (left) {
-    // FIXME TODO - need sexpr !!!
+  symbol("(number_literal)").nud = itself; // [esix]: commented as in conflict with SQL operator ':'
+  // infix("?", 20, function (left) {
+  //   this.first = left;
+  //   this.second = expression(0);
+  //   advance(":");
+  //   this.third = expression(0);
+  //   this.arity = "ternary";
+  //   this.sexpr = ["if", this.first.sexpr, this.second.sexpr, this.third.sexpr];
+  //   return this;
+  // });
+  // [esix]: ternary operator with no conflict on ':' operator
+
+  infix('?', 20, function (left) {
     this.first = left;
     this.second = expression(0);
-    advance(":");
-    this.third = expression(0);
-    this.arity = "ternary";
+    this.arity = 'binary';
+
+    if (this.second.arity === 'binary' && this.second.value === ':') {
+      this.sexpr = ["if", this.first.sexpr, this.second.sexpr[1], this.second.sexpr[2]];
+    } else {
+      __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__lpel__["a" /* makeError */])(this.second, "Invalid ternary operator.");
+    }
+
     return this;
   });
   infixr("&&", 30);
@@ -1249,6 +1264,14 @@ var make_parse = function make_parse() {
   infixr("∨", 30);
   operator_alias("||", "or");
   operator_alias("∨", "or");
+  infixr('⍱', 30);
+  operator_alias('⍱', 'nor');
+  infixr('⍲', 30);
+  operator_alias('⍲', 'nand');
+  infixr('⊣', 30);
+  operator_alias('⊣', 'car');
+  infixr('⊢', 30);
+  operator_alias('⊢', 'cdr');
   /* will be used in logical scope */
 
   infixr("and", 30);
@@ -1999,6 +2022,10 @@ function eval_lpe(lpe, ctx) {
 
 var isDigit = function isDigit(c) {
   return c >= '0' && c <= '9';
+};
+
+var isLetter = function isLetter(c) {
+  return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z';
 }; // Transform a token object into an exception object and throw it.
 
 
@@ -2056,14 +2083,15 @@ function tokenize(s) {
     if (c <= ' ') {
       i += 1;
       c = s.charAt(i); // name.
-    } else if (c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c === '$' || c === '#') {
+    } else if (isLetter(c) || c === '_' || c === '$') {
+      // first char of name
       str = c;
       i += 1;
 
       for (;;) {
         c = s.charAt(i);
 
-        if (c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9' || c === '_' || c === '$') {
+        if (isLetter(c) || isDigit(c) || c === '_' || c === '$') {
           str += c;
           i += 1;
         } else {

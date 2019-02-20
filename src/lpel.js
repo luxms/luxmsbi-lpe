@@ -24,7 +24,9 @@
 
 import console from './console/console';
 
-const isDigit = (c) => c >= '0' && c <= '9';
+
+const isDigit = (c) => (c >= '0' && c <= '9');
+const isLetter = (c) => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
 
 
 // Transform a token object into an exception object and throw it.
@@ -77,12 +79,12 @@ export function tokenize(s, prefix = '<>+-&', suffix = '=>&:') {
       c = s.charAt(i);
 
     // name.
-    } else if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c === '$' || c === '#') {
+    } else if (isLetter(c) || c === '_' || c === '$') {                         // first char of name
       str = c;
       i += 1;
       for (;;) {
         c = s.charAt(i);
-        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c === '_' || c === '$') {
+        if (isLetter(c) || isDigit(c) || c === '_' || c === '$') {
           str += c;
           i += 1;
         } else {
