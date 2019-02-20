@@ -50,7 +50,7 @@ function $var$(ctx, varName, value) {
 }
 
 
-function makeMacro(fn, ast) {
+export function makeMacro(fn, ast) {
   fn.ast = ast || [[], {}, [], 1]; // mark as macro
   return fn;
 }
@@ -59,6 +59,16 @@ function isMacro(fn) {
   if (!isFunction(fn)) return false;
   if (!isArray(fn.ast)) return false;
   return !!fn.ast[3];
+}
+
+export function makeSF(fn) {
+  fn.__isSpecialForm = true;
+  return fn;
+}
+
+function isSF(fn) {
+  if (!isFunction(fn)) return false;
+  return !!fn.__isSpecialForm;
 }
 
 
@@ -82,48 +92,46 @@ function makeLetBindings(ast, ctx, rs) {
 
 
 const SPECIAL_FORMS = {                                                         // built-in special forms
-  'let': (ast, ctx, rs) => EVAL(['begin', ...ast.slice(1)], [makeLetBindings(ast[0], ctx, rs), ctx], rs),
-  '`': (ast, ctx) => ast[0],                                                    // quote
-  'macroexpand': macroexpand,
-  'begin': (ast, ctx) => ast.reduce((acc, astItem) => EVAL(astItem, ctx), null),
-  'do': (ast, ctx) => { throw new Error('DO not implemented') },
-  'if': (ast, ctx, rs) => {
-    return EVAL(ast[0], ctx, false) ? EVAL(ast[1], ctx, rs) : EVAL(ast[2], ctx, rs);
-  },
-  '~': (ast, ctx, rs) => {                                                      // mark as macro
+  'let': makeSF((ast, ctx, rs) => EVAL(['begin', ...ast.slice(1)], [makeLetBindings(ast[0], ctx, rs), ctx], rs)),
+  '`': makeSF((ast, ctx) => ast[0]),                                            // quote
+  'macroexpand': makeSF(macroexpand),
+  'begin': makeSF((ast, ctx) => ast.reduce((acc, astItem) => EVAL(astItem, ctx), null)),
+  'do': makeSF((ast, ctx) => { throw new Error('DO not implemented') }),
+  'if': makeSF((ast, ctx, rs) => EVAL(ast[0], ctx, false) ? EVAL(ast[1], ctx, rs) : EVAL(ast[2], ctx, rs)),
+  '~': makeSF((ast, ctx, rs) => {                                               // mark as macro
     const f = EVAL(ast[0], ctx, rs);                                            // eval regular function
     f.ast.push(1); // mark as macro
     return f;
-  },
-  '.-': (ast, ctx, rs) => {                                                     // get or set attribute
-    const [obj, propertyName, value] = eval_ast(ast, ctx, rs);
+  }),
+  '.-': makeSF((ast, ctx, rs) => {                                              // get or set attribute
+    const [obj, propertyName, value] = ast.map(a => EVAL(a, ctx, rs));
     return (value !== undefined) ? (obj[propertyName] = value) : obj[propertyName];
-  },
-  '.': (ast, ctx, rs) => {                                                      // call object method
-    const [obj, methodName, ...args] = eval_ast(ast, ctx, rs);
+  }),
+  '.': makeSF((ast, ctx, rs) => {                                               // call object method
+    const [obj, methodName, ...args] = ast.map(a => EVAL(a, ctx, rs));
     const fn = obj[methodName];
     return fn.apply(obj, args);
-  },
-  'try': (ast, ctx, rs) => {                                                    // try/catch
+  }),
+  'try': makeSF((ast, ctx, rs) => {                                             // try/catch
     try {
       return EVAL(ast[0], ctx, rs);
     } catch (e) {
       const errCtx = env_bind([ast[1][0]], ctx, [e]);
       return EVAL(ast[1][1], errCtx, rs);
     }
-  },
-  '||': (ast, ctx, rs) => ast.some(a => !!EVAL(a, ctx, rs)),                    // logical or
-  '&&': (ast, ctx, rs) => ast.every(a => !!EVAL(a, ctx, rs)),                   // logical and
-  'fn': (ast, ctx, rs) => {                                                     // define new function (lambda)
+  }),
+  '||': makeSF((ast, ctx, rs) => ast.some(a => !!EVAL(a, ctx, rs))),            // logical or
+  '&&': makeSF((ast, ctx, rs) => ast.every(a => !!EVAL(a, ctx, rs))),           // logical and
+  'fn': makeSF((ast, ctx, rs) => {                                              // define new function (lambda)
     const f = (...args) => EVAL(ast[1], env_bind(ast[0], ctx, args), rs);
     f.ast = [ast[1], ctx, ast[0]];                                              // f.ast compresses more than f.data
     return f;
-  },
-  'def': (ast, ctx, rs) => {                                                    // update current environment
+  }),
+  'def': makeSF((ast, ctx, rs) => {                                             // update current environment
     const value = EVAL(ast[1], ctx, rs);
     const result = $var$(ctx, ast[0], value);
     return result;
-  },
+  }),
 };
 
 
@@ -141,6 +149,9 @@ const STDLIB = {
   'console': console,
   'JSON': JSON,
 
+  // special forms
+  ...SPECIAL_FORMS,
+
   // built-in function
   '=': (...args) => args.every(v => v === args[0]),
   '+': (...args) => args.reduce((a, b) => a + b),
@@ -152,22 +163,21 @@ const STDLIB = {
   '<=': (...args) => args.every((v, i) => i === 0 ? true : args[i-1] <= args[i]),
   '>=': (...args) => args.every((v, i) => i === 0 ? true : args[i-1] >= args[i]),
   '!=': (...args) => !args.every(v => v === args[0]),
-  'not': a => !a,
+  '[': (...args) => args,
+  'RegExp': (...args) => RegExp.apply(RegExp, args),
+  'count': (a) => a.length,
+  'del': (a, b) => delete a[b],
+  // 'del': (a, b) => Reflect.deleteProperty(a, b),
   'isa': (a, b) => a instanceof b,
   'type': a => typeof a,
-  'new': (...args) => {
-    debugger;
-    return new (args[0].bind.apply(args[0], args));
-  },
-  'del': (a, b) => delete a[b],
+  'new': (...args) => new (args[0].bind.apply(args[0], args)),
+  'not': a => !a,
   'list': (...args) => args,
   'vector': (...args) => args,
-  '[': (...args) => args,
-  'map': (a, b) => b.map(a),
+  'map': (fn, arr) => arr.map(it => fn(it)),
   'throw': a => { throw(a) },
   'identity': a => a,
   'pluck': (c, k) => c.map(el => el[k]),                                        // for each array element, get property value, present result as array.
-  'RegExp': (...args) => RegExp.apply(RegExp, args),
   'read-string': a => JSON.parse(a),
   'rep': (a) => JSON.stringify(EVAL(JSON.parse(a), STDLIB)),                    // TODO: fix ctx and rs arguments
   'null?': (a) => a === null || a === undefined,                                // ??? add [] ???
@@ -177,11 +187,23 @@ const STDLIB = {
   'list?': isArray,
   'contains?': (a, b) =>  a.hasOwnProperty(b),
   'str': (...args) => args.map(x => isString(x) ? x : JSON.stringify(x)).join(''),
-  'count': (a) => a.length,
   'get': (a, b) => a.hasOwnProperty(b) ? a[b] : undefined,
+  'nth': (a, b) => a.hasOwnProperty(b) ? a[b] : undefined,
   'set': (a, b, c) => (a[b] = c, a),
   'keys': (a) => Object.keys(a),
   'vals': (a) => Object.values(a),
+  'rest': (a) => a.slice(1),
+  'println': (...args) => console.log(args.map(x => isString(x) ? x : JSON.stringify(x)).join(' ')),
+  'empty?': (a) => isArray(a) ? a.length === 0 : false,
+  'cons': (a, b) => [].concat([a], b),
+  'prn': (...args) => console.log(args.map((x) => JSON.stringify(x)).join(' ')),
+  'slice': (a, b, ...end) => a.slice(b, end.length > 0 ? end[0] : a.length),
+  'first': (a) => a.length > 0 ? a[0] : null,
+  'last': (a) => a[a.length - 1],
+  'apply': (f, ...b) => f.apply(f, b),
+  'concat': (...a) => [].concat.apply([], a),
+  'pr-str': (...a) => a.map(x => JSON.stringify(x)).join(' '),
+  'classOf': (a) => Object.prototype.toString.call(a),
 
   // not implemented yet
   // 'hash-table->alist'
@@ -246,70 +268,6 @@ const STDLIB = {
 };
 
 
-var minimal = ["begin",
-  ["def", "del", ["fn", ["a", "b"],
-    [".", "Reflect", ["`", "deleteProperty"], "a", "b"]]],
-  ["def", "map", ["fn", ["a", "b"],
-    [".", "b", ["`", "map"], ["fn", ["x"], ["a", "x"]]]]],
-  ["def", "classOf", ["fn", ["a"],
-    [".", [".-", [".-", "Object", ["`", "prototype"]], ["`", "toString"]],
-      ["`", "call"], "a"]]],
-
-  ["def", "pr-str", ["fn", ["&", "a"],
-    [".", ["map", [".-", "JSON", ["`", "stringify"]], "a"],
-      ["`", "join"], ["`", " "]]]],
-
-  ["def", "prn", ["fn", ["&", "a"],
-    ["begin",
-      [".", "console", ["`", "log"],
-          [".", ["map", [".-", "JSON", ["`", "stringify"]], "a"],
-        ["`", "join"], ["`", " "]]],
-      null]]],
-  ["def", "println", ["fn", ["&", "a"],
-    ["begin", [".", "console", ["`", "log"],
-      [".", ["map", ["fn", ["x"],
-        ["if", ["string?", "x"],
-          "x",
-          [".", "JSON", ["`", "stringify"], "x"]]],
-        "a"],
-        ["`", "join"], ["`", " "]]],
-      null]]],
-
-  ["def", "cons", ["fn", ["a", "b"],
-    [".", ["`", []],
-      ["`", "concat"], ["list", "a"], "b"]]],
-  ["def", "concat", ["fn", ["&", "a"],
-    [".", [".-", ["list"], ["`", "concat"]],
-      ["`", "apply"], ["list"], "a"]]],
-  ["def", "nth", "get"],
-  ["def", "first", ["fn", ["a"],
-    ["if", [">", [".-", "a", ["`", "length"]], 0],
-      ["nth", "a", 0],
-      null]]],
-  ["def", "last", ["fn", ["a"],
-    ["nth", "a", ["-", [".-", "a", ["`", "length"]], 1]]]],
-
-  ["def", "empty?", ["fn", ["a"],
-    ["if", ["list?", "a"],
-      ["=", 0, [".-", "a", ["`", "length"]]],
-      ["=", "a", null]]]],
-  ["def", "slice", ["fn", ["a", "b", "&", "end"],
-    [".", "a", ["`", "slice"], "b",
-      ["if", [">", [".-", "end", ["`", "length"]], 0],
-        ["get", "end", 0],
-        [".-", "a", ["`", "length"]]]]]],
-  ["def", "rest", ["fn", ["a"], ["slice", "a", 1]]],
-
-  ["def", "apply", ["fn", ["f", "&", "b"],
-    [".", "f", ["`", "apply"], "f",
-      ["concat", ["slice", "b", 0, -1], ["last", "b"]]]]],
-
-  null
-];
-
-EVAL(minimal, STDLIB);
-
-
 function macroexpand(ast, ctx, resolveString = true) {
   while (true) {
     if (!isArray(ast)) break;
@@ -336,7 +294,7 @@ function macroexpand(ast, ctx, resolveString = true) {
  */
 function env_bind(ast, ctx, exprs) {
   let newCtx = {};
-  for (var i = 0; i < ast.length; i++) {
+  for (let i = 0; i < ast.length; i++) {
     if (ast[i] === "&") {
       // variable length arguments
       newCtx[ast[i + 1]] = Array.prototype.slice.call(exprs, i);
@@ -349,49 +307,41 @@ function env_bind(ast, ctx, exprs) {
 }
 
 
-function eval_ast(ast, ctx, resolveString = true) {
-  if (isArray(ast)) {                                                           // list?
-    return ast.map(e => EVAL(e, ctx, resolveString));
-  }
-
-  if (isString(ast)) {
-    const value = $var$(ctx, ast);
-
-    if (value !== undefined) {                                                  // variable
-      return value;
-    }
-
-    return resolveString ? ast : undefined;                                     // if string and not in ctx:
-  }
-
-  return ast;
-}
-
-
 function EVAL(ast, ctx, resolveString = true) {
   while (true) {
-    if (!isArray(ast)) {
-      return eval_ast(ast, ctx, resolveString);
+    if (!isArray(ast)) {                                                        // atom
+      if (isString(ast)) {
+        const value = $var$(ctx, ast);
+        if (value !== undefined) {                                              // variable
+          return value;
+        }
+        return resolveString ? ast : undefined;                                 // if string and not in ctx
+      }
+      return ast;
     }
 
     // apply
     ast = macroexpand(ast, ctx);
-    if (!Array.isArray(ast)) return ast;                                        // do we need eval here?
-    if (ast.length === 0) return null;                                          // [] => empty list (or, maybe return vector [])
+    if (!Array.isArray(ast)) return ast;                                        // TODO: do we need eval here?
+    if (ast.length === 0) return null;                                          // TODO: [] => empty list (or, maybe return vector [])
 
-    const op = ast[0];
+    const [opAst, ...argsAst] = ast;
 
-    if (isString(op) && (op in SPECIAL_FORMS)) {
-      return SPECIAL_FORMS[op](ast.slice(1), ctx, resolveString);
+    const op = EVAL(opAst, ctx, resolveString);                                 // evaluate operator
+
+    if (isSF(op)) {                                                             // special form
+      const sfResult = op(argsAst, ctx, resolveString);
+      return sfResult;
     }
 
-    const el = ast.map(ast => EVAL(ast, ctx, resolveString));
-    const f = el[0];
-    if (f.ast) {
-      ast = f.ast[0];
-      ctx = env_bind(f.ast[2], f.ast[1], el.slice(1));                          // TCO
+    const args = argsAst.map(a => EVAL(a, ctx, resolveString));                 // evaluate arguments
+
+    if (op.ast) {
+      ast = op.ast[0];
+      ctx = env_bind(op.ast[2], op.ast[1], args);                               // TCO
     } else {
-      return f.apply(f, el.slice(1));
+      const fnResult = op.apply(op, args);
+      return fnResult;
     }
   }
 } // EVAL

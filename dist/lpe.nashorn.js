@@ -128,10 +128,16 @@ function log() {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
+/* unused harmony export makeMacro */
+/* unused harmony export makeSF */
 /* unused harmony export init_lisp */
 /* harmony export (immutable) */ __webpack_exports__["a"] = eval_lisp;
 /* harmony export (immutable) */ __webpack_exports__["b"] = evaluate;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__console_console__ = __webpack_require__(0);
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 function _toArray(arr) { return _arrayWithHoles(arr) || _iterableToArray(arr) || _nonIterableRest(); }
 
 function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
@@ -254,6 +260,16 @@ function isMacro(fn) {
   return !!fn.ast[3];
 }
 
+function makeSF(fn) {
+  fn.__isSpecialForm = true;
+  return fn;
+}
+
+function isSF(fn) {
+  if (!isFunction(fn)) return false;
+  return !!fn.__isSpecialForm;
+}
+
 function makeLetBindings(ast, ctx, rs) {
   var result = {};
 
@@ -278,55 +294,59 @@ function makeLetBindings(ast, ctx, rs) {
 
 var SPECIAL_FORMS = {
   // built-in special forms
-  'let': function _let(ast, ctx, rs) {
+  'let': makeSF(function (ast, ctx, rs) {
     return EVAL(['begin'].concat(_toConsumableArray(ast.slice(1))), [makeLetBindings(ast[0], ctx, rs), ctx], rs);
-  },
-  '`': function _(ast, ctx) {
+  }),
+  '`': makeSF(function (ast, ctx) {
     return ast[0];
-  },
+  }),
   // quote
-  'macroexpand': macroexpand,
-  'begin': function begin(ast, ctx) {
+  'macroexpand': makeSF(macroexpand),
+  'begin': makeSF(function (ast, ctx) {
     return ast.reduce(function (acc, astItem) {
       return EVAL(astItem, ctx);
     }, null);
-  },
-  'do': function _do(ast, ctx) {
+  }),
+  'do': makeSF(function (ast, ctx) {
     throw new Error('DO not implemented');
-  },
-  'if': function _if(ast, ctx, rs) {
+  }),
+  'if': makeSF(function (ast, ctx, rs) {
     return EVAL(ast[0], ctx, false) ? EVAL(ast[1], ctx, rs) : EVAL(ast[2], ctx, rs);
-  },
-  '~': function _(ast, ctx, rs) {
+  }),
+  '~': makeSF(function (ast, ctx, rs) {
     // mark as macro
     var f = EVAL(ast[0], ctx, rs); // eval regular function
 
     f.ast.push(1); // mark as macro
 
     return f;
-  },
-  '.-': function _(ast, ctx, rs) {
+  }),
+  '.-': makeSF(function (ast, ctx, rs) {
     // get or set attribute
-    var _eval_ast = eval_ast(ast, ctx, rs),
-        _eval_ast2 = _slicedToArray(_eval_ast, 3),
-        obj = _eval_ast2[0],
-        propertyName = _eval_ast2[1],
-        value = _eval_ast2[2];
+    var _ast$map = ast.map(function (a) {
+      return EVAL(a, ctx, rs);
+    }),
+        _ast$map2 = _slicedToArray(_ast$map, 3),
+        obj = _ast$map2[0],
+        propertyName = _ast$map2[1],
+        value = _ast$map2[2];
 
     return value !== undefined ? obj[propertyName] = value : obj[propertyName];
-  },
-  '.': function _(ast, ctx, rs) {
+  }),
+  '.': makeSF(function (ast, ctx, rs) {
     // call object method
-    var _eval_ast3 = eval_ast(ast, ctx, rs),
-        _eval_ast4 = _toArray(_eval_ast3),
-        obj = _eval_ast4[0],
-        methodName = _eval_ast4[1],
-        args = _eval_ast4.slice(2);
+    var _ast$map3 = ast.map(function (a) {
+      return EVAL(a, ctx, rs);
+    }),
+        _ast$map4 = _toArray(_ast$map3),
+        obj = _ast$map4[0],
+        methodName = _ast$map4[1],
+        args = _ast$map4.slice(2);
 
     var fn = obj[methodName];
     return fn.apply(obj, args);
-  },
-  'try': function _try(ast, ctx, rs) {
+  }),
+  'try': makeSF(function (ast, ctx, rs) {
     // try/catch
     try {
       return EVAL(ast[0], ctx, rs);
@@ -334,20 +354,20 @@ var SPECIAL_FORMS = {
       var errCtx = env_bind([ast[1][0]], ctx, [e]);
       return EVAL(ast[1][1], errCtx, rs);
     }
-  },
-  '||': function _(ast, ctx, rs) {
+  }),
+  '||': makeSF(function (ast, ctx, rs) {
     return ast.some(function (a) {
       return !!EVAL(a, ctx, rs);
     });
-  },
+  }),
   // logical or
-  '&&': function _(ast, ctx, rs) {
+  '&&': makeSF(function (ast, ctx, rs) {
     return ast.every(function (a) {
       return !!EVAL(a, ctx, rs);
     });
-  },
+  }),
   // logical and
-  'fn': function fn(ast, ctx, rs) {
+  'fn': makeSF(function (ast, ctx, rs) {
     // define new function (lambda)
     var f = function f() {
       for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
@@ -360,15 +380,16 @@ var SPECIAL_FORMS = {
     f.ast = [ast[1], ctx, ast[0]]; // f.ast compresses more than f.data
 
     return f;
-  },
-  'def': function def(ast, ctx, rs) {
+  }),
+  'def': makeSF(function (ast, ctx, rs) {
     // update current environment
     var value = EVAL(ast[1], ctx, rs);
     var result = $var$(ctx, ast[0], value);
     return result;
-  }
+  })
 };
-var STDLIB = {
+
+var STDLIB = _objectSpread({
   // built-in constants
   '#t': true,
   '#f': false,
@@ -382,7 +403,8 @@ var STDLIB = {
   'Object': Object,
   'Date': Date,
   'console': __WEBPACK_IMPORTED_MODULE_0__console_console__["a" /* default */],
-  'JSON': JSON,
+  'JSON': JSON
+}, SPECIAL_FORMS, {
   // built-in function
   '=': function _() {
     for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
@@ -474,9 +496,37 @@ var STDLIB = {
       return v === args[0];
     });
   },
-  'not': function not(a) {
-    return !a;
+  '[': function _() {
+    for (var _len12 = arguments.length, args = new Array(_len12), _key12 = 0; _key12 < _len12; _key12++) {
+      args[_key12] = arguments[_key12];
+    }
+
+    return args;
   },
+  'RegExp': function (_RegExp) {
+    function RegExp() {
+      return _RegExp.apply(this, arguments);
+    }
+
+    RegExp.toString = function () {
+      return _RegExp.toString();
+    };
+
+    return RegExp;
+  }(function () {
+    for (var _len13 = arguments.length, args = new Array(_len13), _key13 = 0; _key13 < _len13; _key13++) {
+      args[_key13] = arguments[_key13];
+    }
+
+    return RegExp.apply(RegExp, args);
+  }),
+  'count': function count(a) {
+    return a.length;
+  },
+  'del': function del(a, b) {
+    return delete a[b];
+  },
+  // 'del': (a, b) => Reflect.deleteProperty(a, b),
   'isa': function isa(a, b) {
     return a instanceof b;
   },
@@ -484,40 +534,33 @@ var STDLIB = {
     return _typeof(a);
   },
   'new': function _new() {
-    debugger;
-
-    for (var _len12 = arguments.length, args = new Array(_len12), _key12 = 0; _key12 < _len12; _key12++) {
-      args[_key12] = arguments[_key12];
-    }
-
-    return new (args[0].bind.apply(args[0], args))();
-  },
-  'del': function del(a, b) {
-    return delete a[b];
-  },
-  'list': function list() {
-    for (var _len13 = arguments.length, args = new Array(_len13), _key13 = 0; _key13 < _len13; _key13++) {
-      args[_key13] = arguments[_key13];
-    }
-
-    return args;
-  },
-  'vector': function vector() {
     for (var _len14 = arguments.length, args = new Array(_len14), _key14 = 0; _key14 < _len14; _key14++) {
       args[_key14] = arguments[_key14];
     }
 
-    return args;
+    return new (args[0].bind.apply(args[0], args))();
   },
-  '[': function _() {
+  'not': function not(a) {
+    return !a;
+  },
+  'list': function list() {
     for (var _len15 = arguments.length, args = new Array(_len15), _key15 = 0; _key15 < _len15; _key15++) {
       args[_key15] = arguments[_key15];
     }
 
     return args;
   },
-  'map': function map(a, b) {
-    return b.map(a);
+  'vector': function vector() {
+    for (var _len16 = arguments.length, args = new Array(_len16), _key16 = 0; _key16 < _len16; _key16++) {
+      args[_key16] = arguments[_key16];
+    }
+
+    return args;
+  },
+  'map': function map(fn, arr) {
+    return arr.map(function (it) {
+      return fn(it);
+    });
   },
   'throw': function _throw(a) {
     throw a;
@@ -531,23 +574,6 @@ var STDLIB = {
     });
   },
   // for each array element, get property value, present result as array.
-  'RegExp': function (_RegExp) {
-    function RegExp() {
-      return _RegExp.apply(this, arguments);
-    }
-
-    RegExp.toString = function () {
-      return _RegExp.toString();
-    };
-
-    return RegExp;
-  }(function () {
-    for (var _len16 = arguments.length, args = new Array(_len16), _key16 = 0; _key16 < _len16; _key16++) {
-      args[_key16] = arguments[_key16];
-    }
-
-    return RegExp.apply(RegExp, args);
-  }),
   'read-string': function readString(a) {
     return JSON.parse(a);
   },
@@ -579,10 +605,10 @@ var STDLIB = {
       return isString(x) ? x : JSON.stringify(x);
     }).join('');
   },
-  'count': function count(a) {
-    return a.length;
-  },
   'get': function get(a, b) {
+    return a.hasOwnProperty(b) ? a[b] : undefined;
+  },
+  'nth': function nth(a, b) {
     return a.hasOwnProperty(b) ? a[b] : undefined;
   },
   'set': function set(a, b, c) {
@@ -594,6 +620,68 @@ var STDLIB = {
   'vals': function vals(a) {
     return Object.values(a);
   },
+  'rest': function rest(a) {
+    return a.slice(1);
+  },
+  'println': function println() {
+    for (var _len18 = arguments.length, args = new Array(_len18), _key18 = 0; _key18 < _len18; _key18++) {
+      args[_key18] = arguments[_key18];
+    }
+
+    return __WEBPACK_IMPORTED_MODULE_0__console_console__["a" /* default */].log(args.map(function (x) {
+      return isString(x) ? x : JSON.stringify(x);
+    }).join(' '));
+  },
+  'empty?': function empty(a) {
+    return isArray(a) ? a.length === 0 : false;
+  },
+  'cons': function cons(a, b) {
+    return [].concat([a], b);
+  },
+  'prn': function prn() {
+    for (var _len19 = arguments.length, args = new Array(_len19), _key19 = 0; _key19 < _len19; _key19++) {
+      args[_key19] = arguments[_key19];
+    }
+
+    return __WEBPACK_IMPORTED_MODULE_0__console_console__["a" /* default */].log(args.map(function (x) {
+      return JSON.stringify(x);
+    }).join(' '));
+  },
+  'slice': function slice(a, b) {
+    return a.slice(b, (arguments.length <= 2 ? 0 : arguments.length - 2) > 0 ? arguments.length <= 2 ? undefined : arguments[2] : a.length);
+  },
+  'first': function first(a) {
+    return a.length > 0 ? a[0] : null;
+  },
+  'last': function last(a) {
+    return a[a.length - 1];
+  },
+  'apply': function apply(f) {
+    for (var _len20 = arguments.length, b = new Array(_len20 > 1 ? _len20 - 1 : 0), _key20 = 1; _key20 < _len20; _key20++) {
+      b[_key20 - 1] = arguments[_key20];
+    }
+
+    return f.apply(f, b);
+  },
+  'concat': function concat() {
+    for (var _len21 = arguments.length, a = new Array(_len21), _key21 = 0; _key21 < _len21; _key21++) {
+      a[_key21] = arguments[_key21];
+    }
+
+    return [].concat.apply([], a);
+  },
+  'pr-str': function prStr() {
+    for (var _len22 = arguments.length, a = new Array(_len22), _key22 = 0; _key22 < _len22; _key22++) {
+      a[_key22] = arguments[_key22];
+    }
+
+    return a.map(function (x) {
+      return JSON.stringify(x);
+    }).join(' ');
+  },
+  'classOf': function classOf(a) {
+    return Object.prototype.toString.call(a);
+  },
   // not implemented yet
   // 'hash-table->alist'
   // macros
@@ -604,16 +692,16 @@ var STDLIB = {
     return a.toString();
   }),
   '()': makeMacro(function () {
-    for (var _len18 = arguments.length, args = new Array(_len18), _key18 = 0; _key18 < _len18; _key18++) {
-      args[_key18] = arguments[_key18];
+    for (var _len23 = arguments.length, args = new Array(_len23), _key23 = 0; _key23 < _len23; _key23++) {
+      args[_key23] = arguments[_key23];
     }
 
     return args;
   }),
   // ???
   '->': makeMacro(function (acc) {
-    for (var _len19 = arguments.length, ast = new Array(_len19 > 1 ? _len19 - 1 : 0), _key19 = 1; _key19 < _len19; _key19++) {
-      ast[_key19 - 1] = arguments[_key19];
+    for (var _len24 = arguments.length, ast = new Array(_len24 > 1 ? _len24 - 1 : 0), _key24 = 1; _key24 < _len24; _key24++) {
+      ast[_key24 - 1] = arguments[_key24];
     }
 
     // thread first macro
@@ -636,8 +724,8 @@ var STDLIB = {
     return acc;
   }),
   '->>': makeMacro(function (acc) {
-    for (var _len20 = arguments.length, ast = new Array(_len20 > 1 ? _len20 - 1 : 0), _key20 = 1; _key20 < _len20; _key20++) {
-      ast[_key20 - 1] = arguments[_key20];
+    for (var _len25 = arguments.length, ast = new Array(_len25 > 1 ? _len25 - 1 : 0), _key25 = 1; _key25 < _len25; _key25++) {
+      ast[_key25 - 1] = arguments[_key25];
     }
 
     // thread last macro
@@ -652,8 +740,8 @@ var STDLIB = {
     return acc;
   }),
   'invoke': makeMacro(function () {
-    for (var _len21 = arguments.length, ast = new Array(_len21), _key21 = 0; _key21 < _len21; _key21++) {
-      ast[_key21] = arguments[_key21];
+    for (var _len26 = arguments.length, ast = new Array(_len26), _key26 = 0; _key26 < _len26; _key26++) {
+      ast[_key26] = arguments[_key26];
     }
 
     /// мы не можем использовать точку в LPE для вызова метода объекта, так как она уже замаплена на ->
@@ -663,8 +751,8 @@ var STDLIB = {
     return ast;
   }),
   'and': makeMacro(function () {
-    for (var _len22 = arguments.length, ast = new Array(_len22), _key22 = 0; _key22 < _len22; _key22++) {
-      ast[_key22] = arguments[_key22];
+    for (var _len27 = arguments.length, ast = new Array(_len27), _key27 = 0; _key27 < _len27; _key27++) {
+      ast[_key27] = arguments[_key27];
     }
 
     if (ast.length === 0) return true;
@@ -672,8 +760,8 @@ var STDLIB = {
     return ["let", ["__and", ast[0]], ["if", "__and", ["and"].concat(ast.slice(1)), "__and"]];
   }),
   'or': makeMacro(function () {
-    for (var _len23 = arguments.length, ast = new Array(_len23), _key23 = 0; _key23 < _len23; _key23++) {
-      ast[_key23] = arguments[_key23];
+    for (var _len28 = arguments.length, ast = new Array(_len28), _key28 = 0; _key28 < _len28; _key28++) {
+      ast[_key28] = arguments[_key28];
     }
 
     if (ast.length === 0) return false;
@@ -687,9 +775,7 @@ var STDLIB = {
   eval: function _eval(a) {
     return EVAL(a, STDLIB);
   }
-};
-var minimal = ["begin", ["def", "del", ["fn", ["a", "b"], [".", "Reflect", ["`", "deleteProperty"], "a", "b"]]], ["def", "map", ["fn", ["a", "b"], [".", "b", ["`", "map"], ["fn", ["x"], ["a", "x"]]]]], ["def", "classOf", ["fn", ["a"], [".", [".-", [".-", "Object", ["`", "prototype"]], ["`", "toString"]], ["`", "call"], "a"]]], ["def", "pr-str", ["fn", ["&", "a"], [".", ["map", [".-", "JSON", ["`", "stringify"]], "a"], ["`", "join"], ["`", " "]]]], ["def", "prn", ["fn", ["&", "a"], ["begin", [".", "console", ["`", "log"], [".", ["map", [".-", "JSON", ["`", "stringify"]], "a"], ["`", "join"], ["`", " "]]], null]]], ["def", "println", ["fn", ["&", "a"], ["begin", [".", "console", ["`", "log"], [".", ["map", ["fn", ["x"], ["if", ["string?", "x"], "x", [".", "JSON", ["`", "stringify"], "x"]]], "a"], ["`", "join"], ["`", " "]]], null]]], ["def", "cons", ["fn", ["a", "b"], [".", ["`", []], ["`", "concat"], ["list", "a"], "b"]]], ["def", "concat", ["fn", ["&", "a"], [".", [".-", ["list"], ["`", "concat"]], ["`", "apply"], ["list"], "a"]]], ["def", "nth", "get"], ["def", "first", ["fn", ["a"], ["if", [">", [".-", "a", ["`", "length"]], 0], ["nth", "a", 0], null]]], ["def", "last", ["fn", ["a"], ["nth", "a", ["-", [".-", "a", ["`", "length"]], 1]]]], ["def", "empty?", ["fn", ["a"], ["if", ["list?", "a"], ["=", 0, [".-", "a", ["`", "length"]]], ["=", "a", null]]]], ["def", "slice", ["fn", ["a", "b", "&", "end"], [".", "a", ["`", "slice"], "b", ["if", [">", [".-", "end", ["`", "length"]], 0], ["get", "end", 0], [".-", "a", ["`", "length"]]]]]], ["def", "rest", ["fn", ["a"], ["slice", "a", 1]]], ["def", "apply", ["fn", ["f", "&", "b"], [".", "f", ["`", "apply"], "f", ["concat", ["slice", "b", 0, -1], ["last", "b"]]]]], null];
-EVAL(minimal, STDLIB);
+});
 
 function macroexpand(ast, ctx) {
   var resolveString = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
@@ -731,60 +817,55 @@ function env_bind(ast, ctx, exprs) {
   return [newCtx, ctx];
 }
 
-function eval_ast(ast, ctx) {
-  var resolveString = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
-
-  if (isArray(ast)) {
-    // list?
-    return ast.map(function (e) {
-      return EVAL(e, ctx, resolveString);
-    });
-  }
-
-  if (isString(ast)) {
-    var value = $var$(ctx, ast);
-
-    if (value !== undefined) {
-      // variable
-      return value;
-    }
-
-    return resolveString ? ast : undefined; // if string and not in ctx:
-  }
-
-  return ast;
-}
-
 function EVAL(ast, ctx) {
   var resolveString = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
 
   while (true) {
     if (!isArray(ast)) {
-      return eval_ast(ast, ctx, resolveString);
+      // atom
+      if (isString(ast)) {
+        var value = $var$(ctx, ast);
+
+        if (value !== undefined) {
+          // variable
+          return value;
+        }
+
+        return resolveString ? ast : undefined; // if string and not in ctx
+      }
+
+      return ast;
     } // apply
 
 
     ast = macroexpand(ast, ctx);
-    if (!Array.isArray(ast)) return ast; // do we need eval here?
+    if (!Array.isArray(ast)) return ast; // TODO: do we need eval here?
 
-    if (ast.length === 0) return null; // [] => empty list (or, maybe return vector [])
+    if (ast.length === 0) return null; // TODO: [] => empty list (or, maybe return vector [])
 
-    var op = ast[0];
+    var _ast = ast,
+        _ast2 = _toArray(_ast),
+        opAst = _ast2[0],
+        argsAst = _ast2.slice(1);
 
-    if (isString(op) && op in SPECIAL_FORMS) {
-      return SPECIAL_FORMS[op](ast.slice(1), ctx, resolveString);
+    var op = EVAL(opAst, ctx, resolveString); // evaluate operator
+
+    if (isSF(op)) {
+      // special form
+      var sfResult = op(argsAst, ctx, resolveString);
+      return sfResult;
     }
 
-    var el = ast.map(function (ast) {
-      return EVAL(ast, ctx, resolveString);
-    });
-    var f = el[0];
+    var args = argsAst.map(function (a) {
+      return EVAL(a, ctx, resolveString);
+    }); // evaluate arguments
 
-    if (f.ast) {
-      ast = f.ast[0];
-      ctx = env_bind(f.ast[2], f.ast[1], el.slice(1)); // TCO
+    if (op.ast) {
+      ast = op.ast[0];
+      ctx = env_bind(op.ast[2], op.ast[1], args); // TCO
     } else {
-      return f.apply(f, el.slice(1));
+      var fnResult = op.apply(op, args);
+      return fnResult;
     }
   }
 } // EVAL
