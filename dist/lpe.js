@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2019/02/20 16:49:40 */ 
+/** [LPE]  Version: 1.0.0 - 2019/02/21 14:24:20 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -2419,8 +2419,8 @@ function tokenize(s) {
     if (c <= ' ') {
       i += 1;
       c = s.charAt(i); // name.
-    } else if (isLetter(c) || c === '_' || c === '$') {
-      // first char of name
+    } else if (isLetter(c) || c === '_' || c === '$' || c === '#') {
+      // first char of name. TODO: remove #
       str = c;
       i += 1;
 

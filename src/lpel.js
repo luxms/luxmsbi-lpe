@@ -79,7 +79,7 @@ export function tokenize(s, prefix = '<>+-&', suffix = '=>&:') {
       c = s.charAt(i);
 
     // name.
-    } else if (isLetter(c) || c === '_' || c === '$') {                         // first char of name
+    } else if (isLetter(c) || c === '_' || c === '$' || c === '#') {                         // first char of name. TODO: remove #
       str = c;
       i += 1;
       for (;;) {

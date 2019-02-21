@@ -2083,8 +2083,8 @@ function tokenize(s) {
     if (c <= ' ') {
       i += 1;
       c = s.charAt(i); // name.
-    } else if (isLetter(c) || c === '_' || c === '$') {
-      // first char of name
+    } else if (isLetter(c) || c === '_' || c === '$' || c === '#') {
+      // first char of name. TODO: remove #
       str = c;
       i += 1;
 
