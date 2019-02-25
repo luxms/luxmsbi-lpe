@@ -2,7 +2,7 @@
   "name": "luxmsbi-lpe",
   "version": "1.0.0",
   "description": "Lux Path Expressions Lexer and Parser implementation in Javascript",
-  "main": "./src/index.js",
+  "main": "./dist/lpe.js",
   "types": "./src/index.d.ts",
   "scripts": {
     "test": "mocha --reporter spec",
