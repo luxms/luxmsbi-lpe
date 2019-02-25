@@ -135,6 +135,14 @@ export function sql_where_context(_vars) {
 
   _context['order_by'].ast = [[],{},[],1]; // mark as macro
 
+  _context['lpe_pg_tstz_at_time_zone'] = function (timestamp, zone) {
+    // FIXME: check quotes !!!
+    if (/'/.test(timestamp)) {
+      throw('Wrong timestamp: ' + JSON.stringify(timestamp));
+    }
+    console.log("lpe_pg_tstz_at_time_zone" + timestamp);
+    return "'" + timestamp + "'" + "::timestamptz at time zone '" + zone + "'";
+  }
 
   _context['pg_interval'] = function (cnt, period_type) {
     var pt;
@@ -176,13 +184,14 @@ export function sql_where_context(_vars) {
 
       var prnt = function(ar) {
         if (ar instanceof Array) {
-          if (  ar[0] === '$' ||  
-                ar[0] === '"' || 
-                ar[0] === "'" || 
-                ar[0] === "[" || 
-                ar[0] === 'parse_kv' || 
+          if (  ar[0] === '$' ||
+                ar[0] === '"' ||
+                ar[0] === "'" ||
+                ar[0] === "[" ||
+                ar[0] === 'parse_kv' ||
                 ar[0] === "=" ||
-                ar[0] === "pg_interval") {
+                ar[0] === "pg_interval" ||
+                ar[0] === "lpe_pg_tstz_at_time_zone") {
             return eval_lisp(ar, ctx);
           } else {
               if (ar.length == 2) {
@@ -202,7 +211,7 @@ export function sql_where_context(_vars) {
                   // в логических выражениях мы это воспринимаем как ссылку на <ИМЯ СХЕМЫ>.<ИМЯ ТАБЛИЦЫ>
                   //return '"' + ar[1]+ '"."' + ar[2] + '"';
                   return ar[1] + '.' + ar[2];
-                } else if (ar[0] == "and" || ar[0] == "or" || ar[0] == "ilike" || ar[0] == "like" || 
+                } else if (ar[0] == "and" || ar[0] == "or" || ar[0] == "ilike" || ar[0] == "like" ||
                            ar[0] == "in" || ar[0] == "is" || ar[0].match(/^[^\w]+$/)) {
                   // имя функции не начинается с буквы
                   return prnt(ar[1]) + ' ' + ar[0] + ' ' + prnt(ar[2]);
@@ -224,18 +233,40 @@ export function sql_where_context(_vars) {
       ctx['"'] = function (el) {
         return '"' + el.toString() + '"';
       }
-    
+
       ctx["'"] = function (el) {
         return "'" + el.toString() + "'";
       }
-    
+
       ctx["["] = function (el) {
         return "[" + Array.prototype.slice.call(arguments).join(',') + "]";
       }
 
       ctx['='] = function (l,r) {
-        if (r instanceof Array && r[0] == 'vector') {
-          return prnt(l) + " in (" + r.slice(1).map(function(el){return prnt(el)}).join(',') + ")";
+        // понимаем a = [null] как a is null
+        // a = [] просто пропускаем
+        // a = [null, 1,2] как a in (1,2) or a is null
+        if (r instanceof Array && r[0] === '[') {
+          var nonnull = r.filter(function(el){return el !== null});
+          if (nonnull.length === r.length) {
+            if (nonnull.length === 1) {
+                return "";
+            } else {
+              return prnt(l)
+                    + " IN ("
+                    + r.slice(1).map(function(el){return prnt(el)}).join(',')
+                    + ")";
+            }
+          } else {
+            var col = prnt(l);
+            if (nonnull.length === 1) {
+              return col + " IS NULL";
+            } else {
+              return "(" + col + " IS NULL OR " + col + " IN (" +
+                    nonnull.slice(1).map(function(el){return prnt(el)}).join(',')
+                    + "))";
+            }
+          }
         }
         return prnt(l) + " = " + prnt(r);
       }
@@ -291,7 +322,8 @@ export function sql_where_context(_vars) {
             }
           }
         }
-        return '(/*parse_kv EMPTY*/ 1=0)';
+        // return everything, FIXME: is it right thing to do ?
+        return '(/*parse_kv EMPTY*/ 1=1)';
       };
       ctx['parse_kv'].ast = [[],{},[],1]; // mark as macro
 
@@ -353,9 +385,9 @@ export function sql_where_context(_vars) {
 
       if (ret.length > 0) {
         if (ret.length > 1) {
-          return 'WHERE (' + ret.join(') AND (') + ')'; 
+          return 'WHERE (' + ret.join(') AND (') + ')';
         } else {
-          return 'WHERE ' + ret[0]; 
+          return 'WHERE ' + ret[0];
         }
       } else {
         return 'WHERE TRUE';

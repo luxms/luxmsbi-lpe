@@ -143,13 +143,13 @@ describe('LPE tests', function() {
     });
 
     it('should eval SQL where expressions', function() {
-        assert.equal( lpe.eval_sql_where( 
+        assert.equal( lpe.eval_sql_where(
             'if(count(period_type_list)>5,count(period_type_list), where( $(period.title) =3))',
             {"period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
             "WHERE 'Noyabr' = 3"
         );
 
-        assert.equal( lpe.eval_sql_where( 
+        assert.equal( lpe.eval_sql_where(
             'if(count(period_type_list)=5,count(period_type_list), where( $(period.title) =3))',
             {"period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
             "5"
@@ -157,75 +157,75 @@ describe('LPE tests', function() {
 
         assert.equal( lpe.eval_sql_where( 'where( )',{}),"WHERE TRUE");
 
-        assert.equal( lpe.eval_sql_where( 
+        assert.equal( lpe.eval_sql_where(
             ' where( tp in ($(period_type_list)))',
             {"period_type_list":[-1, 1, 3,0, 345667]}),
             "WHERE tp in (-1,1,3,0,345667)"
         );
 
-        assert.equal( lpe.eval_sql_where( 
+        assert.equal( lpe.eval_sql_where(
             ' where( title in ($(period_type_list)) and ($(period.title) = title or $(period.title) = period.title))',
             {"period_type_list":['1','qwerty','0','null'], "period": {"title":"Noyabr"}}),
             "WHERE title in ('1','qwerty','0','null') and ('Noyabr' = title or 'Noyabr' = period.title)"
         );
 
-        assert.equal( lpe.eval_sql_where( 
+        assert.equal( lpe.eval_sql_where(
             ' where( title in ($(period_type_list)) and ($(period.title) = title or $(period.id)::INT = period.id))',
             {"period_type_list":['1','qwerty','0','null'], "period": {"title":"Noyabr","id":2131}}),
             "WHERE title in ('1','qwerty','0','null') and ('Noyabr' = title or '2131' :: INT = period.id)"
         );
 
         // do not evaluate code, unless $() escape is used
-        assert.equal( lpe.eval_sql_where( 
+        assert.equal( lpe.eval_sql_where(
             'where( vector(str) = if("90",[0,0,0],\'9\'))',
             {"period_type_list":['1','qwerty','0','null'], "period": {"title":"Noyabr","id":2131}}),
             "WHERE vector(str) = if(\"90\",[0,0,0],'9')"
         );
 
         // evaluate code in $()
-        assert.equal( lpe.eval_sql_where( 
+        assert.equal( lpe.eval_sql_where(
             'where(title = $(str(first([11,2,3,4]),last([1,2,3,-1999]))))',
             {"period_type_list":['1','qwerty','0','null'], "period": {"title":"Noyabr","id":2131}}),
             "WHERE title = '11-1999'"
         );
 
         // if false
-        assert.equal( lpe.eval_sql_where( 
+        assert.equal( lpe.eval_sql_where(
             'if(count(period_type_list), where(a = $(first(period_type_list)))  , where (title is not null))',
             {"period_type_list":['1','qwerty','0','null'], "period": {"title":"Noyabr","id":2131}, "period_type_list": []}),
             "WHERE title is not null"
         );
 
         // if true
-        assert.equal( lpe.eval_sql_where( 
+        assert.equal( lpe.eval_sql_where(
             'if(count(period_type_list), where(a = $(first(period_type_list)))  , where (title is not null))',
             {"period_type_list":['1','qwerty','0','null'], "period": {"title":"Noyabr","id":2131}, "period_type_list": [4,5,6]}),
             "WHERE a = '4'"
         );
 
         // if pluck
-        assert.equal( lpe.eval_sql_where( 
+        assert.equal( lpe.eval_sql_where(
             'if(periods.count(), where (ctime in ($(periods.pluck(start_time)))), where())',
             {"periods":[{"start_time":"2018-01-01","id":2324342},{"id":9890798,"start_time":"2017-01-01"}], "period": {"title":"Noyabr","id":2131}}),
             "WHERE ctime in ('2018-01-01','2017-01-01')"
         );
 
         // combine several arguments with AND
-        assert.equal( lpe.eval_sql_where( 
+        assert.equal( lpe.eval_sql_where(
             'where (ctime in ($(periods.pluck(start_time))), cnt = $(periods.count()) )',
             {"periods":[{"start_time":"2018-01-01","id":2324342},{"id":9890798,"start_time":"2017-01-01"}], "period": {"title":"Noyabr","id":2131}}),
             "WHERE (ctime in ('2018-01-01','2017-01-01')) AND (cnt = '2')"
         );
 
         // combine several arguments with AND 2
-        assert.equal( lpe.eval_sql_where( 
+        assert.equal( lpe.eval_sql_where(
             'where (ctime in ($(periods.pluck(start_time))), cnt = $(periods.count()) )',
             {"periods":[{"start_time":"2018-01-01","id":2324342},{"id":9890798,"start_time":"2017-01-01"}], "period": {"title":"Noyabr","id":2131}}),
             "WHERE (ctime in ('2018-01-01','2017-01-01')) AND (cnt = '2')"
         );
 
         // + interval generation from period_type
-        assert.equal( lpe.eval_sql_where( 
+        assert.equal( lpe.eval_sql_where(
             'where(pg_interval(1,7) or pg_interval(2,"day") or pg_interval(3,period_type))',
             {"period_type": {"unit":"day"},"period_range":{"start": {"qty": 1, "start_time": "2018-09-10T18:16:00+03:00", "period_type": 1},
             "end": {"qty": 1, "start_time": "2018-12-10T18:16:00+03:00", "period_type": 1}}}),
@@ -233,7 +233,7 @@ describe('LPE tests', function() {
         );
 
         // Works with nested JSON structs
-        assert.equal( lpe.eval_sql_where( 
+        assert.equal( lpe.eval_sql_where(
             'where(ctime >= $(period_range.start.start_time) and ctime <= $(period_range.end.start_time))',
             {"period_range":{"start": {"qty": 1, "start_time": "2018-09-10T18:16:00+03:00", "period_type": 1},
             "end": {"qty": 1, "start_time": "2018-12-10T18:16:00+03:00", "period_type": 1}}}),
@@ -241,14 +241,14 @@ describe('LPE tests', function() {
         );
 
         // if object false
-        assert.equal( lpe.eval_sql_where( 
+        assert.equal( lpe.eval_sql_where(
             'if(period_range, where(ctime >= $(period_range.start.start_time) and ctime <= $(period_range.end.start_time)), str())',
             {"period_range":null}),
             ""
         );
 
         // if object true
-        assert.equal( lpe.eval_sql_where( 
+        assert.equal( lpe.eval_sql_where(
             'if(period_range, where(ctime >= $(period_range.start.start_time) and ctime <= $(period_range.end.start_time)), str())',
             {"period_range":{"start": {"qty": 1, "start_time": "2018-09-10T18:16:00+03:00", "period_type": 1},
             "end": {"qty": 1, "start_time": "2018-12-10T18:16:00+03:00", "period_type": 1}}}),
@@ -256,7 +256,7 @@ describe('LPE tests', function() {
         );
 
         // + interval handling... THIS IS WRONG SINGLE QOUTES
-        assert.equal( lpe.eval_sql_where( 
+        assert.equal( lpe.eval_sql_where(
             'if(period_range, where(ctime >= $(period_range.start.start_time) and ctime <= $(period_range.end.start_time) + $(str(interval," 1 ", period_type.unit)) ), str())',
             {"period_type": {"unit":"day"},"period_range":{"start": {"qty": 1, "start_time": "2018-09-10T18:16:00+03:00", "period_type": 1},
             "end": {"qty": 1, "start_time": "2018-12-10T18:16:00+03:00", "period_type": 1}}}),
@@ -264,7 +264,7 @@ describe('LPE tests', function() {
         );
 
         // + interval handling... THIS IS NICE
-        assert.equal( lpe.eval_sql_where( 
+        assert.equal( lpe.eval_sql_where(
             'if(period_range, where(ctime >= $(period_range.start.start_time) and ctime <= $(period_range.end.start_time) + $(str("1 ", period_type.unit)) :: interval ), str())',
             {"period_type": {"unit":"day"},"period_range":{"start": {"qty": 1, "start_time": "2018-09-10T18:16:00+03:00", "period_type": 1},
             "end": {"qty": 1, "start_time": "2018-12-10T18:16:00+03:00", "period_type": 1}}}),
@@ -272,17 +272,51 @@ describe('LPE tests', function() {
         );
 
         // + interval generation from period_type
-        assert.equal( lpe.eval_sql_where( 
+        assert.equal( lpe.eval_sql_where(
             'where(pg_interval(1,7) or pg_interval(2,"day") or pg_interval(3,period_type))',
             {"period_type": {"unit":"day"},"period_range":{"start": {"qty": 1, "start_time": "2018-09-10T18:16:00+03:00", "period_type": 1},
             "end": {"qty": 1, "start_time": "2018-12-10T18:16:00+03:00", "period_type": 1}}}),
             "WHERE '3 month'::interval or '2 day'::interval or '3 day'::interval"
         );
+
+       // lpe_pg_tstz_at_time_zone
+       assert.equal( lpe.eval_sql_where(
+           'where(ctime > lpe_pg_tstz_at_time_zone(period_range.start.start_time,GMT))',
+           {"period_type": {"unit":"day"},"period_range":{"start": {"qty": 1, "start_time": "2018-09-10T18:16:00+03:00", "period_type": 1},
+           "end": {"qty": 1, "start_time": "2018-12-10T18:16:00+03:00", "period_type": 1}}}),
+           "WHERE ctime > '2018-09-10T18:16:00+03:00'::timestamptz at time zone 'GMT'"
+       );
+
+        // support nulls in arrays for IN () SQL clause
+        assert.equal( lpe.eval_sql_where(
+            'where(a = [null])',
+            {}),
+            "WHERE a IS NULL"
+        );
+
+        assert.equal( lpe.eval_sql_where(
+            'where(a = [1,2,3])',
+            {}),
+            "WHERE a IN (1,2,3)"
+        );
+
+        assert.equal( lpe.eval_sql_where(
+            'where(a = [null,1,2,null,3,null])',
+            {}),
+            "WHERE (a IS NULL OR a IN (1,2,3))"
+        );
+
+        assert.equal( lpe.eval_sql_where(
+            'where(a = [])',
+            {}),
+            "WHERE TRUE"
+        );
+
     });
 
 /* NOT YET READY !!!
     it('should eval full SQL expressions', function() {
-        assert.equal( lpe.eval_sql_apidb_expr( 
+        assert.equal( lpe.eval_sql_apidb_expr(
             'from(bm.tbl).select(department_code.alias, no::TEXT:textual, max(credits)).where(a>1).from(final.tbl).order_by(a,-b).select(select(last).from(test)):subselect.where(\'b\'+3 <3)',
             {"period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
             "WHERE 'Noyabr' = 3"

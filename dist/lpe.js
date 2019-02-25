@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2019/02/21 14:24:20 */ 
+/** [LPE]  Version: 1.0.0 - 2019/02/25 16:36:00 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -1648,6 +1648,16 @@ function sql_where_context(_vars) {
 
   _context['order_by'].ast = [[], {}, [], 1]; // mark as macro
 
+  _context['lpe_pg_tstz_at_time_zone'] = function (timestamp, zone) {
+    // FIXME: check quotes !!!
+    if (/'/.test(timestamp)) {
+      throw 'Wrong timestamp: ' + JSON.stringify(timestamp);
+    }
+
+    __WEBPACK_IMPORTED_MODULE_0__console_console__["a" /* default */].log("lpe_pg_tstz_at_time_zone" + timestamp);
+    return "'" + timestamp + "'" + "::timestamptz at time zone '" + zone + "'";
+  };
+
   _context['pg_interval'] = function (cnt, period_type) {
     var pt;
 
@@ -1719,7 +1729,7 @@ function sql_where_context(_vars) {
 
     var prnt = function prnt(ar) {
       if (ar instanceof Array) {
-        if (ar[0] === '$' || ar[0] === '"' || ar[0] === "'" || ar[0] === "[" || ar[0] === 'parse_kv' || ar[0] === "=" || ar[0] === "pg_interval") {
+        if (ar[0] === '$' || ar[0] === '"' || ar[0] === "'" || ar[0] === "[" || ar[0] === 'parse_kv' || ar[0] === "=" || ar[0] === "pg_interval" || ar[0] === "lpe_pg_tstz_at_time_zone") {
           return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_3__lisp__["a" /* eval_lisp */])(ar, ctx);
         } else {
           if (ar.length == 2) {
@@ -1770,10 +1780,33 @@ function sql_where_context(_vars) {
     };
 
     ctx['='] = function (l, r) {
-      if (r instanceof Array && r[0] == 'vector') {
-        return prnt(l) + " in (" + r.slice(1).map(function (el) {
-          return prnt(el);
-        }).join(',') + ")";
+      // понимаем a = [null] как a is null
+      // a = [] просто пропускаем
+      // a = [null, 1,2] как a in (1,2) or a is null
+      if (r instanceof Array && r[0] === '[') {
+        var nonnull = r.filter(function (el) {
+          return el !== null;
+        });
+
+        if (nonnull.length === r.length) {
+          if (nonnull.length === 1) {
+            return "";
+          } else {
+            return prnt(l) + " IN (" + r.slice(1).map(function (el) {
+              return prnt(el);
+            }).join(',') + ")";
+          }
+        } else {
+          var col = prnt(l);
+
+          if (nonnull.length === 1) {
+            return col + " IS NULL";
+          } else {
+            return "(" + col + " IS NULL OR " + col + " IN (" + nonnull.slice(1).map(function (el) {
+              return prnt(el);
+            }).join(',') + "))";
+          }
+        }
       }
 
       return prnt(l) + " = " + prnt(r);
@@ -1830,9 +1863,10 @@ function sql_where_context(_vars) {
             return result;
           }
         }
-      }
+      } // return everything, FIXME: is it right thing to do ?
 
-      return '(/*parse_kv EMPTY*/ 1=0)';
+
+      return '(/*parse_kv EMPTY*/ 1=1)';
     };
 
     ctx['parse_kv'].ast = [[], {}, [], 1]; // mark as macro
