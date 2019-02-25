@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2019/02/25 16:36:00 */ 
+/** [LPE]  Version: 1.0.0 - 2019/02/25 19:47:56 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -1727,6 +1727,16 @@ function sql_where_context(_vars) {
       ctx[key] = _vars[key];
     }
 
+    var quote_scalar = function quote_scalar(el) {
+      if (typeof el === "string") {
+        return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__utils_utils__["a" /* db_quote_literal */])(el);
+      } else if (typeof el === "number") {
+        return el;
+      } else {
+        return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__utils_utils__["a" /* db_quote_literal */])(JSON.stringify(el));
+      }
+    };
+
     var prnt = function prnt(ar) {
       if (ar instanceof Array) {
         if (ar[0] === '$' || ar[0] === '"' || ar[0] === "'" || ar[0] === "[" || ar[0] === 'parse_kv' || ar[0] === "=" || ar[0] === "pg_interval" || ar[0] === "lpe_pg_tstz_at_time_zone") {
@@ -1783,33 +1793,61 @@ function sql_where_context(_vars) {
       // понимаем a = [null] как a is null
       // a = [] просто пропускаем
       // a = [null, 1,2] как a in (1,2) or a is null
-      if (r instanceof Array && r[0] === '[') {
-        var nonnull = r.filter(function (el) {
-          return el !== null;
-        });
+      if (r instanceof Array) {
+        if (r[0] === '[') {
+          r = ['['].concat(r.slice(1).map(function (el) {
+            return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_3__lisp__["a" /* eval_lisp */])(el, _context);
+          }));
+          var nonnull = r.filter(function (el) {
+            return el !== null;
+          });
 
-        if (nonnull.length === r.length) {
-          if (nonnull.length === 1) {
-            return "";
+          if (nonnull.length === r.length) {
+            if (nonnull.length === 1) {
+              return "TRUE";
+            } else {
+              return prnt(l) + " IN (" + r.slice(1).map(function (el) {
+                return prnt(el);
+              }).join(',') + ")";
+            }
           } else {
-            return prnt(l) + " IN (" + r.slice(1).map(function (el) {
-              return prnt(el);
-            }).join(',') + ")";
+            var col = prnt(l);
+
+            if (nonnull.length === 1) {
+              return col + " IS NULL";
+            } else {
+              return "(" + col + " IS NULL OR " + col + " IN (" + nonnull.slice(1).map(function (el) {
+                return prnt(el);
+              }).join(',') + "))";
+            }
           }
         } else {
-          var col = prnt(l);
+          //console.log("RESOLVING VAR " + JSON.stringify(r));
+          //console.log("RESOLVING VAR " + JSON.stringify(r.slice(1)));
+          var var_expr;
 
-          if (nonnull.length === 1) {
-            return col + " IS NULL";
+          if (r[0] === '$') {
+            var_expr = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_3__lisp__["a" /* eval_lisp */])(r[1], _context);
           } else {
-            return "(" + col + " IS NULL OR " + col + " IN (" + nonnull.slice(1).map(function (el) {
-              return prnt(el);
-            }).join(',') + "))";
+            var_expr = prnt(r, ctx);
+          } //console.log("EVAL" + JSON.stringify(var_expr));
+
+
+          if (var_expr instanceof Array) {
+            return ctx['='](l, ['['].concat(var_expr));
+          } else {
+            return ctx['='](l, var_expr);
           }
         }
       }
 
-      return prnt(l) + " = " + prnt(r);
+      if (r == null) {
+        return prnt(l) + " IS NULL ";
+      } else if (r == '') {
+        return prnt(l) + " = ''";
+      } else {
+        return prnt(l) + " = " + prnt(r);
+      }
     };
 
     ctx['='].ast = [[], {}, [], 1]; // mark as macro
@@ -1822,13 +1860,7 @@ function sql_where_context(_vars) {
       if (expr instanceof Array) {
         // try to print using quotes, use plv8 !!!
         return expr.map(function (el) {
-          if (typeof el === "string") {
-            return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__utils_utils__["a" /* db_quote_literal */])(el);
-          } else if (typeof el === "number") {
-            return el;
-          } else {
-            return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__utils_utils__["a" /* db_quote_literal */])(JSON.stringify(el));
-          }
+          return quote_scalar(el);
         }).join(',');
       }
 
