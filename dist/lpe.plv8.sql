@@ -2859,3 +2859,35 @@ $body$;
 
 COMMENT ON FUNCTION lpe.parse_sql_expr(TEXT,JSONB) IS
 $$Выполняет разбор LPE выражения и выдаёт SQL запрос в виде текста$$;
+
+
+
+CREATE OR REPLACE FUNCTION lpe.eval_mixed_expr(_expr jsonb, _vars jsonb DEFAULT '{}'::jsonb)
+ RETURNS text
+ LANGUAGE plv8
+ STABLE
+AS $function$
+
+
+  var safe_sql_type = function (ret) {
+    if (typeof(ret) == "function") {
+      return '["function"]';
+    } else {
+      return ret;
+    }
+  }
+
+if (_expr instanceof Array) {
+    return safe_sql_type(plv8.lpe.eval_lisp(_expr));
+  }
+  if (typeof(_expr) === 'string') {
+    if      (_expr.startsWith('lpe:')) return safe_sql_type(plv8.lpe.eval_lpe(_expr.substr(4)));
+    else if (_expr.startsWith('⚡'))   return safe_sql_type(plv8.lpe.eval_lpe(_expr.substr(1)));
+  }
+
+  return _expr;
+$function$;
+
+COMMENT ON FUNCTION lpe.eval_mixed_expr(JSONB, JSONB) IS
+$$Выполняет разбор LPE выражения в разных форматах: LISP S-EXPRESSIONS в виде JSON массива и текстовые выражения LPE. 
+Текстовые выражения должны начинаться с префикса lpe: или ⚡. Иначе функция просто вернёт входной параметр _expr$$;
