@@ -109,7 +109,7 @@ const SPECIAL_FORMS = {                                                         
     try {
       return (value !== undefined) ? (obj[propertyName] = value) : obj[propertyName];
     } catch (err) {
-      return null;
+      return undefined;
     }
   }),
   '.': makeSF((ast, ctx, rs) => {                                               // call object method

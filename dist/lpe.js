@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2019/03/06 20:10:48 */ 
+/** [LPE]  Version: 1.0.0 - 2019/03/06 20:44:57 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -897,7 +897,7 @@ var SPECIAL_FORMS = {
     try {
       return value !== undefined ? obj[propertyName] = value : obj[propertyName];
     } catch (err) {
-      return null;
+      return undefined;
     }
   }),
   '.': makeSF(function (ast, ctx, rs) {

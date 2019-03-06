@@ -898,7 +898,7 @@ var SPECIAL_FORMS = {
     try {
       return value !== undefined ? obj[propertyName] = value : obj[propertyName];
     } catch (err) {
-      return null;
+      return undefined;
     }
   }),
   '.': makeSF(function (ast, ctx, rs) {
