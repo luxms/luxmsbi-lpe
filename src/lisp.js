@@ -106,8 +106,11 @@ const SPECIAL_FORMS = {                                                         
   }),
   '.-': makeSF((ast, ctx, rs) => {                                              // get or set attribute
     const [obj, propertyName, value] = ast.map(a => EVAL(a, ctx, rs));
-    if (obj === null || obj === undefined || isNumber(obj) || isBoolean(obj)) return null;
-    return (value !== undefined) ? (obj[propertyName] = value) : obj[propertyName];
+    try {
+      return (value !== undefined) ? (obj[propertyName] = value) : obj[propertyName];
+    } catch (err) {
+      return null;
+    }
   }),
   '.': makeSF((ast, ctx, rs) => {                                               // call object method
     const [obj, methodName, ...args] = ast.map(a => EVAL(a, ctx, rs));

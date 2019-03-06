@@ -335,8 +335,11 @@ var SPECIAL_FORMS = {
         propertyName = _ast$map2[1],
         value = _ast$map2[2];
 
-    if (obj === null || obj === undefined || isNumber(obj) || isBoolean(obj)) return null;
-    return value !== undefined ? obj[propertyName] = value : obj[propertyName];
+    try {
+      return value !== undefined ? obj[propertyName] = value : obj[propertyName];
+    } catch (err) {
+      return null;
+    }
   }),
   '.': makeSF(function (ast, ctx, rs) {
     // call object method

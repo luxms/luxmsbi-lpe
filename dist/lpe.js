@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2019/03/06 18:35:19 */ 
+/** [LPE]  Version: 1.0.0 - 2019/03/06 18:37:23 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -296,8 +296,11 @@ var SPECIAL_FORMS = {
         propertyName = _ast$map2[1],
         value = _ast$map2[2];
 
-    if (obj === null || obj === undefined || isNumber(obj) || isBoolean(obj)) return null;
-    return value !== undefined ? obj[propertyName] = value : obj[propertyName];
+    try {
+      return value !== undefined ? obj[propertyName] = value : obj[propertyName];
+    } catch (err) {
+      return null;
+    }
   }),
   '.': makeSF(function (ast, ctx, rs) {
     // call object method
