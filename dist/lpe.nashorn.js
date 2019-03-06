@@ -185,6 +185,10 @@ var isNumber = function isNumber(arg) {
   return typeof arg === 'number';
 };
 
+var isBoolean = function isBoolean(arg) {
+  return arg === true || arg === false;
+};
+
 var isHash = function isHash(arg) {
   return _typeof(arg) === 'object' && arg !== null && !isArray(arg);
 };
@@ -331,6 +335,7 @@ var SPECIAL_FORMS = {
         propertyName = _ast$map2[1],
         value = _ast$map2[2];
 
+    if (obj === null || obj === undefined || isNumber(obj) || isBoolean(obj)) return null;
     return value !== undefined ? obj[propertyName] = value : obj[propertyName];
   }),
   '.': makeSF(function (ast, ctx, rs) {

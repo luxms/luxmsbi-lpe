@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2019/02/25 16:36:00 */ 
+/** [LPE]  Version: 1.0.0 - 2019/03/06 18:34:21 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -144,6 +144,10 @@ var isString = function isString(arg) {
 
 var isNumber = function isNumber(arg) {
   return typeof arg === 'number';
+};
+
+var isBoolean = function isBoolean(arg) {
+  return arg === true || arg === false;
 };
 
 var isHash = function isHash(arg) {
@@ -292,6 +296,7 @@ var SPECIAL_FORMS = {
         propertyName = _ast$map2[1],
         value = _ast$map2[2];
 
+    if (obj === null || obj === undefined || isNumber(obj) || isBoolean(obj)) return null;
     return value !== undefined ? obj[propertyName] = value : obj[propertyName];
   }),
   '.': makeSF(function (ast, ctx, rs) {

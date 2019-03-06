@@ -17,6 +17,7 @@ import console from './console/console';
 const isArray = (arg) => Object.prototype.toString.call(arg) === '[object Array]';
 const isString = (arg) => (typeof arg === 'string');
 const isNumber = (arg) => (typeof arg === 'number');
+const isBoolean = (arg) => arg === true || arg === false;
 const isHash = (arg) => (typeof arg === 'object') && (arg !== null) && !isArray(arg);
 const isFunction = (arg) => (typeof arg === 'function');
 
@@ -105,6 +106,7 @@ const SPECIAL_FORMS = {                                                         
   }),
   '.-': makeSF((ast, ctx, rs) => {                                              // get or set attribute
     const [obj, propertyName, value] = ast.map(a => EVAL(a, ctx, rs));
+    if (obj === null || obj === undefined || isNumber(obj) || isBoolean(obj)) return null;
     return (value !== undefined) ? (obj[propertyName] = value) : obj[propertyName];
   }),
   '.': makeSF((ast, ctx, rs) => {                                               // call object method
@@ -377,3 +379,6 @@ export function eval_lisp(ast, ctx) {
 export function evaluate(ast, ctx) {
   return eval_lisp(ast, ctx);
 }
+
+
+
