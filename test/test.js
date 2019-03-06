@@ -184,9 +184,9 @@ describe('LPE tests', function() {
 
         // evaluate code in $()
         assert.equal( lpe.eval_sql_where(
-            'where(title = $(str(first([11,2,3,4]),last([1,2,3,-1999]))))',
+            "where(a = 'b' or title = $(str(first([11,2,3,4]),last([1,2,3,-1999]))))",
             {"period_type_list":['1','qwerty','0','null'], "period": {"title":"Noyabr","id":2131}}),
-            "WHERE title = '11-1999'"
+            "WHERE a = 'b' or title = 11-1999"
         );
 
         // if false
@@ -200,7 +200,7 @@ describe('LPE tests', function() {
         assert.equal( lpe.eval_sql_where(
             'if(count(period_type_list), where(a = $(first(period_type_list)))  , where (title is not null))',
             {"period_type_list":['1','qwerty','0','null'], "period": {"title":"Noyabr","id":2131}, "period_type_list": [4,5,6]}),
-            "WHERE a = '4'"
+            "WHERE a = 4"
         );
 
         // if pluck
@@ -214,14 +214,14 @@ describe('LPE tests', function() {
         assert.equal( lpe.eval_sql_where(
             'where (ctime in ($(periods.pluck(start_time))), cnt = $(periods.count()) )',
             {"periods":[{"start_time":"2018-01-01","id":2324342},{"id":9890798,"start_time":"2017-01-01"}], "period": {"title":"Noyabr","id":2131}}),
-            "WHERE (ctime in ('2018-01-01','2017-01-01')) AND (cnt = '2')"
+            "WHERE (ctime in ('2018-01-01','2017-01-01')) AND (cnt = 2)"
         );
 
         // combine several arguments with AND 2
         assert.equal( lpe.eval_sql_where(
             'where (ctime in ($(periods.pluck(start_time))), cnt = $(periods.count()) )',
             {"periods":[{"start_time":"2018-01-01","id":2324342},{"id":9890798,"start_time":"2017-01-01"}], "period": {"title":"Noyabr","id":2131}}),
-            "WHERE (ctime in ('2018-01-01','2017-01-01')) AND (cnt = '2')"
+            "WHERE (ctime in ('2018-01-01','2017-01-01')) AND (cnt = 2)"
         );
 
         // + interval generation from period_type
@@ -310,6 +310,18 @@ describe('LPE tests', function() {
             'where(a = [])',
             {}),
             "WHERE TRUE"
+        );
+
+        assert.equal( lpe.eval_sql_where(
+            'where(a = $(var1) and b = $(var1))',
+            {"var1":[]}),
+            "WHERE TRUE and TRUE"
+        );
+
+        assert.equal( lpe.eval_sql_where(
+            'where(a = $(var1))',
+            {"var1":""}),
+            "WHERE a = ''"
         );
 
     });

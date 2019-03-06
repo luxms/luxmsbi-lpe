@@ -182,6 +182,16 @@ export function sql_where_context(_vars) {
       var ctx = {};
       for(var key in _vars) ctx[key] = _vars[key];
 
+      var quote_scalar = function(el) {
+        if (typeof(el)==="string") {
+          return db_quote_literal(el);
+        } else if (typeof(el) === "number") {
+          return el;
+        } else {
+          return db_quote_literal(JSON.stringify(el));
+        }
+      }
+
       var prnt = function(ar) {
         if (ar instanceof Array) {
           if (  ar[0] === '$' ||
@@ -246,29 +256,54 @@ export function sql_where_context(_vars) {
         // понимаем a = [null] как a is null
         // a = [] просто пропускаем
         // a = [null, 1,2] как a in (1,2) or a is null
-        if (r instanceof Array && r[0] === '[') {
-          var nonnull = r.filter(function(el){return el !== null});
-          if (nonnull.length === r.length) {
-            if (nonnull.length === 1) {
-                return "";
+        if (r instanceof Array) {
+          if (r[0] === '[') {
+            r = ['['].concat(r.slice(1).map(function(el){return eval_lisp(el, _context)}))
+            var nonnull = r.filter(function(el){return el !== null});
+            if (nonnull.length === r.length) {
+              if (nonnull.length === 1) {
+                  return "TRUE";
+              } else {
+                return prnt(l)
+                      + " IN ("
+                      + r.slice(1).map(function(el){return prnt(el)}).join(',')
+                      + ")";
+              }
             } else {
-              return prnt(l)
-                    + " IN ("
-                    + r.slice(1).map(function(el){return prnt(el)}).join(',')
-                    + ")";
+              var col = prnt(l);
+              if (nonnull.length === 1) {
+                return col + " IS NULL";
+              } else {
+                return "(" + col + " IS NULL OR " + col + " IN (" +
+                      nonnull.slice(1).map(function(el){return prnt(el)}).join(',')
+                      + "))";
+              }
             }
           } else {
-            var col = prnt(l);
-            if (nonnull.length === 1) {
-              return col + " IS NULL";
+            //console.log("RESOLVING VAR " + JSON.stringify(r));
+            //console.log("RESOLVING VAR " + JSON.stringify(r.slice(1)));
+            var var_expr
+            if (r[0] === '$') {
+              var_expr = eval_lisp(r[1], _context);
             } else {
-              return "(" + col + " IS NULL OR " + col + " IN (" +
-                    nonnull.slice(1).map(function(el){return prnt(el)}).join(',')
-                    + "))";
+              var_expr = prnt(r, ctx);
+            }
+            //console.log("EVAL" + JSON.stringify(var_expr));
+            if (var_expr instanceof Array) {
+              return ctx['='](l,['['].concat(var_expr));
+            } else {
+              return ctx['='](l,var_expr);
             }
           }
         }
-        return prnt(l) + " = " + prnt(r);
+
+        if (r == null) {
+          return prnt(l) + " IS NULL ";
+        } else if (r == '') {
+          return prnt(l) + " = ''";
+        } else {
+          return prnt(l) + " = " + prnt(r);
+        }
       }
       ctx['='].ast = [[],{},[],1]; // mark as macro
 
@@ -279,13 +314,7 @@ export function sql_where_context(_vars) {
         if (expr instanceof Array) {
           // try to print using quotes, use plv8 !!!
           return expr.map(function(el){
-              if (typeof(el)==="string") {
-                return db_quote_literal(el);
-              } else if (typeof(el) === "number") {
-                return el;
-              } else {
-                return db_quote_literal(JSON.stringify(el));
-              }
+              return quote_scalar(el);
             }).join(',');
         }
         return db_quote_literal(expr);
