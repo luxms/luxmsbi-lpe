@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2019/03/14 13:35:15 */ 
+/** [LPE]  Version: 1.0.0 - 2019/03/14 17:50:55 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -1008,7 +1008,7 @@ var STDLIB = _objectSpread({
     }
 
     return args.every(function (v) {
-      return v === args[0];
+      return v == args[0];
     });
   },
   '+': function _() {
@@ -1089,7 +1089,7 @@ var STDLIB = _objectSpread({
     }
 
     return !args.every(function (v) {
-      return v === args[0];
+      return v == args[0];
     });
   },
   '[': function _() {

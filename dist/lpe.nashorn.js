@@ -1233,7 +1233,7 @@ var STDLIB = _objectSpread({
     }
 
     return args.every(function (v) {
-      return v === args[0];
+      return v == args[0];
     });
   },
   '+': function _() {
@@ -1314,7 +1314,7 @@ var STDLIB = _objectSpread({
     }
 
     return !args.every(function (v) {
-      return v === args[0];
+      return v == args[0];
     });
   },
   '[': function _() {

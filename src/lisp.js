@@ -178,7 +178,7 @@ const STDLIB = {
   ...SPECIAL_FORMS,
 
   // built-in function
-  '=': (...args) => args.every(v => v === args[0]),
+  '=': (...args) => args.every(v => v == args[0]),
   '+': (...args) => args.reduce((a, b) => a + b),
   '-': (...args) => args.length === 1 ? -args[0] : args.reduce((a, b) => a - b),
   '*': (...args) => args.reduce((a, b) => a * b),
@@ -187,7 +187,7 @@ const STDLIB = {
   '>': (...args) => args.every((v, i) => i === 0 ? true : args[i-1] > args[i]),
   '<=': (...args) => args.every((v, i) => i === 0 ? true : args[i-1] <= args[i]),
   '>=': (...args) => args.every((v, i) => i === 0 ? true : args[i-1] >= args[i]),
-  '!=': (...args) => !args.every(v => v === args[0]),
+  '!=': (...args) => !args.every(v => v == args[0]),
   '[': (...args) => args,
   'RegExp': (...args) => RegExp.apply(RegExp, args),
   'count': (a) => a.length,
