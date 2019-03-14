@@ -659,8 +659,8 @@ module.exports = function (it) {
 "use strict";
 /* unused harmony export makeMacro */
 /* unused harmony export makeSF */
-/* unused harmony export init_lisp */
 /* harmony export (immutable) */ __webpack_exports__["a"] = eval_lisp;
+/* unused harmony export init_lisp */
 /* harmony export (immutable) */ __webpack_exports__["b"] = evaluate;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_string_iterator__ = __webpack_require__(103);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_string_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_string_iterator__);
@@ -803,10 +803,29 @@ function $var$(ctx, varName, value) {
     return undefined; // ??? ctx.length = 0
   }
 
-  if (isFunction(ctx)) return ctx(varName, value);
+  if (isFunction(ctx)) {
+    return ctx(varName, value);
+  }
 
   if (isHash(ctx)) {
-    return value === undefined ? ctx[varName] : ctx[varName] = value;
+    if (value === undefined) {
+      // get from hash
+      var _result = ctx[varName];
+
+      if (_result !== undefined) {
+        // found value in hash
+        return _result;
+      }
+
+      if (varName[0] !== '⌘' && isFunction(ctx['⌘' + varName])) {
+        // user-defined special form
+        return makeSF(ctx['⌘' + varName]);
+      }
+
+      return undefined;
+    } else {
+      return ctx[varName] = value;
+    }
   }
 
   return undefined;
@@ -898,7 +917,7 @@ var SPECIAL_FORMS = {
     try {
       return value !== undefined ? obj[propertyName] = value : obj[propertyName];
     } catch (err) {
-      return undefined;
+      return value; // undefined when 'get'
     }
   }),
   '.': makeSF(function (ast, ctx, rs) {
@@ -955,15 +974,15 @@ var SPECIAL_FORMS = {
     var result = $var$(ctx, ast[0], value);
     return result;
   }),
-  'filterIt': makeSF(function (ast, ctx, rs) {
-    var array = EVAL(ast[0], ctx, rs);
-    var conditionAST = ast[1];
-    return Array.prototype.filter.call(array, function (it, idx) {
-      return !!EVAL(conditionAST, [{
-        it: it,
-        idx: idx
-      }, ctx], rs);
-    });
+  'filter': makeSF(function (ast, ctx, rs) {
+    var _ast$map5 = ast.map(function (a) {
+      return EVAL(a, ctx, rs);
+    }),
+        _ast$map6 = _slicedToArray(_ast$map5, 2),
+        lambda = _ast$map6[0],
+        array = _ast$map6[1];
+
+    return Array.prototype.filter.call(array, lambda);
   })
 };
 
@@ -1274,7 +1293,7 @@ var STDLIB = _objectSpread({
       args[_key23] = arguments[_key23];
     }
 
-    return ["begin"].concat(args);
+    return ['begin'].concat(args);
   }),
   '->': makeMacro(function (acc) {
     for (var _len24 = arguments.length, ast = new Array(_len24 > 1 ? _len24 - 1 : 0), _key24 = 1; _key24 < _len24; _key24++) {
@@ -1347,8 +1366,6 @@ var STDLIB = _objectSpread({
   }),
   // system functions & objects
   // 'js': eval,
-  eval_context: eval_context,
-  // TODO: remove
   eval: function _eval(a) {
     return EVAL(a, STDLIB);
   }
@@ -1452,32 +1469,23 @@ function EVAL(ast, ctx) {
 } // EVAL
 
 
-function eval_context(ast, ctx) {
+function eval_lisp(ast, ctx) {
   var result = EVAL(ast, [ctx || {}, STDLIB]);
   return result;
 } // Use with care
-
 
 function init_lisp(ctx) {
   ctx = [ctx || {}, STDLIB];
   return {
     eval: function _eval(ast) {
-      return eval_context(ast, ctx);
+      return eval_lisp(ast, ctx);
     },
     val: function val(varName, value) {
       return $var$(ctx, varName, value);
     }
   };
-}
-function eval_lisp(ast, ctx) {
-  var result = eval_context(ast, ctx);
+} // deprecated
 
-  if (isFunction(result)) {
-    return '["function"]';
-  } else {
-    return result;
-  }
-}
 function evaluate(ast, ctx) {
   return eval_lisp(ast, ctx);
 }

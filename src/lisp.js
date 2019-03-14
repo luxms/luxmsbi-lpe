@@ -41,10 +41,23 @@ function $var$(ctx, varName, value) {
     return undefined;                                                           // ??? ctx.length = 0
   }
   
-  if (isFunction(ctx)) return ctx(varName, value);
+  if (isFunction(ctx)) {
+    return ctx(varName, value);
+  }
 
   if (isHash(ctx)) {
-    return (value === undefined) ? ctx[varName] : (ctx[varName] = value);
+    if (value === undefined) {                                                  // get from hash
+      const result = ctx[varName];
+      if (result !== undefined) {                                               // found value in hash
+        return result;
+      }
+      if (varName[0] !== '⌘' && isFunction(ctx['⌘' + varName])) {              // user-defined special form
+        return makeSF(ctx['⌘' + varName]);
+      }
+      return undefined;
+    } else {
+      return (ctx[varName] = value);
+    }
   }
 
   return undefined;
@@ -56,16 +69,19 @@ export function makeMacro(fn, ast) {
   return fn;
 }
 
+
 function isMacro(fn) {
   if (!isFunction(fn)) return false;
   if (!isArray(fn.ast)) return false;
   return !!fn.ast[3];
 }
 
+
 export function makeSF(fn) {
   fn.__isSpecialForm = true;
   return fn;
 }
+
 
 function isSF(fn) {
   if (!isFunction(fn)) return false;
@@ -109,7 +125,7 @@ const SPECIAL_FORMS = {                                                         
     try {
       return (value !== undefined) ? (obj[propertyName] = value) : obj[propertyName];
     } catch (err) {
-      return undefined;
+      return value;                                                             // undefined when 'get'
     }
   }),
   '.': makeSF((ast, ctx, rs) => {                                               // call object method
@@ -137,10 +153,9 @@ const SPECIAL_FORMS = {                                                         
     const result = $var$(ctx, ast[0], value);
     return result;
   }),
-  'filterIt': makeSF((ast, ctx, rs) => {
-    const array = EVAL(ast[0], ctx, rs);
-    const conditionAST = ast[1];
-    return Array.prototype.filter.call(array, (it, idx) => !!EVAL(conditionAST, [{it, idx}, ctx], rs));
+  'filter': makeSF((ast, ctx, rs) => {
+    const [lambda, array] = ast.map(a => EVAL(a, ctx, rs));
+    return Array.prototype.filter.call(array, lambda);
   }),
 };
 
@@ -221,7 +236,7 @@ const STDLIB = {
   // macros
   '\'': makeMacro(a => a.toString()),
   '"': makeMacro(a => a.toString()),
-  '()': makeMacro((...args) => ["begin", ...args]),
+  '()': makeMacro((...args) => ['begin', ...args]),
   '->': makeMacro((acc, ...ast) => {                                            // thread first macro
     // императивная лапша для макроса ->
     // надо вот так: https://clojuredocs.org/clojure.core/-%3E%3E
@@ -273,7 +288,6 @@ const STDLIB = {
 
   // system functions & objects
   // 'js': eval,
-  eval_context: eval_context,                           // TODO: remove
   eval: (a) => EVAL(a, STDLIB),
 };
 
@@ -361,33 +375,22 @@ function EVAL(ast, ctx, resolveString = true) {
 } // EVAL
 
 
-function eval_context(ast, ctx) {
+export function eval_lisp(ast, ctx) {
   const result = EVAL(ast, [ctx || {}, STDLIB]);
   return result;
 }
-
 
 // Use with care
 export function init_lisp(ctx) {
   ctx = [ctx || {}, STDLIB];
   return {
-    eval: (ast) => eval_context(ast, ctx),
+    eval: (ast) => eval_lisp(ast, ctx),
     val: (varName, value) => $var$(ctx, varName, value),
   }
 }
 
 
-export function eval_lisp(ast, ctx) {
-  const result = eval_context(ast, ctx);
-
-  if (isFunction(result)) {
-    return '["function"]';
-  } else {
-    return result;
-  }
-}
-
-
+// deprecated
 export function evaluate(ast, ctx) {
   return eval_lisp(ast, ctx);
 }
