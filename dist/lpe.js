@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2019/03/06 20:44:57 */ 
+/** [LPE]  Version: 1.0.0 - 2019/03/14 12:00:18 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -953,6 +953,16 @@ var SPECIAL_FORMS = {
     var value = EVAL(ast[1], ctx, rs);
     var result = $var$(ctx, ast[0], value);
     return result;
+  }),
+  'filterIt': makeSF(function (ast, ctx, rs) {
+    var array = EVAL(ast[0], ctx, rs);
+    var conditionAST = ast[1];
+    return Array.prototype.filter.call(array, function (it, idx) {
+      return !!EVAL(conditionAST, [{
+        it: it,
+        idx: idx
+      }, ctx], rs);
+    });
   })
 };
 
@@ -1416,6 +1426,10 @@ function EVAL(ast, ctx) {
         argsAst = _ast2.slice(1);
 
     var op = EVAL(opAst, ctx, resolveString); // evaluate operator
+
+    if (typeof op !== 'function') {
+      throw new Error('Error: ' + String(op) + ' is not a function');
+    }
 
     if (isSF(op)) {
       // special form

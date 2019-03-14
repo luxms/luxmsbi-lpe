@@ -137,6 +137,11 @@ const SPECIAL_FORMS = {                                                         
     const result = $var$(ctx, ast[0], value);
     return result;
   }),
+  'filterIt': makeSF((ast, ctx, rs) => {
+    const array = EVAL(ast[0], ctx, rs);
+    const conditionAST = ast[1];
+    return Array.prototype.filter.call(array, (it, idx) => !!EVAL(conditionAST, [{it, idx}, ctx], rs));
+  }),
 };
 
 
@@ -333,6 +338,10 @@ function EVAL(ast, ctx, resolveString = true) {
     const [opAst, ...argsAst] = ast;
 
     const op = EVAL(opAst, ctx, resolveString);                                 // evaluate operator
+
+    if (typeof op !== 'function') {
+      throw new Error('Error: ' + String(op) + ' is not a function');
+    }
 
     if (isSF(op)) {                                                             // special form
       const sfResult = op(argsAst, ctx, resolveString);
