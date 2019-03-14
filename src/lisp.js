@@ -221,7 +221,7 @@ const STDLIB = {
   // macros
   '\'': makeMacro(a => a.toString()),
   '"': makeMacro(a => a.toString()),
-  '()': makeMacro((...args) => args),                                           // ???
+  '()': makeMacro((...args) => ["begin", ...args]),
   '->': makeMacro((acc, ...ast) => {                                            // thread first macro
     // императивная лапша для макроса ->
     // надо вот так: https://clojuredocs.org/clojure.core/-%3E%3E

@@ -1498,9 +1498,8 @@ var STDLIB = _objectSpread({
       args[_key23] = arguments[_key23];
     }
 
-    return args;
+    return ["begin"].concat(args);
   }),
-  // ???
   '->': makeMacro(function (acc) {
     for (var _len24 = arguments.length, ast = new Array(_len24 > 1 ? _len24 - 1 : 0), _key24 = 1; _key24 < _len24; _key24++) {
       ast[_key24 - 1] = arguments[_key24];
