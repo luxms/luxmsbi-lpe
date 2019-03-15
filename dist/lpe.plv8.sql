@@ -817,9 +817,9 @@ function $var$(ctx, varName, value) {
         return _result;
       }
 
-      if (varName[0] !== '⌘' && isFunction(ctx['⌘' + varName])) {
+      if (varName.substr(0, 3) === 'sf:' && isFunction(ctx['sf:' + varName])) {
         // user-defined special form
-        return makeSF(ctx['⌘' + varName]);
+        return makeSF(ctx['sf:' + varName]);
       }
 
       return undefined;
