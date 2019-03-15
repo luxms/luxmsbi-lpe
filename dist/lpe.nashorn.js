@@ -1041,7 +1041,7 @@ function $var$(ctx, varName, value) {
         return _result;
       }
 
-      if (varName.substr(0, 3) === 'sf:' && isFunction(ctx['sf:' + varName])) {
+      if (varName.substr(0, 3) !== 'sf:' && isFunction(ctx['sf:' + varName])) {
         // user-defined special form
         return makeSF(ctx['sf:' + varName]);
       }

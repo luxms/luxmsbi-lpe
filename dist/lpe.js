@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2019/03/15 15:44:51 */ 
+/** [LPE]  Version: 1.0.0 - 2019/03/15 16:02:22 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -816,7 +816,7 @@ function $var$(ctx, varName, value) {
         return _result;
       }
 
-      if (varName.substr(0, 3) === 'sf:' && isFunction(ctx['sf:' + varName])) {
+      if (varName.substr(0, 3) !== 'sf:' && isFunction(ctx['sf:' + varName])) {
         // user-defined special form
         return makeSF(ctx['sf:' + varName]);
       }
