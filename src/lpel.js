@@ -53,6 +53,9 @@ export function makeError(t, message) {
 
 
 export function tokenize(s, prefix = '<>+-&', suffix = '=>&:') {
+  if (s.startsWith('lpe:')) s = s.substr(4);
+  if (s.startsWith('⚡'))  s = s.substr(1);
+
   let c;                      // The current character.
   let from;                   // The index of the start of the token.
   let i = 0;                  // The index of the current character.
