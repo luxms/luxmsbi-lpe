@@ -51,8 +51,8 @@ function $var$(ctx, varName, value) {
       if (result !== undefined) {                                               // found value in hash
         return result;
       }
-      if (varName[0] !== '⌘' && isFunction(ctx['⌘' + varName])) {              // user-defined special form
-        return makeSF(ctx['⌘' + varName]);
+      if (varName.substr(0, 3) === 'sf:' && isFunction(ctx['sf:' + varName])) { // user-defined special form
+        return makeSF(ctx['sf:' + varName]);
       }
       return undefined;
     } else {
