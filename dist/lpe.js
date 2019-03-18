@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2019/03/18 11:39:20 */ 
+/** [LPE]  Version: 1.0.0 - 2019/03/18 14:23:40 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -911,7 +911,13 @@ var SPECIAL_FORMS = {
         _ast$map2 = _slicedToArray(_ast$map, 3),
         obj = _ast$map2[0],
         propertyName = _ast$map2[1],
-        value = _ast$map2[2];
+        value = _ast$map2[2]; // hack
+
+
+    if (propertyName === undefined && isString(ast[1])) {
+      // string propertyName tried to evaluate in rs context
+      propertyName = ast[1];
+    }
 
     try {
       return value !== undefined ? obj[propertyName] = value : obj[propertyName];

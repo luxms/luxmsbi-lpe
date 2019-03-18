@@ -121,7 +121,11 @@ const SPECIAL_FORMS = {                                                         
     return f;
   }),
   '.-': makeSF((ast, ctx, rs) => {                                              // get or set attribute
-    const [obj, propertyName, value] = ast.map(a => EVAL(a, ctx, rs));
+    let [obj, propertyName, value] = ast.map(a => EVAL(a, ctx, rs));
+    // hack
+    if (propertyName === undefined && isString(ast[1])) {                       // string propertyName tried to evaluate in rs context
+      propertyName = ast[1];
+    }
     try {
       return (value !== undefined) ? (obj[propertyName] = value) : obj[propertyName];
     } catch (err) {
