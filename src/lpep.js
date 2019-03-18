@@ -23,20 +23,21 @@ import console from './console/console';
 import {tokenize, makeError, LPESyntaxError} from './lpel';
 
 
+
 var make_parse = function () {
-  var symbol_table = {};
-  var token;
-  var tokens;
-  var token_nr;
+  var m_symbol_table = {};
+  var m_token;
+  var m_tokens;
+  var m_token_nr;
 
   // стэк для типов выражений
-  var expr_scope = { pop: function () {}}; // для разбора логических выражений типа (A and B or C)
+  var m_expr_scope = { pop: function () {}};                                    // для разбора логических выражений типа (A and B or C)
 
   // для хранения алиасов для операций
-  var operator_aliases = {};
+  var m_operator_aliases = {};
 
   var operator_alias = function(from, to) {
-    operator_aliases[from] = to;
+    m_operator_aliases[from] = to;
   };
 
   var itself = function () {
@@ -56,7 +57,7 @@ var make_parse = function () {
 
   var expr_logical_scope = {
     pop: function () {
-      expr_scope = this.parent;
+      m_expr_scope = this.parent;
     },
     parent: null,
     tp: "logical"
@@ -64,42 +65,42 @@ var make_parse = function () {
 
   var expr_lpe_scope = {
     pop: function () {
-      expr_scope = this.parent;
+      m_expr_scope = this.parent;
     },
     parent: null,
     tp: "lpe"
   };
 
   var new_expression_scope = function (tp) {
-    var s = expr_scope;
-    expr_scope = Object.create(tp === "logical" ? expr_logical_scope : expr_lpe_scope);
-    expr_scope.parent = s;
-    return expr_scope;
+    var s = m_expr_scope;
+    m_expr_scope = Object.create(tp === "logical" ? expr_logical_scope : expr_lpe_scope);
+    m_expr_scope.parent = s;
+    return m_expr_scope;
   };
 
   var advance = function (id) {
     var a, o, t, v;
-    if (id && token.id !== id) {
-      makeError(token, "Got " + token.value + " but expected '" + id + "'.");
+    if (id && m_token.id !== id) {
+      makeError(m_token, "Got " + m_token.value + " but expected '" + id + "'.");
     }
-    if (token_nr >= tokens.length) {
-      token = symbol_table["(end)"];
+    if (m_token_nr >= m_tokens.length) {
+      m_token = m_symbol_table["(end)"];
       return;
     }
-    t = tokens[token_nr];
-    token_nr += 1;
+    t = m_tokens[m_token_nr];
+    m_token_nr += 1;
     v = t.value;
     a = t.type;
 
     if (a === "name") {
 
       if (v === 'true' || v === 'false' || v === 'null') {
-        o = symbol_table[v];
+        o = m_symbol_table[v];
         a = "literal";
-      } else if (expr_scope.tp == "logical") {
+      } else if (m_expr_scope.tp == "logical") {
         if (v === "or" || v === "and" || v === "not" || v === "in" || v === "is") {
           a = "operator";
-          o = symbol_table[v];
+          o = m_symbol_table[v];
           if (!o) {
             makeError(t, "Unknown logical operator.");
           }
@@ -110,37 +111,37 @@ var make_parse = function () {
         o = scope.find(v);
       }
     } else if (a === "operator") {
-      o = symbol_table[v];
+      o = m_symbol_table[v];
       if (!o) {
         makeError(t, "Unknown operator.");
       }
     } else if (a === "string_double") {
-      o = symbol_table["(string_literal_double)"];
+      o = m_symbol_table["(string_literal_double)"];
       a = "literal";
     } else if (a === "string_single") {
-      o = symbol_table["(string_literal_single)"];
+      o = m_symbol_table["(string_literal_single)"];
       a = "literal";
     } else if (a === "number") {
-      o = symbol_table["(number_literal)"];
+      o = m_symbol_table["(number_literal)"];
       a = "literal";
     } else {
       makeError(t, "Unexpected token.");
     }
-    token = Object.create(o);
-    token.from = t.from;
-    token.to = t.to;
-    token.value = v;
-    token.arity = a;
+    m_token = Object.create(o);
+    m_token.from = t.from;
+    m_token.to = t.to;
+    m_token.value = v;
+    m_token.arity = a;
     if (a == "operator") {
-      token.sexpr = operator_aliases[v];
+      m_token.sexpr = m_operator_aliases[v];
     } else {
-      token.sexpr = v; // by dima
+      m_token.sexpr = v; // by dima
     }
-    return token;
+    return m_token;
   };
 
   var statement = function () {
-    var n = token, v;
+    var n = m_token, v;
 
     if (n.std) {
         advance();
@@ -161,9 +162,9 @@ var make_parse = function () {
     var a = [], s;
     while (true) {
         //console.log(token);
-        if ( token.id === "(end)") {
+        if ( m_token.id === "(end)") {
             break;
-        } else if(token.value === ';'){
+        } else if(m_token.value === ';'){
           // skip optional ;
            advance();
         }
@@ -178,11 +179,11 @@ var make_parse = function () {
 
   var expression = function (rbp) {
     var left;
-    var t = token;
+    var t = m_token;
     advance();
     left = t.nud();
-    while (rbp < token.lbp) {
-      t = token;
+    while (rbp < m_token.lbp) {
+      t = m_token;
       advance();
       left = t.led(left);
     }
@@ -199,7 +200,7 @@ var make_parse = function () {
   };
 
   var symbol = function (id, bp) {
-    var s = symbol_table[id];
+    var s = m_symbol_table[id];
     bp = bp || 0;
     if (s) {
       if (bp >= s.lbp) {
@@ -209,7 +210,7 @@ var make_parse = function () {
       s = Object.create(original_symbol);
       s.id = s.value = id;
       s.lbp = bp;
-      symbol_table[id] = s;
+      m_symbol_table[id] = s;
     }
     operator_alias(id, id);
     return s;
@@ -270,6 +271,7 @@ var make_parse = function () {
   // allow to skip values in function calls....
   var comma = symbol(",");
 
+
   symbol("(string_literal_double)").nud = function() {
     this.first = '"';
     this.arity = "unary";
@@ -325,6 +327,8 @@ var make_parse = function () {
 
   infixr('⊣', 30); operator_alias('⊣', 'car');
   infixr('⊢', 30); operator_alias('⊢', 'cdr');
+
+  infixr('⍴', 30);
 
   /* will be used in logical scope */
   infixr("and", 30);
@@ -387,25 +391,25 @@ var make_parse = function () {
           }
     }
     // dima support for missed function arguments...
-    if (token.id !== ")") {
+    if (m_token.id !== ")") {
       if (false && left.value == "where") {
         // специальный парсер для where - logical expression.
         // тут у нас выражение с использованием скобок, and, or, not и никаких запятых...
         new_expression_scope("logical");
         var e = expression(0);
-        expr_scope.pop();
+        m_expr_scope.pop();
         a.push(e);
       } else {
         new_expression_scope("lpe");
         while (true) {
           // console.log(">" + token.arity + " NAME:" + left.value);
-          if (token.id === ',') {
+          if (m_token.id === ',') {
             a.push({
               value: null,
               arity: "literal"
             });
             advance();
-          } else if (token.id === ')') {
+          } else if (m_token.id === ')') {
             a.push({
               value: null,
               arity: "literal"
@@ -414,16 +418,16 @@ var make_parse = function () {
           } else {
             new_expression_scope("logical");
             var e = expression(0);
-            expr_scope.pop();
+            m_expr_scope.pop();
             // var e = statements();
             a.push(e);
-            if (token.id !== ",") {
+            if (m_token.id !== ",") {
               break;
             }
             advance(",");
           }
         }
-        expr_scope.pop();
+        m_expr_scope.pop();
       }
     }
 
@@ -514,7 +518,7 @@ var make_parse = function () {
 
   prefix("(", function () {
     var e = expression(0);
-    if (expr_scope.tp == "logical") {
+    if (m_expr_scope.tp == "logical") {
       // we should remember all brackets to restore original user expression
       e.sexpr = ["()", e.sexpr];
     } else {
@@ -534,11 +538,11 @@ var make_parse = function () {
 
   prefix("[", function () {
     var a = [];
-    if (token.id !== "]") {
+    if (m_token.id !== "]") {
       while (true) {
         a.push(expression(0));
         // a.push(statements());
-        if (token.id !== ",") {
+        if (m_token.id !== ",") {
           break;
         }
         advance(",");
@@ -552,8 +556,8 @@ var make_parse = function () {
   });
 
   return function (source) {
-    tokens = tokenize(source, '=<>!+-*&|/%^:.', '=<>&|:.');
-    token_nr = 0;
+    m_tokens = tokenize(source, '=<>!+-*&|/%^:.', '=<>&|:.');
+    m_token_nr = 0;
     advance();
     var s = statements();
     // var s = expression(0);

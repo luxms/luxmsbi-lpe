@@ -1517,6 +1517,15 @@ var STDLIB = _objectSpread({
   'classOf': function classOf(a) {
     return Object.prototype.toString.call(a);
   },
+  '⍴': function _(len) {
+    for (var _len23 = arguments.length, values = new Array(_len23 > 1 ? _len23 - 1 : 0), _key23 = 1; _key23 < _len23; _key23++) {
+      values[_key23 - 1] = arguments[_key23];
+    }
+
+    return Array.apply(null, Array(len)).map(function (a, idx) {
+      return values[idx % values.length];
+    });
+  },
   // not implemented yet
   // 'hash-table->alist'
   // macros
@@ -1527,15 +1536,15 @@ var STDLIB = _objectSpread({
     return a.toString();
   }),
   '()': makeMacro(function () {
-    for (var _len23 = arguments.length, args = new Array(_len23), _key23 = 0; _key23 < _len23; _key23++) {
-      args[_key23] = arguments[_key23];
+    for (var _len24 = arguments.length, args = new Array(_len24), _key24 = 0; _key24 < _len24; _key24++) {
+      args[_key24] = arguments[_key24];
     }
 
     return ['begin'].concat(args);
   }),
   '->': makeMacro(function (acc) {
-    for (var _len24 = arguments.length, ast = new Array(_len24 > 1 ? _len24 - 1 : 0), _key24 = 1; _key24 < _len24; _key24++) {
-      ast[_key24 - 1] = arguments[_key24];
+    for (var _len25 = arguments.length, ast = new Array(_len25 > 1 ? _len25 - 1 : 0), _key25 = 1; _key25 < _len25; _key25++) {
+      ast[_key25 - 1] = arguments[_key25];
     }
 
     // thread first macro
@@ -1558,8 +1567,8 @@ var STDLIB = _objectSpread({
     return acc;
   }),
   '->>': makeMacro(function (acc) {
-    for (var _len25 = arguments.length, ast = new Array(_len25 > 1 ? _len25 - 1 : 0), _key25 = 1; _key25 < _len25; _key25++) {
-      ast[_key25 - 1] = arguments[_key25];
+    for (var _len26 = arguments.length, ast = new Array(_len26 > 1 ? _len26 - 1 : 0), _key26 = 1; _key26 < _len26; _key26++) {
+      ast[_key26 - 1] = arguments[_key26];
     }
 
     // thread last macro
@@ -1574,8 +1583,8 @@ var STDLIB = _objectSpread({
     return acc;
   }),
   'invoke': makeMacro(function () {
-    for (var _len26 = arguments.length, ast = new Array(_len26), _key26 = 0; _key26 < _len26; _key26++) {
-      ast[_key26] = arguments[_key26];
+    for (var _len27 = arguments.length, ast = new Array(_len27), _key27 = 0; _key27 < _len27; _key27++) {
+      ast[_key27] = arguments[_key27];
     }
 
     /// мы не можем использовать точку в LPE для вызова метода объекта, так как она уже замаплена на ->
@@ -1585,8 +1594,8 @@ var STDLIB = _objectSpread({
     return ast;
   }),
   'and': makeMacro(function () {
-    for (var _len27 = arguments.length, ast = new Array(_len27), _key27 = 0; _key27 < _len27; _key27++) {
-      ast[_key27] = arguments[_key27];
+    for (var _len28 = arguments.length, ast = new Array(_len28), _key28 = 0; _key28 < _len28; _key28++) {
+      ast[_key28] = arguments[_key28];
     }
 
     if (ast.length === 0) return true;
@@ -1594,8 +1603,8 @@ var STDLIB = _objectSpread({
     return ["let", ["__and", ast[0]], ["if", "__and", ["and"].concat(ast.slice(1)), "__and"]];
   }),
   'or': makeMacro(function () {
-    for (var _len28 = arguments.length, ast = new Array(_len28), _key28 = 0; _key28 < _len28; _key28++) {
-      ast[_key28] = arguments[_key28];
+    for (var _len29 = arguments.length, ast = new Array(_len29), _key29 = 0; _key29 < _len29; _key29++) {
+      ast[_key29] = arguments[_key29];
     }
 
     if (ast.length === 0) return false;
@@ -1763,20 +1772,20 @@ function evaluate(ast, ctx) {
 
 
 var make_parse = function make_parse() {
-  var symbol_table = {};
-  var token;
-  var tokens;
-  var token_nr; // стэк для типов выражений
+  var m_symbol_table = {};
+  var m_token;
+  var m_tokens;
+  var m_token_nr; // стэк для типов выражений
 
-  var expr_scope = {
+  var m_expr_scope = {
     pop: function pop() {}
   }; // для разбора логических выражений типа (A and B or C)
   // для хранения алиасов для операций
 
-  var operator_aliases = {};
+  var m_operator_aliases = {};
 
   var operator_alias = function operator_alias(from, to) {
-    operator_aliases[from] = to;
+    m_operator_aliases[from] = to;
   };
 
   var itself = function itself() {
@@ -1796,51 +1805,51 @@ var make_parse = function make_parse() {
   };
   var expr_logical_scope = {
     pop: function pop() {
-      expr_scope = this.parent;
+      m_expr_scope = this.parent;
     },
     parent: null,
     tp: "logical"
   };
   var expr_lpe_scope = {
     pop: function pop() {
-      expr_scope = this.parent;
+      m_expr_scope = this.parent;
     },
     parent: null,
     tp: "lpe"
   };
 
   var new_expression_scope = function new_expression_scope(tp) {
-    var s = expr_scope;
-    expr_scope = Object.create(tp === "logical" ? expr_logical_scope : expr_lpe_scope);
-    expr_scope.parent = s;
-    return expr_scope;
+    var s = m_expr_scope;
+    m_expr_scope = Object.create(tp === "logical" ? expr_logical_scope : expr_lpe_scope);
+    m_expr_scope.parent = s;
+    return m_expr_scope;
   };
 
   var advance = function advance(id) {
     var a, o, t, v;
 
-    if (id && token.id !== id) {
-      __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__lpel__["a" /* makeError */])(token, "Got " + token.value + " but expected '" + id + "'.");
+    if (id && m_token.id !== id) {
+      __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__lpel__["a" /* makeError */])(m_token, "Got " + m_token.value + " but expected '" + id + "'.");
     }
 
-    if (token_nr >= tokens.length) {
-      token = symbol_table["(end)"];
+    if (m_token_nr >= m_tokens.length) {
+      m_token = m_symbol_table["(end)"];
       return;
     }
 
-    t = tokens[token_nr];
-    token_nr += 1;
+    t = m_tokens[m_token_nr];
+    m_token_nr += 1;
     v = t.value;
     a = t.type;
 
     if (a === "name") {
       if (v === 'true' || v === 'false' || v === 'null') {
-        o = symbol_table[v];
+        o = m_symbol_table[v];
         a = "literal";
-      } else if (expr_scope.tp == "logical") {
+      } else if (m_expr_scope.tp == "logical") {
         if (v === "or" || v === "and" || v === "not" || v === "in" || v === "is") {
           a = "operator";
-          o = symbol_table[v];
+          o = m_symbol_table[v];
 
           if (!o) {
             __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__lpel__["a" /* makeError */])(t, "Unknown logical operator.");
@@ -1852,41 +1861,41 @@ var make_parse = function make_parse() {
         o = scope.find(v);
       }
     } else if (a === "operator") {
-      o = symbol_table[v];
+      o = m_symbol_table[v];
 
       if (!o) {
         __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__lpel__["a" /* makeError */])(t, "Unknown operator.");
       }
     } else if (a === "string_double") {
-      o = symbol_table["(string_literal_double)"];
+      o = m_symbol_table["(string_literal_double)"];
       a = "literal";
     } else if (a === "string_single") {
-      o = symbol_table["(string_literal_single)"];
+      o = m_symbol_table["(string_literal_single)"];
       a = "literal";
     } else if (a === "number") {
-      o = symbol_table["(number_literal)"];
+      o = m_symbol_table["(number_literal)"];
       a = "literal";
     } else {
       __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__lpel__["a" /* makeError */])(t, "Unexpected token.");
     }
 
-    token = Object.create(o);
-    token.from = t.from;
-    token.to = t.to;
-    token.value = v;
-    token.arity = a;
+    m_token = Object.create(o);
+    m_token.from = t.from;
+    m_token.to = t.to;
+    m_token.value = v;
+    m_token.arity = a;
 
     if (a == "operator") {
-      token.sexpr = operator_aliases[v];
+      m_token.sexpr = m_operator_aliases[v];
     } else {
-      token.sexpr = v; // by dima
+      m_token.sexpr = v; // by dima
     }
 
-    return token;
+    return m_token;
   };
 
   var statement = function statement() {
-    var n = token,
+    var n = m_token,
         v;
 
     if (n.std) {
@@ -1912,9 +1921,9 @@ var make_parse = function make_parse() {
 
     while (true) {
       //console.log(token);
-      if (token.id === "(end)") {
+      if (m_token.id === "(end)") {
         break;
-      } else if (token.value === ';') {
+      } else if (m_token.value === ';') {
         // skip optional ;
         advance();
       }
@@ -1935,12 +1944,12 @@ var make_parse = function make_parse() {
 
   var expression = function expression(rbp) {
     var left;
-    var t = token;
+    var t = m_token;
     advance();
     left = t.nud();
 
-    while (rbp < token.lbp) {
-      t = token;
+    while (rbp < m_token.lbp) {
+      t = m_token;
       advance();
       left = t.led(left);
     }
@@ -1958,7 +1967,7 @@ var make_parse = function make_parse() {
   };
 
   var symbol = function symbol(id, bp) {
-    var s = symbol_table[id];
+    var s = m_symbol_table[id];
     bp = bp || 0;
 
     if (s) {
@@ -1969,7 +1978,7 @@ var make_parse = function make_parse() {
       s = Object.create(original_symbol);
       s.id = s.value = id;
       s.lbp = bp;
-      symbol_table[id] = s;
+      m_symbol_table[id] = s;
     }
 
     operator_alias(id, id);
@@ -2103,6 +2112,7 @@ var make_parse = function make_parse() {
   operator_alias('⊣', 'car');
   infixr('⊢', 30);
   operator_alias('⊢', 'cdr');
+  infixr('⍴', 30);
   /* will be used in logical scope */
 
   infixr("and", 30);
@@ -2159,26 +2169,26 @@ var make_parse = function make_parse() {
     } // dima support for missed function arguments...
 
 
-    if (token.id !== ")") {
+    if (m_token.id !== ")") {
       if (false) {
         // специальный парсер для where - logical expression.
         // тут у нас выражение с использованием скобок, and, or, not и никаких запятых...
         new_expression_scope("logical");
         var e = expression(0);
-        expr_scope.pop();
+        m_expr_scope.pop();
         a.push(e);
       } else {
         new_expression_scope("lpe");
 
         while (true) {
           // console.log(">" + token.arity + " NAME:" + left.value);
-          if (token.id === ',') {
+          if (m_token.id === ',') {
             a.push({
               value: null,
               arity: "literal"
             });
             advance();
-          } else if (token.id === ')') {
+          } else if (m_token.id === ')') {
             a.push({
               value: null,
               arity: "literal"
@@ -2187,11 +2197,11 @@ var make_parse = function make_parse() {
           } else {
             new_expression_scope("logical");
             var e = expression(0);
-            expr_scope.pop(); // var e = statements();
+            m_expr_scope.pop(); // var e = statements();
 
             a.push(e);
 
-            if (token.id !== ",") {
+            if (m_token.id !== ",") {
               break;
             }
 
@@ -2199,7 +2209,7 @@ var make_parse = function make_parse() {
           }
         }
 
-        expr_scope.pop();
+        m_expr_scope.pop();
       }
     }
 
@@ -2289,7 +2299,7 @@ var make_parse = function make_parse() {
   prefix("(", function () {
     var e = expression(0);
 
-    if (expr_scope.tp == "logical") {
+    if (m_expr_scope.tp == "logical") {
       // we should remember all brackets to restore original user expression
       e.sexpr = ["()", e.sexpr];
     } else {
@@ -2310,11 +2320,11 @@ var make_parse = function make_parse() {
   prefix("[", function () {
     var a = [];
 
-    if (token.id !== "]") {
+    if (m_token.id !== "]") {
       while (true) {
         a.push(expression(0)); // a.push(statements());
 
-        if (token.id !== ",") {
+        if (m_token.id !== ",") {
           break;
         }
 
@@ -2331,8 +2341,8 @@ var make_parse = function make_parse() {
     return this;
   });
   return function (source) {
-    tokens = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__lpel__["b" /* tokenize */])(source, '=<>!+-*&|/%^:.', '=<>&|:.');
-    token_nr = 0;
+    m_tokens = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__lpel__["b" /* tokenize */])(source, '=<>!+-*&|/%^:.', '=<>&|:.');
+    m_token_nr = 0;
     advance();
     var s = statements(); // var s = expression(0);
 

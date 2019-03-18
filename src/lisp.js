@@ -229,6 +229,7 @@ const STDLIB = {
   'concat': (...a) => [].concat.apply([], a),
   'pr-str': (...a) => a.map(x => JSON.stringify(x)).join(' '),
   'classOf': (a) => Object.prototype.toString.call(a),
+  '⍴': (len, ...values) => Array.apply(null, Array(len)).map((a, idx) => values[idx % values.length]),
 
   // not implemented yet
   // 'hash-table->alist'
