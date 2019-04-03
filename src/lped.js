@@ -91,5 +91,8 @@ export function deparse(lispExpr) {
 
   } else if (isArray(lispExpr)) {
     return deparseSexpr(lispExpr)
+
+  } else {
+    return String(lispExpr);
   }
 }

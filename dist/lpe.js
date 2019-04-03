@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2019/04/03 15:26:14 */ 
+/** [LPE]  Version: 1.0.0 - 2019/04/03 15:30:58 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -4007,6 +4007,8 @@ function deparse(lispExpr) {
     return 'null';
   } else if (isArray(lispExpr)) {
     return deparseSexpr(lispExpr);
+  } else {
+    return String(lispExpr);
   }
 }
 
