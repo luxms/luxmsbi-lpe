@@ -7,10 +7,11 @@
 ### Standard LPE grammar
 
 basically follows LISP notation but written with C-like function call semantics. Example: `f1(1,b,c).f2(d,e,f).f3(w)`
+
 Dot (`.`) separated function calls will compose to left thread `->` call: `["->",["f1",1,"b","c"],["f2","d","e","f"],["f3","w"]]`
 Semicolon (`;`) separated function calls will compose to `begin` call: `["begin",["f1",1,"b","c"],["f2","d","e","f"],["f3","w"]]`
 
-Arrays notation `[]` will result in `vector` calls: `[1,2,3]` => `["vector","1","2","3"]`
+Arrays notation `[]` will result in `[` call: `[1,2,3]` => `["[","1","2","3"]`
 
 ### Logical LPE grammar
 
