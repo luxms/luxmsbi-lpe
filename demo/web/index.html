@@ -75,8 +75,9 @@
     lispInput.value = window.localStorage.getItem('lisp') || '';
 
     function runLPEAction() {
+      var lisp;
       try {
-        var lisp = lpe.parse(lpeInput.value);
+        lisp = lpe.parse(lpeInput.value);
         lispInput.value = JSON.stringify(lisp, null, 2);
       } catch (err) {
         console.error(err);
@@ -84,6 +85,12 @@
         lispInput.value = err.message;
       }
       window.localStorage.setItem('lisp', lispInput.value);
+
+      try {
+        console.log(lpe.deparse(lisp));
+      } catch (err) {
+        console.error('deparse error', err);
+      }
     }
 
     function runLispAction() {

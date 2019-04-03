@@ -1,5 +1,6 @@
 import console from './console/console';
 import {parse, LPESyntaxError} from './lpep';
+import {deparse} from './lped';
 import {eval_lisp, evaluate} from './lisp';
 import {sql_where_context, eval_sql_where} from './sql_where';
 import {sql_context, parse_sql_expr, parse_sql_apidb_expr} from './sql_context';
@@ -13,6 +14,7 @@ function eval_lpe(lpe, ctx) {
 
 export {
   parse,
+  deparse,
   LPESyntaxError,
   evaluate,                         // deprecated
   eval_lisp,
