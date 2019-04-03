@@ -7,38 +7,69 @@
 ### Standard LPE grammar
 
 basically follows LISP notation but written with C-like function call semantics. Example: `f1(1,b,c).f2(d,e,f).f3(w)`
-Dot (`.`) operations will compose to `seq` call: `["seq",["f1","1","b","c"],["f2","d","e","f"],["f3","w"]]`
+Dot (`.`) separated function calls will compose to left thread `->` call: `["->",["f1",1,"b","c"],["f2","d","e","f"],["f3","w"]]`
+Semicolon (`;`) separated function calls will compose to `begin` call: `["begin",["f1",1,"b","c"],["f2","d","e","f"],["f3","w"]]`
 
 Arrays notation `[]` will result in `vector` calls: `[1,2,3]` => `["vector","1","2","3"]`
 
 ### Logical LPE grammar
 
 Some functions will have special syntax for their arguments. Currently only `logical` syntax is supported.
-It is used only for `where` function, which has single logical expression argument with 3 operations: `and`, `or`, `not`.
+For example, it is used for `where` function, which has single logical expression argument with 3 operations: `and`, `or`, `not`.
 Logical operations may use any LPE expression as argumants. Brackets are preserved with call to obvious `()` function.
 
 `where((a and b or c) or (avg(d) < avg(e)) or (e = 20 and parse_kv(locations.src_id)))`
 
 ```JSON
-["where",
-  ["or",
-    ["()",
-      ["and",
+[
+  "where",
+  [
+    "or",
+    [
+      "()",
+      [
+        "and",
         "a",
-        ["or","b","c"]
+        [
+          "or",
+          "b",
+          "c"
+        ]
       ]
     ],
-    ["or",
-      ["()",
-        ["<",
-          ["avg","d"],
-          ["avg","e"]
+    [
+      "or",
+      [
+        "()",
+        [
+          "<",
+          [
+            "avg",
+            "d"
+          ],
+          [
+            "avg",
+            "e"
+          ]
         ]
       ],
-      ["()",
-        ["and",
-          ["=","e","20"],
-          ["parse_kv",["seq","locations","src_id"]]
+      [
+        "()",
+        [
+          "and",
+          [
+            "=",
+            "e",
+            20
+          ],
+          [
+            "parse_kv",
+            [
+              "->",
+              "locations",
+              "src_id"
+            ]
+          ]
         ]
       ]
     ]
@@ -46,7 +77,7 @@ Logical operations may use any LPE expression as argumants. Brackets are preserv
 ]
 ```
 
-Note, that dot notation in arguments `locations.src_id` is currently interpreted as `seq` call.
+Note, that dot notation in arguments `locations.src_id` is currently interpreted as `->` call.
 
 ## Run from cli
 
