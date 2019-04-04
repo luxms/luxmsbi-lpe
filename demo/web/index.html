@@ -57,6 +57,7 @@
     <textarea id="lisp-input"></textarea>
 
     <button id="lisp-action">Execute</button>
+    <button id="sql-action">Exec SQL</button>
 
     <span id="result-input-title" class="input-title">LPE expression:</span>
     <textarea id="result-input" readonly></textarea>
@@ -70,6 +71,7 @@
     var resultInput = document.getElementById('result-input');
     var lpeAction = document.getElementById('lpe-action');
     var lispAction = document.getElementById('lisp-action');
+    var sqlAction = document.getElementById('sql-action');
 
     lpeInput.value = window.localStorage.getItem('lpe') || '';
     lispInput.value = window.localStorage.getItem('lisp') || '';
@@ -97,6 +99,17 @@
       try {
         var lisp = JSON.parse(lispInput.value);
         var result = lpe.eval_lisp(lisp);
+        resultInput.value = JSON.stringify(result, null, 2);
+      } catch (err) {
+        console.error(err);
+        console.error(err.stack);
+        resultInput.value = err.message;
+      }
+    }
+
+    function runSQLAction() {
+      try {
+        var result = lpe.eval_sql_where(lpeInput.value,{});
         resultInput.value = JSON.stringify(result, null, 2);
       } catch (err) {
         console.error(err);
@@ -143,6 +156,7 @@
 
     lispAction.addEventListener('click', runLispAction, false);
 
+    sqlAction.addEventListener('click', runSQLAction, false);
   </script>
 </body>
 </html>
