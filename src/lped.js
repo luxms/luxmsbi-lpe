@@ -61,6 +61,7 @@ function deparseSexpr(sexpr) {
   if (op === '\'') return '\'' + fixString(args[0]) + '\'';
   if (op === '[') return '[' + args.map(deparse).join(', ') + ']';
   if (op === '()') return '(' + args.map(deparse).join(', ') + ')';
+  if (op === '->') return args.map(deparse).join('.');
   if (OPERATORS[op] === true) {
     return args.map(arg => deparseWithOptionalBrackets(arg, op)).join(' ' + op + ' ');
   }

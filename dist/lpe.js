@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2019/04/03 16:26:08 */ 
+/** [LPE]  Version: 1.0.0 - 2019/04/04 12:38:08 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -3978,6 +3978,7 @@ function deparseSexpr(sexpr) {
   if (op === '\'') return '\'' + fixString(args[0]) + '\'';
   if (op === '[') return '[' + args.map(deparse).join(', ') + ']';
   if (op === '()') return '(' + args.map(deparse).join(', ') + ')';
+  if (op === '->') return args.map(deparse).join('.');
 
   if (OPERATORS[op] === true) {
     return args.map(function (arg) {
