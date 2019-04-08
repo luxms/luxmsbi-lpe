@@ -22,7 +22,7 @@
 
 import console from './console/console';
 import {parse} from './lpep';
-import {db_quote_literal} from './utils/utils';
+import {db_quote_literal, db_quote_ident} from './utils/utils';
 import {eval_lisp} from './lisp';
 
 
@@ -61,8 +61,7 @@ export function sql_where_context(_vars) {
         console.log("-: try_to_quote_order_by_column " + JSON.stringify(o));
         console.log("-: try_to_quote_order_by_column " + (typeof o));
         if (o !== undefined && o.length > 0) {
-          //return '"' + o.toString() + '"';
-          return o.toString();
+          return db_quote_ident(o.toString());
         }
       }
     }
