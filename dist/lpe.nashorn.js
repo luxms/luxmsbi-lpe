@@ -1564,6 +1564,8 @@ var STDLIB = _objectSpread({
       } else if (arr[0] === "()" && arr.length === 2 && (isString(arr[1]) || isNumber(arr[1]))) {
         arr = [".-", acc, arr[1]];
       } else {
+        arr = arr.slice(0); // must copy array before modify
+
         arr.splice(1, 0, acc); // подставляем "вычисленное" ранее значение в качестве первого аргумента... классика thread first
       }
 
