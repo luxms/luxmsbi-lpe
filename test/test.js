@@ -324,9 +324,78 @@ describe('LPE tests', function() {
             "WHERE a = ''"
         );
 
+        assert.equal( lpe.eval_sql_where(
+            'where(a = $(var1))',
+            {"var1":"0"}),
+            "WHERE a = 0"
+        );
+
     });
 
-/* NOT YET READY !!!
+
+    it('should eval full SQL expressions', function() {
+        
+        assert.deepEqual( lpe.parse_sql_expr(
+            'filter(a=b and b < 3).slice(2,45).order_by(+a,-d)',
+            {"period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
+            {
+                from: undefined,
+                limit_offset: 'LIMIT 45 OFFSET 2',
+                order_by: 'ORDER BY a,d DESC',
+                select: 'SELECT *',
+                where: '(a = b and b < 3)'
+              }
+        );
+
+        assert.deepEqual( lpe.parse_sql_expr(
+            'slice(1,15)',
+            {"period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
+            {
+                from: undefined,
+                limit_offset: 'LIMIT 15 OFFSET 1',
+                order_by: undefined,
+                select: 'SELECT *',
+                where: undefined
+              }
+        );
+
+        assert.deepEqual( lpe.parse_sql_expr(
+            undefined,
+            {"period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
+            {
+                from: undefined,
+                limit_offset: undefined,
+                order_by: undefined,
+                select: 'SELECT *',
+                where: undefined
+              }
+        );
+
+        assert.deepEqual( lpe.parse_sql_expr(
+            '',
+            {"period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
+            {
+                from: undefined,
+                limit_offset: undefined,
+                order_by: undefined,
+                select: 'SELECT *',
+                where: undefined
+              }
+        );
+
+
+    });
+
+    it('should eval full SQL expressions', function() {
+        assert.equal( lpe.eval_sql_expr(
+            'where(tree_level = [0]).select(id).from(metrics)',
+            {"period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
+            "SELECT id FROM metrics WHERE tree_level IN (0)"
+        );
+
+    });
+
+/*
     it('should eval full SQL expressions', function() {
         assert.equal( lpe.eval_sql_apidb_expr(
             'from(bm.tbl).select(department_code.alias, no::TEXT:textual, max(credits)).where(a>1).from(final.tbl).order_by(a,-b).select(select(last).from(test)):subselect.where(\'b\'+3 <3)',
@@ -336,5 +405,6 @@ describe('LPE tests', function() {
 
     });
 */
+
 
 });

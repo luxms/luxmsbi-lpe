@@ -62,9 +62,11 @@ $$Выполняет разбор LPE выражений в SQL шаблоне �
 
 /*********************************************************************************/
 
+DROP FUNCTION IF EXISTS lpe.parse_sql_expr(text,jsonb);
+
 CREATE OR REPLACE FUNCTION
 lpe.parse_sql_expr(_expr TEXT, _vars JSONB DEFAULT '{}')
-RETURNS TEXT
+RETURNS JSONB
 LANGUAGE 'plv8' STABLE
 AS $body$
 
@@ -73,8 +75,21 @@ AS $body$
 $body$;
 
 COMMENT ON FUNCTION lpe.parse_sql_expr(TEXT,JSONB) IS
-$$Выполняет разбор LPE выражения и выдаёт SQL запрос в виде текста$$;
+$$Выполняет разбор LPE выражения и выдаёт SQL запрос в виде структуры данных$$;
 
+
+CREATE OR REPLACE FUNCTION
+lpe.eval_sql_expr(_expr TEXT, _vars JSONB DEFAULT '{}')
+RETURNS TEXT
+LANGUAGE 'plv8' STABLE
+AS $body$
+
+  return plv8.lpe.eval_sql_expr(_expr, _vars);
+
+$body$;
+
+COMMENT ON FUNCTION lpe.eval_sql_expr(TEXT,JSONB) IS
+$$Выполняет разбор LPE выражения и выдаёт SQL запрос в виде текста$$;
 
 
 CREATE OR REPLACE FUNCTION lpe.eval_mixed_expr(_expr jsonb, _vars jsonb DEFAULT '{}'::jsonb)

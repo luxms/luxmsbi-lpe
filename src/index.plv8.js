@@ -2,7 +2,7 @@ import console from './console/console';
 import {parse, LPESyntaxError} from './lpep';
 import {eval_lisp, evaluate} from './lisp';
 import {sql_where_context, eval_sql_where} from './sql_where';
-import {sql_context, parse_sql_expr} from './sql_context';
+import {sql_context, eval_sql_expr, parse_sql_expr} from './sql_context';
 
 
 // test:
@@ -54,6 +54,7 @@ export {
   eval_sql_where,
   // sql_context
   sql_context,
+  eval_sql_expr,
   parse_sql_expr,
 };
 

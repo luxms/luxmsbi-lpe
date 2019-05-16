@@ -298,7 +298,7 @@ export function sql_where_context(_vars) {
 
         if (r == null) {
           return prnt(l) + " IS NULL ";
-        } else if (r == '') {
+        } else if (r === '') {
           return prnt(l) + " = ''";
         } else {
           return prnt(l) + " = " + prnt(r);

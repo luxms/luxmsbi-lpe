@@ -2761,7 +2761,7 @@ function sql_where_context(_vars) {
 
       if (r == null) {
         return prnt(l) + " IS NULL ";
-      } else if (r == '') {
+      } else if (r === '') {
         return prnt(l) + " = ''";
       } else {
         return prnt(l) + " = " + prnt(r);
@@ -3776,8 +3776,8 @@ for (var collections = getKeys(DOMIterables), i = 0; i < collections.length; i++
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = sql_context;
-/* harmony export (immutable) */ __webpack_exports__["b"] = parse_sql_expr;
-/* unused harmony export parse_sql_apidb_expr */
+/* harmony export (immutable) */ __webpack_exports__["b"] = eval_sql_expr;
+/* harmony export (immutable) */ __webpack_exports__["c"] = parse_sql_expr;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_regexp_to_string__ = __webpack_require__(41);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_regexp_to_string___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_regexp_to_string__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_regexp_replace__ = __webpack_require__(61);
@@ -3873,9 +3873,17 @@ function sql_context(_vars) {
 
     if (where instanceof Array && where.length > 1) {
       q = q + ' ' + __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_4__lisp__["a" /* eval_lisp */])(where, _context);
+    } //slice(offset, pageItemsNum)
+
+
+    var s = find_part('slice');
+    __WEBPACK_IMPORTED_MODULE_3__console_console__["a" /* default */].log("FOUND slice: ", s);
+
+    if (s instanceof Array && s.length > 1) {
+      q = q + ' ' + __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_4__lisp__["a" /* eval_lisp */])(s, _context);
     }
 
-    var srt = find_part('sort');
+    var srt = find_part('order_by');
     __WEBPACK_IMPORTED_MODULE_3__console_console__["a" /* default */].log('FOUND sort: ', srt);
 
     if (srt instanceof Array && srt.length > 1) {
@@ -3886,6 +3894,59 @@ function sql_context(_vars) {
   };
 
   _context['sql'].ast = [[], {}, [], 1]; // mark as macro
+
+  /* возвращает структуру запроса, при этом все элементы уже превращены в TEXT */
+
+  _context['sql-struct'] = function () {
+    var q = {
+      "select": undefined,
+      "from": undefined,
+      "where": undefined,
+      "order_by": undefined,
+      "limit_offset": undefined
+    }; // resulting sql
+
+    var args = Array.prototype.slice.call(arguments);
+    __WEBPACK_IMPORTED_MODULE_3__console_console__["a" /* default */].log('SQL IN: ', args);
+
+    var find_part = function find_part(p) {
+      return args.find(function (el) {
+        return p == el[0];
+      });
+    };
+
+    var sel = find_part('select');
+    __WEBPACK_IMPORTED_MODULE_3__console_console__["a" /* default */].log('FOUND select: ', sel);
+    q.select = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_4__lisp__["a" /* eval_lisp */])(sel, _context);
+    var from = find_part('from');
+    __WEBPACK_IMPORTED_MODULE_3__console_console__["a" /* default */].log('FOUND from: ', from);
+    q.from = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_4__lisp__["a" /* eval_lisp */])(from, _context);
+    var where = find_part('filter');
+    __WEBPACK_IMPORTED_MODULE_3__console_console__["a" /* default */].log("FOUND where: ", where);
+
+    if (where instanceof Array && where.length > 1) {
+      q.where = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_4__lisp__["a" /* eval_lisp */])(where, _context);
+    } //slice(offset, pageItemsNum)
+
+
+    var s = find_part('slice');
+    __WEBPACK_IMPORTED_MODULE_3__console_console__["a" /* default */].log("FOUND slice: ", s);
+
+    if (s instanceof Array && s.length > 1) {
+      q.limit_offset = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_4__lisp__["a" /* eval_lisp */])(s, _context);
+    }
+
+    var srt = find_part('order_by');
+    __WEBPACK_IMPORTED_MODULE_3__console_console__["a" /* default */].log('FOUND sort: ', srt);
+
+    if (srt instanceof Array && srt.length > 1) {
+      q.order_by = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_4__lisp__["a" /* eval_lisp */])(srt, _context);
+    }
+
+    return q;
+  };
+
+  _context['sql-struct'].ast = [[], {}, [], 1]; // mark as macro
 
   function prnt(a) {
     __WEBPACK_IMPORTED_MODULE_3__console_console__["a" /* default */].log('prnt IN: ', a);
@@ -3936,6 +3997,19 @@ function sql_context(_vars) {
 
   _context['from'].ast = [[], {}, [], 1]; // mark as macro
 
+  _context['slice'] = function () {
+    var a = Array.prototype.slice.call(arguments);
+    __WEBPACK_IMPORTED_MODULE_3__console_console__["a" /* default */].log('slice IN: ', a);
+
+    if (a.length < 1) {
+      return "";
+    } else {
+      return "LIMIT " + parseInt(a[1]) + " OFFSET " + parseInt(a[0]);
+    }
+  };
+
+  _context['from'].ast = [[], {}, [], 1]; // mark as macro
+
   return _context;
 }
 /*
@@ -3943,7 +4017,7 @@ function sql_context(_vars) {
 но например, как указать схему? сейчас парсер фигню выдаёт, так как точка не всегда корректно отрабатывает +sch.table(col1,col2)
 Тщательнее надо....
 
-select lpe.parse_sql_expr($$metrics(id).where(id='abcd')$$);
+select lpe.eval_sql_expr($$metrics(id).where(id='abcd')$$);
 
 
 Примеры htSQL:
@@ -3957,7 +4031,7 @@ select lpe.parse_sql_expr($$metrics(id).where(id='abcd')$$);
 
 */
 
-function parse_sql_expr(_expr, _vars) {
+function eval_sql_expr(_expr, _vars) {
   var ctx = sql_context(_vars);
   var _context = ctx; // for(var key in _vars) _context[key] = _vars[key];
 
@@ -4007,7 +4081,7 @@ function parse_sql_expr(_expr, _vars) {
     var fr = sel[0];
     var p = false;
 
-    if (fr != 'where' && fr != 'select' && fr != 'sort' && fr != 'filter' && fr != 'from') {
+    if (fr != 'where' && fr != 'select' && fr != 'sort' && fr != 'filter' && fr != 'from' && fr != 'slice') {
       sel[0] = 'select';
       p = true;
     }
@@ -4026,12 +4100,7 @@ function parse_sql_expr(_expr, _vars) {
 
     if (expr instanceof Array) {
       // expr: ["metrics","a","d",["max","c"]]
-      if (expr[0] === 'order_by') {
-        expr[0] = 'sort';
-      }
-
-      ;
-
+      // if (expr[0] === 'order_by') {expr[0]='sort'};
       if (expr[0] === 'where') {
         expr[0] = 'where';
       }
@@ -4062,12 +4131,23 @@ function parse_sql_expr(_expr, _vars) {
   var ret = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_4__lisp__["a" /* eval_lisp */])(sql, _context); // console.log("parse: ", ret);
 
   return ret;
-}
-function parse_sql_apidb_expr(_expr, _vars, _forced_table, _forced_where) {
+} // currently works only for bi_path part of the URL in the DBAPI
+
+function parse_sql_expr(_expr, _vars, _forced_table, _forced_where) {
   var ctx = sql_context(_vars);
   var _context = ctx; // for(var key in _vars) _context[key] = _vars[key];
 
+  if (_expr === null || _expr === '' || typeof _expr === "undefined") {
+    _expr = 'filter()'; // that should generate empty struct
+  }
+
   var sexpr = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_6__lpep__["a" /* parse */])(_expr);
+
+  if (sexpr[0] !== '->') {
+    // это значит, что на входе у нас всего один вызов функции, мы его оберём в ->
+    sexpr = ['->', sexpr];
+  }
+
   __WEBPACK_IMPORTED_MODULE_3__console_console__["a" /* default */].log("DBAPI IN: ", sexpr);
   /*
   if (ctx.hasOwnProperty('where')){
@@ -4081,15 +4161,16 @@ function parse_sql_apidb_expr(_expr, _vars, _forced_table, _forced_where) {
   // order_by(a,b) === order_by(a).order_by(b)
   // where(a>1).where(b<1) === where(a>1 and b<1)
   // from(a).from(b).from(c) === from(c)
-  // в последнем случае берётся последний from, а все первые игнорятся !!!!
+  // в последнем случае берётся последний from, а все первые игнорятся, но см. test.js = там есть другой пример !!!!
 
-  var sql = ['sql']; // wrapped by sql call...
+  var sql = ['sql-struct']; // wrapped by sql call...
 
   var cache = {
-    "where": [],
+    "filter": [],
     "select": [],
     "order_by": [],
-    "from": []
+    "from": [],
+    "slice": []
   };
 
   for (var i = 1; i < sexpr.length; i++) {
@@ -4098,7 +4179,7 @@ function parse_sql_apidb_expr(_expr, _vars, _forced_table, _forced_where) {
     if (expr instanceof Array) {
       var fr = expr[0];
 
-      if (fr != 'where' && fr != 'select' && fr != 'order_by' && fr != 'from' && fr != ':') {
+      if (fr != 'where' && fr != 'select' && fr != 'order_by' && fr != 'from' && fr != ':' && fr != 'slice' && fr != 'filter') {
         throw 'unexpected func: ' + JSON.stringify(fr);
       } // have no idea how to support aliases for selects...
 
@@ -4106,6 +4187,10 @@ function parse_sql_apidb_expr(_expr, _vars, _forced_table, _forced_where) {
       if (fr === ':' && expr[1][0] === 'select') {
         cache["select"].push(expr[1]);
       } else {
+        if (fr === 'where') {
+          fr = 'filter';
+        }
+
         cache[fr].push(expr);
       }
     } else {
@@ -4117,27 +4202,48 @@ function parse_sql_apidb_expr(_expr, _vars, _forced_table, _forced_where) {
     cache[fr].push(["from", _forced_table]);
   }
 
+  __WEBPACK_IMPORTED_MODULE_3__console_console__["a" /* default */].log("DEBUG", JSON.stringify(cache));
   var args = cache["select"].map(function (ar) {
     return ar.slice(1);
   });
   var sel = [].concat.apply(["select"], args); //flat
 
   sql.push(sel);
-  sql.push(cache["from"].pop());
-  args = cache["where"].map(function (ar) {
+  var f = cache["from"].pop();
+
+  if (f) {
+    sql.push(f);
+  }
+
+  f = cache["order_by"].pop();
+
+  if (f) {
+    sql.push(f);
+  }
+
+  f = cache["slice"].pop();
+
+  if (f) {
+    sql.push(f);
+  }
+
+  args = cache["filter"].map(function (ar) {
     return ar.slice(1);
   });
   args = [].concat.apply([], args); //flat
 
-  var w = ["()", args[0]];
+  if (args.length > 0) {
+    var w = ["()", args[0]];
 
-  if (args.length > 1) {
-    for (var i = 1; i < args.length; i++) {
-      w = ["and", w, ["()", args[i]]];
+    if (args.length > 1) {
+      for (var i = 1; i < args.length; i++) {
+        w = ["and", w, ["()", args[i]]];
+      }
     }
+
+    sql.push(["filter", w]);
   }
 
-  sql.push(["where", w]);
   __WEBPACK_IMPORTED_MODULE_3__console_console__["a" /* default */].log("WHERE", JSON.stringify(w));
   __WEBPACK_IMPORTED_MODULE_3__console_console__["a" /* default */].log('DBAPI parse: ', sql);
   var ret = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_4__lisp__["a" /* eval_lisp */])(sql, _context);
@@ -4163,7 +4269,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "sql_where_context", function() { return __WEBPACK_IMPORTED_MODULE_3__sql_where__["a"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "eval_sql_where", function() { return __WEBPACK_IMPORTED_MODULE_3__sql_where__["b"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "sql_context", function() { return __WEBPACK_IMPORTED_MODULE_4__sql_context__["a"]; });
-/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "parse_sql_expr", function() { return __WEBPACK_IMPORTED_MODULE_4__sql_context__["b"]; });
+/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "eval_sql_expr", function() { return __WEBPACK_IMPORTED_MODULE_4__sql_context__["b"]; });
+/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "parse_sql_expr", function() { return __WEBPACK_IMPORTED_MODULE_4__sql_context__["c"]; });
 
 
 
@@ -5540,9 +5647,11 @@ $$Выполняет разбор LPE выражений в SQL шаблоне �
 
 /*********************************************************************************/
 
+DROP FUNCTION IF EXISTS lpe.parse_sql_expr(text,jsonb);
+
 CREATE OR REPLACE FUNCTION
 lpe.parse_sql_expr(_expr TEXT, _vars JSONB DEFAULT '{}')
-RETURNS TEXT
+RETURNS JSONB
 LANGUAGE 'plv8' STABLE
 AS $body$
 
@@ -5551,8 +5660,21 @@ AS $body$
 $body$;
 
 COMMENT ON FUNCTION lpe.parse_sql_expr(TEXT,JSONB) IS
-$$Выполняет разбор LPE выражения и выдаёт SQL запрос в виде текста$$;
+$$Выполняет разбор LPE выражения и выдаёт SQL запрос в виде структуры данных$$;
 
+
+CREATE OR REPLACE FUNCTION
+lpe.eval_sql_expr(_expr TEXT, _vars JSONB DEFAULT '{}')
+RETURNS TEXT
+LANGUAGE 'plv8' STABLE
+AS $body$
+
+  return plv8.lpe.eval_sql_expr(_expr, _vars);
+
+$body$;
+
+COMMENT ON FUNCTION lpe.eval_sql_expr(TEXT,JSONB) IS
+$$Выполняет разбор LPE выражения и выдаёт SQL запрос в виде текста$$;
 
 
 CREATE OR REPLACE FUNCTION lpe.eval_mixed_expr(_expr jsonb, _vars jsonb DEFAULT '{}'::jsonb)
