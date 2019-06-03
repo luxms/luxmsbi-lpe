@@ -61,7 +61,15 @@ export function sql_where_context(_vars) {
         console.log("-: try_to_quote_order_by_column " + JSON.stringify(o));
         console.log("-: try_to_quote_order_by_column " + (typeof o));
         if (o !== undefined && o.length > 0) {
-          return db_quote_ident(o.toString());
+          o = o.toString();
+          var regExp = new RegExp(/^\w[\w\d]*$/, "i");
+          // quote only literals that are not standard!
+          var schema_table = o.split('.');
+          if (schema_table.length < 4) {
+            return schema_table.map( item => regExp.test(item) ? item : db_quote_ident(item) ).join('.');
+          } else {
+            throw new Error('Too many dots for column name ' + o);
+          }
         }
       }
     }
