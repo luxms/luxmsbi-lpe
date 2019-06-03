@@ -3503,7 +3503,7 @@ function sql_where_context(_vars) {
 
     var prnt = function prnt(ar) {
       if (ar instanceof Array) {
-        if (ar[0] === '$' || ar[0] === '"' || ar[0] === "'" || ar[0] === "[" || ar[0] === 'parse_kv' || ar[0] === "=" || ar[0] === "pg_interval" || ar[0] === "lpe_pg_tstz_at_time_zone") {
+        if (ar[0] === '$' || ar[0] === '"' || ar[0] === "'" || ar[0] === "str" || ar[0] === "[" || ar[0] === 'parse_kv' || ar[0] === "=" || ar[0] === "pg_interval" || ar[0] === "lpe_pg_tstz_at_time_zone") {
           return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(ar, ctx);
         } else {
           if (ar.length == 2) {
@@ -3677,12 +3677,13 @@ function sql_where_context(_vars) {
       // Full Text Search based on column_list
 
       if (_typeof(_vars['_columns']) == 'object') {
-        //console.log("FTS: ",  JSON.stringify(fts));
         var ilike = Object.values(_vars['_columns']).map(function (col) {
-          col["search"] !== undefined ? ["ilike", col["search"], ["str", '%' + fts + '%']] : null;
+          return col["search"] !== undefined ? ["ilike", col["search"], ["'", '%' + fts + '%']] : null;
+        }).filter(function (el) {
+          return el !== null;
         }).reduce(function (ac, el) {
-          el == null ? ac : ['or', ac, el];
-        }); //console.log( "FTS PARSED: ",  JSON.stringify(ilike));
+          return ['or', ac, el];
+        }); // console.log( "FTS PARSED: ",  JSON.stringify(ilike));
 
         if (ilike !== undefined && ilike.length > 0) {
           // добавляем корень AND с нашим поиском

@@ -196,6 +196,7 @@ export function sql_where_context(_vars) {
           if (  ar[0] === '$' ||
                 ar[0] === '"' ||
                 ar[0] === "'" ||
+                ar[0] === "str" ||
                 ar[0] === "[" ||
                 ar[0] === 'parse_kv' ||
                 ar[0] === "=" ||
@@ -365,16 +366,13 @@ export function sql_where_context(_vars) {
         fts = fts.replace(/\'/g , "''"); //' be safe
         // Full Text Search based on column_list
         if (typeof _vars['_columns'] == 'object') {
+          var ilike = Object.values(_vars['_columns']).map(col =>
+              col["search"] !== undefined
+              ? ["ilike", col["search"], ["'", '%' + fts + '%']]
+              : null
+            ).filter(el => el !== null).reduce((ac, el) => ['or',ac,el]);
 
-          //console.log("FTS: ",  JSON.stringify(fts));
-
-          var ilike = Object.values(_vars['_columns']).map(function(col){
-            col["search"] !== undefined
-            ? ["ilike", col["search"], ["str", '%' + fts + '%']]
-            : null
-            }).reduce(function(ac, el) {el == null ? ac : ['or',ac,el]});
-
-          //console.log( "FTS PARSED: ",  JSON.stringify(ilike));
+          // console.log( "FTS PARSED: ",  JSON.stringify(ilike));
 
           if (ilike !== undefined && ilike.length > 0) {
             // добавляем корень AND с нашим поиском
