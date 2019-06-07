@@ -3694,11 +3694,16 @@ function sql_where_context(_vars) {
           return el !== null;
         }).reduce(function (ac, el) {
           return ['or', ac, el];
-        }); // console.log( "FTS PARSED: ",  JSON.stringify(ilike));
+        }); //console.log( "FTS PARSED: ",  JSON.stringify(ilike));
+        //console.log( "FTS PARSED: ",  JSON.stringify(tree));
 
         if (ilike !== undefined && ilike.length > 0) {
           // добавляем корень AND с нашим поиском
-          tree = [["and", tree[0], ['()', ilike]]];
+          if (tree[0]) {
+            tree = [["and", tree[0], ['()', ilike]]];
+          } else {
+            tree = [['()', ilike]];
+          }
         }
       }
     }
@@ -3726,9 +3731,17 @@ function sql_where_context(_vars) {
     var tree = arguments;
     var ret = [];
 
-    for (var i = 0; i < tree.length; i++) {
-      // console.log("array ", JSON.stringify(Array.prototype.slice.call(tree[i])));
-      var r = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(["filter", tree[i]], _context); // r should be string
+    if (tree.length > 0) {
+      for (var i = 0; i < tree.length; i++) {
+        // console.log("array ", JSON.stringify(Array.prototype.slice.call(tree[i])));
+        var r = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(["filter", tree[i]], _context); // r should be string
+
+        if (r.length > 0) {
+          ret.push(r);
+        }
+      }
+    } else {
+      var r = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(["filter"], _context); // r should be string
 
       if (r.length > 0) {
         ret.push(r);
