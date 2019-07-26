@@ -1,7 +1,7 @@
 import console from './console/console';
 import {parse, LPESyntaxError} from './lpep';
 import {deparse} from './lped';
-import {eval_lisp, evaluate} from './lisp';
+import {eval_lisp} from './lisp';
 import {sql_where_context, eval_sql_where} from './sql_where';
 import {sql_context, eval_sql_expr, parse_sql_expr} from './sql_context';
 
@@ -16,7 +16,6 @@ export {
   parse,
   deparse,
   LPESyntaxError,
-  evaluate,                         // deprecated
   eval_lisp,
   eval_lpe,
   eval_sql_where,
@@ -29,7 +28,7 @@ export {
 // test:
 // var ast = parse('2+2*2');
 // console.log(ast);
-// var res = evaluate(ast, []);
+// var res = eval_lisp(ast, []);
 // console.log(res);
 
 // test:

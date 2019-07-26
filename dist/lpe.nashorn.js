@@ -132,7 +132,7 @@ if (typeof __g == 'number') __g = global; // eslint-disable-line no-undef
 
 var anObject = __webpack_require__(1);
 var IE8_DOM_DEFINE = __webpack_require__(46);
-var toPrimitive = __webpack_require__(37);
+var toPrimitive = __webpack_require__(38);
 var dP = Object.defineProperty;
 
 exports.f = __webpack_require__(2) ? Object.defineProperty : function defineProperty(O, P, Attributes) {
@@ -318,7 +318,7 @@ if (typeof __e == 'number') __e = core; // eslint-disable-line no-undef
 
 // 19.1.2.14 / 15.2.3.14 Object.keys(O)
 var $keys = __webpack_require__(53);
-var enumBugKeys = __webpack_require__(31);
+var enumBugKeys = __webpack_require__(32);
 
 module.exports = Object.keys || function keys(O) {
   return $keys(O, enumBugKeys);
@@ -475,7 +475,7 @@ var hide = __webpack_require__(8);
 var fails = __webpack_require__(5);
 var defined = __webpack_require__(16);
 var wks = __webpack_require__(0);
-var regexpExec = __webpack_require__(34);
+var regexpExec = __webpack_require__(35);
 
 var SPECIES = wks('species');
 
@@ -660,1093 +660,6 @@ module.exports = function (it) {
 
 /***/ }),
 /* 30 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-var at = __webpack_require__(54)(true);
-
- // `AdvanceStringIndex` abstract operation
-// https://tc39.github.io/ecma262/#sec-advancestringindex
-module.exports = function (S, index, unicode) {
-  return index + (unicode ? at(S, index).length : 1);
-};
-
-
-/***/ }),
-/* 31 */
-/***/ (function(module, exports) {
-
-// IE 8- don't enum bug keys
-module.exports = (
-  'constructor,hasOwnProperty,isPrototypeOf,propertyIsEnumerable,toLocaleString,toString,valueOf'
-).split(',');
-
-
-/***/ }),
-/* 32 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// 7.2.8 IsRegExp(argument)
-var isObject = __webpack_require__(6);
-var cof = __webpack_require__(21);
-var MATCH = __webpack_require__(0)('match');
-module.exports = function (it) {
-  var isRegExp;
-  return isObject(it) && ((isRegExp = it[MATCH]) !== undefined ? !!isRegExp : cof(it) == 'RegExp');
-};
-
-
-/***/ }),
-/* 33 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// 19.1.2.7 / 15.2.3.4 Object.getOwnPropertyNames(O)
-var $keys = __webpack_require__(53);
-var hiddenKeys = __webpack_require__(31).concat('length', 'prototype');
-
-exports.f = Object.getOwnPropertyNames || function getOwnPropertyNames(O) {
-  return $keys(O, hiddenKeys);
-};
-
-
-/***/ }),
-/* 34 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var regexpFlags = __webpack_require__(24);
-
-var nativeExec = RegExp.prototype.exec;
-// This always refers to the native implementation, because the
-// String#replace polyfill uses ./fix-regexp-well-known-symbol-logic.js,
-// which loads this file before patching the method.
-var nativeReplace = String.prototype.replace;
-
-var patchedExec = nativeExec;
-
-var LAST_INDEX = 'lastIndex';
-
-var UPDATES_LAST_INDEX_WRONG = (function () {
-  var re1 = /a/,
-      re2 = /b*/g;
-  nativeExec.call(re1, 'a');
-  nativeExec.call(re2, 'a');
-  return re1[LAST_INDEX] !== 0 || re2[LAST_INDEX] !== 0;
-})();
-
-// nonparticipating capturing group, copied from es5-shim's String#split patch.
-var NPCG_INCLUDED = /()??/.exec('')[1] !== undefined;
-
-var PATCH = UPDATES_LAST_INDEX_WRONG || NPCG_INCLUDED;
-
-if (PATCH) {
-  patchedExec = function exec(str) {
-    var re = this;
-    var lastIndex, reCopy, match, i;
-
-    if (NPCG_INCLUDED) {
-      reCopy = new RegExp('^' + re.source + '$(?!\\s)', regexpFlags.call(re));
-    }
-    if (UPDATES_LAST_INDEX_WRONG) lastIndex = re[LAST_INDEX];
-
-    match = nativeExec.call(re, str);
-
-    if (UPDATES_LAST_INDEX_WRONG && match) {
-      re[LAST_INDEX] = re.global ? match.index + match[0].length : lastIndex;
-    }
-    if (NPCG_INCLUDED && match && match.length > 1) {
-      // Fix browsers whose `exec` methods don't consistently return `undefined`
-      // for NPCG, like IE8. NOTE: This doesn' work for /(.?)?/
-      // eslint-disable-next-line no-loop-func
-      nativeReplace.call(match[0], reCopy, function () {
-        for (i = 1; i < arguments.length - 2; i++) {
-          if (arguments[i] === undefined) match[i] = undefined;
-        }
-      });
-    }
-
-    return match;
-  };
-}
-
-module.exports = patchedExec;
-
-
-/***/ }),
-/* 35 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var def = __webpack_require__(4).f;
-var has = __webpack_require__(9);
-var TAG = __webpack_require__(0)('toStringTag');
-
-module.exports = function (it, tag, stat) {
-  if (it && !has(it = stat ? it : it.prototype, TAG)) def(it, TAG, { configurable: true, value: tag });
-};
-
-
-/***/ }),
-/* 36 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var shared = __webpack_require__(28)('keys');
-var uid = __webpack_require__(20);
-module.exports = function (key) {
-  return shared[key] || (shared[key] = uid(key));
-};
-
-
-/***/ }),
-/* 37 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// 7.1.1 ToPrimitive(input [, PreferredType])
-var isObject = __webpack_require__(6);
-// instead of the ES6 spec version, we didn't implement @@toPrimitive case
-// and the second argument - flag - preferred type is a string
-module.exports = function (it, S) {
-  if (!isObject(it)) return it;
-  var fn, val;
-  if (S && typeof (fn = it.toString) == 'function' && !isObject(val = fn.call(it))) return val;
-  if (typeof (fn = it.valueOf) == 'function' && !isObject(val = fn.call(it))) return val;
-  if (!S && typeof (fn = it.toString) == 'function' && !isObject(val = fn.call(it))) return val;
-  throw TypeError("Can't convert object to primitive value");
-};
-
-
-/***/ }),
-/* 38 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-var addToUnscopables = __webpack_require__(43);
-var step = __webpack_require__(82);
-var Iterators = __webpack_require__(17);
-var toIObject = __webpack_require__(11);
-
-// 22.1.3.4 Array.prototype.entries()
-// 22.1.3.13 Array.prototype.keys()
-// 22.1.3.29 Array.prototype.values()
-// 22.1.3.30 Array.prototype[@@iterator]()
-module.exports = __webpack_require__(49)(Array, 'Array', function (iterated, kind) {
-  this._t = toIObject(iterated); // target
-  this._i = 0;                   // next index
-  this._k = kind;                // kind
-// 22.1.5.2.1 %ArrayIteratorPrototype%.next()
-}, function () {
-  var O = this._t;
-  var kind = this._k;
-  var index = this._i++;
-  if (!O || index >= O.length) {
-    this._t = undefined;
-    return step(1);
-  }
-  if (kind == 'keys') return step(0, index);
-  if (kind == 'values') return step(0, O[index]);
-  return step(0, [index, O[index]]);
-}, 'values');
-
-// argumentsList[@@iterator] is %ArrayProto_values% (9.4.4.6, 9.4.4.7)
-Iterators.Arguments = Iterators.Array;
-
-addToUnscopables('keys');
-addToUnscopables('values');
-addToUnscopables('entries');
-
-
-/***/ }),
-/* 39 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-__webpack_require__(100);
-var anObject = __webpack_require__(1);
-var $flags = __webpack_require__(24);
-var DESCRIPTORS = __webpack_require__(2);
-var TO_STRING = 'toString';
-var $toString = /./[TO_STRING];
-
-var define = function (fn) {
-  __webpack_require__(10)(RegExp.prototype, TO_STRING, fn, true);
-};
-
-// 21.2.5.14 RegExp.prototype.toString()
-if (__webpack_require__(5)(function () { return $toString.call({ source: 'a', flags: 'b' }) != '/a/b'; })) {
-  define(function toString() {
-    var R = anObject(this);
-    return '/'.concat(R.source, '/',
-      'flags' in R ? R.flags : !DESCRIPTORS && R instanceof RegExp ? $flags.call(R) : undefined);
-  });
-// FF44- RegExp#toString has a wrong name
-} else if ($toString.name != TO_STRING) {
-  define(function toString() {
-    return $toString.call(this);
-  });
-}
-
-
-/***/ }),
-/* 40 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* unused harmony export makeMacro */
-/* unused harmony export makeSF */
-/* harmony export (immutable) */ __webpack_exports__["a"] = eval_lisp;
-/* unused harmony export init_lisp */
-/* harmony export (immutable) */ __webpack_exports__["b"] = evaluate;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_string_iterator__ = __webpack_require__(104);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_string_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_string_iterator__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_array_from__ = __webpack_require__(97);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_array_from___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_array_from__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es7_object_values__ = __webpack_require__(61);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es7_object_values___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_core_js_modules_es7_object_values__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_array_iterator__ = __webpack_require__(38);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_array_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_array_iterator__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_object_keys__ = __webpack_require__(98);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_object_keys___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_object_keys__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es6_regexp_constructor__ = __webpack_require__(58);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es6_regexp_constructor___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_core_js_modules_es6_regexp_constructor__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_es7_symbol_async_iterator__ = __webpack_require__(62);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_es7_symbol_async_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_core_js_modules_es7_symbol_async_iterator__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_symbol__ = __webpack_require__(60);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_symbol___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_symbol__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_core_js_modules_web_dom_iterable__ = __webpack_require__(63);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_core_js_modules_web_dom_iterable___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8_core_js_modules_web_dom_iterable__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_regexp_to_string__ = __webpack_require__(39);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_regexp_to_string___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_regexp_to_string__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__console_console__ = __webpack_require__(15);
-
-
-
-
-
-
-
-
-
-
-
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
-function _toArray(arr) { return _arrayWithHoles(arr) || _iterableToArray(arr) || _nonIterableRest(); }
-
-function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
-
-function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
-
-function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
-
-function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
-
-function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
-
-function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
-
-function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
-
-function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
-
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
-
-/**
- *  miniMAL lisp interpreter
- *  Copyright (C) 2014 Joel Martin
- *  Licensed under MPL 2.0
- *  https://github.com/kanaka/mal
- * 
- */
-
-/**
- *  The code has been reworked to suite LuxmsBI needs
- *  by esix & Dmitry Dorofeev
- *  2017-2019
- */
-
-
-var isArray = function isArray(arg) {
-  return Object.prototype.toString.call(arg) === '[object Array]';
-};
-
-var isString = function isString(arg) {
-  return typeof arg === 'string';
-};
-
-var isNumber = function isNumber(arg) {
-  return typeof arg === 'number';
-};
-
-var isBoolean = function isBoolean(arg) {
-  return arg === true || arg === false;
-};
-
-var isHash = function isHash(arg) {
-  return _typeof(arg) === 'object' && arg !== null && !isArray(arg);
-};
-
-var isFunction = function isFunction(arg) {
-  return typeof arg === 'function';
-};
-/**
- * Get or Set variable in context
- * @param {*} ctx - array, hashmap or function that stores variables 
- * @param {*} varName - the name of variable
- * @param {*} value - optional value to set (undefied if get)
- */
-
-
-function $var$(ctx, varName, value) {
-  if (isArray(ctx)) {
-    // contexts chain
-    var _iteratorNormalCompletion = true;
-    var _didIteratorError = false;
-    var _iteratorError = undefined;
-
-    try {
-      for (var _iterator = ctx[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-        var theCtx = _step.value;
-        var result = $var$(theCtx, varName);
-        if (result === undefined) continue; // no such var in context
-
-        if (value === undefined) return result; // get => we've got a result
-
-        return $var$(theCtx, varName, value); // set => redirect 'set' to context with variable.
-      }
-    } catch (err) {
-      _didIteratorError = true;
-      _iteratorError = err;
-    } finally {
-      try {
-        if (!_iteratorNormalCompletion && _iterator.return != null) {
-          _iterator.return();
-        }
-      } finally {
-        if (_didIteratorError) {
-          throw _iteratorError;
-        }
-      }
-    }
-
-    if (value === undefined) return undefined; // get => variable not found in all contexts
-
-    if (ctx.length) $var$(ctx[0], varName, value); // set => set variable to HEAD context
-
-    return undefined; // ??? ctx.length = 0
-  }
-
-  if (isFunction(ctx)) {
-    return ctx(varName, value);
-  }
-
-  if (isHash(ctx)) {
-    if (value === undefined) {
-      // get from hash
-      var _result = ctx[varName];
-
-      if (_result !== undefined) {
-        // found value in hash
-        return _result;
-      }
-
-      if (varName.substr(0, 3) !== 'sf:' && isFunction(ctx['sf:' + varName])) {
-        // user-defined special form
-        return makeSF(ctx['sf:' + varName]);
-      }
-
-      return undefined;
-    } else {
-      return ctx[varName] = value;
-    }
-  }
-
-  return undefined;
-}
-
-function makeMacro(fn, ast) {
-  fn.ast = ast || [[], {}, [], 1]; // mark as macro
-
-  return fn;
-}
-
-function isMacro(fn) {
-  if (!isFunction(fn)) return false;
-  if (!isArray(fn.ast)) return false;
-  return !!fn.ast[3];
-}
-
-function makeSF(fn) {
-  fn.__isSpecialForm = true;
-  return fn;
-}
-
-function isSF(fn) {
-  if (!isFunction(fn)) return false;
-  return !!fn.__isSpecialForm;
-}
-
-function makeLetBindings(ast, ctx, rs) {
-  var result = {};
-
-  if (isHash(ast)) {
-    for (var varName in ast) {
-      result[varName] = EVAL(ast[varName], ctx, rs);
-    }
-  } else if (isArray(ast) && isString(ast[0])) {
-    result[ast[0]] = EVAL(ast[1], ctx, rs);
-  } else if (isArray(ast)) {
-    ast.forEach(function (pair) {
-      return result[pair[0]] = EVAL(pair[1], ctx, rs);
-    });
-  } else if (isFunction(ast)) {
-    return ast;
-  } else {
-    throw new Error('LISP: let expression invalid form in ' + ast);
-  }
-
-  return result;
-}
-
-var SPECIAL_FORMS = {
-  // built-in special forms
-  'let': makeSF(function (ast, ctx, rs) {
-    return EVAL(['begin'].concat(_toConsumableArray(ast.slice(1))), [makeLetBindings(ast[0], ctx, rs), ctx], rs);
-  }),
-  '`': makeSF(function (ast, ctx) {
-    return ast[0];
-  }),
-  // quote
-  'macroexpand': makeSF(macroexpand),
-  'begin': makeSF(function (ast, ctx) {
-    return ast.reduce(function (acc, astItem) {
-      return EVAL(astItem, ctx);
-    }, null);
-  }),
-  'do': makeSF(function (ast, ctx) {
-    throw new Error('DO not implemented');
-  }),
-  'if': makeSF(function (ast, ctx, rs) {
-    return EVAL(ast[0], ctx, false) ? EVAL(ast[1], ctx, rs) : EVAL(ast[2], ctx, rs);
-  }),
-  '~': makeSF(function (ast, ctx, rs) {
-    // mark as macro
-    var f = EVAL(ast[0], ctx, rs); // eval regular function
-
-    f.ast.push(1); // mark as macro
-
-    return f;
-  }),
-  '.-': makeSF(function (ast, ctx, rs) {
-    // get or set attribute
-    var _ast$map = ast.map(function (a) {
-      return EVAL(a, ctx, rs);
-    }),
-        _ast$map2 = _slicedToArray(_ast$map, 3),
-        obj = _ast$map2[0],
-        propertyName = _ast$map2[1],
-        value = _ast$map2[2]; // hack
-
-
-    if (propertyName === undefined && isString(ast[1])) {
-      // string propertyName tried to evaluate in rs context
-      propertyName = ast[1];
-    }
-
-    try {
-      return value !== undefined ? obj[propertyName] = value : obj[propertyName];
-    } catch (err) {
-      return value; // undefined when 'get'
-    }
-  }),
-  '.': makeSF(function (ast, ctx, rs) {
-    // call object method
-    var _ast$map3 = ast.map(function (a) {
-      return EVAL(a, ctx, rs);
-    }),
-        _ast$map4 = _toArray(_ast$map3),
-        obj = _ast$map4[0],
-        methodName = _ast$map4[1],
-        args = _ast$map4.slice(2);
-
-    var fn = obj[methodName];
-    return fn.apply(obj, args);
-  }),
-  'try': makeSF(function (ast, ctx, rs) {
-    // try/catch
-    try {
-      return EVAL(ast[0], ctx, rs);
-    } catch (e) {
-      var errCtx = env_bind([ast[1][0]], ctx, [e]);
-      return EVAL(ast[1][1], errCtx, rs);
-    }
-  }),
-  '||': makeSF(function (ast, ctx, rs) {
-    return ast.some(function (a) {
-      return !!EVAL(a, ctx, rs);
-    });
-  }),
-  // logical or
-  '&&': makeSF(function (ast, ctx, rs) {
-    return ast.every(function (a) {
-      return !!EVAL(a, ctx, rs);
-    });
-  }),
-  // logical and
-  'fn': makeSF(function (ast, ctx, rs) {
-    // define new function (lambda)
-    var f = function f() {
-      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-        args[_key] = arguments[_key];
-      }
-
-      return EVAL(ast[1], env_bind(ast[0], ctx, args), rs);
-    };
-
-    f.ast = [ast[1], ctx, ast[0]]; // f.ast compresses more than f.data
-
-    return f;
-  }),
-  'def': makeSF(function (ast, ctx, rs) {
-    // update current environment
-    var value = EVAL(ast[1], ctx, rs);
-    var result = $var$(ctx, ast[0], value);
-    return result;
-  }),
-  'filter': makeSF(function (ast, ctx, rs) {
-    var _ast$map5 = ast.map(function (a) {
-      return EVAL(a, ctx, rs);
-    }),
-        _ast$map6 = _slicedToArray(_ast$map5, 2),
-        lambda = _ast$map6[0],
-        array = _ast$map6[1];
-
-    return Array.prototype.filter.call(array, lambda);
-  })
-};
-
-var STDLIB = _objectSpread({
-  // built-in constants
-  '#t': true,
-  '#f': false,
-  'NIL': null,
-  'null': null,
-  // js specific
-  'true': true,
-  'false': false,
-  'Array': Array,
-  // TODO: consider removing these properties
-  'Object': Object,
-  'Date': Date,
-  'console': __WEBPACK_IMPORTED_MODULE_10__console_console__["a" /* default */],
-  'JSON': JSON
-}, SPECIAL_FORMS, {
-  // built-in function
-  '=': function _() {
-    for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-      args[_key2] = arguments[_key2];
-    }
-
-    return args.every(function (v) {
-      return v == args[0];
-    });
-  },
-  '+': function _() {
-    for (var _len3 = arguments.length, args = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
-      args[_key3] = arguments[_key3];
-    }
-
-    return args.reduce(function (a, b) {
-      return a + b;
-    });
-  },
-  '-': function _() {
-    for (var _len4 = arguments.length, args = new Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
-      args[_key4] = arguments[_key4];
-    }
-
-    return args.length === 1 ? -args[0] : args.reduce(function (a, b) {
-      return a - b;
-    });
-  },
-  '*': function _() {
-    for (var _len5 = arguments.length, args = new Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
-      args[_key5] = arguments[_key5];
-    }
-
-    return args.reduce(function (a, b) {
-      return a * b;
-    });
-  },
-  '/': function _() {
-    for (var _len6 = arguments.length, args = new Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
-      args[_key6] = arguments[_key6];
-    }
-
-    return args.length === 1 ? 1 / args[0] : args.reduce(function (a, b) {
-      return a / b;
-    });
-  },
-  '<': function _() {
-    for (var _len7 = arguments.length, args = new Array(_len7), _key7 = 0; _key7 < _len7; _key7++) {
-      args[_key7] = arguments[_key7];
-    }
-
-    return args.every(function (v, i) {
-      return i === 0 ? true : args[i - 1] < args[i];
-    });
-  },
-  '>': function _() {
-    for (var _len8 = arguments.length, args = new Array(_len8), _key8 = 0; _key8 < _len8; _key8++) {
-      args[_key8] = arguments[_key8];
-    }
-
-    return args.every(function (v, i) {
-      return i === 0 ? true : args[i - 1] > args[i];
-    });
-  },
-  '<=': function _() {
-    for (var _len9 = arguments.length, args = new Array(_len9), _key9 = 0; _key9 < _len9; _key9++) {
-      args[_key9] = arguments[_key9];
-    }
-
-    return args.every(function (v, i) {
-      return i === 0 ? true : args[i - 1] <= args[i];
-    });
-  },
-  '>=': function _() {
-    for (var _len10 = arguments.length, args = new Array(_len10), _key10 = 0; _key10 < _len10; _key10++) {
-      args[_key10] = arguments[_key10];
-    }
-
-    return args.every(function (v, i) {
-      return i === 0 ? true : args[i - 1] >= args[i];
-    });
-  },
-  '!=': function _() {
-    for (var _len11 = arguments.length, args = new Array(_len11), _key11 = 0; _key11 < _len11; _key11++) {
-      args[_key11] = arguments[_key11];
-    }
-
-    return !args.every(function (v) {
-      return v == args[0];
-    });
-  },
-  '[': function _() {
-    for (var _len12 = arguments.length, args = new Array(_len12), _key12 = 0; _key12 < _len12; _key12++) {
-      args[_key12] = arguments[_key12];
-    }
-
-    return args;
-  },
-  'RegExp': function (_RegExp) {
-    function RegExp() {
-      return _RegExp.apply(this, arguments);
-    }
-
-    RegExp.toString = function () {
-      return _RegExp.toString();
-    };
-
-    return RegExp;
-  }(function () {
-    for (var _len13 = arguments.length, args = new Array(_len13), _key13 = 0; _key13 < _len13; _key13++) {
-      args[_key13] = arguments[_key13];
-    }
-
-    return RegExp.apply(RegExp, args);
-  }),
-  'count': function count(a) {
-    return a.length;
-  },
-  'del': function del(a, b) {
-    return delete a[b];
-  },
-  // 'del': (a, b) => Reflect.deleteProperty(a, b),
-  'isa': function isa(a, b) {
-    return a instanceof b;
-  },
-  'type': function type(a) {
-    return _typeof(a);
-  },
-  'new': function _new() {
-    for (var _len14 = arguments.length, args = new Array(_len14), _key14 = 0; _key14 < _len14; _key14++) {
-      args[_key14] = arguments[_key14];
-    }
-
-    return new (args[0].bind.apply(args[0], args))();
-  },
-  'not': function not(a) {
-    return !a;
-  },
-  'list': function list() {
-    for (var _len15 = arguments.length, args = new Array(_len15), _key15 = 0; _key15 < _len15; _key15++) {
-      args[_key15] = arguments[_key15];
-    }
-
-    return args;
-  },
-  'vector': function vector() {
-    for (var _len16 = arguments.length, args = new Array(_len16), _key16 = 0; _key16 < _len16; _key16++) {
-      args[_key16] = arguments[_key16];
-    }
-
-    return args;
-  },
-  'map': function map(fn, arr) {
-    return arr.map(function (it) {
-      return fn(it);
-    });
-  },
-  'throw': function _throw(a) {
-    throw a;
-  },
-  'identity': function identity(a) {
-    return a;
-  },
-  'pluck': function pluck(c, k) {
-    return c.map(function (el) {
-      return el[k];
-    });
-  },
-  // for each array element, get property value, present result as array.
-  'read-string': function readString(a) {
-    return JSON.parse(a);
-  },
-  'rep': function rep(a) {
-    return JSON.stringify(EVAL(JSON.parse(a), STDLIB));
-  },
-  // TODO: fix ctx and rs arguments
-  'null?': function _null(a) {
-    return a === null || a === undefined;
-  },
-  // ??? add [] ???
-  'true?': function _true(a) {
-    return a === true;
-  },
-  'false?': function _false(a) {
-    return a === false;
-  },
-  'string?': isString,
-  'list?': isArray,
-  'contains?': function contains(a, b) {
-    return a.hasOwnProperty(b);
-  },
-  'str': function str() {
-    for (var _len17 = arguments.length, args = new Array(_len17), _key17 = 0; _key17 < _len17; _key17++) {
-      args[_key17] = arguments[_key17];
-    }
-
-    return args.map(function (x) {
-      return isString(x) ? x : JSON.stringify(x);
-    }).join('');
-  },
-  'get': function get(a, b) {
-    return a.hasOwnProperty(b) ? a[b] : undefined;
-  },
-  'nth': function nth(a, b) {
-    return a.hasOwnProperty(b) ? a[b] : undefined;
-  },
-  'set': function set(a, b, c) {
-    return a[b] = c, a;
-  },
-  'keys': function keys(a) {
-    return Object.keys(a);
-  },
-  'vals': function vals(a) {
-    return Object.values(a);
-  },
-  'rest': function rest(a) {
-    return a.slice(1);
-  },
-  'println': function println() {
-    for (var _len18 = arguments.length, args = new Array(_len18), _key18 = 0; _key18 < _len18; _key18++) {
-      args[_key18] = arguments[_key18];
-    }
-
-    return __WEBPACK_IMPORTED_MODULE_10__console_console__["a" /* default */].log(args.map(function (x) {
-      return isString(x) ? x : JSON.stringify(x);
-    }).join(' '));
-  },
-  'empty?': function empty(a) {
-    return isArray(a) ? a.length === 0 : false;
-  },
-  'cons': function cons(a, b) {
-    return [].concat([a], b);
-  },
-  'prn': function prn() {
-    for (var _len19 = arguments.length, args = new Array(_len19), _key19 = 0; _key19 < _len19; _key19++) {
-      args[_key19] = arguments[_key19];
-    }
-
-    return __WEBPACK_IMPORTED_MODULE_10__console_console__["a" /* default */].log(args.map(function (x) {
-      return JSON.stringify(x);
-    }).join(' '));
-  },
-  'slice': function slice(a, b) {
-    return a.slice(b, (arguments.length <= 2 ? 0 : arguments.length - 2) > 0 ? arguments.length <= 2 ? undefined : arguments[2] : a.length);
-  },
-  'first': function first(a) {
-    return a.length > 0 ? a[0] : null;
-  },
-  'last': function last(a) {
-    return a[a.length - 1];
-  },
-  'apply': function apply(f) {
-    for (var _len20 = arguments.length, b = new Array(_len20 > 1 ? _len20 - 1 : 0), _key20 = 1; _key20 < _len20; _key20++) {
-      b[_key20 - 1] = arguments[_key20];
-    }
-
-    return f.apply(f, b);
-  },
-  'concat': function concat() {
-    for (var _len21 = arguments.length, a = new Array(_len21), _key21 = 0; _key21 < _len21; _key21++) {
-      a[_key21] = arguments[_key21];
-    }
-
-    return [].concat.apply([], a);
-  },
-  'pr-str': function prStr() {
-    for (var _len22 = arguments.length, a = new Array(_len22), _key22 = 0; _key22 < _len22; _key22++) {
-      a[_key22] = arguments[_key22];
-    }
-
-    return a.map(function (x) {
-      return JSON.stringify(x);
-    }).join(' ');
-  },
-  'classOf': function classOf(a) {
-    return Object.prototype.toString.call(a);
-  },
-  '⍴': function _(len) {
-    for (var _len23 = arguments.length, values = new Array(_len23 > 1 ? _len23 - 1 : 0), _key23 = 1; _key23 < _len23; _key23++) {
-      values[_key23 - 1] = arguments[_key23];
-    }
-
-    return Array.apply(null, Array(len)).map(function (a, idx) {
-      return values[idx % values.length];
-    });
-  },
-  // not implemented yet
-  // 'hash-table->alist'
-  // macros
-  '\'': makeMacro(function (a) {
-    return a.toString();
-  }),
-  '"': makeMacro(function (a) {
-    return a.toString();
-  }),
-  '()': makeMacro(function () {
-    for (var _len24 = arguments.length, args = new Array(_len24), _key24 = 0; _key24 < _len24; _key24++) {
-      args[_key24] = arguments[_key24];
-    }
-
-    return ['begin'].concat(args);
-  }),
-  '->': makeMacro(function (acc) {
-    for (var _len25 = arguments.length, ast = new Array(_len25 > 1 ? _len25 - 1 : 0), _key25 = 1; _key25 < _len25; _key25++) {
-      ast[_key25 - 1] = arguments[_key25];
-    }
-
-    // thread first macro
-    // императивная лапша для макроса ->
-    // надо вот так: https://clojuredocs.org/clojure.core/-%3E%3E
-    for (var _i2 = 0; _i2 < ast.length; _i2++) {
-      var arr = ast[_i2];
-
-      if (!isArray(arr)) {
-        arr = [".-", acc, arr]; // это может быть обращение к хэшу или массиву через индекс или ключ....
-      } else if (arr[0] === "()" && arr.length === 2 && (isString(arr[1]) || isNumber(arr[1]))) {
-        arr = [".-", acc, arr[1]];
-      } else {
-        arr = arr.slice(0); // must copy array before modify
-
-        arr.splice(1, 0, acc); // подставляем "вычисленное" ранее значение в качестве первого аргумента... классика thread first
-      }
-
-      acc = arr;
-    }
-
-    return acc;
-  }),
-  '->>': makeMacro(function (acc) {
-    for (var _len26 = arguments.length, ast = new Array(_len26 > 1 ? _len26 - 1 : 0), _key26 = 1; _key26 < _len26; _key26++) {
-      ast[_key26 - 1] = arguments[_key26];
-    }
-
-    // thread last macro
-    // императивная лапша для макроса ->>
-    // надо вот так: https://clojuredocs.org/clojure.core/-%3E%3E
-    for (var _i3 = 0; _i3 < ast.length; _i3++) {
-      var arr = ast[_i3];
-      arr.push(acc);
-      acc = arr;
-    }
-
-    return acc;
-  }),
-  'invoke': makeMacro(function () {
-    for (var _len27 = arguments.length, ast = new Array(_len27), _key27 = 0; _key27 < _len27; _key27++) {
-      ast[_key27] = arguments[_key27];
-    }
-
-    /// мы не можем использовать точку в LPE для вызова метода объекта, так как она уже замаплена на ->
-    /// поэтому для фанатов ООП пришлось добавить макрос invoke - вызов метода по его текстовому названию.
-    /// invoke хорошо стыкуется с ->
-    ast.splice(0, 0, ".");
-    return ast;
-  }),
-  'and': makeMacro(function () {
-    for (var _len28 = arguments.length, ast = new Array(_len28), _key28 = 0; _key28 < _len28; _key28++) {
-      ast[_key28] = arguments[_key28];
-    }
-
-    if (ast.length === 0) return true;
-    if (ast.length === 1) return ast[0];
-    return ["let", ["__and", ast[0]], ["if", "__and", ["and"].concat(ast.slice(1)), "__and"]];
-  }),
-  'or': makeMacro(function () {
-    for (var _len29 = arguments.length, ast = new Array(_len29), _key29 = 0; _key29 < _len29; _key29++) {
-      ast[_key29] = arguments[_key29];
-    }
-
-    if (ast.length === 0) return false;
-    if (ast.length === 1) return ast[0];
-    return ["let", ["__or", ast[0]], ["if", "__or", "__or", ["or"].concat(ast.slice(1))]];
-  }),
-  // system functions & objects
-  // 'js': eval,
-  eval: function _eval(a) {
-    return EVAL(a, STDLIB);
-  }
-});
-
-function macroexpand(ast, ctx) {
-  var resolveString = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
-
-  while (true) {
-    if (!isArray(ast)) break;
-    if (!isString(ast[0])) break;
-    var v = $var$(ctx, ast[0]);
-    if (!isFunction(v)) break;
-    if (!isMacro(v)) break;
-    ast = v.apply(v, ast.slice(1)); // Это макрос! 3-й элемент макроса установлен в 1 через push
-  }
-
-  return ast;
-}
-/**
- * Return new ctx with symbols in ast bound to
- * corresponding values in exprs
- * @param ast
- * @param ctx
- * @param exprs
- * @returns {*[]}
- */
-
-
-function env_bind(ast, ctx, exprs) {
-  var newCtx = {};
-
-  for (var i = 0; i < ast.length; i++) {
-    if (ast[i] === "&") {
-      // variable length arguments
-      newCtx[ast[i + 1]] = Array.prototype.slice.call(exprs, i);
-      break;
-    } else {
-      newCtx[ast[i]] = exprs[i];
-    }
-  }
-
-  return [newCtx, ctx];
-}
-
-function EVAL(ast, ctx) {
-  var resolveString = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
-
-  while (true) {
-    if (!isArray(ast)) {
-      // atom
-      if (isString(ast)) {
-        var value = $var$(ctx, ast);
-
-        if (value !== undefined) {
-          // variable
-          return value;
-        }
-
-        return resolveString ? ast : undefined; // if string and not in ctx
-      }
-
-      return ast;
-    } // apply
-
-
-    ast = macroexpand(ast, ctx);
-    if (!Array.isArray(ast)) return ast; // TODO: do we need eval here?
-
-    if (ast.length === 0) return null; // TODO: [] => empty list (or, maybe return vector [])
-
-    var _ast = ast,
-        _ast2 = _toArray(_ast),
-        opAst = _ast2[0],
-        argsAst = _ast2.slice(1);
-
-    var op = EVAL(opAst, ctx, resolveString); // evaluate operator
-
-    if (typeof op !== 'function') {
-      throw new Error('Error: ' + String(op) + ' is not a function');
-    }
-
-    if (isSF(op)) {
-      // special form
-      var sfResult = op(argsAst, ctx, resolveString);
-      return sfResult;
-    }
-
-    var args = argsAst.map(function (a) {
-      return EVAL(a, ctx, resolveString);
-    }); // evaluate arguments
-
-    if (op.ast) {
-      ast = op.ast[0];
-      ctx = env_bind(op.ast[2], op.ast[1], args); // TCO
-    } else {
-      var fnResult = op.apply(op, args);
-      return fnResult;
-    }
-  }
-} // EVAL
-
-
-function eval_lisp(ast, ctx) {
-  var result = EVAL(ast, [ctx || {}, STDLIB]);
-  return result;
-} // Use with care
-
-function init_lisp(ctx) {
-  ctx = [ctx || {}, STDLIB];
-  return {
-    eval: function _eval(ast) {
-      return eval_lisp(ast, ctx);
-    },
-    val: function val(varName, value) {
-      return $var$(ctx, varName, value);
-    }
-  };
-} // deprecated
-
-function evaluate(ast, ctx) {
-  return eval_lisp(ast, ctx);
-}
-
-/***/ }),
-/* 41 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2375,6 +1288,1118 @@ function parse(str) {
 
 
 /***/ }),
+/* 31 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var at = __webpack_require__(54)(true);
+
+ // `AdvanceStringIndex` abstract operation
+// https://tc39.github.io/ecma262/#sec-advancestringindex
+module.exports = function (S, index, unicode) {
+  return index + (unicode ? at(S, index).length : 1);
+};
+
+
+/***/ }),
+/* 32 */
+/***/ (function(module, exports) {
+
+// IE 8- don't enum bug keys
+module.exports = (
+  'constructor,hasOwnProperty,isPrototypeOf,propertyIsEnumerable,toLocaleString,toString,valueOf'
+).split(',');
+
+
+/***/ }),
+/* 33 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// 7.2.8 IsRegExp(argument)
+var isObject = __webpack_require__(6);
+var cof = __webpack_require__(21);
+var MATCH = __webpack_require__(0)('match');
+module.exports = function (it) {
+  var isRegExp;
+  return isObject(it) && ((isRegExp = it[MATCH]) !== undefined ? !!isRegExp : cof(it) == 'RegExp');
+};
+
+
+/***/ }),
+/* 34 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// 19.1.2.7 / 15.2.3.4 Object.getOwnPropertyNames(O)
+var $keys = __webpack_require__(53);
+var hiddenKeys = __webpack_require__(32).concat('length', 'prototype');
+
+exports.f = Object.getOwnPropertyNames || function getOwnPropertyNames(O) {
+  return $keys(O, hiddenKeys);
+};
+
+
+/***/ }),
+/* 35 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var regexpFlags = __webpack_require__(24);
+
+var nativeExec = RegExp.prototype.exec;
+// This always refers to the native implementation, because the
+// String#replace polyfill uses ./fix-regexp-well-known-symbol-logic.js,
+// which loads this file before patching the method.
+var nativeReplace = String.prototype.replace;
+
+var patchedExec = nativeExec;
+
+var LAST_INDEX = 'lastIndex';
+
+var UPDATES_LAST_INDEX_WRONG = (function () {
+  var re1 = /a/,
+      re2 = /b*/g;
+  nativeExec.call(re1, 'a');
+  nativeExec.call(re2, 'a');
+  return re1[LAST_INDEX] !== 0 || re2[LAST_INDEX] !== 0;
+})();
+
+// nonparticipating capturing group, copied from es5-shim's String#split patch.
+var NPCG_INCLUDED = /()??/.exec('')[1] !== undefined;
+
+var PATCH = UPDATES_LAST_INDEX_WRONG || NPCG_INCLUDED;
+
+if (PATCH) {
+  patchedExec = function exec(str) {
+    var re = this;
+    var lastIndex, reCopy, match, i;
+
+    if (NPCG_INCLUDED) {
+      reCopy = new RegExp('^' + re.source + '$(?!\\s)', regexpFlags.call(re));
+    }
+    if (UPDATES_LAST_INDEX_WRONG) lastIndex = re[LAST_INDEX];
+
+    match = nativeExec.call(re, str);
+
+    if (UPDATES_LAST_INDEX_WRONG && match) {
+      re[LAST_INDEX] = re.global ? match.index + match[0].length : lastIndex;
+    }
+    if (NPCG_INCLUDED && match && match.length > 1) {
+      // Fix browsers whose `exec` methods don't consistently return `undefined`
+      // for NPCG, like IE8. NOTE: This doesn' work for /(.?)?/
+      // eslint-disable-next-line no-loop-func
+      nativeReplace.call(match[0], reCopy, function () {
+        for (i = 1; i < arguments.length - 2; i++) {
+          if (arguments[i] === undefined) match[i] = undefined;
+        }
+      });
+    }
+
+    return match;
+  };
+}
+
+module.exports = patchedExec;
+
+
+/***/ }),
+/* 36 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var def = __webpack_require__(4).f;
+var has = __webpack_require__(9);
+var TAG = __webpack_require__(0)('toStringTag');
+
+module.exports = function (it, tag, stat) {
+  if (it && !has(it = stat ? it : it.prototype, TAG)) def(it, TAG, { configurable: true, value: tag });
+};
+
+
+/***/ }),
+/* 37 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var shared = __webpack_require__(28)('keys');
+var uid = __webpack_require__(20);
+module.exports = function (key) {
+  return shared[key] || (shared[key] = uid(key));
+};
+
+
+/***/ }),
+/* 38 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// 7.1.1 ToPrimitive(input [, PreferredType])
+var isObject = __webpack_require__(6);
+// instead of the ES6 spec version, we didn't implement @@toPrimitive case
+// and the second argument - flag - preferred type is a string
+module.exports = function (it, S) {
+  if (!isObject(it)) return it;
+  var fn, val;
+  if (S && typeof (fn = it.toString) == 'function' && !isObject(val = fn.call(it))) return val;
+  if (typeof (fn = it.valueOf) == 'function' && !isObject(val = fn.call(it))) return val;
+  if (!S && typeof (fn = it.toString) == 'function' && !isObject(val = fn.call(it))) return val;
+  throw TypeError("Can't convert object to primitive value");
+};
+
+
+/***/ }),
+/* 39 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var addToUnscopables = __webpack_require__(43);
+var step = __webpack_require__(82);
+var Iterators = __webpack_require__(17);
+var toIObject = __webpack_require__(11);
+
+// 22.1.3.4 Array.prototype.entries()
+// 22.1.3.13 Array.prototype.keys()
+// 22.1.3.29 Array.prototype.values()
+// 22.1.3.30 Array.prototype[@@iterator]()
+module.exports = __webpack_require__(49)(Array, 'Array', function (iterated, kind) {
+  this._t = toIObject(iterated); // target
+  this._i = 0;                   // next index
+  this._k = kind;                // kind
+// 22.1.5.2.1 %ArrayIteratorPrototype%.next()
+}, function () {
+  var O = this._t;
+  var kind = this._k;
+  var index = this._i++;
+  if (!O || index >= O.length) {
+    this._t = undefined;
+    return step(1);
+  }
+  if (kind == 'keys') return step(0, index);
+  if (kind == 'values') return step(0, O[index]);
+  return step(0, [index, O[index]]);
+}, 'values');
+
+// argumentsList[@@iterator] is %ArrayProto_values% (9.4.4.6, 9.4.4.7)
+Iterators.Arguments = Iterators.Array;
+
+addToUnscopables('keys');
+addToUnscopables('values');
+addToUnscopables('entries');
+
+
+/***/ }),
+/* 40 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+__webpack_require__(100);
+var anObject = __webpack_require__(1);
+var $flags = __webpack_require__(24);
+var DESCRIPTORS = __webpack_require__(2);
+var TO_STRING = 'toString';
+var $toString = /./[TO_STRING];
+
+var define = function (fn) {
+  __webpack_require__(10)(RegExp.prototype, TO_STRING, fn, true);
+};
+
+// 21.2.5.14 RegExp.prototype.toString()
+if (__webpack_require__(5)(function () { return $toString.call({ source: 'a', flags: 'b' }) != '/a/b'; })) {
+  define(function toString() {
+    var R = anObject(this);
+    return '/'.concat(R.source, '/',
+      'flags' in R ? R.flags : !DESCRIPTORS && R instanceof RegExp ? $flags.call(R) : undefined);
+  });
+// FF44- RegExp#toString has a wrong name
+} else if ($toString.name != TO_STRING) {
+  define(function toString() {
+    return $toString.call(this);
+  });
+}
+
+
+/***/ }),
+/* 41 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* unused harmony export makeMacro */
+/* unused harmony export makeSF */
+/* harmony export (immutable) */ __webpack_exports__["a"] = eval_lisp;
+/* unused harmony export init_lisp */
+/* unused harmony export evaluate */
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_string_iterator__ = __webpack_require__(104);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_string_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_string_iterator__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_array_from__ = __webpack_require__(97);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_array_from___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_array_from__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es7_object_values__ = __webpack_require__(61);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es7_object_values___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_core_js_modules_es7_object_values__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_array_iterator__ = __webpack_require__(39);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_array_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_array_iterator__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_object_keys__ = __webpack_require__(98);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_object_keys___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_object_keys__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es6_regexp_constructor__ = __webpack_require__(58);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es6_regexp_constructor___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_core_js_modules_es6_regexp_constructor__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_es7_symbol_async_iterator__ = __webpack_require__(62);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_es7_symbol_async_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_core_js_modules_es7_symbol_async_iterator__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_symbol__ = __webpack_require__(60);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_symbol___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_symbol__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_core_js_modules_web_dom_iterable__ = __webpack_require__(63);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_core_js_modules_web_dom_iterable___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8_core_js_modules_web_dom_iterable__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_regexp_to_string__ = __webpack_require__(40);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_regexp_to_string___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_regexp_to_string__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__console_console__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__lpep__ = __webpack_require__(30);
+
+
+
+
+
+
+
+
+
+
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+function _toArray(arr) { return _arrayWithHoles(arr) || _iterableToArray(arr) || _nonIterableRest(); }
+
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
+
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
+
+function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+
+function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
+
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
+
+function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
+
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
+
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+/**
+ *  miniMAL lisp interpreter
+ *  Copyright (C) 2014 Joel Martin
+ *  Licensed under MPL 2.0
+ *  https://github.com/kanaka/mal
+ * 
+ */
+
+/**
+ *  The code has been reworked to suite LuxmsBI needs
+ *  by esix & Dmitry Dorofeev
+ *  2017-2019
+ */
+
+
+
+var isArray = function isArray(arg) {
+  return Object.prototype.toString.call(arg) === '[object Array]';
+};
+
+var isString = function isString(arg) {
+  return typeof arg === 'string';
+};
+
+var isNumber = function isNumber(arg) {
+  return typeof arg === 'number';
+};
+
+var isBoolean = function isBoolean(arg) {
+  return arg === true || arg === false;
+};
+
+var isHash = function isHash(arg) {
+  return _typeof(arg) === 'object' && arg !== null && !isArray(arg);
+};
+
+var isFunction = function isFunction(arg) {
+  return typeof arg === 'function';
+};
+/**
+ * Get or Set variable in context
+ * @param {*} ctx - array, hashmap or function that stores variables 
+ * @param {*} varName - the name of variable
+ * @param {*} value - optional value to set (undefied if get)
+ */
+
+
+function $var$(ctx, varName, value) {
+  if (isArray(ctx)) {
+    // contexts chain
+    var _iteratorNormalCompletion = true;
+    var _didIteratorError = false;
+    var _iteratorError = undefined;
+
+    try {
+      for (var _iterator = ctx[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+        var theCtx = _step.value;
+        var result = $var$(theCtx, varName);
+        if (result === undefined) continue; // no such var in context
+
+        if (value === undefined) return result; // get => we've got a result
+
+        return $var$(theCtx, varName, value); // set => redirect 'set' to context with variable.
+      }
+    } catch (err) {
+      _didIteratorError = true;
+      _iteratorError = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion && _iterator.return != null) {
+          _iterator.return();
+        }
+      } finally {
+        if (_didIteratorError) {
+          throw _iteratorError;
+        }
+      }
+    }
+
+    if (value === undefined) return undefined; // get => variable not found in all contexts
+
+    if (ctx.length) $var$(ctx[0], varName, value); // set => set variable to HEAD context
+
+    return undefined; // ??? ctx.length = 0
+  }
+
+  if (isFunction(ctx)) {
+    return ctx(varName, value);
+  }
+
+  if (isHash(ctx)) {
+    if (value === undefined) {
+      // get from hash
+      var _result = ctx[varName];
+
+      if (_result !== undefined) {
+        // found value in hash
+        return _result;
+      }
+
+      if (varName.substr(0, 3) !== 'sf:' && isFunction(ctx['sf:' + varName])) {
+        // user-defined special form
+        return makeSF(ctx['sf:' + varName]);
+      }
+
+      return undefined;
+    } else {
+      return ctx[varName] = value;
+    }
+  }
+
+  return undefined;
+}
+
+function makeMacro(fn, ast) {
+  fn.ast = ast || [[], {}, [], 1]; // mark as macro
+
+  return fn;
+}
+
+function isMacro(fn) {
+  if (!isFunction(fn)) return false;
+  if (!isArray(fn.ast)) return false;
+  return !!fn.ast[3];
+}
+
+function makeSF(fn) {
+  fn.__isSpecialForm = true;
+  return fn;
+}
+
+function isSF(fn) {
+  if (!isFunction(fn)) return false;
+  return !!fn.__isSpecialForm;
+}
+
+function makeLetBindings(ast, ctx, rs) {
+  var result = {};
+
+  if (isHash(ast)) {
+    for (var varName in ast) {
+      result[varName] = EVAL(ast[varName], ctx, rs);
+    }
+  } else if (isArray(ast) && isString(ast[0])) {
+    result[ast[0]] = EVAL(ast[1], ctx, rs);
+  } else if (isArray(ast)) {
+    ast.forEach(function (pair) {
+      return result[pair[0]] = EVAL(pair[1], ctx, rs);
+    });
+  } else if (isFunction(ast)) {
+    return ast;
+  } else {
+    throw new Error('LISP: let expression invalid form in ' + ast);
+  }
+
+  return result;
+}
+
+var SPECIAL_FORMS = {
+  // built-in special forms
+  'let': makeSF(function (ast, ctx, rs) {
+    return EVAL(['begin'].concat(_toConsumableArray(ast.slice(1))), [makeLetBindings(ast[0], ctx, rs), ctx], rs);
+  }),
+  '`': makeSF(function (ast, ctx) {
+    return ast[0];
+  }),
+  // quote
+  'macroexpand': makeSF(macroexpand),
+  'begin': makeSF(function (ast, ctx) {
+    return ast.reduce(function (acc, astItem) {
+      return EVAL(astItem, ctx);
+    }, null);
+  }),
+  'do': makeSF(function (ast, ctx) {
+    throw new Error('DO not implemented');
+  }),
+  'if': makeSF(function (ast, ctx, rs) {
+    return EVAL(ast[0], ctx, false) ? EVAL(ast[1], ctx, rs) : EVAL(ast[2], ctx, rs);
+  }),
+  '~': makeSF(function (ast, ctx, rs) {
+    // mark as macro
+    var f = EVAL(ast[0], ctx, rs); // eval regular function
+
+    f.ast.push(1); // mark as macro
+
+    return f;
+  }),
+  '.-': makeSF(function (ast, ctx, rs) {
+    // get or set attribute
+    var _ast$map = ast.map(function (a) {
+      return EVAL(a, ctx, rs);
+    }),
+        _ast$map2 = _slicedToArray(_ast$map, 3),
+        obj = _ast$map2[0],
+        propertyName = _ast$map2[1],
+        value = _ast$map2[2]; // hack
+
+
+    if (propertyName === undefined && isString(ast[1])) {
+      // string propertyName tried to evaluate in rs context
+      propertyName = ast[1];
+    }
+
+    try {
+      return value !== undefined ? obj[propertyName] = value : obj[propertyName];
+    } catch (err) {
+      return value; // undefined when 'get'
+    }
+  }),
+  '.': makeSF(function (ast, ctx, rs) {
+    // call object method
+    var _ast$map3 = ast.map(function (a) {
+      return EVAL(a, ctx, rs);
+    }),
+        _ast$map4 = _toArray(_ast$map3),
+        obj = _ast$map4[0],
+        methodName = _ast$map4[1],
+        args = _ast$map4.slice(2);
+
+    var fn = obj[methodName];
+    return fn.apply(obj, args);
+  }),
+  'try': makeSF(function (ast, ctx, rs) {
+    // try/catch
+    try {
+      return EVAL(ast[0], ctx, rs);
+    } catch (e) {
+      var errCtx = env_bind([ast[1][0]], ctx, [e]);
+      return EVAL(ast[1][1], errCtx, rs);
+    }
+  }),
+  '||': makeSF(function (ast, ctx, rs) {
+    return ast.some(function (a) {
+      return !!EVAL(a, ctx, rs);
+    });
+  }),
+  // logical or
+  '&&': makeSF(function (ast, ctx, rs) {
+    return ast.every(function (a) {
+      return !!EVAL(a, ctx, rs);
+    });
+  }),
+  // logical and
+  'fn': makeSF(function (ast, ctx, rs) {
+    // define new function (lambda)
+    var f = function f() {
+      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
+      }
+
+      return EVAL(ast[1], env_bind(ast[0], ctx, args), rs);
+    };
+
+    f.ast = [ast[1], ctx, ast[0]]; // f.ast compresses more than f.data
+
+    return f;
+  }),
+  'def': makeSF(function (ast, ctx, rs) {
+    // update current environment
+    var value = EVAL(ast[1], ctx, rs);
+    var result = $var$(ctx, ast[0], value);
+    return result;
+  }),
+  'eval_lpe': makeSF(function (ast, ctx, rs) {
+    var lpeCode = eval_lisp(ast[0], ctx, rs);
+    var lisp = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_11__lpep__["a" /* parse */])(lpeCode);
+    var result = eval_lisp(lisp, ctx);
+    return result;
+  }),
+  'filterit': function filterit(ast, ctx, rs) {
+    var array = eval_lisp(ast[0], ctx, rs);
+    var conditionAST = ast[1];
+    var result = Array.prototype.filter.call(array, function (it, idx) {
+      return !!eval_lisp(conditionAST, [{
+        it: it,
+        idx: idx
+      }, ctx], rs);
+    });
+    return result;
+  },
+  'mapit': function mapit(ast, ctx, rs) {
+    var array = eval_lisp(ast[0], ctx, rs);
+    var conditionAST = ast[1];
+    var result = Array.prototype.map.call(array, function (it, idx) {
+      return eval_lisp(conditionAST, [{
+        it: it,
+        idx: idx
+      }, ctx], rs);
+    });
+    return result;
+  }
+};
+
+var STDLIB = _objectSpread({
+  // built-in constants
+  '#t': true,
+  '#f': false,
+  'NIL': null,
+  'null': null,
+  // js specific
+  'true': true,
+  'false': false,
+  'Array': Array,
+  // TODO: consider removing these properties
+  'Object': Object,
+  'Date': Date,
+  'console': __WEBPACK_IMPORTED_MODULE_10__console_console__["a" /* default */],
+  'JSON': JSON
+}, SPECIAL_FORMS, {
+  // built-in function
+  '=': function _() {
+    for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+      args[_key2] = arguments[_key2];
+    }
+
+    return args.every(function (v) {
+      return v == args[0];
+    });
+  },
+  '+': function _() {
+    for (var _len3 = arguments.length, args = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+      args[_key3] = arguments[_key3];
+    }
+
+    return args.reduce(function (a, b) {
+      return a + b;
+    });
+  },
+  '-': function _() {
+    for (var _len4 = arguments.length, args = new Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+      args[_key4] = arguments[_key4];
+    }
+
+    return args.length === 1 ? -args[0] : args.reduce(function (a, b) {
+      return a - b;
+    });
+  },
+  '*': function _() {
+    for (var _len5 = arguments.length, args = new Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
+      args[_key5] = arguments[_key5];
+    }
+
+    return args.reduce(function (a, b) {
+      return a * b;
+    });
+  },
+  '/': function _() {
+    for (var _len6 = arguments.length, args = new Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
+      args[_key6] = arguments[_key6];
+    }
+
+    return args.length === 1 ? 1 / args[0] : args.reduce(function (a, b) {
+      return a / b;
+    });
+  },
+  '<': function _() {
+    for (var _len7 = arguments.length, args = new Array(_len7), _key7 = 0; _key7 < _len7; _key7++) {
+      args[_key7] = arguments[_key7];
+    }
+
+    return args.every(function (v, i) {
+      return i === 0 ? true : args[i - 1] < args[i];
+    });
+  },
+  '>': function _() {
+    for (var _len8 = arguments.length, args = new Array(_len8), _key8 = 0; _key8 < _len8; _key8++) {
+      args[_key8] = arguments[_key8];
+    }
+
+    return args.every(function (v, i) {
+      return i === 0 ? true : args[i - 1] > args[i];
+    });
+  },
+  '<=': function _() {
+    for (var _len9 = arguments.length, args = new Array(_len9), _key9 = 0; _key9 < _len9; _key9++) {
+      args[_key9] = arguments[_key9];
+    }
+
+    return args.every(function (v, i) {
+      return i === 0 ? true : args[i - 1] <= args[i];
+    });
+  },
+  '>=': function _() {
+    for (var _len10 = arguments.length, args = new Array(_len10), _key10 = 0; _key10 < _len10; _key10++) {
+      args[_key10] = arguments[_key10];
+    }
+
+    return args.every(function (v, i) {
+      return i === 0 ? true : args[i - 1] >= args[i];
+    });
+  },
+  '!=': function _() {
+    for (var _len11 = arguments.length, args = new Array(_len11), _key11 = 0; _key11 < _len11; _key11++) {
+      args[_key11] = arguments[_key11];
+    }
+
+    return !args.every(function (v) {
+      return v == args[0];
+    });
+  },
+  '[': function _() {
+    for (var _len12 = arguments.length, args = new Array(_len12), _key12 = 0; _key12 < _len12; _key12++) {
+      args[_key12] = arguments[_key12];
+    }
+
+    return args;
+  },
+  'RegExp': function (_RegExp) {
+    function RegExp() {
+      return _RegExp.apply(this, arguments);
+    }
+
+    RegExp.toString = function () {
+      return _RegExp.toString();
+    };
+
+    return RegExp;
+  }(function () {
+    for (var _len13 = arguments.length, args = new Array(_len13), _key13 = 0; _key13 < _len13; _key13++) {
+      args[_key13] = arguments[_key13];
+    }
+
+    return RegExp.apply(RegExp, args);
+  }),
+  'count': function count(a) {
+    return a.length;
+  },
+  'del': function del(a, b) {
+    return delete a[b];
+  },
+  // 'del': (a, b) => Reflect.deleteProperty(a, b),
+  'isa': function isa(a, b) {
+    return a instanceof b;
+  },
+  'type': function type(a) {
+    return _typeof(a);
+  },
+  'new': function _new() {
+    for (var _len14 = arguments.length, args = new Array(_len14), _key14 = 0; _key14 < _len14; _key14++) {
+      args[_key14] = arguments[_key14];
+    }
+
+    return new (args[0].bind.apply(args[0], args))();
+  },
+  'not': function not(a) {
+    return !a;
+  },
+  'list': function list() {
+    for (var _len15 = arguments.length, args = new Array(_len15), _key15 = 0; _key15 < _len15; _key15++) {
+      args[_key15] = arguments[_key15];
+    }
+
+    return args;
+  },
+  'vector': function vector() {
+    for (var _len16 = arguments.length, args = new Array(_len16), _key16 = 0; _key16 < _len16; _key16++) {
+      args[_key16] = arguments[_key16];
+    }
+
+    return args;
+  },
+  'map': function map(arr, fn) {
+    return arr.map(function (it) {
+      return fn(it);
+    });
+  },
+  'filter': function filter(arr, fn) {
+    return arr.filter(function (it) {
+      return fn(it);
+    });
+  },
+  'throw': function _throw(a) {
+    throw a;
+  },
+  'identity': function identity(a) {
+    return a;
+  },
+  'pluck': function pluck(c, k) {
+    return c.map(function (el) {
+      return el[k];
+    });
+  },
+  // for each array element, get property value, present result as array.
+  'read-string': function readString(a) {
+    return JSON.parse(a);
+  },
+  'rep': function rep(a) {
+    return JSON.stringify(EVAL(JSON.parse(a), STDLIB));
+  },
+  // TODO: fix ctx and rs arguments
+  'null?': function _null(a) {
+    return a === null || a === undefined;
+  },
+  // ??? add [] ???
+  'true?': function _true(a) {
+    return a === true;
+  },
+  'false?': function _false(a) {
+    return a === false;
+  },
+  'string?': isString,
+  'list?': isArray,
+  'contains?': function contains(a, b) {
+    return a.hasOwnProperty(b);
+  },
+  'str': function str() {
+    for (var _len17 = arguments.length, args = new Array(_len17), _key17 = 0; _key17 < _len17; _key17++) {
+      args[_key17] = arguments[_key17];
+    }
+
+    return args.map(function (x) {
+      return isString(x) ? x : JSON.stringify(x);
+    }).join('');
+  },
+  'get': function get(a, b) {
+    return a.hasOwnProperty(b) ? a[b] : undefined;
+  },
+  'nth': function nth(a, b) {
+    return a.hasOwnProperty(b) ? a[b] : undefined;
+  },
+  'set': function set(a, b, c) {
+    return a[b] = c, a;
+  },
+  'keys': function keys(a) {
+    return Object.keys(a);
+  },
+  'vals': function vals(a) {
+    return Object.values(a);
+  },
+  'rest': function rest(a) {
+    return a.slice(1);
+  },
+  'println': function println() {
+    for (var _len18 = arguments.length, args = new Array(_len18), _key18 = 0; _key18 < _len18; _key18++) {
+      args[_key18] = arguments[_key18];
+    }
+
+    return __WEBPACK_IMPORTED_MODULE_10__console_console__["a" /* default */].log(args.map(function (x) {
+      return isString(x) ? x : JSON.stringify(x);
+    }).join(' '));
+  },
+  'empty?': function empty(a) {
+    return isArray(a) ? a.length === 0 : false;
+  },
+  'cons': function cons(a, b) {
+    return [].concat([a], b);
+  },
+  'prn': function prn() {
+    for (var _len19 = arguments.length, args = new Array(_len19), _key19 = 0; _key19 < _len19; _key19++) {
+      args[_key19] = arguments[_key19];
+    }
+
+    return __WEBPACK_IMPORTED_MODULE_10__console_console__["a" /* default */].log(args.map(function (x) {
+      return JSON.stringify(x);
+    }).join(' '));
+  },
+  'slice': function slice(a, b) {
+    return a.slice(b, (arguments.length <= 2 ? 0 : arguments.length - 2) > 0 ? arguments.length <= 2 ? undefined : arguments[2] : a.length);
+  },
+  'first': function first(a) {
+    return a.length > 0 ? a[0] : null;
+  },
+  'last': function last(a) {
+    return a[a.length - 1];
+  },
+  'apply': function apply(f) {
+    for (var _len20 = arguments.length, b = new Array(_len20 > 1 ? _len20 - 1 : 0), _key20 = 1; _key20 < _len20; _key20++) {
+      b[_key20 - 1] = arguments[_key20];
+    }
+
+    return f.apply(f, b);
+  },
+  'concat': function concat() {
+    for (var _len21 = arguments.length, a = new Array(_len21), _key21 = 0; _key21 < _len21; _key21++) {
+      a[_key21] = arguments[_key21];
+    }
+
+    return [].concat.apply([], a);
+  },
+  'pr-str': function prStr() {
+    for (var _len22 = arguments.length, a = new Array(_len22), _key22 = 0; _key22 < _len22; _key22++) {
+      a[_key22] = arguments[_key22];
+    }
+
+    return a.map(function (x) {
+      return JSON.stringify(x);
+    }).join(' ');
+  },
+  'classOf': function classOf(a) {
+    return Object.prototype.toString.call(a);
+  },
+  '⍴': function _(len) {
+    for (var _len23 = arguments.length, values = new Array(_len23 > 1 ? _len23 - 1 : 0), _key23 = 1; _key23 < _len23; _key23++) {
+      values[_key23 - 1] = arguments[_key23];
+    }
+
+    return Array.apply(null, Array(len)).map(function (a, idx) {
+      return values[idx % values.length];
+    });
+  },
+  // not implemented yet
+  // 'hash-table->alist'
+  // macros
+  '\'': makeMacro(function (a) {
+    return a.toString();
+  }),
+  '"': makeMacro(function (a) {
+    return a.toString();
+  }),
+  '()': makeMacro(function () {
+    for (var _len24 = arguments.length, args = new Array(_len24), _key24 = 0; _key24 < _len24; _key24++) {
+      args[_key24] = arguments[_key24];
+    }
+
+    return ['begin'].concat(args);
+  }),
+  '->': makeMacro(function (acc) {
+    for (var _len25 = arguments.length, ast = new Array(_len25 > 1 ? _len25 - 1 : 0), _key25 = 1; _key25 < _len25; _key25++) {
+      ast[_key25 - 1] = arguments[_key25];
+    }
+
+    // thread first macro
+    // императивная лапша для макроса ->
+    // надо вот так: https://clojuredocs.org/clojure.core/-%3E%3E
+    for (var _i2 = 0; _i2 < ast.length; _i2++) {
+      var arr = ast[_i2];
+
+      if (!isArray(arr)) {
+        arr = [".-", acc, arr]; // это может быть обращение к хэшу или массиву через индекс или ключ....
+      } else if (arr[0] === "()" && arr.length === 2 && (isString(arr[1]) || isNumber(arr[1]))) {
+        arr = [".-", acc, arr[1]];
+      } else {
+        arr = arr.slice(0); // must copy array before modify
+
+        arr.splice(1, 0, acc); // подставляем "вычисленное" ранее значение в качестве первого аргумента... классика thread first
+      }
+
+      acc = arr;
+    }
+
+    return acc;
+  }),
+  '->>': makeMacro(function (acc) {
+    for (var _len26 = arguments.length, ast = new Array(_len26 > 1 ? _len26 - 1 : 0), _key26 = 1; _key26 < _len26; _key26++) {
+      ast[_key26 - 1] = arguments[_key26];
+    }
+
+    // thread last macro
+    // императивная лапша для макроса ->>
+    // надо вот так: https://clojuredocs.org/clojure.core/-%3E%3E
+    for (var _i3 = 0; _i3 < ast.length; _i3++) {
+      var arr = ast[_i3];
+      arr.push(acc);
+      acc = arr;
+    }
+
+    return acc;
+  }),
+  'invoke': makeMacro(function () {
+    for (var _len27 = arguments.length, ast = new Array(_len27), _key27 = 0; _key27 < _len27; _key27++) {
+      ast[_key27] = arguments[_key27];
+    }
+
+    /// мы не можем использовать точку в LPE для вызова метода объекта, так как она уже замаплена на ->
+    /// поэтому для фанатов ООП пришлось добавить макрос invoke - вызов метода по его текстовому названию.
+    /// invoke хорошо стыкуется с ->
+    ast.splice(0, 0, ".");
+    return ast;
+  }),
+  'and': makeMacro(function () {
+    for (var _len28 = arguments.length, ast = new Array(_len28), _key28 = 0; _key28 < _len28; _key28++) {
+      ast[_key28] = arguments[_key28];
+    }
+
+    if (ast.length === 0) return true;
+    if (ast.length === 1) return ast[0];
+    return ["let", ["__and", ast[0]], ["if", "__and", ["and"].concat(ast.slice(1)), "__and"]];
+  }),
+  'or': makeMacro(function () {
+    for (var _len29 = arguments.length, ast = new Array(_len29), _key29 = 0; _key29 < _len29; _key29++) {
+      ast[_key29] = arguments[_key29];
+    }
+
+    if (ast.length === 0) return false;
+    if (ast.length === 1) return ast[0];
+    return ["let", ["__or", ast[0]], ["if", "__or", "__or", ["or"].concat(ast.slice(1))]];
+  }),
+  // system functions & objects
+  // 'js': eval,
+  eval: function _eval(a) {
+    return EVAL(a, STDLIB);
+  }
+});
+
+function macroexpand(ast, ctx) {
+  var resolveString = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+
+  while (true) {
+    if (!isArray(ast)) break;
+    if (!isString(ast[0])) break;
+    var v = $var$(ctx, ast[0]);
+    if (!isFunction(v)) break;
+    if (!isMacro(v)) break;
+    ast = v.apply(v, ast.slice(1)); // Это макрос! 3-й элемент макроса установлен в 1 через push
+  }
+
+  return ast;
+}
+/**
+ * Return new ctx with symbols in ast bound to
+ * corresponding values in exprs
+ * @param ast
+ * @param ctx
+ * @param exprs
+ * @returns {*[]}
+ */
+
+
+function env_bind(ast, ctx, exprs) {
+  var newCtx = {};
+
+  for (var i = 0; i < ast.length; i++) {
+    if (ast[i] === "&") {
+      // variable length arguments
+      newCtx[ast[i + 1]] = Array.prototype.slice.call(exprs, i);
+      break;
+    } else {
+      newCtx[ast[i]] = exprs[i];
+    }
+  }
+
+  return [newCtx, ctx];
+}
+
+function EVAL(ast, ctx) {
+  var resolveString = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+
+  while (true) {
+    if (!isArray(ast)) {
+      // atom
+      if (isString(ast)) {
+        var value = $var$(ctx, ast);
+
+        if (value !== undefined) {
+          // variable
+          return value;
+        }
+
+        return resolveString ? ast : undefined; // if string and not in ctx
+      }
+
+      return ast;
+    } // apply
+
+
+    ast = macroexpand(ast, ctx);
+    if (!Array.isArray(ast)) return ast; // TODO: do we need eval here?
+
+    if (ast.length === 0) return null; // TODO: [] => empty list (or, maybe return vector [])
+
+    var _ast = ast,
+        _ast2 = _toArray(_ast),
+        opAst = _ast2[0],
+        argsAst = _ast2.slice(1);
+
+    var op = EVAL(opAst, ctx, resolveString); // evaluate operator
+
+    if (typeof op !== 'function') {
+      throw new Error('Error: ' + String(op) + ' is not a function');
+    }
+
+    if (isSF(op)) {
+      // special form
+      var sfResult = op(argsAst, ctx, resolveString);
+      return sfResult;
+    }
+
+    var args = argsAst.map(function (a) {
+      return EVAL(a, ctx, resolveString);
+    }); // evaluate arguments
+
+    if (op.ast) {
+      ast = op.ast[0];
+      ctx = env_bind(op.ast[2], op.ast[1], args); // TCO
+    } else {
+      var fnResult = op.apply(op, args);
+      return fnResult;
+    }
+  }
+} // EVAL
+
+
+function eval_lisp(ast, ctx) {
+  var result = EVAL(ast, [ctx || {}, STDLIB]);
+  return result;
+} // Use with care
+
+function init_lisp(ctx) {
+  ctx = [ctx || {}, STDLIB];
+  return {
+    eval: function _eval(ast) {
+      return eval_lisp(ast, ctx);
+    },
+    val: function val(varName, value) {
+      return $var$(ctx, varName, value);
+    }
+  };
+} // deprecated
+
+function evaluate(ast, ctx) {
+  return eval_lisp(ast, ctx);
+}
+
+/***/ }),
 /* 42 */
 /***/ (function(module, exports) {
 
@@ -2483,7 +2508,7 @@ var redefine = __webpack_require__(10);
 var hide = __webpack_require__(8);
 var Iterators = __webpack_require__(17);
 var $iterCreate = __webpack_require__(80);
-var setToStringTag = __webpack_require__(35);
+var setToStringTag = __webpack_require__(36);
 var getPrototypeOf = __webpack_require__(86);
 var ITERATOR = __webpack_require__(0)('iterator');
 var BUGGY = !([].keys && 'next' in [].keys()); // Safari has buggy iterators w/o `next`
@@ -2554,8 +2579,8 @@ module.exports = function (Base, NAME, Constructor, next, DEFAULT, IS_SET, FORCE
 // 19.1.2.2 / 15.2.3.5 Object.create(O [, Properties])
 var anObject = __webpack_require__(1);
 var dPs = __webpack_require__(84);
-var enumBugKeys = __webpack_require__(31);
-var IE_PROTO = __webpack_require__(36)('IE_PROTO');
+var enumBugKeys = __webpack_require__(32);
+var IE_PROTO = __webpack_require__(37)('IE_PROTO');
 var Empty = function () { /* empty */ };
 var PROTOTYPE = 'prototype';
 
@@ -2601,7 +2626,7 @@ module.exports = Object.create || function create(O, Properties) {
 var pIE = __webpack_require__(26);
 var createDesc = __webpack_require__(18);
 var toIObject = __webpack_require__(11);
-var toPrimitive = __webpack_require__(37);
+var toPrimitive = __webpack_require__(38);
 var has = __webpack_require__(9);
 var IE8_DOM_DEFINE = __webpack_require__(46);
 var gOPD = Object.getOwnPropertyDescriptor;
@@ -2630,7 +2655,7 @@ exports.f = Object.getOwnPropertySymbols;
 var has = __webpack_require__(9);
 var toIObject = __webpack_require__(11);
 var arrayIndexOf = __webpack_require__(68)(false);
-var IE_PROTO = __webpack_require__(36)('IE_PROTO');
+var IE_PROTO = __webpack_require__(37)('IE_PROTO');
 
 module.exports = function (object, names) {
   var O = toIObject(object);
@@ -2720,8 +2745,8 @@ NAME in FProto || __webpack_require__(2) && dP(FProto, NAME, {
 var global = __webpack_require__(3);
 var inheritIfRequired = __webpack_require__(77);
 var dP = __webpack_require__(4).f;
-var gOPN = __webpack_require__(33).f;
-var isRegExp = __webpack_require__(32);
+var gOPN = __webpack_require__(34).f;
+var isRegExp = __webpack_require__(33);
 var $flags = __webpack_require__(24);
 var $RegExp = global.RegExp;
 var Base = $RegExp;
@@ -2773,7 +2798,7 @@ var anObject = __webpack_require__(1);
 var toObject = __webpack_require__(19);
 var toLength = __webpack_require__(12);
 var toInteger = __webpack_require__(29);
-var advanceStringIndex = __webpack_require__(30);
+var advanceStringIndex = __webpack_require__(31);
 var regExpExec = __webpack_require__(27);
 var max = Math.max;
 var min = Math.min;
@@ -2902,7 +2927,7 @@ var redefine = __webpack_require__(10);
 var META = __webpack_require__(83).KEY;
 var $fails = __webpack_require__(5);
 var shared = __webpack_require__(28);
-var setToStringTag = __webpack_require__(35);
+var setToStringTag = __webpack_require__(36);
 var uid = __webpack_require__(20);
 var wks = __webpack_require__(0);
 var wksExt = __webpack_require__(56);
@@ -2912,7 +2937,7 @@ var isArray = __webpack_require__(48);
 var anObject = __webpack_require__(1);
 var isObject = __webpack_require__(6);
 var toIObject = __webpack_require__(11);
-var toPrimitive = __webpack_require__(37);
+var toPrimitive = __webpack_require__(38);
 var createDesc = __webpack_require__(18);
 var _create = __webpack_require__(50);
 var gOPNExt = __webpack_require__(85);
@@ -3041,7 +3066,7 @@ if (!USE_NATIVE) {
 
   $GOPD.f = $getOwnPropertyDescriptor;
   $DP.f = $defineProperty;
-  __webpack_require__(33).f = gOPNExt.f = $getOwnPropertyNames;
+  __webpack_require__(34).f = gOPNExt.f = $getOwnPropertyNames;
   __webpack_require__(26).f = $propertyIsEnumerable;
   __webpack_require__(52).f = $getOwnPropertySymbols;
 
@@ -3154,7 +3179,7 @@ __webpack_require__(55)('asyncIterator');
 /* 63 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var $iterators = __webpack_require__(38);
+var $iterators = __webpack_require__(39);
 var getKeys = __webpack_require__(14);
 var redefine = __webpack_require__(10);
 var global = __webpack_require__(3);
@@ -3229,7 +3254,7 @@ for (var collections = getKeys(DOMIterables), i = 0; i < collections.length; i++
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_regexp_search___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_regexp_search__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_web_dom_iterable__ = __webpack_require__(63);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_web_dom_iterable___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_core_js_modules_web_dom_iterable__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_array_iterator__ = __webpack_require__(38);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_array_iterator__ = __webpack_require__(39);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_array_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_array_iterator__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es7_object_values__ = __webpack_require__(61);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es7_object_values___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_core_js_modules_es7_object_values__);
@@ -3243,12 +3268,12 @@ for (var collections = getKeys(DOMIterables), i = 0; i < collections.length; i++
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_regexp_constructor___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_regexp_constructor__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_10_core_js_modules_es6_function_name__ = __webpack_require__(57);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_10_core_js_modules_es6_function_name___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_10_core_js_modules_es6_function_name__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11_core_js_modules_es6_regexp_to_string__ = __webpack_require__(39);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11_core_js_modules_es6_regexp_to_string__ = __webpack_require__(40);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_11_core_js_modules_es6_regexp_to_string___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_11_core_js_modules_es6_regexp_to_string__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__console_console__ = __webpack_require__(15);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__lpep__ = __webpack_require__(41);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__lpep__ = __webpack_require__(30);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__utils_utils__ = __webpack_require__(67);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__lisp__ = __webpack_require__(40);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__lisp__ = __webpack_require__(41);
 
 
 
@@ -3788,12 +3813,11 @@ function eval_sql_where(_expr, _vars) {
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "eval_lpe", function() { return eval_lpe; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__console_console__ = __webpack_require__(15);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__lpep__ = __webpack_require__(41);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__lisp__ = __webpack_require__(40);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__lpep__ = __webpack_require__(30);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__lisp__ = __webpack_require__(41);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__sql_where__ = __webpack_require__(64);
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "parse", function() { return __WEBPACK_IMPORTED_MODULE_1__lpep__["a"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "LPESyntaxError", function() { return __WEBPACK_IMPORTED_MODULE_1__lpep__["b"]; });
-/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "evaluate", function() { return __WEBPACK_IMPORTED_MODULE_2__lisp__["b"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "eval_lisp", function() { return __WEBPACK_IMPORTED_MODULE_2__lisp__["a"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "eval_sql_where", function() { return __WEBPACK_IMPORTED_MODULE_3__sql_where__["a"]; });
 
@@ -4122,7 +4146,7 @@ function tokenize(s) {
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["b"] = db_quote_literal;
 /* harmony export (immutable) */ __webpack_exports__["a"] = db_quote_ident;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_regexp_to_string__ = __webpack_require__(39);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_regexp_to_string__ = __webpack_require__(40);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_regexp_to_string___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_regexp_to_string__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_regexp_replace__ = __webpack_require__(59);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_regexp_replace___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_regexp_replace__);
@@ -4372,7 +4396,7 @@ module.exports = function (iterator, fn, value, entries) {
 
 var create = __webpack_require__(50);
 var descriptor = __webpack_require__(18);
-var setToStringTag = __webpack_require__(35);
+var setToStringTag = __webpack_require__(36);
 var IteratorPrototype = {};
 
 // 25.1.2.1.1 %IteratorPrototype%[@@iterator]()
@@ -4505,7 +4529,7 @@ module.exports = __webpack_require__(2) ? Object.defineProperties : function def
 
 // fallback for IE11 buggy Object.getOwnPropertyNames with iframe and window
 var toIObject = __webpack_require__(11);
-var gOPN = __webpack_require__(33).f;
+var gOPN = __webpack_require__(34).f;
 var toString = {}.toString;
 
 var windowNames = typeof window == 'object' && window && Object.getOwnPropertyNames
@@ -4531,7 +4555,7 @@ module.exports.f = function getOwnPropertyNames(it) {
 // 19.1.2.9 / 15.2.3.2 Object.getPrototypeOf(O)
 var has = __webpack_require__(9);
 var toObject = __webpack_require__(19);
-var IE_PROTO = __webpack_require__(36)('IE_PROTO');
+var IE_PROTO = __webpack_require__(37)('IE_PROTO');
 var ObjectProto = Object.prototype;
 
 module.exports = Object.getPrototypeOf || function (O) {
@@ -4663,7 +4687,7 @@ module.exports = function (O, D) {
 /***/ (function(module, exports, __webpack_require__) {
 
 // helper for String#{startsWith, endsWith, includes}
-var isRegExp = __webpack_require__(32);
+var isRegExp = __webpack_require__(33);
 var defined = __webpack_require__(16);
 
 module.exports = function (that, searchString, NAME) {
@@ -4785,7 +4809,7 @@ __webpack_require__(87)('keys', function () {
 
 "use strict";
 
-var regexpExec = __webpack_require__(34);
+var regexpExec = __webpack_require__(35);
 __webpack_require__(7)({
   target: 'RegExp',
   proto: true,
@@ -4815,7 +4839,7 @@ if (__webpack_require__(2) && /./g.flags != 'g') __webpack_require__(4).f(RegExp
 
 var anObject = __webpack_require__(1);
 var toLength = __webpack_require__(12);
-var advanceStringIndex = __webpack_require__(30);
+var advanceStringIndex = __webpack_require__(31);
 var regExpExec = __webpack_require__(27);
 
 // @@match logic
@@ -4898,13 +4922,13 @@ __webpack_require__(23)('search', 1, function (defined, SEARCH, $search, maybeCa
 "use strict";
 
 
-var isRegExp = __webpack_require__(32);
+var isRegExp = __webpack_require__(33);
 var anObject = __webpack_require__(1);
 var speciesConstructor = __webpack_require__(92);
-var advanceStringIndex = __webpack_require__(30);
+var advanceStringIndex = __webpack_require__(31);
 var toLength = __webpack_require__(12);
 var callRegExpExec = __webpack_require__(27);
-var regexpExec = __webpack_require__(34);
+var regexpExec = __webpack_require__(35);
 var fails = __webpack_require__(5);
 var $min = Math.min;
 var $push = [].push;

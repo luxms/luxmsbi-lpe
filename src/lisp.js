@@ -12,6 +12,7 @@
  */
 
 import console from './console/console';
+import {parse, LPESyntaxError} from './lpep';
 
 
 const isArray = (arg) => Object.prototype.toString.call(arg) === '[object Array]';
@@ -157,10 +158,24 @@ const SPECIAL_FORMS = {                                                         
     const result = $var$(ctx, ast[0], value);
     return result;
   }),
-  'filter': makeSF((ast, ctx, rs) => {
-    const [lambda, array] = ast.map(a => EVAL(a, ctx, rs));
-    return Array.prototype.filter.call(array, lambda);
+  'eval_lpe': makeSF((ast, ctx, rs) => {
+    const lpeCode = eval_lisp(ast[0], ctx, rs);
+    const lisp = parse(lpeCode);
+    const result = eval_lisp(lisp, ctx);
+    return result;
   }),
+  'filterit': (ast, ctx, rs) => {
+    const array = eval_lisp(ast[0], ctx, rs);
+    const conditionAST = ast[1];
+    const result = Array.prototype.filter.call(array, (it, idx) => !!eval_lisp(conditionAST, [{it, idx}, ctx], rs));
+    return result;
+  },
+  'mapit': (ast, ctx, rs) => {
+    const array = eval_lisp(ast[0], ctx, rs);
+    const conditionAST = ast[1];
+    const result = Array.prototype.map.call(array, (it, idx) => eval_lisp(conditionAST, [{it, idx}, ctx], rs));
+    return result;
+  },
 };
 
 
@@ -203,7 +218,8 @@ const STDLIB = {
   'not': a => !a,
   'list': (...args) => args,
   'vector': (...args) => args,
-  'map': (fn, arr) => arr.map(it => fn(it)),
+  'map': (arr, fn) => arr.map(it => fn(it)),
+  'filter': (arr, fn) => arr.filter(it => fn(it)),
   'throw': a => { throw(a) },
   'identity': a => a,
   'pluck': (c, k) => c.map(el => el[k]),                                        // for each array element, get property value, present result as array.
