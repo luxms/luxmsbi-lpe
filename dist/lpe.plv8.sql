@@ -2469,7 +2469,7 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
 
 
 /*
-where - всегда возвращает слово WHERE, а потом условия. На пустом вхоже вернёт WHERE TRUE
+where - всегда возвращает слово WHERE, а потом условия. На пустом входе вернёт WHERE TRUE
 filter - на пустом входе вернёт пустую строку
 */
 
@@ -5742,11 +5742,11 @@ AS $function$
   }
 
 if (_expr instanceof Array) {
-    return safe_sql_type(plv8.lpe.eval_lisp(_expr));
+    return safe_sql_type(plv8.lpe.eval_lisp(_expr, _vars));
   }
   if (typeof(_expr) === 'string') {
-    if      (_expr.startsWith('lpe:')) return safe_sql_type(plv8.lpe.eval_lpe(_expr.substr(4)));
-    else if (_expr.startsWith('⚡'))   return safe_sql_type(plv8.lpe.eval_lpe(_expr.substr(1)));
+    if      (_expr.startsWith('lpe:')) return safe_sql_type(plv8.lpe.eval_lpe(_expr.substr(4), _vars));
+    else if (_expr.startsWith('⚡'))   return safe_sql_type(plv8.lpe.eval_lpe(_expr.substr(1), _vars));
   }
 
   return _expr;

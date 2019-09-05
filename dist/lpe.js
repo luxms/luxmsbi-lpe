@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2019/07/26 11:20:29 */ 
+/** [LPE]  Version: 1.0.0 - 2019/09/05 13:28:09 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -2809,7 +2809,7 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
 
 
 /*
-where - всегда возвращает слово WHERE, а потом условия. На пустом вхоже вернёт WHERE TRUE
+where - всегда возвращает слово WHERE, а потом условия. На пустом входе вернёт WHERE TRUE
 filter - на пустом входе вернёт пустую строку
 */
 
