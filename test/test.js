@@ -393,7 +393,15 @@ describe('LPE tests', function() {
             "where(l.id in ($(locations.pluck(id))))",
             {"context": null, "locations": [{"id": 47, "srt": 2147483647, "tags": [], "title": "SPB99-DMZ02", "alt_id": null, "config": {}, "src_id": null, "created": "2019-08-13T15:46:34.173204+03:00", "updated": "2019-08-13T15:46:34.173204+03:00", "latitude": null, "is_hidden": 0, "longitude": null, "parent_id": 2, "tree_path": "spb99-ccvc01.gazprom-neft.local:MSK01:SPB99-DMZ02", "tree_level": 2}], "period_type": {"id": 4, "unit": "DAY"}, "period_range": {"end": {"qty": 1, "start_time": "2019-08-02T00:00:00", "granularity": 54, "period_type": 4}, "start": {"qty": 1, "start_time": "2019-08-01T00:00:00", "granularity": 54, "period_type": 4}}, "metric_id_list": "3", "period_type.id": 4, "location_id_list": "47", "period_type.unit": "DAY"}),
             "WHERE l.id in (47)"
-        );  
+        ); 
+
+
+        // Quoting
+        assert.equal( lpe.eval_sql_where(
+            'where(a = $(varNull) and b = $(ql(var1)))',
+            {"var1":"TXT VAL"}),
+            "WHERE a = varNull and b = 'TXT VAL'"
+        );
         
     });
 
@@ -459,6 +467,8 @@ describe('LPE tests', function() {
         );
 
     });
+
+    
 
 /*
     it('should eval full SQL expressions', function() {

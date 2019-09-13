@@ -184,6 +184,11 @@ export function sql_where_context(_vars) {
     return "'" + cnt + " " + pt + "'::interval";
   }
 
+
+  _context["ql"] = function(el) {
+    return db_quote_literal(el)
+  }
+
   // filter
   _context['filter'] = function () {
       var ctx = {};
@@ -289,10 +294,16 @@ export function sql_where_context(_vars) {
             }
           } else {
             //console.log("RESOLVING VAR " + JSON.stringify(r));
-            //console.log("RESOLVING VAR " + JSON.stringify(r.slice(1)));
+            //console.log("RESOLVING VAR " + JSON.stringify(_context));
             var var_expr
             if (r[0] === '$') {
-              var_expr = eval_lisp(r[1], _context);
+              /* FIXME !!!
+              _context contains just hash with defined vars (key/value).
+              $(expr) inside sql_where should resolve to vars or generate exception with user refer to not defioned var!!!
+              it is better than default eval_lisp behavior where undefined var reolves to itself (atom). 
+              */
+              //var_expr = eval_lisp(r[1], _context);
+              var_expr = eval_lisp(r[1], _context); // actually, we might do eval_lisp(r, ctx) but that will quote everything, including numbers!
             } else {
               var_expr = prnt(r, ctx);
             }
@@ -319,6 +330,7 @@ export function sql_where_context(_vars) {
       // also, we should evaluate expression, if any.
       ctx['$'] = function(inexpr) {
         var expr = eval_lisp(inexpr, _context); // evaluate in a normal LISP context without vars, not in WHERE context
+
         if (expr instanceof Array) {
           // try to print using quotes, use plv8 !!!
           return expr.map(function(el){

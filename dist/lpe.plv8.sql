@@ -2671,6 +2671,10 @@ function sql_where_context(_vars) {
     }
 
     return "'" + cnt + " " + pt + "'::interval";
+  };
+
+  _context["ql"] = function (el) {
+    return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["b" /* db_quote_literal */])(el);
   }; // filter
 
 
@@ -2777,11 +2781,17 @@ function sql_where_context(_vars) {
           }
         } else {
           //console.log("RESOLVING VAR " + JSON.stringify(r));
-          //console.log("RESOLVING VAR " + JSON.stringify(r.slice(1)));
+          //console.log("RESOLVING VAR " + JSON.stringify(_context));
           var var_expr;
 
           if (r[0] === '$') {
-            var_expr = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(r[1], _context);
+            /* FIXME !!!
+            _context contains just hash with defined vars (key/value).
+            $(expr) inside sql_where should resolve to vars or generate exception with user refer to not defioned var!!!
+            it is better than default eval_lisp behavior where undefined var reolves to itself (atom). 
+            */
+            //var_expr = eval_lisp(r[1], _context);
+            var_expr = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(r[1], _context); // actually, we might do eval_lisp(r, ctx) but that will quote everything, including numbers!
           } else {
             var_expr = prnt(r, ctx);
           } //console.log("EVAL" + JSON.stringify(var_expr));
@@ -5662,7 +5672,7 @@ CREATE OR REPLACE FUNCTION lpe.eval(ast jsonb, context jsonb DEFAULT '{}'::jsonb
  STABLE
 AS $function$
 
-  ret = plv8.lpe.evaluate(ast, context);
+  ret = plv8.lpe.eval_lpe(ast, context);
 
   if (typeof(ret) == "function") {
     /*plv8.elog(NOTICE, "RET = ", ret.toString());*/
