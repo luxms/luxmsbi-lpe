@@ -5672,7 +5672,7 @@ CREATE OR REPLACE FUNCTION lpe.eval(ast jsonb, context jsonb DEFAULT '{}'::jsonb
  STABLE
 AS $function$
 
-  ret = plv8.lpe.eval_lpe(ast, context);
+  ret = plv8.lpe.eval_lisp(ast, context);
 
   if (typeof(ret) == "function") {
     /*plv8.elog(NOTICE, "RET = ", ret.toString());*/
