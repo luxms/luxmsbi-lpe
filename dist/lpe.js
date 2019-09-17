@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2019/09/17 19:42:50 */ 
+/** [LPE]  Version: 1.0.0 - 2019/09/17 22:37:24 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
