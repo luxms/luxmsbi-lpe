@@ -154,6 +154,12 @@ export function sql_context(_vars) {
           return a[1] + '::' + a[2];
         } else if (a[0] === ':') {
           return prnt(a[1]) + ' as "' + a[2].replace(/"/,'\\"') + '"';
+        } else if (a[0] === "->") {
+          // наш LPE использует точку, как разделитель вызовов функций и кодирует её как ->
+          // в логических выражениях мы это воспринимаем как ссылку на <ИМЯ СХЕМЫ>.<ИМЯ ТАБЛИЦЫ>
+          // return '"' + a[1] + '"."' + a[2] + '"';
+          console.log("HI MAN ====================");
+          return eval_lisp(a, _context);
         } else {
           return a[0] + '(' + a.slice(1).map(
             function(argel) { return prnt(argel) }
@@ -166,6 +172,14 @@ export function sql_context(_vars) {
       return a;
     }
   }
+
+  // table.column 
+  _context['->'] = function() {
+    var a = Array.prototype.slice.call(arguments);
+    console.log("->   " + JSON.stringify(a));
+    return a.map( a => '"'+ a + '"').join('.');
+  }
+
 
     // должен вернуть СТРОКУ
   _context['select'] = function() {
@@ -199,7 +213,7 @@ export function sql_context(_vars) {
       return "LIMIT " + parseInt(a[1]) + " OFFSET " + parseInt(a[0]);
     }
   }
-  _context['from'].ast = [[],{},[],1]; // mark as macro
+  _context['slice'].ast = [[],{},[],1]; // mark as macro
 
   return _context;
 }
@@ -229,19 +243,20 @@ export function eval_sql_expr(_expr, _vars) {
   var _context = ctx;
   // for(var key in _vars) _context[key] = _vars[key];
 
-  _context['->'] = function() {
+  _context['sql->entrypoint'] = function() {
+    console.log("++++++++++++++++++");
     var ret = [];
-
     for (var i = 0; i < arguments.length; i++) {
       ret.push(eval_lisp( arguments[i], _context));
+      console.log(JSON.stringify(ret));
     }
 
     return ret.join(',');
   }
-  _context['->'].ast = [[],{},[],1]; // mark as macro
+  _context['sql->entrypoint'].ast = [[],{},[],1]; // mark as macro
 
   var sexpr = parse(_expr);
-  console.log("IN: ", sexpr);
+  console.log("parsed eval_sql_expr IN: ", sexpr);
 
   /*
   if (ctx.hasOwnProperty('where')){
@@ -249,10 +264,15 @@ export function eval_sql_expr(_expr, _vars) {
   }
   */
 
-  // точка входа всегда должна быть ->, так как мы определили -> как макроc чтобы иметь возможность
+  // точка входа всегда должна быть sql->entrypoint, так как мы определили sql->entrypoint как макроc чтобы иметь возможность
   // перекодировать имена таблиц в вызов .from()
-  if (sexpr[0] !== '->') {
-    sexpr = ['->',sexpr];
+  // а parse возвращает нам ->, так что меняем!
+  if (sexpr[0] === '->') {
+    sexpr[0] = 'sql->entrypoint';
+  }
+
+  if (sexpr[0] !== 'sql->entrypoint') {
+    sexpr = ['sql->entrypoint',sexpr];
   }
 
   // теперь нужно пройтись по списку вызовов и привести к нормальной форме.
@@ -319,7 +339,15 @@ export function eval_sql_expr(_expr, _vars) {
 }
 
 
-// currently works only for bi_path part of the URL in the DBAPI
+/* returns struct, which is suitable to build full SQL text:
+            {
+                from: undefined,
+                limit_offset: undefined,
+                order_by: undefined,
+                select: 'SELECT *',
+                where: undefined
+              }
+*/
 export function parse_sql_expr(_expr, _vars, _forced_table, _forced_where) {
   var ctx = sql_context(_vars);
   var _context = ctx;
@@ -331,9 +359,13 @@ export function parse_sql_expr(_expr, _vars, _forced_table, _forced_where) {
 
   var sexpr = parse(_expr);
 
-  if (sexpr[0] !== '->') {
-    // это значит, что на входе у нас всего один вызов функции, мы его оберём в ->
-    sexpr = ['->', sexpr];
+  if (sexpr[0] === '->') {
+    sexpr[0] = 'sql->entrypoint';
+  }
+
+  if (sexpr[0] !== 'sql->entrypoint') {
+    // это значит, что на входе у нас всего один вызов функции, мы его обернём в ->
+    sexpr = ['sql->entrypoint', sexpr];
   }
   console.log("DBAPI IN: ", sexpr);
 
@@ -424,4 +456,251 @@ export function parse_sql_expr(_expr, _vars, _forced_table, _forced_where) {
   var ret = eval_lisp(sql, _context);
 
   return ret;
+}
+
+
+export function generate_report_sql(_cfg, _vars) {
+  var ctx = sql_context(_vars);
+  var _context = ctx;
+   /* Для генерации SELECT запросов из конфигов, созданных для Reports */
+  /*
+  {
+   "columns":[
+      {
+         "sort":1,
+         "dimId":"vNetwork.cluster",
+         "group":"Dimensions A",
+         "title":"Cluster"
+      },
+      {
+         "sort":2,
+         "dimId":"vNetwork.direct_path_io",
+         "group":"Dimensions A",
+         "title":"Direct Path IO"
+      },
+      {
+         "dimId":"vNetwork.os_according_to_the_vmware_tools",
+         "group":"Dimensions A",
+         "title":"OS according to the VMware Tools"
+      }
+   ],
+   "filters":[
+      {
+         "lpe":[
+            "NOT",
+            [
+               "IN",
+               [
+                  "column",
+                  "vNetwork.cluster"
+               ],
+               [
+                  "[",
+                  "SPB99-DMZ02",
+                  "SPB99-ESXCL02",
+                  "SPB99-ESXCL04",
+                  "SPB99-ESXCLMAIL"
+               ]
+            ]
+         ],
+         "dimId":"vNetwork.cluster",
+         "predicate":"IN",
+         "filterValues":[
+            "SPB99-DMZ02",
+            "SPB99-ESXCL02",
+            "SPB99-ESXCL04",
+            "SPB99-ESXCLMAIL"
+         ],
+         "negationValue":true,
+         "isTemplateFilter":true
+      },
+      {
+         "lpe":[
+            "NOT",
+            [
+               "~",
+               [
+                  "column",
+                  "vNetwork.folder"
+               ],
+               "XXX"
+            ]
+         ],
+         "dimId":"vNetwork.folder",
+         "predicate":"~",
+         "filterValues":[
+            "XXX"
+         ],
+         "negationValue":true,
+         "isTemplateFilter":true
+      },
+      {
+         "lpe":[
+            "=",
+            [
+               "column",
+               "vNetwork.adapter"
+            ]
+         ],
+         "dimId":"vNetwork.adapter",
+         "predicate":"=",
+         "filterValues":[
+
+         ],
+         "negationValue":false,
+         "isTemplateFilter":false
+      },
+      {
+         "lpe":[
+            "=",
+            [
+               "column",
+               "vNetwork.period_day"
+            ]
+         ],
+         "dimId":"vNetwork.period_day",
+         "predicate":"=",
+         "filterValues":[
+
+         ],
+         "negationValue":false,
+         "isTemplateFilter":false
+      }
+   ],
+   "sourceId":"rvtools"
+}
+*/
+_context["column"] = function(col) {
+  return col.split('.')[1];
+}
+
+_context['generate_sql_struct_for_report'] = function(cfg) {
+  console.log(JSON.stringify(cfg))
+  if (typeof cfg === 'object' && Array.isArray(cfg)) {
+    throw new Error("reports_sql expected {...} as argument")
+  }
+
+  /* нужно сгенерить что-то типа такого:
+[  'sql-struct',
+  [
+    'select',
+    'a',
+    'b',
+    [ '->', 'department_code', 'alias' ],
+    [ '::', 'no', 'TEXT' ],
+    [ 'max', 'credits' ]
+  ],
+  [ 'from', [ '->', 'bm', 'tbl' ] ],
+  [ 'order_by', 'a', [ '-', 'b' ] ],
+  [ 'filter', [ '()', [Array] ] ]
+]
+*/
+/*
+  var convert_in_to_eq = function(in_lpe){
+    if (in_lpe[0] === 'in'){
+      in_lpe[0] = '=';
+    }
+     in_lpe.map(el => {
+       if (Array.isArray(el)) {
+        convert_in_to_eq(el)
+       }      
+      })
+    return in_lpe;
+  }*/
+
+  const convert_in_to_eq = (in_lpe) => {
+    if (!Array.isArray(in_lpe) || in_lpe.length === 0) return in_lpe;
+    return [
+      in_lpe[0] === 'in' ? '=' : in_lpe[0],
+      ...in_lpe.slice(1).map(convert_in_to_eq)
+    ]
+  }
+
+
+  var quote_text_constants = (in_lpe) => {
+    if (!Array.isArray(in_lpe)) return in_lpe;
+
+    //console.log("quote_text_constants" + JSON.stringify(in_lpe))
+    if (in_lpe[0] === 'in') {
+      if (Array.isArray(in_lpe[1])) {
+        if (in_lpe[1][0] === 'column') {
+          if (Array.isArray(in_lpe[2]) && in_lpe[2][0] === '[') {
+            // ["=",["column","vNetwork.cluster"],["[","SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]]
+            in_lpe[2] = ['['].concat(in_lpe[2].slice(1).map(el=>["ql", el]))
+          }
+        }
+      }
+    } else {
+      if (in_lpe.length > 2 && in_lpe[0] !== 'not') {
+        if (Array.isArray(in_lpe[1])) {
+          if (in_lpe[1][0] === 'column') {
+            if (!Array.isArray(in_lpe[2])) {
+              // ["~",["column","vNetwork.cluster"],"SPB99-DMZ02"]
+              in_lpe[2] = ['ql', in_lpe[2]]
+            }
+            if (in_lpe.length === 4) {
+              // between
+              if (!Array.isArray(in_lpe[3])) {
+                //["between",["column","vNetwork.period_month"],"2019-09-10","2019-09-20"]
+                in_lpe[3] = ['ql', in_lpe[3]]
+              }
+            }
+          }
+        }
+      }
+    }
+    in_lpe.map(el => {
+        //console.log("RECURS" + JSON.stringify(el))
+        quote_text_constants(el)     
+     })
+    return in_lpe;
+  }
+
+  var struct = ['sql'];
+
+  var allColumns = cfg["columns"].map(h => h["dimId"].split('.')[0]);
+  var uniq = [...new Set(allColumns)];
+  if (uniq.length != 1) {
+    throw new Error("We support only select from one table, joins are not supported! Tables detected: " + JSON.stringify(uniq));
+  }
+
+  var sel = ['select'].concat(cfg["columns"].map(h => h["dimId"].split('.')[1]))
+
+  var uniqIter = uniq.values();
+  var from = ['from', uniqIter.next().value];
+
+  var order_by = ['order_by'].concat(cfg["columns"].map(h=> {
+                                                        if (h["sort"] == 1) {
+                                                          return ["+", h["dimId"].split('.')[1]];
+                                                        } else if (h["sort"] == 2) {
+                                                          return ["-", h["dimId"].split('.')[1]]
+                                                        }
+                                                      }));
+  order_by = order_by.filter(function(el){return el !== undefined})
+
+  var filt = cfg["filters"].map(h => { return convert_in_to_eq(quote_text_constants(h["lpe"]))} );
+
+  if (filt.length > 1) {
+    filt = ['and'].concat(filt);
+  } else if (filt.length == 1) {
+    filt = filt[0]
+  }
+  if (filt.length > 0) {
+    filt = ["where", filt]
+  } else {
+    filt = ["where"]
+  }
+
+  struct.push(sel, from, order_by, filt)
+  var ret = eval_lisp(struct, _context);
+
+  return ret;
+}
+
+// по хорошему, надо столбцы засунуть в _context в _columns и подгрузить их тип из базы!!!
+// но мы это типы столбцов будем определять здесь (в этой функции) и пытаться сконвертировать константы....
+var ret = eval_lisp(["generate_sql_struct_for_report", _cfg], _context);
+
+return ret;
+
 }

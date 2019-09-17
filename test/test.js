@@ -402,6 +402,12 @@ describe('LPE tests', function() {
             {"var1":"TXT VAL"}),
             "WHERE a = varNull and b = 'TXT VAL'"
         );
+
+        assert.equal( lpe.eval_sql_where(
+            'where(a = $(varNull) and b = $(ql(location.alt_id)))',
+            {"location":{"alt_id":"TXT VAL"}}),
+            "WHERE a = varNull and b = 'TXT VAL'"
+        );
         
     });
 
@@ -468,18 +474,6 @@ describe('LPE tests', function() {
 
     });
 
-    
-
-/*
-    it('should eval full SQL expressions', function() {
-        assert.equal( lpe.eval_sql_apidb_expr(
-            'from(bm.tbl).select(department_code.alias, no::TEXT:textual, max(credits)).where(a>1).from(final.tbl).order_by(a,-b).select(select(last).from(test)):subselect.where(\'b\'+3 <3)',
-            {"period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
-            "WHERE 'Noyabr' = 3"
-        );
-
-    });
-*/
 
 
 });

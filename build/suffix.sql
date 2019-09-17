@@ -121,3 +121,19 @@ $function$;
 COMMENT ON FUNCTION lpe.eval_mixed_expr(JSONB, JSONB) IS
 $$Выполняет разбор LPE выражения в разных форматах: LISP S-EXPRESSIONS в виде JSON массива и текстовые выражения LPE. 
 Текстовые выражения должны начинаться с префикса lpe: или ⚡. Иначе функция просто вернёт входной параметр _expr$$;
+
+
+
+CREATE OR REPLACE FUNCTION
+lpe.generate_report_sql(_lpe JSONB, _vars JSONB DEFAULT '{}')
+RETURNS TEXT
+LANGUAGE 'plv8' STABLE
+AS $body$
+
+  return plv8.lpe.generate_report_sql(_lpe, _vars);
+
+$body$;
+
+COMMENT ON FUNCTION lpe.generate_report_sql(JSONB,JSONB) IS
+$$Выполняет разбор LPE выражения и выдаёт SQL запрос в виде текста. На вход подаются конфиги для отчётов.$$;
+

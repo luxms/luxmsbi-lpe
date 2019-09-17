@@ -205,6 +205,7 @@ export function sql_where_context(_vars) {
       }
 
       var prnt = function(ar) {
+        console.log("PRNT:" + JSON.stringify(ar))
         if (ar instanceof Array) {
           if (  ar[0] === '$' ||
                 ar[0] === '"' ||
@@ -213,8 +214,10 @@ export function sql_where_context(_vars) {
                 ar[0] === "[" ||
                 ar[0] === 'parse_kv' ||
                 ar[0] === "=" ||
+                ar[0] === "ql" ||
                 ar[0] === "pg_interval" ||
-                ar[0] === "lpe_pg_tstz_at_time_zone") {
+                ar[0] === "lpe_pg_tstz_at_time_zone" ||
+                ar[0] === "column") {
             return eval_lisp(ar, ctx);
           } else {
               if (ar.length == 2) {
@@ -234,13 +237,30 @@ export function sql_where_context(_vars) {
                   // в логических выражениях мы это воспринимаем как ссылку на <ИМЯ СХЕМЫ>.<ИМЯ ТАБЛИЦЫ>
                   //return '"' + ar[1]+ '"."' + ar[2] + '"';
                   return ar[1] + '.' + ar[2];
-                } else if (ar[0] == "and" || ar[0] == "or" || ar[0] == "ilike" || ar[0] == "like" ||
-                           ar[0] == "in" || ar[0] == "is" || ar[0].match(/^[^\w]+$/)) {
-                  // имя функции не начинается с буквы
+                } else if (ar[0] == "and" || ar[0] == "or"){
                   return prnt(ar[1]) + ' ' + ar[0] + ' ' + prnt(ar[2]);
+                } else if (ar[0] == "ilike" || ar[0] == "like" ||
+                           ar[0] == "in" || ar[0] == "is" || ar[0].match(/^[^\w]+$/)) {
+                   // имя функции не начинается с буквы
+                   console.log("PRNT FUNC x F z " + JSON.stringify(ar))
+                   // ["~",["column","vNetwork.folder"],"XXX"]
+
+                   if (Array.isArray(ar[1]) && ar[1][0] === 'column' && 
+                       (Array.isArray(ar[2]) && ar[2][0] !== 'column') || !(Array.isArray(ar[2]) )
+                      ) {
+                        // справа значение, которое нужно квотировать!
+                   }
+                   return prnt(ar[1]) + ' ' + ar[0] + ' ' + prnt(ar[2]);                 
+                  
                 } else {
                   return ar[0] + '(' + prnt(ar[1]) + ',' + prnt(ar[2]) + ')';
                 }
+              } else if (ar[0] == "and" || ar[0] == "or") {
+                // много аргументов для логической функции
+                return ar.slice(1).map(prnt).join(' '+ar[0]+' ');
+              } else if (ar[0] == "between" ){
+                return '(' + prnt(ar[1]) + ' BETWEEN ' + prnt(ar[2]) + ' AND ' + prnt(ar[3]) + ')'; 
+                
               } else {
                 // это неизвестная функция с неизвестным кол-вом аргументов
                 return ar[0] + '(' + ar.slice(1).map(
@@ -269,7 +289,13 @@ export function sql_where_context(_vars) {
         // понимаем a = [null] как a is null
         // a = [] просто пропускаем
         // a = [null, 1,2] как a in (1,2) or a is null
+
+        // ["=",["column","vNetwork.cluster"],["[","SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]]
+        console.log('========'+ JSON.stringify(l) + ' ' + JSON.stringify(r))
         if (r instanceof Array) {
+          if (r.length === 0) {
+            return 'TRUE';
+          }
           if (r[0] === '[') {
             r = ['['].concat(r.slice(1).map(function(el){return eval_lisp(el, _context)}))
             var nonnull = r.filter(function(el){return el !== null});
