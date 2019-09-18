@@ -24,6 +24,7 @@ import console from './console/console';
 import {eval_lisp} from './lisp';
 import {sql_where_context} from './sql_where';
 import {parse} from './lpep';
+import {reports_get_column_sql, reports_get_table_sql} from './utils/utils';
 
 // polyfill = remove in 2020 !!!
 
@@ -463,115 +464,9 @@ export function generate_report_sql(_cfg, _vars) {
   var ctx = sql_context(_vars);
   var _context = ctx;
    /* Для генерации SELECT запросов из конфигов, созданных для Reports */
-  /*
-  {
-   "columns":[
-      {
-         "sort":1,
-         "dimId":"vNetwork.cluster",
-         "group":"Dimensions A",
-         "title":"Cluster"
-      },
-      {
-         "sort":2,
-         "dimId":"vNetwork.direct_path_io",
-         "group":"Dimensions A",
-         "title":"Direct Path IO"
-      },
-      {
-         "dimId":"vNetwork.os_according_to_the_vmware_tools",
-         "group":"Dimensions A",
-         "title":"OS according to the VMware Tools"
-      }
-   ],
-   "filters":[
-      {
-         "lpe":[
-            "NOT",
-            [
-               "IN",
-               [
-                  "column",
-                  "vNetwork.cluster"
-               ],
-               [
-                  "[",
-                  "SPB99-DMZ02",
-                  "SPB99-ESXCL02",
-                  "SPB99-ESXCL04",
-                  "SPB99-ESXCLMAIL"
-               ]
-            ]
-         ],
-         "dimId":"vNetwork.cluster",
-         "predicate":"IN",
-         "filterValues":[
-            "SPB99-DMZ02",
-            "SPB99-ESXCL02",
-            "SPB99-ESXCL04",
-            "SPB99-ESXCLMAIL"
-         ],
-         "negationValue":true,
-         "isTemplateFilter":true
-      },
-      {
-         "lpe":[
-            "NOT",
-            [
-               "~",
-               [
-                  "column",
-                  "vNetwork.folder"
-               ],
-               "XXX"
-            ]
-         ],
-         "dimId":"vNetwork.folder",
-         "predicate":"~",
-         "filterValues":[
-            "XXX"
-         ],
-         "negationValue":true,
-         "isTemplateFilter":true
-      },
-      {
-         "lpe":[
-            "=",
-            [
-               "column",
-               "vNetwork.adapter"
-            ]
-         ],
-         "dimId":"vNetwork.adapter",
-         "predicate":"=",
-         "filterValues":[
 
-         ],
-         "negationValue":false,
-         "isTemplateFilter":false
-      },
-      {
-         "lpe":[
-            "=",
-            [
-               "column",
-               "vNetwork.period_day"
-            ]
-         ],
-         "dimId":"vNetwork.period_day",
-         "predicate":"=",
-         "filterValues":[
-
-         ],
-         "negationValue":false,
-         "isTemplateFilter":false
-      }
-   ],
-   "sourceId":"rvtools"
-}
-*/
 _context["column"] = function(col) {
-  return col.split('.')[1];
+  return reports_get_column_sql(_cfg["sourceId"], col)
 }
 
 _context['generate_sql_struct_for_report'] = function(cfg) {
@@ -667,7 +562,8 @@ _context['generate_sql_struct_for_report'] = function(cfg) {
   var sel = ['select'].concat(cfg["columns"].map(h => h["dimId"].split('.')[1]))
 
   var uniqIter = uniq.values();
-  var from = ['from', uniqIter.next().value];
+  // will return something like     (select * from abc) AS a
+  var from = ['from', reports_get_table_sql(cfg["sourceId"], uniqIter.next().value) ];
 
   var order_by = ['order_by'].concat(cfg["columns"].map(h=> {
                                                         if (h["sort"] == 1) {
@@ -678,7 +574,9 @@ _context['generate_sql_struct_for_report'] = function(cfg) {
                                                       }));
   order_by = order_by.filter(function(el){return el !== undefined})
 
-  var filt = cfg["filters"].map(h => { return convert_in_to_eq(quote_text_constants(h["lpe"]))} );
+  var filt = cfg["filters"]
+             .map(h => { return h["lpe"] ? convert_in_to_eq(quote_text_constants(h["lpe"])) : null} )
+             .filter(function(el){return el !== null});
 
   if (filt.length > 1) {
     filt = ['and'].concat(filt);
@@ -698,7 +596,7 @@ _context['generate_sql_struct_for_report'] = function(cfg) {
 }
 
 // по хорошему, надо столбцы засунуть в _context в _columns и подгрузить их тип из базы!!!
-// но мы это типы столбцов будем определять здесь (в этой функции) и пытаться сконвертировать константы....
+// но мы типы столбцов будем определять здесь (в этой функции) и пытаться закавычить константы заранее....
 var ret = eval_lisp(["generate_sql_struct_for_report", _cfg], _context);
 
 return ret;

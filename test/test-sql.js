@@ -169,12 +169,19 @@ describe('LPE tests', function() {
            {"period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
            "SELECT period_day FROM vNetwork WHERE (period_month BETWEEN '2019-09-10' AND '2019-09-20')"
        );
+
+            // lpe: null
+       assert.equal( lpe.generate_report_sql(
+        {"columns": [{"sort": 2, "dimId": "vNetwork.direct_path_io", "group": "Dimensions A", "title": "Direct Path IO"}], "filters": [{"lpe": ["not", ["in", ["column", "vNetwork.os_according_to_the_vmware_tools"], ["[", "CentOS 7 (64-bit)", "Debian GNU/Linux 6 (64-bit)", "Debian GNU/Linux 9 (64-bit)", "FreeBSD Pre-11 versions (32-bit)", "FreeBSD Pre-11 versions (64-bit)", "Linux 4.15.0-51-generic buster/sid", "Linux 4.15.0-58-generic buster/sid", "Linux 4.15.3-1-generic Astra Linux CE 2.12.13 (Orel)", "Microsoft Windows 10 (64-bit)"]]], "dimId": "vNetwork.os_according_to_the_vmware_tools", "predicate": "in", "filterValues": ["CentOS 7 (64-bit)", "Debian GNU/Linux 6 (64-bit)", "Debian GNU/Linux 9 (64-bit)", "FreeBSD Pre-11 versions (32-bit)", "FreeBSD Pre-11 versions (64-bit)", "Linux 4.15.0-51-generic buster/sid", "Linux 4.15.0-58-generic buster/sid", "Linux 4.15.3-1-generic Astra Linux CE 2.12.13 (Orel)", "Microsoft Windows 10 (64-bit)"], "negationValue": true, "isTemplateFilter": true}, {"lpe": null, "dimId": "vNetwork.starts_connected", "predicate": "~", "filterValues": [], "negationValue": false, "isTemplateFilter": true}, {"lpe": ["not", ["between", ["column", "vNetwork.period_month"], "2019-09-09", "2019-09-27"]], "dimId": "vNetwork.period_month", "predicate": "between", "filterValues": ["2019-09-09", "2019-09-27"], "negationValue": true, "isTemplateFilter": true}], "sourceId": "rvtools"}
+              ,
+       {"period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
+       "SELECT direct_path_io FROM vNetwork WHERE not os_according_to_the_vmware_tools IN ('CentOS 7 (64-bit)','Debian GNU/Linux 6 (64-bit)','Debian GNU/Linux 9 (64-bit)','FreeBSD Pre-11 versions (32-bit)','FreeBSD Pre-11 versions (64-bit)','Linux 4.15.0-51-generic buster/sid','Linux 4.15.0-58-generic buster/sid','Linux 4.15.3-1-generic Astra Linux CE 2.12.13 (Orel)','Microsoft Windows 10 (64-bit)') and not (period_month BETWEEN '2019-09-09' AND '2019-09-27') ORDER BY direct_path_io DESC"
+   );
     });
 
 
 
-
-   
+    
 });
 
 
