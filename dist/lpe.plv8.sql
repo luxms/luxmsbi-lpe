@@ -5001,7 +5001,14 @@ function generate_report_sql(_cfg, _vars) {
     }
 
     var sel = ['select'].concat(cfg["columns"].map(function (h) {
-      return h["dimId"].split('.')[1];
+      var c = h["dimId"].split('.')[1];
+      var sql_col = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__utils_utils__["a" /* reports_get_column_sql */])(cfg["sourceId"], h["dimId"]);
+
+      if (sql_col == c) {
+        return c;
+      } else {
+        return sql_col + ' AS ' + c;
+      }
     }));
     var uniqIter = uniq.values(); // will return something like     (select * from abc) AS a
 

@@ -559,7 +559,15 @@ _context['generate_sql_struct_for_report'] = function(cfg) {
     throw new Error("We support only select from one table, joins are not supported! Tables detected: " + JSON.stringify(uniq));
   }
 
-  var sel = ['select'].concat(cfg["columns"].map(h => h["dimId"].split('.')[1]))
+  var sel = ['select'].concat(cfg["columns"].map(h => {
+    var c = h["dimId"].split('.')[1]
+    var sql_col = reports_get_column_sql(cfg["sourceId"], h["dimId"])
+    if (sql_col == c) {
+      return c
+    } else {
+      return sql_col + ' AS ' + c
+    }
+  }))
 
   var uniqIter = uniq.values();
   // will return something like     (select * from abc) AS a

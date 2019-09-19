@@ -102,6 +102,10 @@ describe('LPE tests', function() {
       assert.deepEqual(lpe.parse('where((a and b or c) or (avg(d) < avg(e)) or (e = 20 and parse_kv(locations.src_id)))'),
       ["where",["or",["()",["and","a",["or","b","c"]]],["or",["()",["<",["avg","d"],["avg","e"]]],["()",["and",["=","e","20"],["parse_kv",["->","locations","src_id"]]]]]]]
       );
+
+      assert.deepEqual(lpe.parse('where((a && b || c) or (avg(d) < avg(e)) || (e = 20 and parse_kv(locations.src_id)))'),
+      ["where",["or",["()",["and","a",["or","b","c"]]],["or",["()",["<",["avg","d"],["avg","e"]]],["()",["and",["=","e","20"],["parse_kv",["->","locations","src_id"]]]]]]]
+      );
     });
 
     it('should parse if expressions with grouping', function() {
