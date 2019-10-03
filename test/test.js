@@ -425,6 +425,7 @@ describe('LPE tests', function() {
                 from: undefined,
                 limit_offset: 'LIMIT 45 OFFSET 2',
                 order_by: 'ORDER BY a,d DESC',
+                group_by: undefined,
                 select: 'SELECT *',
                 where: '(a = b and b < 3)'
               }
@@ -437,6 +438,7 @@ describe('LPE tests', function() {
                 from: undefined,
                 limit_offset: 'LIMIT 15 OFFSET 1',
                 order_by: undefined,
+                group_by: undefined,
                 select: 'SELECT *',
                 where: undefined
               }
@@ -449,6 +451,7 @@ describe('LPE tests', function() {
                 from: undefined,
                 limit_offset: undefined,
                 order_by: undefined,
+                group_by: undefined,
                 select: 'SELECT *',
                 where: undefined
               }
@@ -461,6 +464,7 @@ describe('LPE tests', function() {
                 from: undefined,
                 limit_offset: undefined,
                 order_by: undefined,
+                group_by: undefined,
                 select: 'SELECT *',
                 where: undefined
               }
