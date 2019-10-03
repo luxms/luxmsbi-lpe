@@ -79,17 +79,23 @@ export function sql_context(_vars) {
       q = q + ' ' + eval_lisp(where, _context );
     }
 
+    var grp = find_part('group_by');
+    console.log('FOUND group_by: ', grp);
+    if (grp instanceof Array && grp.length > 1) {
+      q = q + ' ' + eval_lisp( grp, _context );
+    }
+  
+    var srt = find_part('order_by');
+    console.log('FOUND sort: ', srt);
+    if (srt instanceof Array && srt.length > 1) {
+      q = q + ' ' + eval_lisp( srt, _context );
+    }
+
     //slice(offset, pageItemsNum)
     var s = find_part('slice');
     console.log("FOUND slice: ", s);
     if (s instanceof Array && s.length > 1) {
       q = q + ' ' + eval_lisp(s, _context );
-    }
-
-    var srt = find_part('order_by');
-    console.log('FOUND sort: ', srt);
-    if (srt instanceof Array && srt.length > 1) {
-      q = q + ' ' + eval_lisp( srt, _context );
     }
 
     return q;
@@ -104,7 +110,8 @@ export function sql_context(_vars) {
       "from": undefined,
       "where": undefined,
       "order_by": undefined,
-      "limit_offset": undefined
+      "limit_offset": undefined,
+      "group_by": undefined
     }; // resulting sql
 
     var args = Array.prototype.slice.call(arguments);
@@ -128,17 +135,23 @@ export function sql_context(_vars) {
       q.where = eval_lisp(where, _context );
     }
 
-    //slice(offset, pageItemsNum)
-    var s = find_part('slice');
-    console.log("FOUND slice: ", s);
-    if (s instanceof Array && s.length > 1) {
-      q.limit_offset = eval_lisp(s, _context );
+    var grp = find_part('group_by');
+    console.log('FOUND group_by: ', grp);
+    if (grp instanceof Array && grp.length > 1) {
+      q = q + ' ' + eval_lisp( grp, _context );
     }
 
     var srt = find_part('order_by');
     console.log('FOUND sort: ', srt);
     if (srt instanceof Array && srt.length > 1) {
       q.order_by = eval_lisp( srt, _context );
+    }
+
+    //slice(offset, pageItemsNum)
+    var s = find_part('slice');
+    console.log("FOUND slice: ", s);
+    if (s instanceof Array && s.length > 1) {
+      q.limit_offset = eval_lisp(s, _context );
     }
 
     return q;
@@ -215,6 +228,15 @@ export function sql_context(_vars) {
     }
   }
   _context['slice'].ast = [[],{},[],1]; // mark as macro
+
+  _context['group_by'] = function() {
+    var a = Array.prototype.slice.call(arguments);
+    if (a.length === 0) {
+      return ""
+    } else {
+      return "GROUP BY " + a.join(' , ')
+    }
+  }
 
   return _context;
 }
@@ -346,7 +368,8 @@ export function eval_sql_expr(_expr, _vars) {
                 limit_offset: undefined,
                 order_by: undefined,
                 select: 'SELECT *',
-                where: undefined
+                where: undefined,
+                group_by: undefined
               }
 */
 export function parse_sql_expr(_expr, _vars, _forced_table, _forced_where) {
@@ -551,23 +574,44 @@ _context['generate_sql_struct_for_report'] = function(cfg) {
     return in_lpe;
   }
 
+  /* while we wrapping aggregate functions around columns, we should keep track of the free columns, so we will be able to
+     generate correct group by !!!!
+  */
+  var group_by = cfg["columns"].map(h => h["id"])
+
+  var wrap_aggregate_functions = (col, cfg, col_id) => {
+    ret = col;
+    if (Array.isArray(cfg["agg"]) && cfg["agg"].length > 0) {
+      group_by = group_by.filter( id => id !== col_id )
+      return cfg["agg"].reduce( (a, currentFunc) => currentFunc + '(' + a + ')' , ret)
+    }
+    return ret
+  }
+
   var struct = ['sql'];
 
-  var allColumns = cfg["columns"].map(h => h["dimId"].split('.')[0]);
+  var allColumns = cfg["columns"].map(h => h["id"].split('.')[0]);
   var uniq = [...new Set(allColumns)];
   if (uniq.length != 1) {
     throw new Error("We support only select from one table, joins are not supported! Tables detected: " + JSON.stringify(uniq));
   }
 
   var sel = ['select'].concat(cfg["columns"].map(h => {
-    var c = h["dimId"].split('.')[1]
-    var sql_col = reports_get_column_sql(cfg["sourceId"], h["dimId"])
+    var c = h["id"].split('.')[1]
+    var sql_col = reports_get_column_sql(cfg["sourceId"], h["id"])
     if (sql_col == c) {
-      return c
+      return wrap_aggregate_functions(c, h, h["id"]) // h["id"] for backtracking for group_by
     } else {
-      return sql_col + ' AS ' + c
+      return wrap_aggregate_functions(sql_col, h, h["id"]) + ' AS ' + c
     }
   }))
+
+  if (group_by.length === cfg["columns"].length) {
+    group_by = ["group_by"]
+  } else {
+    // we should provide group_by!
+    group_by = ["group_by"].concat(group_by.map( c => ["column",c]))
+  }
 
   var uniqIter = uniq.values();
   // will return something like     (select * from abc) AS a
@@ -575,9 +619,9 @@ _context['generate_sql_struct_for_report'] = function(cfg) {
 
   var order_by = ['order_by'].concat(cfg["columns"].map(h=> {
                                                         if (h["sort"] == 1) {
-                                                          return ["+", h["dimId"].split('.')[1]];
+                                                          return ["+", h["id"].split('.')[1]];
                                                         } else if (h["sort"] == 2) {
-                                                          return ["-", h["dimId"].split('.')[1]]
+                                                          return ["-", h["id"].split('.')[1]]
                                                         }
                                                       }));
   order_by = order_by.filter(function(el){return el !== undefined})
@@ -597,7 +641,9 @@ _context['generate_sql_struct_for_report'] = function(cfg) {
     filt = ["where"]
   }
 
-  struct.push(sel, from, order_by, filt)
+  struct.push(sel, from, order_by, filt, group_by)
+
+  console.log(JSON.stringify(struct))
   var ret = eval_lisp(struct, _context);
 
   return ret;

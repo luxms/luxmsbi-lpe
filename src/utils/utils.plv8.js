@@ -7,6 +7,7 @@ export function db_quote_ident(intxt) {
 }
 
 /* will make select from the local PostgreSQL */
+
 export function reports_get_column_sql(srcId, col) {
     // on Error plv8 will generate Exception!
     var id = srcId + '.' + col

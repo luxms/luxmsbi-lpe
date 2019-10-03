@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2019/09/19 12:32:58 */ 
+/** [LPE]  Version: 1.0.0 - 2019/10/03 12:56:20 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -4581,6 +4581,20 @@ function sql_context(_vars) {
 
     if (where instanceof Array && where.length > 1) {
       q = q + ' ' + __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13__lisp__["a" /* eval_lisp */])(where, _context);
+    }
+
+    var grp = find_part('group_by');
+    __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log('FOUND group_by: ', grp);
+
+    if (grp instanceof Array && grp.length > 1) {
+      q = q + ' ' + __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13__lisp__["a" /* eval_lisp */])(grp, _context);
+    }
+
+    var srt = find_part('order_by');
+    __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log('FOUND sort: ', srt);
+
+    if (srt instanceof Array && srt.length > 1) {
+      q = q + ' ' + __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13__lisp__["a" /* eval_lisp */])(srt, _context);
     } //slice(offset, pageItemsNum)
 
 
@@ -4589,13 +4603,6 @@ function sql_context(_vars) {
 
     if (s instanceof Array && s.length > 1) {
       q = q + ' ' + __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13__lisp__["a" /* eval_lisp */])(s, _context);
-    }
-
-    var srt = find_part('order_by');
-    __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log('FOUND sort: ', srt);
-
-    if (srt instanceof Array && srt.length > 1) {
-      q = q + ' ' + __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13__lisp__["a" /* eval_lisp */])(srt, _context);
     }
 
     return q;
@@ -4611,7 +4618,8 @@ function sql_context(_vars) {
       "from": undefined,
       "where": undefined,
       "order_by": undefined,
-      "limit_offset": undefined
+      "limit_offset": undefined,
+      "group_by": undefined
     }; // resulting sql
 
     var args = Array.prototype.slice.call(arguments);
@@ -4634,6 +4642,20 @@ function sql_context(_vars) {
 
     if (where instanceof Array && where.length > 1) {
       q.where = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13__lisp__["a" /* eval_lisp */])(where, _context);
+    }
+
+    var grp = find_part('group_by');
+    __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log('FOUND group_by: ', grp);
+
+    if (grp instanceof Array && grp.length > 1) {
+      q = q + ' ' + __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13__lisp__["a" /* eval_lisp */])(grp, _context);
+    }
+
+    var srt = find_part('order_by');
+    __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log('FOUND sort: ', srt);
+
+    if (srt instanceof Array && srt.length > 1) {
+      q.order_by = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13__lisp__["a" /* eval_lisp */])(srt, _context);
     } //slice(offset, pageItemsNum)
 
 
@@ -4642,13 +4664,6 @@ function sql_context(_vars) {
 
     if (s instanceof Array && s.length > 1) {
       q.limit_offset = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13__lisp__["a" /* eval_lisp */])(s, _context);
-    }
-
-    var srt = find_part('order_by');
-    __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log('FOUND sort: ', srt);
-
-    if (srt instanceof Array && srt.length > 1) {
-      q.order_by = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13__lisp__["a" /* eval_lisp */])(srt, _context);
     }
 
     return q;
@@ -4732,6 +4747,16 @@ function sql_context(_vars) {
   };
 
   _context['slice'].ast = [[], {}, [], 1]; // mark as macro
+
+  _context['group_by'] = function () {
+    var a = Array.prototype.slice.call(arguments);
+
+    if (a.length === 0) {
+      return "";
+    } else {
+      return "GROUP BY " + a.join(' , ');
+    }
+  };
 
   return _context;
 }
@@ -4868,7 +4893,8 @@ function eval_sql_expr(_expr, _vars) {
                 limit_offset: undefined,
                 order_by: undefined,
                 select: 'SELECT *',
-                where: undefined
+                where: undefined,
+                group_by: undefined
               }
 */
 
@@ -5083,10 +5109,33 @@ function generate_report_sql(_cfg, _vars) {
       });
       return in_lpe;
     };
+    /* while we wrapping aggregate functions around columns, we should keep track of the free columns, so we will be able to
+       generate correct group by !!!!
+    */
+
+
+    var group_by = cfg["columns"].map(function (h) {
+      return h["id"];
+    });
+
+    var wrap_aggregate_functions = function wrap_aggregate_functions(col, cfg, col_id) {
+      ret = col;
+
+      if (Array.isArray(cfg["agg"]) && cfg["agg"].length > 0) {
+        group_by = group_by.filter(function (id) {
+          return id !== col_id;
+        });
+        return cfg["agg"].reduce(function (a, currentFunc) {
+          return currentFunc + '(' + a + ')';
+        }, ret);
+      }
+
+      return ret;
+    };
 
     var struct = ['sql'];
     var allColumns = cfg["columns"].map(function (h) {
-      return h["dimId"].split('.')[0];
+      return h["id"].split('.')[0];
     });
 
     var uniq = _toConsumableArray(new Set(allColumns));
@@ -5096,23 +5145,33 @@ function generate_report_sql(_cfg, _vars) {
     }
 
     var sel = ['select'].concat(cfg["columns"].map(function (h) {
-      var c = h["dimId"].split('.')[1];
-      var sql_col = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__utils_utils__["a" /* reports_get_column_sql */])(cfg["sourceId"], h["dimId"]);
+      var c = h["id"].split('.')[1];
+      var sql_col = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__utils_utils__["a" /* reports_get_column_sql */])(cfg["sourceId"], h["id"]);
 
       if (sql_col == c) {
-        return c;
+        return wrap_aggregate_functions(c, h, h["id"]); // h["id"] for backtracking for group_by
       } else {
-        return sql_col + ' AS ' + c;
+        return wrap_aggregate_functions(sql_col, h, h["id"]) + ' AS ' + c;
       }
     }));
+
+    if (group_by.length === cfg["columns"].length) {
+      group_by = ["group_by"];
+    } else {
+      // we should provide group_by!
+      group_by = ["group_by"].concat(group_by.map(function (c) {
+        return ["column", c];
+      }));
+    }
+
     var uniqIter = uniq.values(); // will return something like     (select * from abc) AS a
 
     var from = ['from', __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__utils_utils__["b" /* reports_get_table_sql */])(cfg["sourceId"], uniqIter.next().value)];
     var order_by = ['order_by'].concat(cfg["columns"].map(function (h) {
       if (h["sort"] == 1) {
-        return ["+", h["dimId"].split('.')[1]];
+        return ["+", h["id"].split('.')[1]];
       } else if (h["sort"] == 2) {
-        return ["-", h["dimId"].split('.')[1]];
+        return ["-", h["id"].split('.')[1]];
       }
     }));
     order_by = order_by.filter(function (el) {
@@ -5136,7 +5195,8 @@ function generate_report_sql(_cfg, _vars) {
       filt = ["where"];
     }
 
-    struct.push(sel, from, order_by, filt);
+    struct.push(sel, from, order_by, filt, group_by);
+    __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log(JSON.stringify(struct));
     var ret = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13__lisp__["a" /* eval_lisp */])(struct, _context);
     return ret;
   }; // по хорошему, надо столбцы засунуть в _context в _columns и подгрузить их тип из базы!!!
