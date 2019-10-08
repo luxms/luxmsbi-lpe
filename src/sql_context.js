@@ -24,7 +24,7 @@ import console from './console/console';
 import {eval_lisp} from './lisp';
 import {sql_where_context} from './sql_where';
 import {parse} from './lpep';
-import {reports_get_column_sql, reports_get_table_sql} from './utils/utils';
+import {reports_get_column_sql, reports_get_table_sql, reports_get_join_path} from './utils/utils';
 
 // polyfill = remove in 2020 !!!
 
@@ -590,14 +590,23 @@ _context['generate_sql_struct_for_report'] = function(cfg) {
 
   var struct = ['sql'];
 
-  var allColumns = cfg["columns"].map(h => h["id"].split('.')[0]);
-  var uniq = [...new Set(allColumns)];
+  var allSources = cfg["columns"].map(h => h["id"].split('.')[0]);
+  var uniq = [...new Set(allSources)];
   if (uniq.length != 1) {
-    throw new Error("We support only select from one table, joins are not supported! Tables detected: " + JSON.stringify(uniq));
+    throw new Error("We support select from one source only, joins are not supported! Sources detected: " + JSON.stringify(uniq));
+  }
+
+  var allTables = cfg["columns"].map(h => h["id"].split('.').slice(0,2).join('.') );
+  // !!!!!!!!!!!!! uniq will be used later in from!!!
+  uniq = [...new Set(allTables)];
+  if (uniq.length != 1) {
+    // we have more that one table, let check if we can use JOIN to generate results.
+    join_struct = reports_get_join_path(uniq)
+    throw new Error("Can not find path to JOIN tables: " + JSON.stringify(uniq));
   }
 
   var sel = ['select'].concat(cfg["columns"].map(h => {
-    var c = h["id"].split('.')[1]
+    var c = h["id"].split('.')[2]
     var sql_col = reports_get_column_sql(cfg["sourceId"], h["id"])
     if (sql_col == c) {
       return wrap_aggregate_functions(c, h, h["id"]) // h["id"] for backtracking for group_by
@@ -619,9 +628,9 @@ _context['generate_sql_struct_for_report'] = function(cfg) {
 
   var order_by = ['order_by'].concat(cfg["columns"].map(h=> {
                                                         if (h["sort"] == 1) {
-                                                          return ["+", h["id"].split('.')[1]];
+                                                          return ["+", h["id"].split('.')[2]];
                                                         } else if (h["sort"] == 2) {
-                                                          return ["-", h["id"].split('.')[1]]
+                                                          return ["-", h["id"].split('.')[2]]
                                                         }
                                                       }));
   order_by = order_by.filter(function(el){return el !== undefined})
@@ -643,6 +652,10 @@ _context['generate_sql_struct_for_report'] = function(cfg) {
 
   struct.push(sel, from, order_by, filt, group_by)
 
+  if (cfg["limit"] !== undefined) {
+    var offset = cfg["offset"] || 0
+    struct.push( ["slice", offset, cfg["limit"]])
+  }
   console.log(JSON.stringify(struct))
   var ret = eval_lisp(struct, _context);
 

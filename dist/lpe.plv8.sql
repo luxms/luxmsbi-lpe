@@ -3020,7 +3020,7 @@ function sql_where_context(_vars) {
 
           if (schema_table.length < 4) {
             return schema_table.map(function (item) {
-              return regExp.test(item) ? item : __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["c" /* db_quote_ident */])(item);
+              return regExp.test(item) ? item : __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["d" /* db_quote_ident */])(item);
             }).join('.');
           } else {
             throw new Error('Too many dots for column name ' + o);
@@ -3178,7 +3178,7 @@ function sql_where_context(_vars) {
   };
 
   _context["ql"] = function (el) {
-    return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["d" /* db_quote_literal */])(el);
+    return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["e" /* db_quote_literal */])(el);
   }; // filter
 
 
@@ -3191,11 +3191,11 @@ function sql_where_context(_vars) {
 
     var quote_scalar = function quote_scalar(el) {
       if (typeof el === "string") {
-        return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["d" /* db_quote_literal */])(el);
+        return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["e" /* db_quote_literal */])(el);
       } else if (typeof el === "number") {
         return el;
       } else {
-        return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["d" /* db_quote_literal */])(JSON.stringify(el));
+        return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["e" /* db_quote_literal */])(JSON.stringify(el));
       }
     };
 
@@ -3353,7 +3353,7 @@ function sql_where_context(_vars) {
         }).join(',');
       }
 
-      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["d" /* db_quote_literal */])(expr);
+      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["e" /* db_quote_literal */])(expr);
     };
 
     ctx['$'].ast = [[], {}, [], 1]; // mark as macro
@@ -3499,10 +3499,11 @@ function eval_sql_where(_expr, _vars) {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony export (immutable) */ __webpack_exports__["d"] = db_quote_literal;
-/* harmony export (immutable) */ __webpack_exports__["c"] = db_quote_ident;
+/* harmony export (immutable) */ __webpack_exports__["e"] = db_quote_literal;
+/* harmony export (immutable) */ __webpack_exports__["d"] = db_quote_ident;
 /* harmony export (immutable) */ __webpack_exports__["a"] = reports_get_column_sql;
-/* harmony export (immutable) */ __webpack_exports__["b"] = reports_get_table_sql;
+/* harmony export (immutable) */ __webpack_exports__["c"] = reports_get_table_sql;
+/* harmony export (immutable) */ __webpack_exports__["b"] = reports_get_join_path;
 function db_quote_literal(intxt) {
   return plv8.quote_literal(intxt);
 }
@@ -3511,9 +3512,11 @@ function db_quote_ident(intxt) {
 }
 /* will make select from the local PostgreSQL */
 
+/* col must be 3-elements: srcId, table, colname */
+
 function reports_get_column_sql(srcId, col) {
   // on Error plv8 will generate Exception!
-  var id = srcId + '.' + col;
+  var id = col;
   var rows = plv8.execute('SELECT sql_query FROM koob.dimensions WHERE id = $1', [id]);
 
   if (rows.length > 0) {
@@ -3526,7 +3529,7 @@ function reports_get_column_sql(srcId, col) {
 
 function reports_get_table_sql(srcId, tbl) {
   // on Error plv8 will generate Exception!
-  var id = srcId + '.' + tbl;
+  var id = tbl;
   var rows = plv8.execute('SELECT sql_query FROM koob.cubes WHERE id = $1', [id]);
 
   if (rows.length > 0) {
@@ -3534,6 +3537,25 @@ function reports_get_table_sql(srcId, tbl) {
   }
 
   throw new Error("Can not find table description in the koob.cubes for table " + id);
+}
+/* should find path to JOIN all tables listed in cubes array */
+
+/* returns list of tables and list of links between them */
+
+function reports_get_join_path(cubes) {
+  var join_info = plv8.execute("\n        WITH RECURSIVE prev(from_table, link_ident, to_table, step, nodes, links) AS (\n            SELECT\n            src.cube_ident,\n            src.link_ident,\n            dst.cube_ident,\n            0::INT as step,\n            ARRAY[src.cube_ident,dst.cube_ident]::TEXT[] as nodes,\n            ARRAY[src.link_ident]::TEXT[] as links\n            FROM koob.joins as src left join koob.joins as dst on (src.link_ident = dst.link_ident)\n            WHERE src.cube_ident = $1\n            AND src.cube_ident <> dst.cube_ident\n        UNION ALL\n            SELECT\n            src.cube_ident,\n            src.link_ident,\n            dst.cube_ident,\n            step+1 as step,\n            nodes || dst.cube_ident as nodes,\n            links || src.link_ident as links\n            FROM koob.joins as src LEFT JOIN koob.joins as dst ON (src.link_ident = dst.link_ident), prev\n            WHERE src.cube_ident = prev.to_table\n            AND dst.cube_ident <> prev.to_table\n            AND src.link_ident <> prev.link_ident\n            AND dst.link_ident <> prev.link_ident\n            AND step < 6\n        )\n        SELECT * from prev where nodes @> $2 order by array_length(nodes,1) asc limit 1", [cubes[0], cubes]);
+
+  if (join_info.length === 0) {
+    return {
+      "links": [],
+      "nodes": []
+    };
+  }
+
+  return {
+    "links": join_info[0]["links"],
+    "nodes": join_info[0]["nodes"]
+  };
 }
 
 /***/ }),
@@ -5039,18 +5061,30 @@ function generate_report_sql(_cfg, _vars) {
     };
 
     var struct = ['sql'];
-    var allColumns = cfg["columns"].map(function (h) {
+    var allSources = cfg["columns"].map(function (h) {
       return h["id"].split('.')[0];
     });
 
-    var uniq = _toConsumableArray(new Set(allColumns));
+    var uniq = _toConsumableArray(new Set(allSources));
 
     if (uniq.length != 1) {
-      throw new Error("We support only select from one table, joins are not supported! Tables detected: " + JSON.stringify(uniq));
+      throw new Error("We support select from one source only, joins are not supported! Sources detected: " + JSON.stringify(uniq));
+    }
+
+    var allTables = cfg["columns"].map(function (h) {
+      return h["id"].split('.').slice(0, 2).join('.');
+    }); // !!!!!!!!!!!!! uniq will be used later in from!!!
+
+    uniq = _toConsumableArray(new Set(allTables));
+
+    if (uniq.length != 1) {
+      // we have more that one table, let check if we can use JOIN to generate results.
+      join_struct = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__utils_utils__["b" /* reports_get_join_path */])(uniq);
+      throw new Error("Can not find path to JOIN tables: " + JSON.stringify(uniq));
     }
 
     var sel = ['select'].concat(cfg["columns"].map(function (h) {
-      var c = h["id"].split('.')[1];
+      var c = h["id"].split('.')[2];
       var sql_col = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__utils_utils__["a" /* reports_get_column_sql */])(cfg["sourceId"], h["id"]);
 
       if (sql_col == c) {
@@ -5071,12 +5105,12 @@ function generate_report_sql(_cfg, _vars) {
 
     var uniqIter = uniq.values(); // will return something like     (select * from abc) AS a
 
-    var from = ['from', __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__utils_utils__["b" /* reports_get_table_sql */])(cfg["sourceId"], uniqIter.next().value)];
+    var from = ['from', __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__utils_utils__["c" /* reports_get_table_sql */])(cfg["sourceId"], uniqIter.next().value)];
     var order_by = ['order_by'].concat(cfg["columns"].map(function (h) {
       if (h["sort"] == 1) {
-        return ["+", h["id"].split('.')[1]];
+        return ["+", h["id"].split('.')[2]];
       } else if (h["sort"] == 2) {
-        return ["-", h["id"].split('.')[1]];
+        return ["-", h["id"].split('.')[2]];
       }
     }));
     order_by = order_by.filter(function (el) {
@@ -5101,6 +5135,12 @@ function generate_report_sql(_cfg, _vars) {
     }
 
     struct.push(sel, from, order_by, filt, group_by);
+
+    if (cfg["limit"] !== undefined) {
+      var offset = cfg["offset"] || 0;
+      struct.push(["slice", offset, cfg["limit"]]);
+    }
+
     __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log(JSON.stringify(struct));
     var ret = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13__lisp__["a" /* eval_lisp */])(struct, _context);
     return ret;

@@ -4320,6 +4320,7 @@ function tokenize(s) {
 /* harmony export (immutable) */ __webpack_exports__["a"] = db_quote_ident;
 /* unused harmony export reports_get_column_sql */
 /* unused harmony export reports_get_table_sql */
+/* unused harmony export reports_get_join_path */
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_regexp_split__ = __webpack_require__(60);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_regexp_split___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_regexp_split__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_regexp_to_string__ = __webpack_require__(40);
@@ -4337,11 +4338,21 @@ function db_quote_ident(intxt) {
 }
 function reports_get_column_sql(srcId, col) {
   // on Error plv8 will generate Exception!
-  return col.split('.')[1];
+  return col.split('.')[2];
 }
 function reports_get_table_sql(srcId, tbl) {
   // on Error plv8 will generate Exception!
-  return tbl;
+  return tbl.split('.')[1];
+}
+/* should find path to JOIN all tables listed in cubes array */
+
+/* returns list of tables and list of links between them */
+
+function reports_get_join_path(cubes) {
+  return {
+    "links": [],
+    "nodes": []
+  };
 }
 
 /***/ }),
