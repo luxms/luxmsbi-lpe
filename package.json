@@ -7,6 +7,7 @@
   "scripts": {
     "test": "mocha --reporter spec",
     "test-sql": "mocha --reporter spec test/test-sql.js",
+    "test-join": "mocha --reporter spec test/test-join.js",
     "cli": "node -e \"console.log(JSON.stringify(require('./dist/lpe').parse(require('fs').readFileSync('/dev/stdin').toString())))\"",
     "eval": "node -e \"var lpep=require('./dist/lpe');console.log(JSON.stringify(lpep.evaluate(lpep.parse(require('fs').readFileSync('/dev/stdin').toString()))))\"",
     "build": "webpack",

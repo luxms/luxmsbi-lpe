@@ -196,7 +196,7 @@ const STDLIB = {
   // special forms
   ...SPECIAL_FORMS,
 
-  // built-in function
+  // built-in functions
   '=': (...args) => args.every(v => v == args[0]),
   '+': (...args) => args.reduce((a, b) => a + b),
   '-': (...args) => args.length === 1 ? -args[0] : args.reduce((a, b) => a - b),
@@ -249,6 +249,8 @@ const STDLIB = {
   'concat': (...a) => [].concat.apply([], a),
   'pr-str': (...a) => a.map(x => JSON.stringify(x)).join(' '),
   'classOf': (a) => Object.prototype.toString.call(a),
+  'join': (a, sep) => Array.prototype.join.call(a, sep),
+  // operator from APL language
   '⍴': (len, ...values) => Array.apply(null, Array(len)).map((a, idx) => values[idx % values.length]),
 
   // not implemented yet

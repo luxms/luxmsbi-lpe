@@ -106,21 +106,12 @@ export function sql_where_context(_vars) {
     // с помощью макросов + и - в этом случае перехватим вызов и сделаем обработку.
     // а вот когда работает обработчик аргументов where - там eval_lisp почти никогда не вызывается...
     ctx['+'] = function (a) {
-      if (a instanceof Array) {
-        throw("recursive +..-");
-      } else {
-        return resolve_order_by_literal(a);
-      }
+      return resolve_order_by_literal(eval_lisp(a, _vars))
     }
     ctx['+'].ast = [[],{},[],1]; // mark as macro
 
     ctx['-'] = function (a) {
-      //console.log("-: call " + JSON.stringify(a));
-      if (a instanceof Array) {
-        throw("recursive -..+");
-      } else {
-        return resolve_order_by_literal(a) + ' ' + 'DESC';
-      }
+      return resolve_order_by_literal(eval_lisp(a, _vars)) + ' DESC'
     }
     ctx['-'].ast = [[],{},[],1]; // mark as macro
 
@@ -186,7 +177,26 @@ export function sql_where_context(_vars) {
 
 
   _context["ql"] = function(el) {
-    return db_quote_literal(el)
+    // NULL values should not be quoted
+    return el === null ? null : db_quote_literal(el)
+  }
+
+  // required for Oracle Reports
+  _context["to_timestamp"] = function(el, fmt, nls) {
+    return `to_timestamp(${el})`
+  }
+
+  // required for Oracle Reports
+  _context["to_date"] = function(el, fmt, nls) {
+    if (fmt && nls ) {
+      return `to_date(${el}, ${fmt}, ${nls})`
+    }
+
+    if (fmt) {
+      return `to_date(${el}, ${fmt})`
+    }
+
+    return `to_date(${el})`
   }
 
   // filter
@@ -239,6 +249,16 @@ export function sql_where_context(_vars) {
                   return ar[1] + '.' + ar[2];
                 } else if (ar[0] == "and" || ar[0] == "or"){
                   return prnt(ar[1]) + ' ' + ar[0] + ' ' + prnt(ar[2]);
+
+                } else if (ar[0] == "~" ) {
+                  //_source_database
+                  // Oracle has no ~ operator !!!
+                  if (_vars["_target_database"] === 'oracle') {
+                    return `REGEXP_LIKE( ${prnt(ar[1])} , ${prnt(ar[2])} )` 
+                  } else {
+                    return prnt(ar[1]) + ' ' + ar[0] + ' ' + prnt(ar[2])
+                  }
+              
                 } else if (ar[0] == "ilike" || ar[0] == "like" ||
                            ar[0] == "in" || ar[0] == "is" || ar[0].match(/^[^\w]+$/)) {
                    // имя функции не начинается с буквы
@@ -291,7 +311,7 @@ export function sql_where_context(_vars) {
         // a = [null, 1,2] как a in (1,2) or a is null
 
         // ["=",["column","vNetwork.cluster"],["[","SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]]
-        console.log('========'+ JSON.stringify(l) + ' ' + JSON.stringify(r))
+        // console.log('========'+ JSON.stringify(l) + ' ' + JSON.stringify(r))
         if (r instanceof Array) {
           if (r.length === 0) {
             return 'TRUE';
@@ -499,11 +519,20 @@ export function eval_sql_where(_expr, _vars) {
 
   console.log('sql_where parse: ', JSON.stringify(sexpr));
 
-  if ((sexpr instanceof Array) &&
-     ((sexpr[0]==='filter' && (sexpr.length <=2)) || (sexpr[0]==='order_by') || (sexpr[0]==='if') || (sexpr[0]==='where') )) {
+  if ((sexpr instanceof Array) && (
+      (sexpr[0]==='filter' && (sexpr.length <=2))
+     || (sexpr[0]==='order_by') 
+     || (sexpr[0]==='if') 
+     || (sexpr[0]==='where') 
+     || (sexpr[0]==='pluck')
+     || (sexpr[0]==='str')
+     || (sexpr[0]==='prnt')
+     || (sexpr[0]==='->') // it is dot operator, FIXME: add correct function call check !
+     
+  )) {
     // ok
   } else {
-    throw("only single where() or order_by() could be evaluated.")
+    throw("only single where() or order_by() could be evaluated. Found: " + sexpr[0])
   }
 
 

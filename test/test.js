@@ -221,6 +221,14 @@ describe('LPE tests', function() {
             "WHERE (ctime in ('2018-01-01','2017-01-01')) AND (cnt = 2)"
         );
 
+        // use plain pluck and print quoted values
+        assert.equal( lpe.eval_sql_where(
+            `periods.pluck(start_time).map(ql).join(',')`,
+            {"periods":[{"start_time":"2018-01-01","id":2324342},{"id":9890798,"start_time":"2017-01-01"}], "period": {"title":"Noyabr","id":2131}}),
+            "'2018-01-01','2017-01-01'"
+        );
+
+
         // combine several arguments with AND 2
         assert.equal( lpe.eval_sql_where(
             'where (ctime in ($(periods.pluck(start_time))), cnt = $(periods.count()) )',
@@ -475,7 +483,7 @@ describe('LPE tests', function() {
 
     it('should eval full SQL expressions', function() {
         assert.equal( lpe.eval_sql_expr(
-            'where(tree_level = [0]).select(id).from(metrics)',
+            'filter(tree_level = [0]).select(id).from(metrics)',
             {"period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
             "SELECT id FROM metrics WHERE tree_level IN (0)"
         );

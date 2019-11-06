@@ -1895,7 +1895,7 @@ var STDLIB = _objectSpread({
   'console': __WEBPACK_IMPORTED_MODULE_10__console_console__["a" /* default */],
   'JSON': JSON
 }, SPECIAL_FORMS, {
-  // built-in function
+  // built-in functions
   '=': function _() {
     for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
       args[_key2] = arguments[_key2];
@@ -2177,6 +2177,10 @@ var STDLIB = _objectSpread({
   'classOf': function classOf(a) {
     return Object.prototype.toString.call(a);
   },
+  'join': function join(a, sep) {
+    return Array.prototype.join.call(a, sep);
+  },
+  // operator from APL language
   '⍴': function _(len) {
     for (var _len23 = arguments.length, values = new Array(_len23 > 1 ? _len23 - 1 : 0), _key23 = 1; _key23 < _len23; _key23++) {
       values[_key23 - 1] = arguments[_key23];
@@ -3551,22 +3555,13 @@ function sql_where_context(_vars) {
 
 
     ctx['+'] = function (a) {
-      if (a instanceof Array) {
-        throw "recursive +..-";
-      } else {
-        return resolve_order_by_literal(a);
-      }
+      return resolve_order_by_literal(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(a, _vars));
     };
 
     ctx['+'].ast = [[], {}, [], 1]; // mark as macro
 
     ctx['-'] = function (a) {
-      //console.log("-: call " + JSON.stringify(a));
-      if (a instanceof Array) {
-        throw "recursive -..+";
-      } else {
-        return resolve_order_by_literal(a) + ' ' + 'DESC';
-      }
+      return resolve_order_by_literal(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(a, _vars)) + ' DESC';
     };
 
     ctx['-'].ast = [[], {}, [], 1]; // mark as macro
@@ -3661,7 +3656,26 @@ function sql_where_context(_vars) {
   };
 
   _context["ql"] = function (el) {
-    return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["b" /* db_quote_literal */])(el);
+    // NULL values should not be quoted
+    return el === null ? null : __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["b" /* db_quote_literal */])(el);
+  }; // required for Oracle Reports
+
+
+  _context["to_timestamp"] = function (el, fmt, nls) {
+    return "to_timestamp(".concat(el, ")");
+  }; // required for Oracle Reports
+
+
+  _context["to_date"] = function (el, fmt, nls) {
+    if (fmt && nls) {
+      return "to_date(".concat(el, ", ").concat(fmt, ", ").concat(nls, ")");
+    }
+
+    if (fmt) {
+      return "to_date(".concat(el, ", ").concat(fmt, ")");
+    }
+
+    return "to_date(".concat(el, ")");
   }; // filter
 
 
@@ -3708,6 +3722,14 @@ function sql_where_context(_vars) {
               return ar[1] + '.' + ar[2];
             } else if (ar[0] == "and" || ar[0] == "or") {
               return prnt(ar[1]) + ' ' + ar[0] + ' ' + prnt(ar[2]);
+            } else if (ar[0] == "~") {
+              //_source_database
+              // Oracle has no ~ operator !!!
+              if (_vars["_target_database"] === 'oracle') {
+                return "REGEXP_LIKE( ".concat(prnt(ar[1]), " , ").concat(prnt(ar[2]), " )");
+              } else {
+                return prnt(ar[1]) + ' ' + ar[0] + ' ' + prnt(ar[2]);
+              }
             } else if (ar[0] == "ilike" || ar[0] == "like" || ar[0] == "in" || ar[0] == "is" || ar[0].match(/^[^\w]+$/)) {
               // имя функции не начинается с буквы
               __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log("PRNT FUNC x F z " + JSON.stringify(ar)); // ["~",["column","vNetwork.folder"],"XXX"]
@@ -3753,8 +3775,7 @@ function sql_where_context(_vars) {
       // a = [] просто пропускаем
       // a = [null, 1,2] как a in (1,2) or a is null
       // ["=",["column","vNetwork.cluster"],["[","SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]]
-      __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log('========' + JSON.stringify(l) + ' ' + JSON.stringify(r));
-
+      // console.log('========'+ JSON.stringify(l) + ' ' + JSON.stringify(r))
       if (r instanceof Array) {
         if (r.length === 0) {
           return 'TRUE';
@@ -3965,9 +3986,10 @@ function eval_sql_where(_expr, _vars) {
   var sexpr = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13__lpep__["a" /* parse */])(_expr);
   __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log('sql_where parse: ', JSON.stringify(sexpr));
 
-  if (sexpr instanceof Array && (sexpr[0] === 'filter' && sexpr.length <= 2 || sexpr[0] === 'order_by' || sexpr[0] === 'if' || sexpr[0] === 'where')) {// ok
-  } else {
-    throw "only single where() or order_by() could be evaluated.";
+  if (sexpr instanceof Array && (sexpr[0] === 'filter' && sexpr.length <= 2 || sexpr[0] === 'order_by' || sexpr[0] === 'if' || sexpr[0] === 'where' || sexpr[0] === 'pluck' || sexpr[0] === 'str' || sexpr[0] === 'prnt' || sexpr[0] === '->' // it is dot operator, FIXME: add correct function call check !
+  )) {// ok
+    } else {
+    throw "only single where() or order_by() could be evaluated. Found: " + sexpr[0];
   }
 
   var _context = sql_where_context(_vars);
@@ -4318,9 +4340,11 @@ function tokenize(s) {
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["b"] = db_quote_literal;
 /* harmony export (immutable) */ __webpack_exports__["a"] = db_quote_ident;
-/* unused harmony export reports_get_column_sql */
+/* unused harmony export reports_get_column_info */
 /* unused harmony export reports_get_table_sql */
 /* unused harmony export reports_get_join_path */
+/* unused harmony export reports_get_join_conditions */
+/* unused harmony export get_source_database */
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_regexp_split__ = __webpack_require__(60);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_regexp_split___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_regexp_split__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_regexp_to_string__ = __webpack_require__(40);
@@ -4336,13 +4360,22 @@ function db_quote_literal(intxt) {
 function db_quote_ident(intxt) {
   return '"' + intxt.toString() + '"';
 }
-function reports_get_column_sql(srcId, col) {
-  // on Error plv8 will generate Exception!
-  return col.split('.')[2];
+function reports_get_column_info(srcId, col) {
+  var parts = col.split('.');
+  return {
+    "id": col,
+    "sql_query": parts[2],
+    "type": "STRING"
+  };
 }
-function reports_get_table_sql(srcId, tbl) {
-  // on Error plv8 will generate Exception!
-  return tbl.split('.')[1];
+function reports_get_table_sql(target_db_type, tbl) {
+  var table_name = tbl.split('.')[1];
+
+  if (target_db_type === 'oracle') {
+    return "".concat(table_name, " ").concat(table_name);
+  }
+
+  return "".concat(table_name, " AS ").concat(table_name);
 }
 /* should find path to JOIN all tables listed in cubes array */
 
@@ -4351,8 +4384,20 @@ function reports_get_table_sql(srcId, tbl) {
 function reports_get_join_path(cubes) {
   return {
     "links": [],
-    "nodes": []
+    "nodes": cubes
   };
+} // should return LPE STRUCT
+
+function reports_get_join_conditions(link_struct) {
+  return 'TRUE';
+} // we should get it from JDBC Connect String
+
+function get_source_database(srcIdent) {
+  if (srcIdent === 'oracle') {
+    return 'oracle';
+  } else {
+    return 'postgresql';
+  }
 }
 
 /***/ }),

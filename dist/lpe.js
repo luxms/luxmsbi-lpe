@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2019/10/08 22:08:47 */ 
+/** [LPE]  Version: 1.0.0 - 2019/11/06 16:11:01 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -74,7 +74,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 84);
+/******/ 	return __webpack_require__(__webpack_require__.s = 85);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -228,7 +228,7 @@ var global = __webpack_require__(4);
 var hide = __webpack_require__(9);
 var has = __webpack_require__(11);
 var SRC = __webpack_require__(21)('src');
-var $toString = __webpack_require__(95);
+var $toString = __webpack_require__(96);
 var TO_STRING = 'toString';
 var TPL = ('' + $toString).split(TO_STRING);
 
@@ -419,7 +419,7 @@ module.exports = function (key) {
 
 "use strict";
 
-__webpack_require__(112);
+__webpack_require__(113);
 var anObject = __webpack_require__(1);
 var $flags = __webpack_require__(26);
 var DESCRIPTORS = __webpack_require__(2);
@@ -454,7 +454,7 @@ if (__webpack_require__(3)(function () { return $toString.call({ source: 'a', fl
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_array_find__ = __webpack_require__(76);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_array_find___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_array_find__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__console_console__ = __webpack_require__(13);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__lpel__ = __webpack_require__(85);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__lpel__ = __webpack_require__(86);
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return __WEBPACK_IMPORTED_MODULE_2__lpel__["c"]; });
 
 
@@ -1091,7 +1091,7 @@ module.exports = function (it) {
 
 "use strict";
 
-__webpack_require__(111);
+__webpack_require__(112);
 var redefine = __webpack_require__(8);
 var hide = __webpack_require__(9);
 var fails = __webpack_require__(3);
@@ -1343,7 +1343,7 @@ addToUnscopables('entries');
 
 var isRegExp = __webpack_require__(41);
 var anObject = __webpack_require__(1);
-var speciesConstructor = __webpack_require__(105);
+var speciesConstructor = __webpack_require__(106);
 var advanceStringIndex = __webpack_require__(39);
 var toLength = __webpack_require__(10);
 var callRegExpExec = __webpack_require__(29);
@@ -1495,7 +1495,7 @@ var uid = __webpack_require__(21);
 var wks = __webpack_require__(0);
 var wksExt = __webpack_require__(74);
 var wksDefine = __webpack_require__(73);
-var enumKeys = __webpack_require__(93);
+var enumKeys = __webpack_require__(94);
 var isArray = __webpack_require__(62);
 var anObject = __webpack_require__(1);
 var isObject = __webpack_require__(6);
@@ -1503,7 +1503,7 @@ var toIObject = __webpack_require__(12);
 var toPrimitive = __webpack_require__(48);
 var createDesc = __webpack_require__(20);
 var _create = __webpack_require__(44);
-var gOPNExt = __webpack_require__(99);
+var gOPNExt = __webpack_require__(100);
 var $GOPD = __webpack_require__(66);
 var $DP = __webpack_require__(5);
 var $keys = __webpack_require__(16);
@@ -1733,15 +1733,15 @@ __webpack_require__(73)('asyncIterator');
 /* harmony export (immutable) */ __webpack_exports__["a"] = eval_lisp;
 /* unused harmony export init_lisp */
 /* unused harmony export evaluate */
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_string_iterator__ = __webpack_require__(80);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_string_iterator__ = __webpack_require__(81);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_string_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_string_iterator__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_array_from__ = __webpack_require__(77);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_array_from___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_array_from__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es7_object_values__ = __webpack_require__(81);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es7_object_values__ = __webpack_require__(82);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es7_object_values___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_core_js_modules_es7_object_values__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_array_iterator__ = __webpack_require__(33);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_array_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_array_iterator__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_object_keys__ = __webpack_require__(110);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_object_keys__ = __webpack_require__(111);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_object_keys___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_object_keys__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es6_regexp_constructor__ = __webpack_require__(79);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es6_regexp_constructor___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_core_js_modules_es6_regexp_constructor__);
@@ -2099,7 +2099,7 @@ var STDLIB = _objectSpread({
   'console': __WEBPACK_IMPORTED_MODULE_10__console_console__["a" /* default */],
   'JSON': JSON
 }, SPECIAL_FORMS, {
-  // built-in function
+  // built-in functions
   '=': function _() {
     for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
       args[_key2] = arguments[_key2];
@@ -2381,6 +2381,10 @@ var STDLIB = _objectSpread({
   'classOf': function classOf(a) {
     return Object.prototype.toString.call(a);
   },
+  'join': function join(a, sep) {
+    return Array.prototype.join.call(a, sep);
+  },
+  // operator from APL language
   '⍴': function _(len) {
     for (var _len23 = arguments.length, values = new Array(_len23 > 1 ? _len23 - 1 : 0), _key23 = 1; _key23 < _len23; _key23++) {
       values[_key23 - 1] = arguments[_key23];
@@ -2663,9 +2667,9 @@ var $export = __webpack_require__(7);
 var redefine = __webpack_require__(8);
 var hide = __webpack_require__(9);
 var Iterators = __webpack_require__(19);
-var $iterCreate = __webpack_require__(97);
+var $iterCreate = __webpack_require__(98);
 var setToStringTag = __webpack_require__(30);
-var getPrototypeOf = __webpack_require__(100);
+var getPrototypeOf = __webpack_require__(101);
 var ITERATOR = __webpack_require__(0)('iterator');
 var BUGGY = !([].keys && 'next' in [].keys()); // Safari has buggy iterators w/o `next`
 var FF_ITERATOR = '@@iterator';
@@ -2793,7 +2797,7 @@ var meta = module.exports = {
 
 // 19.1.2.2 / 15.2.3.5 Object.create(O [, Properties])
 var anObject = __webpack_require__(1);
-var dPs = __webpack_require__(98);
+var dPs = __webpack_require__(99);
 var enumBugKeys = __webpack_require__(40);
 var IE_PROTO = __webpack_require__(47)('IE_PROTO');
 var Empty = function () { /* empty */ };
@@ -2808,7 +2812,7 @@ var createDict = function () {
   var gt = '>';
   var iframeDocument;
   iframe.style.display = 'none';
-  __webpack_require__(96).appendChild(iframe);
+  __webpack_require__(97).appendChild(iframe);
   iframe.src = 'javascript:'; // eslint-disable-line no-script-url
   // createDict = iframe.contentWindow.Object;
   // html.removeChild(iframe);
@@ -3147,9 +3151,9 @@ for (var collections = getKeys(DOMIterables), i = 0; i < collections.length; i++
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_web_dom_iterable___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_core_js_modules_web_dom_iterable__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_array_iterator__ = __webpack_require__(33);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_array_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_array_iterator__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es7_object_values__ = __webpack_require__(81);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es7_object_values__ = __webpack_require__(82);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es7_object_values___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_core_js_modules_es7_object_values__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_regexp_match__ = __webpack_require__(113);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_regexp_match__ = __webpack_require__(80);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_regexp_match___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_regexp_match__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_regexp_replace__ = __webpack_require__(49);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_regexp_replace___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_regexp_replace__);
@@ -3253,7 +3257,7 @@ function sql_where_context(_vars) {
 
           if (schema_table.length < 4) {
             return schema_table.map(function (item) {
-              return regExp.test(item) ? item : __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["d" /* db_quote_ident */])(item);
+              return regExp.test(item) ? item : __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["f" /* db_quote_ident */])(item);
             }).join('.');
           } else {
             throw new Error('Too many dots for column name ' + o);
@@ -3301,22 +3305,13 @@ function sql_where_context(_vars) {
 
 
     ctx['+'] = function (a) {
-      if (a instanceof Array) {
-        throw "recursive +..-";
-      } else {
-        return resolve_order_by_literal(a);
-      }
+      return resolve_order_by_literal(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(a, _vars));
     };
 
     ctx['+'].ast = [[], {}, [], 1]; // mark as macro
 
     ctx['-'] = function (a) {
-      //console.log("-: call " + JSON.stringify(a));
-      if (a instanceof Array) {
-        throw "recursive -..+";
-      } else {
-        return resolve_order_by_literal(a) + ' ' + 'DESC';
-      }
+      return resolve_order_by_literal(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(a, _vars)) + ' DESC';
     };
 
     ctx['-'].ast = [[], {}, [], 1]; // mark as macro
@@ -3411,7 +3406,26 @@ function sql_where_context(_vars) {
   };
 
   _context["ql"] = function (el) {
-    return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["e" /* db_quote_literal */])(el);
+    // NULL values should not be quoted
+    return el === null ? null : __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["g" /* db_quote_literal */])(el);
+  }; // required for Oracle Reports
+
+
+  _context["to_timestamp"] = function (el, fmt, nls) {
+    return "to_timestamp(".concat(el, ")");
+  }; // required for Oracle Reports
+
+
+  _context["to_date"] = function (el, fmt, nls) {
+    if (fmt && nls) {
+      return "to_date(".concat(el, ", ").concat(fmt, ", ").concat(nls, ")");
+    }
+
+    if (fmt) {
+      return "to_date(".concat(el, ", ").concat(fmt, ")");
+    }
+
+    return "to_date(".concat(el, ")");
   }; // filter
 
 
@@ -3424,11 +3438,11 @@ function sql_where_context(_vars) {
 
     var quote_scalar = function quote_scalar(el) {
       if (typeof el === "string") {
-        return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["e" /* db_quote_literal */])(el);
+        return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["g" /* db_quote_literal */])(el);
       } else if (typeof el === "number") {
         return el;
       } else {
-        return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["e" /* db_quote_literal */])(JSON.stringify(el));
+        return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["g" /* db_quote_literal */])(JSON.stringify(el));
       }
     };
 
@@ -3458,6 +3472,14 @@ function sql_where_context(_vars) {
               return ar[1] + '.' + ar[2];
             } else if (ar[0] == "and" || ar[0] == "or") {
               return prnt(ar[1]) + ' ' + ar[0] + ' ' + prnt(ar[2]);
+            } else if (ar[0] == "~") {
+              //_source_database
+              // Oracle has no ~ operator !!!
+              if (_vars["_target_database"] === 'oracle') {
+                return "REGEXP_LIKE( ".concat(prnt(ar[1]), " , ").concat(prnt(ar[2]), " )");
+              } else {
+                return prnt(ar[1]) + ' ' + ar[0] + ' ' + prnt(ar[2]);
+              }
             } else if (ar[0] == "ilike" || ar[0] == "like" || ar[0] == "in" || ar[0] == "is" || ar[0].match(/^[^\w]+$/)) {
               // имя функции не начинается с буквы
               __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log("PRNT FUNC x F z " + JSON.stringify(ar)); // ["~",["column","vNetwork.folder"],"XXX"]
@@ -3503,8 +3525,7 @@ function sql_where_context(_vars) {
       // a = [] просто пропускаем
       // a = [null, 1,2] как a in (1,2) or a is null
       // ["=",["column","vNetwork.cluster"],["[","SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]]
-      __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log('========' + JSON.stringify(l) + ' ' + JSON.stringify(r));
-
+      // console.log('========'+ JSON.stringify(l) + ' ' + JSON.stringify(r))
       if (r instanceof Array) {
         if (r.length === 0) {
           return 'TRUE';
@@ -3586,7 +3607,7 @@ function sql_where_context(_vars) {
         }).join(',');
       }
 
-      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["e" /* db_quote_literal */])(expr);
+      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["g" /* db_quote_literal */])(expr);
     };
 
     ctx['$'].ast = [[], {}, [], 1]; // mark as macro
@@ -3715,9 +3736,10 @@ function eval_sql_where(_expr, _vars) {
   var sexpr = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13__lpep__["a" /* parse */])(_expr);
   __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log('sql_where parse: ', JSON.stringify(sexpr));
 
-  if (sexpr instanceof Array && (sexpr[0] === 'filter' && sexpr.length <= 2 || sexpr[0] === 'order_by' || sexpr[0] === 'if' || sexpr[0] === 'where')) {// ok
-  } else {
-    throw "only single where() or order_by() could be evaluated.";
+  if (sexpr instanceof Array && (sexpr[0] === 'filter' && sexpr.length <= 2 || sexpr[0] === 'order_by' || sexpr[0] === 'if' || sexpr[0] === 'where' || sexpr[0] === 'pluck' || sexpr[0] === 'str' || sexpr[0] === 'prnt' || sexpr[0] === '->' // it is dot operator, FIXME: add correct function call check !
+  )) {// ok
+    } else {
+    throw "only single where() or order_by() could be evaluated. Found: " + sexpr[0];
   }
 
   var _context = sql_where_context(_vars);
@@ -3732,11 +3754,13 @@ function eval_sql_where(_expr, _vars) {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony export (immutable) */ __webpack_exports__["e"] = db_quote_literal;
-/* harmony export (immutable) */ __webpack_exports__["d"] = db_quote_ident;
-/* harmony export (immutable) */ __webpack_exports__["a"] = reports_get_column_sql;
-/* harmony export (immutable) */ __webpack_exports__["c"] = reports_get_table_sql;
+/* harmony export (immutable) */ __webpack_exports__["g"] = db_quote_literal;
+/* harmony export (immutable) */ __webpack_exports__["f"] = db_quote_ident;
+/* harmony export (immutable) */ __webpack_exports__["a"] = reports_get_column_info;
+/* harmony export (immutable) */ __webpack_exports__["d"] = reports_get_table_sql;
 /* harmony export (immutable) */ __webpack_exports__["b"] = reports_get_join_path;
+/* harmony export (immutable) */ __webpack_exports__["e"] = reports_get_join_conditions;
+/* harmony export (immutable) */ __webpack_exports__["c"] = get_source_database;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_regexp_split__ = __webpack_require__(34);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_regexp_split___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_regexp_split__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_regexp_to_string__ = __webpack_require__(22);
@@ -3752,13 +3776,22 @@ function db_quote_literal(intxt) {
 function db_quote_ident(intxt) {
   return '"' + intxt.toString() + '"';
 }
-function reports_get_column_sql(srcId, col) {
-  // on Error plv8 will generate Exception!
-  return col.split('.')[2];
+function reports_get_column_info(srcId, col) {
+  var parts = col.split('.');
+  return {
+    "id": col,
+    "sql_query": parts[2],
+    "type": "STRING"
+  };
 }
-function reports_get_table_sql(srcId, tbl) {
-  // on Error plv8 will generate Exception!
-  return tbl.split('.')[1];
+function reports_get_table_sql(target_db_type, tbl) {
+  var table_name = tbl.split('.')[1];
+
+  if (target_db_type === 'oracle') {
+    return "".concat(table_name, " ").concat(table_name);
+  }
+
+  return "".concat(table_name, " AS ").concat(table_name);
 }
 /* should find path to JOIN all tables listed in cubes array */
 
@@ -3767,8 +3800,20 @@ function reports_get_table_sql(srcId, tbl) {
 function reports_get_join_path(cubes) {
   return {
     "links": [],
-    "nodes": []
+    "nodes": cubes
   };
+} // should return LPE STRUCT
+
+function reports_get_join_conditions(link_struct) {
+  return 'TRUE';
+} // we should get it from JDBC Connect String
+
+function get_source_database(srcIdent) {
+  if (srcIdent === 'oracle') {
+    return 'oracle';
+  } else {
+    return 'postgresql';
+  }
 }
 
 /***/ }),
@@ -3882,7 +3927,7 @@ module.exports = !__webpack_require__(2) && !__webpack_require__(3)(function () 
 /***/ (function(module, exports, __webpack_require__) {
 
 var isObject = __webpack_require__(6);
-var setPrototypeOf = __webpack_require__(104).set;
+var setPrototypeOf = __webpack_require__(105).set;
 module.exports = function (that, target, C) {
   var S = target.constructor;
   var P;
@@ -4019,7 +4064,7 @@ exports.f = Object.getOwnPropertySymbols;
 
 var has = __webpack_require__(11);
 var toIObject = __webpack_require__(12);
-var arrayIndexOf = __webpack_require__(86)(false);
+var arrayIndexOf = __webpack_require__(87)(false);
 var IE_PROTO = __webpack_require__(47)('IE_PROTO');
 
 module.exports = function (object, names) {
@@ -4145,7 +4190,7 @@ module.exports = __webpack_require__(14).getIteratorMethod = function (it) {
 
 // 22.1.3.8 Array.prototype.find(predicate, thisArg = undefined)
 var $export = __webpack_require__(7);
-var $find = __webpack_require__(87)(5);
+var $find = __webpack_require__(88)(5);
 var KEY = 'find';
 var forced = true;
 // Shouldn't skip holes
@@ -4170,7 +4215,7 @@ var toObject = __webpack_require__(17);
 var call = __webpack_require__(63);
 var isArrayIter = __webpack_require__(61);
 var toLength = __webpack_require__(10);
-var createProperty = __webpack_require__(92);
+var createProperty = __webpack_require__(93);
 var getIterFn = __webpack_require__(75);
 
 $export($export.S + $export.F * !__webpack_require__(64)(function (iter) { Array.from(iter); }), 'Array', {
@@ -4279,6 +4324,53 @@ __webpack_require__(70)('RegExp');
 
 "use strict";
 
+
+var anObject = __webpack_require__(1);
+var toLength = __webpack_require__(10);
+var advanceStringIndex = __webpack_require__(39);
+var regExpExec = __webpack_require__(29);
+
+// @@match logic
+__webpack_require__(25)('match', 1, function (defined, MATCH, $match, maybeCallNative) {
+  return [
+    // `String.prototype.match` method
+    // https://tc39.github.io/ecma262/#sec-string.prototype.match
+    function match(regexp) {
+      var O = defined(this);
+      var fn = regexp == undefined ? undefined : regexp[MATCH];
+      return fn !== undefined ? fn.call(regexp, O) : new RegExp(regexp)[MATCH](String(O));
+    },
+    // `RegExp.prototype[@@match]` method
+    // https://tc39.github.io/ecma262/#sec-regexp.prototype-@@match
+    function (regexp) {
+      var res = maybeCallNative($match, regexp, this);
+      if (res.done) return res.value;
+      var rx = anObject(regexp);
+      var S = String(this);
+      if (!rx.global) return regExpExec(rx, S);
+      var fullUnicode = rx.unicode;
+      rx.lastIndex = 0;
+      var A = [];
+      var n = 0;
+      var result;
+      while ((result = regExpExec(rx, S)) !== null) {
+        var matchStr = String(result[0]);
+        A[n] = matchStr;
+        if (matchStr === '') rx.lastIndex = advanceStringIndex(S, toLength(rx.lastIndex), fullUnicode);
+        n++;
+      }
+      return n === 0 ? null : A;
+    }
+  ];
+});
+
+
+/***/ }),
+/* 81 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
 var $at = __webpack_require__(71)(true);
 
 // 21.1.3.27 String.prototype[@@iterator]()
@@ -4298,12 +4390,12 @@ __webpack_require__(42)(String, 'String', function (iterated) {
 
 
 /***/ }),
-/* 81 */
+/* 82 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // https://github.com/tc39/proposal-object-values-entries
 var $export = __webpack_require__(7);
-var $values = __webpack_require__(102)(false);
+var $values = __webpack_require__(103)(false);
 
 $export($export.S, 'Object', {
   values: function values(it) {
@@ -4313,7 +4405,7 @@ $export($export.S, 'Object', {
 
 
 /***/ }),
-/* 82 */
+/* 83 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -4450,7 +4542,7 @@ function deparse(lispExpr) {
 }
 
 /***/ }),
-/* 83 */
+/* 84 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -4464,29 +4556,32 @@ function deparse(lispExpr) {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es7_symbol_async_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_core_js_modules_es7_symbol_async_iterator__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_symbol__ = __webpack_require__(35);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_symbol___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_symbol__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_array_sort__ = __webpack_require__(109);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_array_sort__ = __webpack_require__(110);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_array_sort___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_array_sort__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_web_dom_iterable__ = __webpack_require__(50);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_web_dom_iterable___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_core_js_modules_web_dom_iterable__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es6_array_iterator__ = __webpack_require__(33);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es6_array_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_core_js_modules_es6_array_iterator__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_string_iterator__ = __webpack_require__(80);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_string_iterator__ = __webpack_require__(81);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_string_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_string_iterator__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_set__ = __webpack_require__(115);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_set___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_set__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_regexp_split__ = __webpack_require__(34);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_regexp_split___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_regexp_split__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_regexp_to_string__ = __webpack_require__(22);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_regexp_to_string___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_regexp_to_string__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10_core_js_modules_es6_regexp_replace__ = __webpack_require__(49);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10_core_js_modules_es6_regexp_replace___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_10_core_js_modules_es6_regexp_replace__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11_core_js_modules_es6_array_find__ = __webpack_require__(76);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11_core_js_modules_es6_array_find___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_11_core_js_modules_es6_array_find__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__console_console__ = __webpack_require__(13);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__lisp__ = __webpack_require__(37);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__sql_where__ = __webpack_require__(51);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__lpep__ = __webpack_require__(23);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_16__utils_utils__ = __webpack_require__(52);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_regexp_match__ = __webpack_require__(80);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_regexp_match___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_regexp_match__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10_core_js_modules_es6_regexp_to_string__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10_core_js_modules_es6_regexp_to_string___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_10_core_js_modules_es6_regexp_to_string__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11_core_js_modules_es6_regexp_replace__ = __webpack_require__(49);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11_core_js_modules_es6_regexp_replace___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_11_core_js_modules_es6_regexp_replace__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12_core_js_modules_es6_array_find__ = __webpack_require__(76);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12_core_js_modules_es6_array_find___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_12_core_js_modules_es6_array_find__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__console_console__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__lisp__ = __webpack_require__(37);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__sql_where__ = __webpack_require__(51);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_16__lpep__ = __webpack_require__(23);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_17__utils_utils__ = __webpack_require__(52);
+
 
 
 
@@ -4565,7 +4660,7 @@ if (!Array.prototype.find) {
 }
 
 function sql_context(_vars) {
-  var _context = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__sql_where__["b" /* sql_where_context */])(_vars);
+  var _context = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__sql_where__["b" /* sql_where_context */])(_vars);
   /* заполняем контекст функциями и макросами, заточенными на SQL */
 
 
@@ -4573,47 +4668,30 @@ function sql_context(_vars) {
     var q; // resulting sql
 
     var args = Array.prototype.slice.call(arguments);
-    __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log('SQL IN: ', args);
+    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log('SQL IN: ', args); // use sql-struct!
 
-    var find_part = function find_part(p) {
-      return args.find(function (el) {
-        return p == el[0];
-      });
-    };
+    var command = ["sql-struct"].concat(args);
+    var struct = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lisp__["a" /* eval_lisp */])(command, _context);
+    q = "".concat(struct["select"], " ").concat(struct["from"]);
 
-    var sel = find_part('select');
-    __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log('FOUND select: ', sel);
-    q = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13__lisp__["a" /* eval_lisp */])(sel, _context);
-    var from = find_part('from');
-    __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log('FOUND from: ', from);
-    q = q + ' ' + __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13__lisp__["a" /* eval_lisp */])(from, _context);
-    var where = find_part('where');
-    __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log("FOUND where: ", where);
-
-    if (where instanceof Array && where.length > 1) {
-      q = q + ' ' + __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13__lisp__["a" /* eval_lisp */])(where, _context);
+    if (struct["where"] !== undefined) {
+      q = "".concat(q, " WHERE ").concat(struct["where"]);
     }
 
-    var grp = find_part('group_by');
-    __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log('FOUND group_by: ', grp);
-
-    if (grp instanceof Array && grp.length > 1) {
-      q = q + ' ' + __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13__lisp__["a" /* eval_lisp */])(grp, _context);
+    if (struct["group_by"] !== undefined) {
+      q = "".concat(q, " ").concat(struct["group_by"]);
     }
 
-    var srt = find_part('order_by');
-    __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log('FOUND sort: ', srt);
+    if (struct["order_by"] !== undefined) {
+      q = "".concat(q, " ").concat(struct["order_by"]);
+    }
 
-    if (srt instanceof Array && srt.length > 1) {
-      q = q + ' ' + __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13__lisp__["a" /* eval_lisp */])(srt, _context);
-    } //slice(offset, pageItemsNum)
-
-
-    var s = find_part('slice');
-    __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log("FOUND slice: ", s);
-
-    if (s instanceof Array && s.length > 1) {
-      q = q + ' ' + __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13__lisp__["a" /* eval_lisp */])(s, _context);
+    if (struct["limit_offset"] !== undefined) {
+      if (_vars["_target_database"] === 'oracle') {
+        q = "SELECT * FROM (\n          ".concat(q, "\n        ) WHERE ").concat(struct["limit_offset"]);
+      } else {
+        q = "".concat(q, " ").concat(struct["limit_offset"]);
+      }
     }
 
     return q;
@@ -4634,7 +4712,7 @@ function sql_context(_vars) {
     }; // resulting sql
 
     var args = Array.prototype.slice.call(arguments);
-    __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log('SQL IN: ', args);
+    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log('SQL-STRUCT IN: ', args);
 
     var find_part = function find_part(p) {
       return args.find(function (el) {
@@ -4643,38 +4721,38 @@ function sql_context(_vars) {
     };
 
     var sel = find_part('select');
-    __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log('FOUND select: ', sel);
-    q.select = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13__lisp__["a" /* eval_lisp */])(sel, _context);
+    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log('FOUND select: ', sel);
+    q.select = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lisp__["a" /* eval_lisp */])(sel, _context);
     var from = find_part('from');
-    __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log('FOUND from: ', from);
-    q.from = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13__lisp__["a" /* eval_lisp */])(from, _context);
+    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log('FOUND from: ', from);
+    q.from = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lisp__["a" /* eval_lisp */])(from, _context);
     var where = find_part('filter');
-    __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log("FOUND where: ", where);
+    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("FOUND where: ", where);
 
     if (where instanceof Array && where.length > 1) {
-      q.where = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13__lisp__["a" /* eval_lisp */])(where, _context);
+      q.where = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lisp__["a" /* eval_lisp */])(where, _context);
     }
 
     var grp = find_part('group_by');
-    __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log('FOUND group_by: ', grp);
+    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log('FOUND group_by: ', grp);
 
     if (grp instanceof Array && grp.length > 1) {
-      q = q + ' ' + __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13__lisp__["a" /* eval_lisp */])(grp, _context);
+      q.group_by = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lisp__["a" /* eval_lisp */])(grp, _context);
     }
 
     var srt = find_part('order_by');
-    __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log('FOUND sort: ', srt);
+    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log('FOUND sort: ', srt);
 
     if (srt instanceof Array && srt.length > 1) {
-      q.order_by = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13__lisp__["a" /* eval_lisp */])(srt, _context);
+      q.order_by = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lisp__["a" /* eval_lisp */])(srt, _context);
     } //slice(offset, pageItemsNum)
 
 
     var s = find_part('slice');
-    __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log("FOUND slice: ", s);
+    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("FOUND slice: ", s);
 
     if (s instanceof Array && s.length > 1) {
-      q.limit_offset = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13__lisp__["a" /* eval_lisp */])(s, _context);
+      q.limit_offset = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lisp__["a" /* eval_lisp */])(s, _context);
     }
 
     return q;
@@ -4683,7 +4761,7 @@ function sql_context(_vars) {
   _context['sql-struct'].ast = [[], {}, [], 1]; // mark as macro
 
   function prnt(a) {
-    __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log('prnt IN: ', a);
+    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log('prnt IN: ', a);
 
     if (a instanceof Array) {
       if (a.length > 0) {
@@ -4695,8 +4773,7 @@ function sql_context(_vars) {
           // наш LPE использует точку, как разделитель вызовов функций и кодирует её как ->
           // в логических выражениях мы это воспринимаем как ссылку на <ИМЯ СХЕМЫ>.<ИМЯ ТАБЛИЦЫ>
           // return '"' + a[1] + '"."' + a[2] + '"';
-          __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log("HI MAN ====================");
-          return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13__lisp__["a" /* eval_lisp */])(a, _context);
+          return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lisp__["a" /* eval_lisp */])(a, _context);
         } else {
           return a[0] + '(' + a.slice(1).map(function (argel) {
             return prnt(argel);
@@ -4713,7 +4790,7 @@ function sql_context(_vars) {
 
   _context['->'] = function () {
     var a = Array.prototype.slice.call(arguments);
-    __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log("->   " + JSON.stringify(a));
+    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("->   " + JSON.stringify(a));
     return a.map(function (a) {
       return '"' + a + '"';
     }).join('.');
@@ -4722,7 +4799,7 @@ function sql_context(_vars) {
 
   _context['select'] = function () {
     var a = Array.prototype.slice.call(arguments);
-    __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log("select IN: ", JSON.stringify(a));
+    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("select IN: ", JSON.stringify(a));
 
     if (a.length < 1) {
       return "SELECT *";
@@ -4735,12 +4812,12 @@ function sql_context(_vars) {
 
   _context['from'] = function () {
     var a = Array.prototype.slice.call(arguments);
-    __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log('from IN: ', a);
+    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log('from IN: ', a);
 
     if (a.length < 1) {
       return "";
     } else {
-      return "FROM " + a.map(prnt).join(',');
+      return "FROM " + a.map(prnt).join(', ');
     }
   };
 
@@ -4748,12 +4825,20 @@ function sql_context(_vars) {
 
   _context['slice'] = function () {
     var a = Array.prototype.slice.call(arguments);
-    __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log('slice IN: ', a);
+    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log('slice IN: ', a);
 
     if (a.length < 1) {
       return "";
     } else {
-      return "LIMIT " + parseInt(a[1]) + " OFFSET " + parseInt(a[0]);
+      if (_vars["_target_database"] === 'oracle') {
+        if (parseInt(a[0]) === 0) {
+          return "ROWNUM <= ".concat(parseInt(a[1]));
+        } else {
+          return "ROWNUM > ".concat(parseInt(a[0]), " AND ROWNUM <= ").concat(parseInt(a[1]) + parseInt(a[0]));
+        }
+      } else {
+        return "LIMIT " + parseInt(a[1]) + " OFFSET " + parseInt(a[0]);
+      }
     }
   };
 
@@ -4795,12 +4880,12 @@ function eval_sql_expr(_expr, _vars) {
   var _context = ctx; // for(var key in _vars) _context[key] = _vars[key];
 
   _context['sql->entrypoint'] = function () {
-    __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log("++++++++++++++++++");
+    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("++++++++++++++++++");
     var ret = [];
 
     for (var i = 0; i < arguments.length; i++) {
-      ret.push(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13__lisp__["a" /* eval_lisp */])(arguments[i], _context));
-      __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log(JSON.stringify(ret));
+      ret.push(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lisp__["a" /* eval_lisp */])(arguments[i], _context));
+      __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log(JSON.stringify(ret));
     }
 
     return ret.join(',');
@@ -4808,8 +4893,8 @@ function eval_sql_expr(_expr, _vars) {
 
   _context['sql->entrypoint'].ast = [[], {}, [], 1]; // mark as macro
 
-  var sexpr = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lpep__["a" /* parse */])(_expr);
-  __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log("parsed eval_sql_expr IN: ", sexpr);
+  var sexpr = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lpep__["a" /* parse */])(_expr);
+  __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("parsed eval_sql_expr IN: ", sexpr);
   /*
   if (ctx.hasOwnProperty('where')){
     console.log('W O W');
@@ -4858,7 +4943,7 @@ function eval_sql_expr(_expr, _vars) {
       sql.push(["from", fr]);
     }
 
-    __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log("parse do_select_from: ", sql);
+    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("parse do_select_from: ", sql);
   };
 
   for (var i = 1; i < sexpr.length; i++) {
@@ -4893,8 +4978,8 @@ function eval_sql_expr(_expr, _vars) {
     }
   }
 
-  __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log('parse: ', sql);
-  var ret = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13__lisp__["a" /* eval_lisp */])(sql, _context); // console.log("parse: ", ret);
+  __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log('parse: ', sql);
+  var ret = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lisp__["a" /* eval_lisp */])(sql, _context); // console.log("parse: ", ret);
 
   return ret;
 }
@@ -4917,7 +5002,7 @@ function parse_sql_expr(_expr, _vars, _forced_table, _forced_where) {
     _expr = 'filter()'; // that should generate empty struct
   }
 
-  var sexpr = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lpep__["a" /* parse */])(_expr);
+  var sexpr = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lpep__["a" /* parse */])(_expr);
 
   if (sexpr[0] === '->') {
     sexpr[0] = 'sql->entrypoint';
@@ -4928,7 +5013,7 @@ function parse_sql_expr(_expr, _vars, _forced_table, _forced_where) {
     sexpr = ['sql->entrypoint', sexpr];
   }
 
-  __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log("DBAPI IN: ", sexpr);
+  __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("DBAPI IN: ", sexpr);
   /*
   if (ctx.hasOwnProperty('where')){
     console.log('W O W');
@@ -4982,7 +5067,7 @@ function parse_sql_expr(_expr, _vars, _forced_table, _forced_where) {
     cache[fr].push(["from", _forced_table]);
   }
 
-  __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log("DEBUG", JSON.stringify(cache));
+  __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("DEBUG", JSON.stringify(cache));
   var args = cache["select"].map(function (ar) {
     return ar.slice(1);
   });
@@ -5024,9 +5109,9 @@ function parse_sql_expr(_expr, _vars, _forced_table, _forced_where) {
     sql.push(["filter", w]);
   }
 
-  __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log("WHERE", JSON.stringify(w));
-  __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log('DBAPI parse: ', sql);
-  var ret = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13__lisp__["a" /* eval_lisp */])(sql, _context);
+  __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("WHERE", JSON.stringify(w));
+  __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log('DBAPI parse: ', sql);
+  var ret = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lisp__["a" /* eval_lisp */])(sql, _context);
   return ret;
 }
 function generate_report_sql(_cfg, _vars) {
@@ -5034,12 +5119,45 @@ function generate_report_sql(_cfg, _vars) {
   var _context = ctx;
   /* Для генерации SELECT запросов из конфигов, созданных для Reports */
 
+  /* while we wrapping aggregate functions around columns, we should keep track of the free columns, so we will be able to
+     generate correct group by !!!!
+  */
+
+  var group_by = _cfg["columns"].map(function (h) {
+    return h["id"];
+  });
+
+  var wrap_aggregate_functions = function wrap_aggregate_functions(col, cfg, col_id) {
+    ret = col;
+
+    if (Array.isArray(cfg["agg"]) && cfg["agg"].length > 0) {
+      group_by = group_by.filter(function (id) {
+        return id !== col_id;
+      });
+      return cfg["agg"].reduce(function (a, currentFunc) {
+        return "".concat(currentFunc, "( ").concat(a, " )");
+      }, ret);
+    }
+
+    return ret;
+  };
+
   _context["column"] = function (col) {
-    return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__utils_utils__["a" /* reports_get_column_sql */])(_cfg["sourceId"], col);
+    var col_info = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["a" /* reports_get_column_info */])(_cfg["sourceId"], col);
+    var col_sql = col_info["sql_query"];
+
+    if (col_sql.match(/^\S+$/) === null) {
+      // we have whitespace here, so it is complex expression :-()
+      return "".concat(col_sql);
+    } // we have just column name, prepend table alias !
+
+
+    var parts = col.split('.');
+    return "\"".concat(parts[1], "\".\"").concat(col_sql, "\"");
   };
 
   _context['generate_sql_struct_for_report'] = function (cfg) {
-    __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log(JSON.stringify(cfg));
+    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log(JSON.stringify(cfg));
 
     if (_typeof(cfg) === 'object' && Array.isArray(cfg)) {
       throw new Error("reports_sql expected {...} as argument");
@@ -5077,7 +5195,9 @@ function generate_report_sql(_cfg, _vars) {
     var convert_in_to_eq = function convert_in_to_eq(in_lpe) {
       if (!Array.isArray(in_lpe) || in_lpe.length === 0) return in_lpe;
       return [in_lpe[0] === 'in' ? '=' : in_lpe[0]].concat(_toConsumableArray(in_lpe.slice(1).map(convert_in_to_eq)));
-    };
+    }; // на входе вложенная структура из конфига.
+    // расчитываем, что структура создана в GUI и порядок следования элементов стандартный
+
 
     var quote_text_constants = function quote_text_constants(in_lpe) {
       if (!Array.isArray(in_lpe)) return in_lpe; //console.log("quote_text_constants" + JSON.stringify(in_lpe))
@@ -5087,9 +5207,17 @@ function generate_report_sql(_cfg, _vars) {
           if (in_lpe[1][0] === 'column') {
             if (Array.isArray(in_lpe[2]) && in_lpe[2][0] === '[') {
               // ["=",["column","vNetwork.cluster"],["[","SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]]
-              in_lpe[2] = ['['].concat(in_lpe[2].slice(1).map(function (el) {
-                return ["ql", el];
-              }));
+              var info = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["a" /* reports_get_column_info */])(_cfg["sourceId"], in_lpe[1][1]);
+
+              if (info["type"] === 'PERIOD' && _context["_target_database"] === 'oracle') {
+                in_lpe[2] = ['['].concat(in_lpe[2].slice(1).map(function (el) {
+                  return ["to_date", ["ql", el], "'YYYY-MM-DD'"];
+                }));
+              } else {
+                in_lpe[2] = ['['].concat(in_lpe[2].slice(1).map(function (el) {
+                  return ["ql", el];
+                }));
+              }
             }
           }
         }
@@ -5098,15 +5226,30 @@ function generate_report_sql(_cfg, _vars) {
           if (Array.isArray(in_lpe[1])) {
             if (in_lpe[1][0] === 'column') {
               if (!Array.isArray(in_lpe[2])) {
+                // ANY OPERATOR
                 // ["~",["column","vNetwork.cluster"],"SPB99-DMZ02"]
-                in_lpe[2] = ['ql', in_lpe[2]];
+                var info = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["a" /* reports_get_column_info */])(_cfg["sourceId"], in_lpe[1][1]);
+
+                if (info["type"] === 'PERIOD' && _context["_target_database"] === 'oracle') {
+                  in_lpe[2] = ["to_date", ["ql", in_lpe[2]], "'YYYY-MM-DD'"];
+                } else {
+                  in_lpe[2] = ["ql", in_lpe[2]];
+                }
               }
 
               if (in_lpe.length === 4) {
                 // between
                 if (!Array.isArray(in_lpe[3])) {
                   //["between",["column","vNetwork.period_month"],"2019-09-10","2019-09-20"]
-                  in_lpe[3] = ['ql', in_lpe[3]];
+                  var info = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["a" /* reports_get_column_info */])(_cfg["sourceId"], in_lpe[1][1]);
+
+                  if (info["type"] === 'PERIOD' && _context["_target_database"] === 'oracle') {
+                    in_lpe[3] = ["to_date", ["ql", in_lpe[3]], "'YYYY-MM-DD'"];
+                    in_lpe[4] = ["to_date", ["ql", in_lpe[4]], "'YYYY-MM-DD'"];
+                  } else {
+                    in_lpe[3] = ["ql", in_lpe[3]];
+                    in_lpe[4] = ["ql", in_lpe[4]];
+                  }
                 }
               }
             }
@@ -5119,29 +5262,6 @@ function generate_report_sql(_cfg, _vars) {
         quote_text_constants(el);
       });
       return in_lpe;
-    };
-    /* while we wrapping aggregate functions around columns, we should keep track of the free columns, so we will be able to
-       generate correct group by !!!!
-    */
-
-
-    var group_by = cfg["columns"].map(function (h) {
-      return h["id"];
-    });
-
-    var wrap_aggregate_functions = function wrap_aggregate_functions(col, cfg, col_id) {
-      ret = col;
-
-      if (Array.isArray(cfg["agg"]) && cfg["agg"].length > 0) {
-        group_by = group_by.filter(function (id) {
-          return id !== col_id;
-        });
-        return cfg["agg"].reduce(function (a, currentFunc) {
-          return currentFunc + '(' + a + ')';
-        }, ret);
-      }
-
-      return ret;
     };
 
     var struct = ['sql'];
@@ -5159,23 +5279,46 @@ function generate_report_sql(_cfg, _vars) {
       return h["id"].split('.').slice(0, 2).join('.');
     }); // !!!!!!!!!!!!! uniq will be used later in from!!!
 
-    uniq = _toConsumableArray(new Set(allTables));
+    var uniqTables = _toConsumableArray(new Set(allTables));
 
-    if (uniq.length != 1) {
-      // we have more that one table, let check if we can use JOIN to generate results.
-      join_struct = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__utils_utils__["b" /* reports_get_join_path */])(uniq);
-      throw new Error("Can not find path to JOIN tables: " + JSON.stringify(uniq));
+    var join_struct = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["b" /* reports_get_join_path */])(uniqTables);
+
+    if (join_struct.nodes.length === 0) {
+      throw new Error("Can not find path to JOIN tables: " + JSON.stringify(uniqTables));
+    } // HACK as we miss _cfg["sourceId"]
+
+
+    var srcIdent = _cfg["sourceId"];
+
+    if (srcIdent === undefined) {
+      srcIdent = join_struct.nodes[0].split('.')[0];
     }
 
-    var sel = ['select'].concat(cfg["columns"].map(function (h) {
-      var c = h["id"].split('.')[2];
-      var sql_col = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__utils_utils__["a" /* reports_get_column_sql */])(cfg["sourceId"], h["id"]);
+    var target_db_type = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["c" /* get_source_database */])(srcIdent);
+    _context["_target_database"] = target_db_type; // column should always be represented as full path source.cube.ciolumn
+    // for aggregates we should add func names as suffix ! like source.cube.column.max_avg
 
-      if (sql_col == c) {
-        return wrap_aggregate_functions(c, h, h["id"]); // h["id"] for backtracking for group_by
-      } else {
-        return wrap_aggregate_functions(sql_col, h, h["id"]) + ' AS ' + c;
+    var sel = ['select'].concat(cfg["columns"].map(function (h) {
+      var col_info = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["a" /* reports_get_column_info */])(cfg["sourceId"], h["id"]);
+      var col_sql = col_info["sql_query"];
+      var parts = h.id.split('.'); //if ( col_sql.match( /^\S+$/ ) !== null ) {
+
+      if (col_sql === parts[2]) {
+        // we have just column name, prepend table alias !
+        col_sql = "\"".concat(parts[1], "\".\"").concat(col_sql, "\"");
       }
+
+      var wrapped_column_sql = wrap_aggregate_functions(col_sql, h, h["id"]);
+      var as = "\"".concat(h.id, "\"");
+
+      if (Array.isArray(h["agg"])) {
+        as = "\"".concat(h.id, ".").concat(h["agg"].join('.'), "\"");
+      } //return `${wrapped_column_sql} AS ${as}`
+      // oracle has limit 30 chars in identifier!
+      // we can skip it for now.
+
+
+      return "".concat(wrapped_column_sql);
     }));
 
     if (group_by.length === cfg["columns"].length) {
@@ -5185,16 +5328,17 @@ function generate_report_sql(_cfg, _vars) {
       group_by = ["group_by"].concat(group_by.map(function (c) {
         return ["column", c];
       }));
-    }
+    } // will return something like     (select * from abc) AS a
 
-    var uniqIter = uniq.values(); // will return something like     (select * from abc) AS a
 
-    var from = ['from', __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__utils_utils__["c" /* reports_get_table_sql */])(cfg["sourceId"], uniqIter.next().value)];
+    var from = ['from'].concat(join_struct.nodes.map(function (t) {
+      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["d" /* reports_get_table_sql */])(target_db_type, t);
+    }));
     var order_by = ['order_by'].concat(cfg["columns"].map(function (h) {
       if (h["sort"] == 1) {
-        return ["+", h["id"].split('.')[2]];
+        return ["+", ["column", h["id"]]];
       } else if (h["sort"] == 2) {
-        return ["-", h["id"].split('.')[2]];
+        return ["-", ["column", h["id"]]];
       }
     }));
     order_by = order_by.filter(function (el) {
@@ -5205,6 +5349,11 @@ function generate_report_sql(_cfg, _vars) {
     }).filter(function (el) {
       return el !== null;
     });
+    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("========= reports_get_join_conditions " + JSON.stringify(join_struct));
+
+    if (join_struct.nodes.length > 1) {
+      filt = filt.concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["e" /* reports_get_join_conditions */])(join_struct));
+    }
 
     if (filt.length > 1) {
       filt = ['and'].concat(filt);
@@ -5213,9 +5362,9 @@ function generate_report_sql(_cfg, _vars) {
     }
 
     if (filt.length > 0) {
-      filt = ["where", filt];
+      filt = ["filter", filt];
     } else {
-      filt = ["where"];
+      filt = ["filter"];
     }
 
     struct.push(sel, from, order_by, filt, group_by);
@@ -5225,19 +5374,20 @@ function generate_report_sql(_cfg, _vars) {
       struct.push(["slice", offset, cfg["limit"]]);
     }
 
-    __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log(JSON.stringify(struct));
-    var ret = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13__lisp__["a" /* eval_lisp */])(struct, _context);
+    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log(JSON.stringify(struct));
+    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("USING ".concat(target_db_type, " as target database"));
+    var ret = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lisp__["a" /* eval_lisp */])(struct, _context);
     return ret;
   }; // по хорошему, надо столбцы засунуть в _context в _columns и подгрузить их тип из базы!!!
   // но мы типы столбцов будем определять здесь (в этой функции) и пытаться закавычить константы заранее....
 
 
-  var ret = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_13__lisp__["a" /* eval_lisp */])(["generate_sql_struct_for_report", _cfg], _context);
+  var ret = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lisp__["a" /* eval_lisp */])(["generate_sql_struct_for_report", _cfg], _context);
   return ret;
 }
 
 /***/ }),
-/* 84 */
+/* 85 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -5245,10 +5395,10 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "eval_lpe", function() { return eval_lpe; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__console_console__ = __webpack_require__(13);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__lpep__ = __webpack_require__(23);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__lped__ = __webpack_require__(82);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__lped__ = __webpack_require__(83);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__lisp__ = __webpack_require__(37);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__sql_where__ = __webpack_require__(51);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__sql_context__ = __webpack_require__(83);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__sql_context__ = __webpack_require__(84);
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "parse", function() { return __WEBPACK_IMPORTED_MODULE_1__lpep__["a"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "deparse", function() { return __WEBPACK_IMPORTED_MODULE_2__lped__["a"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "LPESyntaxError", function() { return __WEBPACK_IMPORTED_MODULE_1__lpep__["b"]; });
@@ -5279,7 +5429,7 @@ function eval_lpe(lpe, ctx) {
 // console.log(result);
 
 /***/ }),
-/* 85 */
+/* 86 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -5586,14 +5736,14 @@ function tokenize(s) {
 /* unused harmony default export */ var _unused_webpack_default_export = (tokenize);
 
 /***/ }),
-/* 86 */
+/* 87 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // false -> Array#indexOf
 // true  -> Array#includes
 var toIObject = __webpack_require__(12);
 var toLength = __webpack_require__(10);
-var toAbsoluteIndex = __webpack_require__(108);
+var toAbsoluteIndex = __webpack_require__(109);
 module.exports = function (IS_INCLUDES) {
   return function ($this, el, fromIndex) {
     var O = toIObject($this);
@@ -5615,7 +5765,7 @@ module.exports = function (IS_INCLUDES) {
 
 
 /***/ }),
-/* 87 */
+/* 88 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 0 -> Array#forEach
@@ -5629,7 +5779,7 @@ var ctx = __webpack_require__(15);
 var IObject = __webpack_require__(60);
 var toObject = __webpack_require__(17);
 var toLength = __webpack_require__(10);
-var asc = __webpack_require__(89);
+var asc = __webpack_require__(90);
 module.exports = function (TYPE, $create) {
   var IS_MAP = TYPE == 1;
   var IS_FILTER = TYPE == 2;
@@ -5665,7 +5815,7 @@ module.exports = function (TYPE, $create) {
 
 
 /***/ }),
-/* 88 */
+/* 89 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var isObject = __webpack_require__(6);
@@ -5687,11 +5837,11 @@ module.exports = function (original) {
 
 
 /***/ }),
-/* 89 */
+/* 90 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 9.4.2.3 ArraySpeciesCreate(originalArray, length)
-var speciesConstructor = __webpack_require__(88);
+var speciesConstructor = __webpack_require__(89);
 
 module.exports = function (original, length) {
   return new (speciesConstructor(original))(length);
@@ -5699,7 +5849,7 @@ module.exports = function (original, length) {
 
 
 /***/ }),
-/* 90 */
+/* 91 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5850,7 +6000,7 @@ module.exports = {
 
 
 /***/ }),
-/* 91 */
+/* 92 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5942,7 +6092,7 @@ module.exports = function (NAME, wrapper, methods, common, IS_MAP, IS_WEAK) {
 
 
 /***/ }),
-/* 92 */
+/* 93 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5957,7 +6107,7 @@ module.exports = function (object, index, value) {
 
 
 /***/ }),
-/* 93 */
+/* 94 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // all enumerable object keys, includes symbols
@@ -5978,7 +6128,7 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 94 */
+/* 95 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var MATCH = __webpack_require__(0)('match');
@@ -5996,14 +6146,14 @@ module.exports = function (KEY) {
 
 
 /***/ }),
-/* 95 */
+/* 96 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(31)('native-function-to-string', Function.toString);
 
 
 /***/ }),
-/* 96 */
+/* 97 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var document = __webpack_require__(4).document;
@@ -6011,7 +6161,7 @@ module.exports = document && document.documentElement;
 
 
 /***/ }),
-/* 97 */
+/* 98 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6031,7 +6181,7 @@ module.exports = function (Constructor, NAME, next) {
 
 
 /***/ }),
-/* 98 */
+/* 99 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var dP = __webpack_require__(5);
@@ -6050,7 +6200,7 @@ module.exports = __webpack_require__(2) ? Object.defineProperties : function def
 
 
 /***/ }),
-/* 99 */
+/* 100 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // fallback for IE11 buggy Object.getOwnPropertyNames with iframe and window
@@ -6075,7 +6225,7 @@ module.exports.f = function getOwnPropertyNames(it) {
 
 
 /***/ }),
-/* 100 */
+/* 101 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 19.1.2.9 / 15.2.3.2 Object.getPrototypeOf(O)
@@ -6094,7 +6244,7 @@ module.exports = Object.getPrototypeOf || function (O) {
 
 
 /***/ }),
-/* 101 */
+/* 102 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // most Object methods by ES6 should accept primitives
@@ -6110,7 +6260,7 @@ module.exports = function (KEY, exec) {
 
 
 /***/ }),
-/* 102 */
+/* 103 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var getKeys = __webpack_require__(16);
@@ -6132,7 +6282,7 @@ module.exports = function (isEntries) {
 
 
 /***/ }),
-/* 103 */
+/* 104 */
 /***/ (function(module, exports) {
 
 // 7.2.9 SameValue(x, y)
@@ -6143,7 +6293,7 @@ module.exports = Object.is || function is(x, y) {
 
 
 /***/ }),
-/* 104 */
+/* 105 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Works with __proto__ only. Old v8 can't work with null proto objects.
@@ -6174,7 +6324,7 @@ module.exports = {
 
 
 /***/ }),
-/* 105 */
+/* 106 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 7.3.20 SpeciesConstructor(O, defaultConstructor)
@@ -6189,7 +6339,7 @@ module.exports = function (O, D) {
 
 
 /***/ }),
-/* 106 */
+/* 107 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6205,7 +6355,7 @@ module.exports = function (method, arg) {
 
 
 /***/ }),
-/* 107 */
+/* 108 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // helper for String#{startsWith, endsWith, includes}
@@ -6219,7 +6369,7 @@ module.exports = function (that, searchString, NAME) {
 
 
 /***/ }),
-/* 108 */
+/* 109 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var toInteger = __webpack_require__(32);
@@ -6232,7 +6382,7 @@ module.exports = function (index, length) {
 
 
 /***/ }),
-/* 109 */
+/* 110 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6251,7 +6401,7 @@ $export($export.P + $export.F * (fails(function () {
   // V8 bug
   test.sort(null);
   // Old WebKit
-}) || !__webpack_require__(106)($sort)), 'Array', {
+}) || !__webpack_require__(107)($sort)), 'Array', {
   // 22.1.3.25 Array.prototype.sort(comparefn)
   sort: function sort(comparefn) {
     return comparefn === undefined
@@ -6262,14 +6412,14 @@ $export($export.P + $export.F * (fails(function () {
 
 
 /***/ }),
-/* 110 */
+/* 111 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 19.1.2.14 Object.keys(O)
 var toObject = __webpack_require__(17);
 var $keys = __webpack_require__(16);
 
-__webpack_require__(101)('keys', function () {
+__webpack_require__(102)('keys', function () {
   return function keys(it) {
     return $keys(toObject(it));
   };
@@ -6277,7 +6427,7 @@ __webpack_require__(101)('keys', function () {
 
 
 /***/ }),
-/* 111 */
+/* 112 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6293,60 +6443,13 @@ __webpack_require__(7)({
 
 
 /***/ }),
-/* 112 */
+/* 113 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 21.2.5.3 get RegExp.prototype.flags()
 if (__webpack_require__(2) && /./g.flags != 'g') __webpack_require__(5).f(RegExp.prototype, 'flags', {
   configurable: true,
   get: __webpack_require__(26)
-});
-
-
-/***/ }),
-/* 113 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var anObject = __webpack_require__(1);
-var toLength = __webpack_require__(10);
-var advanceStringIndex = __webpack_require__(39);
-var regExpExec = __webpack_require__(29);
-
-// @@match logic
-__webpack_require__(25)('match', 1, function (defined, MATCH, $match, maybeCallNative) {
-  return [
-    // `String.prototype.match` method
-    // https://tc39.github.io/ecma262/#sec-string.prototype.match
-    function match(regexp) {
-      var O = defined(this);
-      var fn = regexp == undefined ? undefined : regexp[MATCH];
-      return fn !== undefined ? fn.call(regexp, O) : new RegExp(regexp)[MATCH](String(O));
-    },
-    // `RegExp.prototype[@@match]` method
-    // https://tc39.github.io/ecma262/#sec-regexp.prototype-@@match
-    function (regexp) {
-      var res = maybeCallNative($match, regexp, this);
-      if (res.done) return res.value;
-      var rx = anObject(regexp);
-      var S = String(this);
-      if (!rx.global) return regExpExec(rx, S);
-      var fullUnicode = rx.unicode;
-      rx.lastIndex = 0;
-      var A = [];
-      var n = 0;
-      var result;
-      while ((result = regExpExec(rx, S)) !== null) {
-        var matchStr = String(result[0]);
-        A[n] = matchStr;
-        if (matchStr === '') rx.lastIndex = advanceStringIndex(S, toLength(rx.lastIndex), fullUnicode);
-        n++;
-      }
-      return n === 0 ? null : A;
-    }
-  ];
 });
 
 
@@ -6358,7 +6461,7 @@ __webpack_require__(25)('match', 1, function (defined, MATCH, $match, maybeCallN
 
 
 var anObject = __webpack_require__(1);
-var sameValue = __webpack_require__(103);
+var sameValue = __webpack_require__(104);
 var regExpExec = __webpack_require__(29);
 
 // @@search logic
@@ -6394,12 +6497,12 @@ __webpack_require__(25)('search', 1, function (defined, SEARCH, $search, maybeCa
 
 "use strict";
 
-var strong = __webpack_require__(90);
+var strong = __webpack_require__(91);
 var validate = __webpack_require__(72);
 var SET = 'Set';
 
 // 23.2 Set Objects
-module.exports = __webpack_require__(91)(SET, function (get) {
+module.exports = __webpack_require__(92)(SET, function (get) {
   return function Set() { return get(this, arguments.length > 0 ? arguments[0] : undefined); };
 }, {
   // 23.2.3.1 Set.prototype.add(value)
@@ -6418,11 +6521,11 @@ module.exports = __webpack_require__(91)(SET, function (get) {
 
 var $export = __webpack_require__(7);
 var toLength = __webpack_require__(10);
-var context = __webpack_require__(107);
+var context = __webpack_require__(108);
 var STARTS_WITH = 'startsWith';
 var $startsWith = ''[STARTS_WITH];
 
-$export($export.P + $export.F * __webpack_require__(94)(STARTS_WITH), 'String', {
+$export($export.P + $export.F * __webpack_require__(95)(STARTS_WITH), 'String', {
   startsWith: function startsWith(searchString /* , position = 0 */) {
     var that = context(this, searchString, STARTS_WITH);
     var index = toLength(Math.min(arguments.length > 1 ? arguments[1] : undefined, that.length));

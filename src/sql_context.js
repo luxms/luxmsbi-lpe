@@ -24,7 +24,13 @@ import console from './console/console';
 import {eval_lisp} from './lisp';
 import {sql_where_context} from './sql_where';
 import {parse} from './lpep';
-import {reports_get_column_sql, reports_get_table_sql, reports_get_join_path} from './utils/utils';
+import {
+  reports_get_column_info, 
+  reports_get_table_sql, 
+  reports_get_join_path, 
+  reports_get_join_conditions, 
+  get_source_database
+} from './utils/utils';
 
 // polyfill = remove in 2020 !!!
 
@@ -61,44 +67,36 @@ export function sql_context(_vars) {
     var args = Array.prototype.slice.call(arguments);
     console.log('SQL IN: ', args);
 
-    var find_part = function(p) {
-      return args.find((el) => p == el[0]);
-    };
+    // use sql-struct!
+    var command = ["sql-struct"].concat(args)
+    var struct = eval_lisp(command, _context )
 
-    var sel = find_part('select');
-    console.log('FOUND select: ', sel);
-    q = eval_lisp(sel, _context);
+    q = `${struct["select"]} ${struct["from"]}`
 
-    var from = find_part('from');
-    console.log('FOUND from: ', from);
-    q = q + ' ' + eval_lisp(from, _context);
-
-    var where = find_part('where');
-    console.log("FOUND where: ", where);
-    if (where instanceof Array && where.length > 1) {
-      q = q + ' ' + eval_lisp(where, _context );
+    if ( struct["where"] !== undefined ) {
+      q = `${q} WHERE ${struct["where"]}`
     }
 
-    var grp = find_part('group_by');
-    console.log('FOUND group_by: ', grp);
-    if (grp instanceof Array && grp.length > 1) {
-      q = q + ' ' + eval_lisp( grp, _context );
-    }
-  
-    var srt = find_part('order_by');
-    console.log('FOUND sort: ', srt);
-    if (srt instanceof Array && srt.length > 1) {
-      q = q + ' ' + eval_lisp( srt, _context );
+    if ( struct["group_by"] !== undefined ) {
+      q = `${q} ${struct["group_by"]}`
     }
 
-    //slice(offset, pageItemsNum)
-    var s = find_part('slice');
-    console.log("FOUND slice: ", s);
-    if (s instanceof Array && s.length > 1) {
-      q = q + ' ' + eval_lisp(s, _context );
+    if ( struct["order_by"] !== undefined ) {
+      q = `${q} ${struct["order_by"]}`
+    }
+    
+    if ( struct["limit_offset"] !== undefined ) {
+      if (_vars["_target_database"] === 'oracle') {
+        q = `SELECT * FROM (
+          ${q}
+        ) WHERE ${struct["limit_offset"]}`
+      } else {
+        q = `${q} ${struct["limit_offset"]}`
+      }
     }
 
-    return q;
+    return q
+
   };
   _context['sql'].ast = [[],{},[],1]; // mark as macro
 
@@ -115,7 +113,7 @@ export function sql_context(_vars) {
     }; // resulting sql
 
     var args = Array.prototype.slice.call(arguments);
-    console.log('SQL IN: ', args);
+    console.log('SQL-STRUCT IN: ', args);
 
     var find_part = function(p) {
       return args.find((el) => p == el[0]);
@@ -138,7 +136,7 @@ export function sql_context(_vars) {
     var grp = find_part('group_by');
     console.log('FOUND group_by: ', grp);
     if (grp instanceof Array && grp.length > 1) {
-      q = q + ' ' + eval_lisp( grp, _context );
+      q.group_by = eval_lisp( grp, _context );
     }
 
     var srt = find_part('order_by');
@@ -172,7 +170,6 @@ export function sql_context(_vars) {
           // наш LPE использует точку, как разделитель вызовов функций и кодирует её как ->
           // в логических выражениях мы это воспринимаем как ссылку на <ИМЯ СХЕМЫ>.<ИМЯ ТАБЛИЦЫ>
           // return '"' + a[1] + '"."' + a[2] + '"';
-          console.log("HI MAN ====================");
           return eval_lisp(a, _context);
         } else {
           return a[0] + '(' + a.slice(1).map(
@@ -213,7 +210,7 @@ export function sql_context(_vars) {
     if (a.length < 1) {
       return "";
     } else {
-      return "FROM " + a.map(prnt).join(',');
+      return "FROM " + a.map(prnt).join(', ');
     }
   }
   _context['from'].ast = [[],{},[],1]; // mark as macro
@@ -224,7 +221,15 @@ export function sql_context(_vars) {
     if (a.length < 1) {
       return "";
     } else {
-      return "LIMIT " + parseInt(a[1]) + " OFFSET " + parseInt(a[0]);
+      if (_vars["_target_database"] === 'oracle') {
+        if (parseInt(a[0]) === 0) {
+          return `ROWNUM <= ${parseInt(a[1])}`
+        } else {
+          return `ROWNUM > ${parseInt(a[0])} AND ROWNUM <= ${parseInt(a[1]) + parseInt(a[0])}`
+        }
+      } else {
+        return "LIMIT " + parseInt(a[1]) + " OFFSET " + parseInt(a[0])
+      }
     }
   }
   _context['slice'].ast = [[],{},[],1]; // mark as macro
@@ -488,8 +493,32 @@ export function generate_report_sql(_cfg, _vars) {
   var _context = ctx;
    /* Для генерации SELECT запросов из конфигов, созданных для Reports */
 
+
+
+  /* while we wrapping aggregate functions around columns, we should keep track of the free columns, so we will be able to
+     generate correct group by !!!!
+  */
+ var group_by = _cfg["columns"].map(h => h["id"])
+
+ var wrap_aggregate_functions = (col, cfg, col_id) => {
+   ret = col;
+   if (Array.isArray(cfg["agg"]) && cfg["agg"].length > 0) {
+     group_by = group_by.filter( id => id !== col_id )
+     return cfg["agg"].reduce( (a, currentFunc) => `${currentFunc}( ${a} )` , ret)
+   }
+   return ret
+ }
+
 _context["column"] = function(col) {
-  return reports_get_column_sql(_cfg["sourceId"], col)
+  var col_info = reports_get_column_info(_cfg["sourceId"], col)
+  var col_sql = col_info["sql_query"]
+  if ( col_sql.match( /^\S+$/ ) === null ) {
+    // we have whitespace here, so it is complex expression :-()
+    return `${col_sql}`
+  }
+  // we have just column name, prepend table alias !
+  var parts = col.split('.')
+  return `"${parts[1]}"."${col_sql}"`
 }
 
 _context['generate_sql_struct_for_report'] = function(cfg) {
@@ -534,7 +563,8 @@ _context['generate_sql_struct_for_report'] = function(cfg) {
     ]
   }
 
-
+  // на входе вложенная структура из конфига.
+  // расчитываем, что структура создана в GUI и порядок следования элементов стандартный
   var quote_text_constants = (in_lpe) => {
     if (!Array.isArray(in_lpe)) return in_lpe;
 
@@ -544,7 +574,12 @@ _context['generate_sql_struct_for_report'] = function(cfg) {
         if (in_lpe[1][0] === 'column') {
           if (Array.isArray(in_lpe[2]) && in_lpe[2][0] === '[') {
             // ["=",["column","vNetwork.cluster"],["[","SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]]
-            in_lpe[2] = ['['].concat(in_lpe[2].slice(1).map(el=>["ql", el]))
+            var info = reports_get_column_info(_cfg["sourceId"], in_lpe[1][1])
+            if (info["type"] === 'PERIOD' && _context["_target_database"] === 'oracle') {
+              in_lpe[2] = ['['].concat(in_lpe[2].slice(1).map(el => ["to_date", ["ql", el], "'YYYY-MM-DD'"]))
+            } else {
+              in_lpe[2] = ['['].concat(in_lpe[2].slice(1).map(el => ["ql", el]))
+            }
           }
         }
       }
@@ -553,14 +588,27 @@ _context['generate_sql_struct_for_report'] = function(cfg) {
         if (Array.isArray(in_lpe[1])) {
           if (in_lpe[1][0] === 'column') {
             if (!Array.isArray(in_lpe[2])) {
+              // ANY OPERATOR
               // ["~",["column","vNetwork.cluster"],"SPB99-DMZ02"]
-              in_lpe[2] = ['ql', in_lpe[2]]
+              var info = reports_get_column_info(_cfg["sourceId"], in_lpe[1][1])
+              if (info["type"] === 'PERIOD' && _context["_target_database"] === 'oracle') {
+                in_lpe[2] = ["to_date", ["ql", in_lpe[2]], "'YYYY-MM-DD'" ]
+              } else {
+                in_lpe[2] = ["ql", in_lpe[2]]
+              }              
             }
             if (in_lpe.length === 4) {
               // between
               if (!Array.isArray(in_lpe[3])) {
                 //["between",["column","vNetwork.period_month"],"2019-09-10","2019-09-20"]
-                in_lpe[3] = ['ql', in_lpe[3]]
+                var info = reports_get_column_info(_cfg["sourceId"], in_lpe[1][1])
+                if (info["type"] === 'PERIOD' && _context["_target_database"] === 'oracle') {
+                  in_lpe[3] = ["to_date",["ql", in_lpe[3]], "'YYYY-MM-DD'" ]
+                  in_lpe[4] = ["to_date",["ql", in_lpe[4]], "'YYYY-MM-DD'" ]
+                } else {
+                  in_lpe[3] = ["ql", in_lpe[3]]
+                  in_lpe[4] = ["ql", in_lpe[4]]
+                }
               }
             }
           }
@@ -574,20 +622,6 @@ _context['generate_sql_struct_for_report'] = function(cfg) {
     return in_lpe;
   }
 
-  /* while we wrapping aggregate functions around columns, we should keep track of the free columns, so we will be able to
-     generate correct group by !!!!
-  */
-  var group_by = cfg["columns"].map(h => h["id"])
-
-  var wrap_aggregate_functions = (col, cfg, col_id) => {
-    ret = col;
-    if (Array.isArray(cfg["agg"]) && cfg["agg"].length > 0) {
-      group_by = group_by.filter( id => id !== col_id )
-      return cfg["agg"].reduce( (a, currentFunc) => currentFunc + '(' + a + ')' , ret)
-    }
-    return ret
-  }
-
   var struct = ['sql'];
 
   var allSources = cfg["columns"].map(h => h["id"].split('.')[0]);
@@ -598,21 +632,45 @@ _context['generate_sql_struct_for_report'] = function(cfg) {
 
   var allTables = cfg["columns"].map(h => h["id"].split('.').slice(0,2).join('.') );
   // !!!!!!!!!!!!! uniq will be used later in from!!!
-  uniq = [...new Set(allTables)];
-  if (uniq.length != 1) {
-    // we have more that one table, let check if we can use JOIN to generate results.
-    join_struct = reports_get_join_path(uniq)
-    throw new Error("Can not find path to JOIN tables: " + JSON.stringify(uniq));
+  var uniqTables = [...new Set(allTables)];
+
+  var join_struct = reports_get_join_path(uniqTables); 
+
+  if (join_struct.nodes.length === 0) {
+    throw new Error("Can not find path to JOIN tables: " + JSON.stringify(uniqTables));
   }
 
+  // HACK as we miss _cfg["sourceId"]
+  var srcIdent = _cfg["sourceId"]
+  if (srcIdent === undefined) {
+    srcIdent = join_struct.nodes[0].split('.')[0]
+  }
+  var target_db_type = get_source_database(srcIdent)
+  _context["_target_database"] = target_db_type
+
+  // column should always be represented as full path source.cube.ciolumn
+  // for aggregates we should add func names as suffix ! like source.cube.column.max_avg
   var sel = ['select'].concat(cfg["columns"].map(h => {
-    var c = h["id"].split('.')[2]
-    var sql_col = reports_get_column_sql(cfg["sourceId"], h["id"])
-    if (sql_col == c) {
-      return wrap_aggregate_functions(c, h, h["id"]) // h["id"] for backtracking for group_by
-    } else {
-      return wrap_aggregate_functions(sql_col, h, h["id"]) + ' AS ' + c
+    var col_info = reports_get_column_info(cfg["sourceId"], h["id"])
+    var col_sql = col_info["sql_query"]
+
+    var parts = h.id.split('.')
+    //if ( col_sql.match( /^\S+$/ ) !== null ) {
+    if (col_sql === parts[2]) {
+      // we have just column name, prepend table alias !
+      col_sql = `"${parts[1]}"."${col_sql}"`
     }
+
+    var wrapped_column_sql = wrap_aggregate_functions(col_sql, h, h["id"]);
+    var as = `"${h.id}"`
+    if (Array.isArray(h["agg"])) {
+      as = `"${h.id}.${h["agg"].join('.')}"`
+    }
+
+    //return `${wrapped_column_sql} AS ${as}`
+    // oracle has limit 30 chars in identifier!
+    // we can skip it for now.
+    return `${wrapped_column_sql}`
   }))
 
   if (group_by.length === cfg["columns"].length) {
@@ -622,15 +680,14 @@ _context['generate_sql_struct_for_report'] = function(cfg) {
     group_by = ["group_by"].concat(group_by.map( c => ["column",c]))
   }
 
-  var uniqIter = uniq.values();
   // will return something like     (select * from abc) AS a
-  var from = ['from', reports_get_table_sql(cfg["sourceId"], uniqIter.next().value) ];
+  var from = ['from'].concat(join_struct.nodes.map( t => reports_get_table_sql(target_db_type, t) ))            
 
   var order_by = ['order_by'].concat(cfg["columns"].map(h=> {
                                                         if (h["sort"] == 1) {
-                                                          return ["+", h["id"].split('.')[2]];
+                                                          return ["+", ["column", h["id"] ] ]
                                                         } else if (h["sort"] == 2) {
-                                                          return ["-", h["id"].split('.')[2]]
+                                                          return ["-", ["column", h["id"] ] ]
                                                         }
                                                       }));
   order_by = order_by.filter(function(el){return el !== undefined})
@@ -639,15 +696,20 @@ _context['generate_sql_struct_for_report'] = function(cfg) {
              .map(h => { return h["lpe"] ? convert_in_to_eq(quote_text_constants(h["lpe"])) : null} )
              .filter(function(el){return el !== null});
 
+  console.log("========= reports_get_join_conditions " + JSON.stringify(join_struct))
+  if (join_struct.nodes.length > 1) {
+    filt = filt.concat( reports_get_join_conditions(join_struct) )
+  }
+
   if (filt.length > 1) {
     filt = ['and'].concat(filt);
   } else if (filt.length == 1) {
     filt = filt[0]
   }
   if (filt.length > 0) {
-    filt = ["where", filt]
+    filt = ["filter", filt]
   } else {
-    filt = ["where"]
+    filt = ["filter"]
   }
 
   struct.push(sel, from, order_by, filt, group_by)
@@ -657,6 +719,8 @@ _context['generate_sql_struct_for_report'] = function(cfg) {
     struct.push( ["slice", offset, cfg["limit"]])
   }
   console.log(JSON.stringify(struct))
+
+  console.log(`USING ${target_db_type} as target database`)
   var ret = eval_lisp(struct, _context);
 
   return ret;
