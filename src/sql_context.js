@@ -337,7 +337,7 @@ export function eval_sql_expr(_expr, _vars) {
     if (expr instanceof Array) {
       // expr: ["metrics","a","d",["max","c"]]
       // if (expr[0] === 'order_by') {expr[0]='sort'};
-      if (expr[0] === 'where') {expr[0]='where'};
+      if (expr[0] === 'where') {expr[0]='filter'};
       if ( expr[0] === '+' ){
         // expr: ["+",["metrics","a","d",["max","c"]]]
         do_select_from(expr[1]);

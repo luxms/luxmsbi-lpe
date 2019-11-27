@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2019/11/06 16:11:01 */ 
+/** [LPE]  Version: 1.0.0 - 2019/11/27 18:09:06 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -3480,7 +3480,16 @@ function sql_where_context(_vars) {
               } else {
                 return prnt(ar[1]) + ' ' + ar[0] + ' ' + prnt(ar[2]);
               }
-            } else if (ar[0] == "ilike" || ar[0] == "like" || ar[0] == "in" || ar[0] == "is" || ar[0].match(/^[^\w]+$/)) {
+            } else if (ar[0] == "ilike") {
+              //_source_database
+              // Oracle has no ilike !!!!
+              if (_vars["_target_database"] === 'oracle') {
+                // UPPER(last_name) LIKE 'SM%' 
+                return "UPPER( ".concat(prnt(ar[1]), " ) LIKE  ").concat(prnt(ar[2]));
+              } else {
+                return prnt(ar[1]) + ' ' + ar[0] + ' ' + prnt(ar[2]);
+              }
+            } else if (ar[0] == "like" || ar[0] == "in" || ar[0] == "is" || ar[0].match(/^[^\w]+$/)) {
               // имя функции не начинается с буквы
               __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log("PRNT FUNC x F z " + JSON.stringify(ar)); // ["~",["column","vNetwork.folder"],"XXX"]
 
@@ -4953,7 +4962,7 @@ function eval_sql_expr(_expr, _vars) {
       // expr: ["metrics","a","d",["max","c"]]
       // if (expr[0] === 'order_by') {expr[0]='sort'};
       if (expr[0] === 'where') {
-        expr[0] = 'where';
+        expr[0] = 'filter';
       }
 
       ;

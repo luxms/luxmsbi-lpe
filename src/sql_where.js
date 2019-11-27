@@ -259,7 +259,16 @@ export function sql_where_context(_vars) {
                     return prnt(ar[1]) + ' ' + ar[0] + ' ' + prnt(ar[2])
                   }
               
-                } else if (ar[0] == "ilike" || ar[0] == "like" ||
+                } else if (ar[0] == "ilike") {
+                  //_source_database
+                  // Oracle has no ilike !!!!
+                  if (_vars["_target_database"] === 'oracle') {
+                    // UPPER(last_name) LIKE 'SM%' 
+                    return `UPPER( ${prnt(ar[1])} ) LIKE  ${prnt(ar[2])}` 
+                  } else {
+                    return prnt(ar[1]) + ' ' + ar[0] + ' ' + prnt(ar[2])
+                  }
+                } else if ( ar[0] == "like" ||
                            ar[0] == "in" || ar[0] == "is" || ar[0].match(/^[^\w]+$/)) {
                    // имя функции не начинается с буквы
                    console.log("PRNT FUNC x F z " + JSON.stringify(ar))
