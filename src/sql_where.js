@@ -22,7 +22,7 @@
 
 import console from './console/console';
 import {parse} from './lpep';
-import {db_quote_literal, db_quote_ident} from './utils/utils';
+import {db_quote_literal, db_quote_ident, get_source_database} from './utils/utils';
 import {eval_lisp} from './lisp';
 
 
@@ -32,6 +32,15 @@ filter - на пустом входе вернёт пустую строку
 */
 
 export function sql_where_context(_vars) {
+
+  // try to get datasource Ident
+  // table lookup queries should be sending us key named sourceId = historical name!
+  var srcIdent = _vars["sourceId"]
+  if (srcIdent !== undefined) {
+    var target_db_type = get_source_database(srcIdent)
+    _vars["_target_database"] = target_db_type
+  }
+
   var _context = _vars;
 
   var try_to_quote_column = function(colname) {
@@ -51,6 +60,7 @@ export function sql_where_context(_vars) {
   };
 
   var try_to_quote_order_by_column = function(colname) {
+    var res = colname.toString();
     if (typeof _vars['_columns'] == 'object') {
       var h = _vars['_columns'][colname];
       if (typeof h == "object") {
@@ -66,14 +76,16 @@ export function sql_where_context(_vars) {
           // quote only literals that are not standard!
           var schema_table = o.split('.');
           if (schema_table.length < 4) {
-            return schema_table.map( item => regExp.test(item) ? item : db_quote_ident(item) ).join('.');
+            res = schema_table.map( item => regExp.test(item) ? item : db_quote_ident(item) ).join('.');
           } else {
             throw new Error('Too many dots for column name ' + o);
           }
         }
       }
     }
-    return colname.toString();
+
+    return res;
+    
   };
 
   var resolve_literal = function(lit) {
@@ -101,17 +113,31 @@ export function sql_where_context(_vars) {
   _context['order_by'] = function () {
     var ret = [];
     var ctx = {};
+
+    var get_extra_order = function(colname){
+      if (typeof _vars['_columns'] == 'object') {
+        var h = _vars['_columns'][colname];
+        if (typeof h == "object") {
+          var o = h['order_extra'];
+          if (o !== undefined) {
+            return ` ${o}`;
+          }
+        }
+      }
+      return "";
+    }
+
     for(var key in _vars) ctx[key] = _vars[key];
     // так как order_by будет выполнять eval_lisp, когда встретит имя стольба с минусом -a, то мы
     // с помощью макросов + и - в этом случае перехватим вызов и сделаем обработку.
     // а вот когда работает обработчик аргументов where - там eval_lisp почти никогда не вызывается...
     ctx['+'] = function (a) {
-      return resolve_order_by_literal(eval_lisp(a, _vars))
+      return resolve_order_by_literal(eval_lisp(a, _vars)) + get_extra_order(a);
     }
     ctx['+'].ast = [[],{},[],1]; // mark as macro
 
     ctx['-'] = function (a) {
-      return resolve_order_by_literal(eval_lisp(a, _vars)) + ' DESC'
+      return resolve_order_by_literal(eval_lisp(a, _vars)) + ' DESC' + get_extra_order(a);
     }
     ctx['-'].ast = [[],{},[],1]; // mark as macro
 
@@ -120,7 +146,8 @@ export function sql_where_context(_vars) {
           ret.push(eval_lisp(arguments[i], ctx) );
         } else {
           // try_to_quote_column берёт текст в двойные кавычки для известных столбцов!!!
-          ret.push(resolve_order_by_literal(arguments[i].toString()));
+          var a = arguments[i].toString();
+          ret.push(resolve_order_by_literal(a) + get_extra_order(a));
         }
     }
 
@@ -268,8 +295,7 @@ export function sql_where_context(_vars) {
                   } else {
                     return prnt(ar[1]) + ' ' + ar[0] + ' ' + prnt(ar[2])
                   }
-                } else if ( ar[0] == "like" ||
-                           ar[0] == "in" || ar[0] == "is" || ar[0].match(/^[^\w]+$/)) {
+                } else if ( ar[0] == "like" || ar[0] == "in" || ar[0] == "is" || ar[0].match(/^[^\w]+$/)) {
                    // имя функции не начинается с буквы
                    console.log("PRNT FUNC x F z " + JSON.stringify(ar))
                    // ["~",["column","vNetwork.folder"],"XXX"]

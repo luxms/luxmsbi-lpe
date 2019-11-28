@@ -3465,6 +3465,15 @@ filter - на пустом входе вернёт пустую строку
 */
 
 function sql_where_context(_vars) {
+  // try to get datasource Ident
+  // table lookup queries should be sending us key named sourceId = historical name!
+  var srcIdent = _vars["sourceId"];
+
+  if (srcIdent !== undefined) {
+    var target_db_type = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["a" /* get_source_database */])(srcIdent);
+    _vars["_target_database"] = target_db_type;
+  }
+
   var _context = _vars;
 
   var try_to_quote_column = function try_to_quote_column(colname) {
@@ -3486,6 +3495,8 @@ function sql_where_context(_vars) {
   };
 
   var try_to_quote_order_by_column = function try_to_quote_order_by_column(colname) {
+    var res = colname.toString();
+
     if (_typeof(_vars['_columns']) == 'object') {
       var h = _vars['_columns'][colname];
 
@@ -3506,8 +3517,8 @@ function sql_where_context(_vars) {
           var schema_table = o.split('.');
 
           if (schema_table.length < 4) {
-            return schema_table.map(function (item) {
-              return regExp.test(item) ? item : __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["a" /* db_quote_ident */])(item);
+            res = schema_table.map(function (item) {
+              return regExp.test(item) ? item : __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["b" /* db_quote_ident */])(item);
             }).join('.');
           } else {
             throw new Error('Too many dots for column name ' + o);
@@ -3516,7 +3527,7 @@ function sql_where_context(_vars) {
       }
     }
 
-    return colname.toString();
+    return res;
   };
 
   var resolve_literal = function resolve_literal(lit) {
@@ -3547,6 +3558,22 @@ function sql_where_context(_vars) {
     var ret = [];
     var ctx = {};
 
+    var get_extra_order = function get_extra_order(colname) {
+      if (_typeof(_vars['_columns']) == 'object') {
+        var h = _vars['_columns'][colname];
+
+        if (_typeof(h) == "object") {
+          var o = h['order_extra'];
+
+          if (o !== undefined) {
+            return " ".concat(o);
+          }
+        }
+      }
+
+      return "";
+    };
+
     for (var key in _vars) {
       ctx[key] = _vars[key];
     } // так как order_by будет выполнять eval_lisp, когда встретит имя стольба с минусом -a, то мы
@@ -3555,13 +3582,13 @@ function sql_where_context(_vars) {
 
 
     ctx['+'] = function (a) {
-      return resolve_order_by_literal(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(a, _vars));
+      return resolve_order_by_literal(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(a, _vars)) + get_extra_order(a);
     };
 
     ctx['+'].ast = [[], {}, [], 1]; // mark as macro
 
     ctx['-'] = function (a) {
-      return resolve_order_by_literal(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(a, _vars)) + ' DESC';
+      return resolve_order_by_literal(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(a, _vars)) + ' DESC' + get_extra_order(a);
     };
 
     ctx['-'].ast = [[], {}, [], 1]; // mark as macro
@@ -3571,7 +3598,8 @@ function sql_where_context(_vars) {
         ret.push(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(arguments[i], ctx));
       } else {
         // try_to_quote_column берёт текст в двойные кавычки для известных столбцов!!!
-        ret.push(resolve_order_by_literal(arguments[i].toString()));
+        var a = arguments[i].toString();
+        ret.push(resolve_order_by_literal(a) + get_extra_order(a));
       }
     }
 
@@ -3657,7 +3685,7 @@ function sql_where_context(_vars) {
 
   _context["ql"] = function (el) {
     // NULL values should not be quoted
-    return el === null ? null : __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["b" /* db_quote_literal */])(el);
+    return el === null ? null : __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["c" /* db_quote_literal */])(el);
   }; // required for Oracle Reports
 
 
@@ -3688,11 +3716,11 @@ function sql_where_context(_vars) {
 
     var quote_scalar = function quote_scalar(el) {
       if (typeof el === "string") {
-        return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["b" /* db_quote_literal */])(el);
+        return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["c" /* db_quote_literal */])(el);
       } else if (typeof el === "number") {
         return el;
       } else {
-        return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["b" /* db_quote_literal */])(JSON.stringify(el));
+        return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["c" /* db_quote_literal */])(JSON.stringify(el));
       }
     };
 
@@ -3866,7 +3894,7 @@ function sql_where_context(_vars) {
         }).join(',');
       }
 
-      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["b" /* db_quote_literal */])(expr);
+      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["c" /* db_quote_literal */])(expr);
     };
 
     ctx['$'].ast = [[], {}, [], 1]; // mark as macro
@@ -4347,13 +4375,13 @@ function tokenize(s) {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony export (immutable) */ __webpack_exports__["b"] = db_quote_literal;
-/* harmony export (immutable) */ __webpack_exports__["a"] = db_quote_ident;
+/* harmony export (immutable) */ __webpack_exports__["c"] = db_quote_literal;
+/* harmony export (immutable) */ __webpack_exports__["b"] = db_quote_ident;
 /* unused harmony export reports_get_column_info */
 /* unused harmony export reports_get_table_sql */
 /* unused harmony export reports_get_join_path */
 /* unused harmony export reports_get_join_conditions */
-/* unused harmony export get_source_database */
+/* harmony export (immutable) */ __webpack_exports__["a"] = get_source_database;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_regexp_split__ = __webpack_require__(60);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_regexp_split___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_regexp_split__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_regexp_to_string__ = __webpack_require__(40);
