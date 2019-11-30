@@ -227,8 +227,10 @@ export function sql_context(_vars) {
         } else {
           return `ROWNUM > ${parseInt(a[0])} AND ROWNUM <= ${parseInt(a[1]) + parseInt(a[0])}`
         }
+      } else if (_vars["_target_database"] === 'sqlserver') {
+        return `OFFSET ${parseInt(a[0])} ROWS FETCH NEXT ${parseInt(a[1])} ROWS ONLY`
       } else {
-        return "LIMIT " + parseInt(a[1]) + " OFFSET " + parseInt(a[0])
+        return `LIMIT ${parseInt(a[1])} OFFSET ${parseInt(a[0])}`
       }
     }
   }

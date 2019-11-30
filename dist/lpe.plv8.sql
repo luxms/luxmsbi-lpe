@@ -3480,6 +3480,11 @@ function sql_where_context(_vars) {
   }; // required for Oracle Reports
 
 
+  _context["to_char"] = function (el, tp, fmt) {
+    return "to_char()";
+  }; // required for Oracle Reports
+
+
   _context["to_date"] = function (el, fmt, nls) {
     if (fmt && nls) {
       return "to_date(".concat(el, ", ").concat(fmt, ", ").concat(nls, ")");
@@ -3549,7 +3554,9 @@ function sql_where_context(_vars) {
               // Oracle has no ilike !!!!
               if (_vars["_target_database"] === 'oracle') {
                 // UPPER(last_name) LIKE 'SM%' 
-                return "UPPER( ".concat(prnt(ar[1]), " ) LIKE  ").concat(prnt(ar[2]));
+                return "UPPER( ".concat(prnt(ar[1]), " ) LIKE ").concat(prnt(ar[2]));
+              } else if (_vars["_target_database"] === 'sqlserver') {
+                return "UPPER( ".concat(prnt(ar[1]), " ) LIKE ").concat(prnt(ar[2]));
               } else {
                 return prnt(ar[1]) + ' ' + ar[0] + ' ' + prnt(ar[2]);
               }
@@ -4981,8 +4988,10 @@ function sql_context(_vars) {
         } else {
           return "ROWNUM > ".concat(parseInt(a[0]), " AND ROWNUM <= ").concat(parseInt(a[1]) + parseInt(a[0]));
         }
+      } else if (_vars["_target_database"] === 'sqlserver') {
+        return "OFFSET ".concat(parseInt(a[0]), " ROWS FETCH NEXT ").concat(parseInt(a[1]), " ROWS ONLY");
       } else {
-        return "LIMIT " + parseInt(a[1]) + " OFFSET " + parseInt(a[0]);
+        return "LIMIT ".concat(parseInt(a[1]), " OFFSET ").concat(parseInt(a[0]));
       }
     }
   };

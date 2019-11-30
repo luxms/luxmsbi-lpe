@@ -213,6 +213,12 @@ export function sql_where_context(_vars) {
     return `to_timestamp(${el})`
   }
 
+
+  // required for Oracle Reports
+  _context["to_char"] = function(el, tp, fmt) {
+    return `to_char()`
+  }
+
   // required for Oracle Reports
   _context["to_date"] = function(el, fmt, nls) {
     if (fmt && nls ) {
@@ -291,7 +297,9 @@ export function sql_where_context(_vars) {
                   // Oracle has no ilike !!!!
                   if (_vars["_target_database"] === 'oracle') {
                     // UPPER(last_name) LIKE 'SM%' 
-                    return `UPPER( ${prnt(ar[1])} ) LIKE  ${prnt(ar[2])}` 
+                    return `UPPER( ${prnt(ar[1])} ) LIKE ${prnt(ar[2])}` 
+                  } else if (_vars["_target_database"] === 'sqlserver') {
+                    return `UPPER( ${prnt(ar[1])} ) LIKE ${prnt(ar[2])}`
                   } else {
                     return prnt(ar[1]) + ' ' + ar[0] + ' ' + prnt(ar[2])
                   }

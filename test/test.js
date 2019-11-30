@@ -380,7 +380,16 @@ describe('LPE tests', function() {
             "dataset": "0ce0d124-495d-11e8-867c-bf44ef619f60", "metrics": ["382"], "periods": ["2019040100000036"], 
             "_columns": {"addr": {"name": "addr", "order": "addr", "title": "Адрес"}, 
                 "perek_check": {"name": "perek_check", "title": "Причина", "search": "perek_check"}}, "lookupId": "9", "order_by": "", "locations": ["3"], "metric_id": 382, "period.id": "2019040100000036", "period_id": 2019040100000036, "parameters": ["382"], "period.qty": "1", "location_id": 3, "limit_offset": "LIMIT 100 OFFSET 0", "period.start_time": "2019-04-01T00:00:00", "period.period_type": "6"}),
-            "WHERE addr = 'Москва' and (UPPER( perek_check ) LIKE  '%Карго%')"
+            "WHERE addr = 'Москва' and (UPPER( perek_check ) LIKE '%Карго%')"
+        );
+
+        assert.equal( lpe.eval_sql_where(
+            "where( addr = 'Москва' )",
+            {"_target_database": "sqlserver", "fts": "Карго", "limit": "LIMIT 100", "filter": "Карго", "offset": "OFFSET 0", 
+            "dataset": "0ce0d124-495d-11e8-867c-bf44ef619f60", "metrics": ["382"], "periods": ["2019040100000036"], 
+            "_columns": {"addr": {"name": "addr", "order": "addr", "title": "Адрес"}, 
+                "perek_check": {"name": "perek_check", "title": "Причина", "search": "perek_check"}}, "lookupId": "9", "order_by": "", "locations": ["3"], "metric_id": 382, "period.id": "2019040100000036", "period_id": 2019040100000036, "parameters": ["382"], "period.qty": "1", "location_id": 3, "limit_offset": "LIMIT 100 OFFSET 0", "period.start_time": "2019-04-01T00:00:00", "period.period_type": "6"}),
+            "WHERE addr = 'Москва' and (UPPER( perek_check ) LIKE '%Карго%')"
         );
     
         // many ilike
@@ -453,6 +462,20 @@ describe('LPE tests', function() {
             {
                 from: undefined,
                 limit_offset: 'LIMIT 45 OFFSET 2',
+                order_by: 'ORDER BY a,d DESC',
+                group_by: undefined,
+                select: 'SELECT *',
+                where: '(a = b and b < 3)'
+              }
+        );
+
+        // sqlserver flavor
+        assert.deepEqual( lpe.parse_sql_expr(
+            'filter(a=b and b < 3).slice(2,45).order_by(+a,-d)',
+            {"_target_database": "sqlserver","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
+            {
+                from: undefined,
+                limit_offset: 'OFFSET 2 ROWS FETCH NEXT 45 ROWS ONLY',
                 order_by: 'ORDER BY a,d DESC',
                 group_by: undefined,
                 select: 'SELECT *',
