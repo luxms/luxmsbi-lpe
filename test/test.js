@@ -450,7 +450,21 @@ describe('LPE tests', function() {
             {"location":{"alt_id":"TXT VAL"}}),
             "WHERE a = varNull and b = 'TXT VAL'"
         );
-        
+
+        // REGEXP
+
+        assert.equal( lpe.eval_sql_where(
+            "where(l.id ~ $(locations.join('|')))",
+            {"_target_database": "oracle", "context": null, "locations": [1234,3456]}),
+            "WHERE REGEXP_LIKE( l.id , '1234|3456' )"
+        ); 
+
+        assert.equal( lpe.eval_sql_where(
+            "where(l.id ~ $(locations.join('|')))",
+            {"_target_database": "mysql", "context": null, "locations": [1234,3456]}),
+            "WHERE l.id REGEXP '1234|3456'"
+        );
+
     });
 
 

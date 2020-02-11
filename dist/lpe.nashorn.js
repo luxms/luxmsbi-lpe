@@ -3760,6 +3760,8 @@ function sql_where_context(_vars) {
               // Oracle has no ~ operator !!!
               if (_vars["_target_database"] === 'oracle') {
                 return "REGEXP_LIKE( ".concat(prnt(ar[1]), " , ").concat(prnt(ar[2]), " )");
+              } else if (_vars["_target_database"] === 'mysql') {
+                return "".concat(prnt(ar[1]), " REGEXP ").concat(prnt(ar[2]));
               } else {
                 return prnt(ar[1]) + ' ' + ar[0] + ' ' + prnt(ar[2]);
               }
@@ -4409,7 +4411,8 @@ function reports_get_column_info(srcId, col) {
   return {
     "id": col,
     "sql_query": parts[2],
-    "type": "STRING"
+    "type": "STRING",
+    "config": {}
   };
 }
 function reports_get_table_sql(target_db_type, tbl) {

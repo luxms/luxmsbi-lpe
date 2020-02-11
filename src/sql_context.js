@@ -504,9 +504,15 @@ export function generate_report_sql(_cfg, _vars) {
 
  var wrap_aggregate_functions = (col, cfg, col_id) => {
    ret = col;
-   if (Array.isArray(cfg["agg"]) && cfg["agg"].length > 0) {
+   // Empty agg arrays can be used for AGGFN type ! We happily support it
+   if (Array.isArray(cfg["agg"])) {
      group_by = group_by.filter( id => id !== col_id )
-     return cfg["agg"].reduce( (a, currentFunc) => `${currentFunc}( ${a} )` , ret)
+     var r = cfg["agg"].reduce( (a, currentFunc) => `${currentFunc}( ${a} )` , ret)
+     if (_context["_target_database"] === 'oracle' || _context["_target_database"] === 'postgresql') {
+       // automatically format number
+       r = `to_char( ${r}, '999G999G999G999G990D00')`
+     }
+     return r;
    }
    return ret
  }
@@ -661,6 +667,13 @@ _context['generate_sql_struct_for_report'] = function(cfg) {
     if (col_sql === parts[2]) {
       // we have just column name, prepend table alias !
       col_sql = `"${parts[1]}"."${col_sql}"`
+    }
+
+    // This is hack to implement AGGFN type !
+    if (col_info["config"]["aggFormula"]) {
+      // We should remove column from GROUP BY
+      // group_by is global, it is sad
+      group_by = group_by.filter( id => id !== h["id"] )
     }
 
     var wrapped_column_sql = wrap_aggregate_functions(col_sql, h, h["id"]);

@@ -146,7 +146,7 @@ describe('LPE tests', function() {
                 "limit": 100
              },
             {"period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
-            `SELECT min( "vNetwork"."cluster" ),avg( sum( "vNetwork"."direct_path_io" ) ),"vNetwork"."os_according_to_the_vmware_tools" FROM vNetwork AS vNetwork WHERE not "vNetwork"."cluster" IN ('SPB99-DMZ02','SPB99-ESXCL02','SPB99-ESXCL04','SPB99-ESXCLMAIL') and not "vNetwork"."folder" ~ 'XXX' and "vNetwork"."adapter" IS NULL  and TRUE GROUP BY "vNetwork"."os_according_to_the_vmware_tools" ORDER BY "vNetwork"."cluster","vNetwork"."direct_path_io" DESC LIMIT 100 OFFSET 0`
+            `SELECT to_char( min( "vNetwork"."cluster" ), '999G999G999G999G990D00'),to_char( avg( sum( "vNetwork"."direct_path_io" ) ), '999G999G999G999G990D00'),"vNetwork"."os_according_to_the_vmware_tools" FROM vNetwork AS vNetwork WHERE not "vNetwork"."cluster" IN ('SPB99-DMZ02','SPB99-ESXCL02','SPB99-ESXCL04','SPB99-ESXCLMAIL') and not "vNetwork"."folder" ~ 'XXX' and "vNetwork"."adapter" IS NULL  and TRUE GROUP BY "vNetwork"."os_according_to_the_vmware_tools" ORDER BY "vNetwork"."cluster","vNetwork"."direct_path_io" DESC LIMIT 100 OFFSET 0`
         );
 
 

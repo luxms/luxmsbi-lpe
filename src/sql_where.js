@@ -288,6 +288,8 @@ export function sql_where_context(_vars) {
                   // Oracle has no ~ operator !!!
                   if (_vars["_target_database"] === 'oracle') {
                     return `REGEXP_LIKE( ${prnt(ar[1])} , ${prnt(ar[2])} )` 
+                  } else if (_vars["_target_database"] === 'mysql') {
+                    return `${prnt(ar[1])} REGEXP ${prnt(ar[2])}` 
                   } else {
                     return prnt(ar[1]) + ' ' + ar[0] + ' ' + prnt(ar[2])
                   }

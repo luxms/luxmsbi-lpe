@@ -3546,6 +3546,8 @@ function sql_where_context(_vars) {
               // Oracle has no ~ operator !!!
               if (_vars["_target_database"] === 'oracle') {
                 return "REGEXP_LIKE( ".concat(prnt(ar[1]), " , ").concat(prnt(ar[2]), " )");
+              } else if (_vars["_target_database"] === 'mysql') {
+                return "".concat(prnt(ar[1]), " REGEXP ").concat(prnt(ar[2]));
               } else {
                 return prnt(ar[1]) + ' ' + ar[0] + ' ' + prnt(ar[2]);
               }
@@ -3892,7 +3894,7 @@ function db_quote_ident(intxt) {
 function reports_get_column_info(srcId, col) {
   // on Error plv8 will generate Exception!
   var id = col;
-  var rows = plv8.execute('SELECT id, sql_query, "type" FROM koob.dimensions WHERE id = $1', [id]);
+  var rows = plv8.execute('SELECT id, sql_query, "type", config FROM koob.dimensions WHERE id = $1', [id]);
 
   if (rows.length > 0) {
     return rows[0];
@@ -5282,15 +5284,22 @@ function generate_report_sql(_cfg, _vars) {
   });
 
   var wrap_aggregate_functions = function wrap_aggregate_functions(col, cfg, col_id) {
-    ret = col;
+    ret = col; // Empty agg arrays can be used for AGGFN type ! We happily support it
 
-    if (Array.isArray(cfg["agg"]) && cfg["agg"].length > 0) {
+    if (Array.isArray(cfg["agg"])) {
       group_by = group_by.filter(function (id) {
         return id !== col_id;
       });
-      return cfg["agg"].reduce(function (a, currentFunc) {
+      var r = cfg["agg"].reduce(function (a, currentFunc) {
         return "".concat(currentFunc, "( ").concat(a, " )");
       }, ret);
+
+      if (_context["_target_database"] === 'oracle' || _context["_target_database"] === 'postgresql') {
+        // automatically format number
+        r = "to_char( ".concat(r, ", '999G999G999G999G990D00')");
+      }
+
+      return r;
     }
 
     return ret;
@@ -5460,6 +5469,15 @@ function generate_report_sql(_cfg, _vars) {
       if (col_sql === parts[2]) {
         // we have just column name, prepend table alias !
         col_sql = "\"".concat(parts[1], "\".\"").concat(col_sql, "\"");
+      } // This is hack to implement AGGFN type !
+
+
+      if (col_info["config"]["aggFormula"]) {
+        // We should remove column from GROUP BY
+        // group_by is global, it is sad
+        group_by = group_by.filter(function (id) {
+          return id !== h["id"];
+        });
       }
 
       var wrapped_column_sql = wrap_aggregate_functions(col_sql, h, h["id"]);

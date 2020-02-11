@@ -9,7 +9,7 @@ export function db_quote_ident(intxt) {
 
 export function reports_get_column_info(srcId, col) {
      var parts = col.split('.')
-     return {"id": col, "sql_query": parts[2], "type": "STRING"}
+     return {"id": col, "sql_query": parts[2], "type": "STRING", "config": {}}
  }
 
  export function reports_get_table_sql(target_db_type, tbl) {

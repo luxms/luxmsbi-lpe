@@ -14,7 +14,7 @@ export function db_quote_ident(intxt) {
 export function reports_get_column_info(srcId, col) {
     // on Error plv8 will generate Exception!
     var id = col
-    var rows = plv8.execute( 'SELECT id, sql_query, "type" FROM koob.dimensions WHERE id = $1', [id] );
+    var rows = plv8.execute( 'SELECT id, sql_query, "type", config FROM koob.dimensions WHERE id = $1', [id] );
     if (rows.length > 0) {
         return rows[0];
     }
