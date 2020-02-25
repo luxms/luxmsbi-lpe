@@ -3604,7 +3604,7 @@ function sql_where_context(_vars) {
 
     ctx['='] = function (l, r) {
       // понимаем a = [null] как a is null
-      // a = [] просто пропускаем
+      // a = [] просто пропускаем, А кстати почему собственно???
       // a = [null, 1,2] как a in (1,2) or a is null
       // ["=",["column","vNetwork.cluster"],["[","SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]]
       // console.log('========'+ JSON.stringify(l) + ' ' + JSON.stringify(r))
@@ -5293,11 +5293,12 @@ function generate_report_sql(_cfg, _vars) {
       var r = cfg["agg"].reduce(function (a, currentFunc) {
         return "".concat(currentFunc, "( ").concat(a, " )");
       }, ret);
-
+      /* it is a special default formatter, which should be implemented per column with LPE!!!! DISABLED
       if (_context["_target_database"] === 'oracle' || _context["_target_database"] === 'postgresql') {
         // automatically format number
-        r = "to_char( ".concat(r, ", '999G999G999G999G990D00')");
+        r = `to_char( ${r}, '999G999G999G999G990D00')`
       }
+      */
 
       return r;
     }
@@ -5363,7 +5364,15 @@ function generate_report_sql(_cfg, _vars) {
 
 
     var quote_text_constants = function quote_text_constants(in_lpe) {
-      if (!Array.isArray(in_lpe)) return in_lpe; //console.log("quote_text_constants" + JSON.stringify(in_lpe))
+      if (!Array.isArray(in_lpe)) return in_lpe;
+
+      if (in_lpe[0] === 'IN') {
+        // example: ["IN",["column","vNetwork.cluster"],["SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]]
+        // Transform to AST form
+        in_lpe[0] = 'in';
+        in_lpe[2] = ['['].concat(in_lpe[2]); // and process further
+      } //console.log("quote_text_constants" + JSON.stringify(in_lpe))
+
 
       if (in_lpe[0] === 'in') {
         if (Array.isArray(in_lpe[1])) {

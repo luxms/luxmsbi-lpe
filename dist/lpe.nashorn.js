@@ -3818,7 +3818,7 @@ function sql_where_context(_vars) {
 
     ctx['='] = function (l, r) {
       // понимаем a = [null] как a is null
-      // a = [] просто пропускаем
+      // a = [] просто пропускаем, А кстати почему собственно???
       // a = [null, 1,2] как a in (1,2) or a is null
       // ["=",["column","vNetwork.cluster"],["[","SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]]
       // console.log('========'+ JSON.stringify(l) + ' ' + JSON.stringify(r))

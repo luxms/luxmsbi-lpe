@@ -146,7 +146,7 @@ describe('LPE tests', function() {
                 "limit": 100
              },
             {"period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
-            `SELECT to_char( min( "vNetwork"."cluster" ), '999G999G999G999G990D00'),to_char( avg( sum( "vNetwork"."direct_path_io" ) ), '999G999G999G999G990D00'),"vNetwork"."os_according_to_the_vmware_tools" FROM vNetwork AS vNetwork WHERE not "vNetwork"."cluster" IN ('SPB99-DMZ02','SPB99-ESXCL02','SPB99-ESXCL04','SPB99-ESXCLMAIL') and not "vNetwork"."folder" ~ 'XXX' and "vNetwork"."adapter" IS NULL  and TRUE GROUP BY "vNetwork"."os_according_to_the_vmware_tools" ORDER BY "vNetwork"."cluster","vNetwork"."direct_path_io" DESC LIMIT 100 OFFSET 0`
+            `SELECT min( "vNetwork"."cluster" ),avg( sum( "vNetwork"."direct_path_io" ) ),"vNetwork"."os_according_to_the_vmware_tools" FROM vNetwork AS vNetwork WHERE not "vNetwork"."cluster" IN ('SPB99-DMZ02','SPB99-ESXCL02','SPB99-ESXCL04','SPB99-ESXCLMAIL') and not "vNetwork"."folder" ~ 'XXX' and "vNetwork"."adapter" IS NULL  and TRUE GROUP BY "vNetwork"."os_according_to_the_vmware_tools" ORDER BY "vNetwork"."cluster","vNetwork"."direct_path_io" DESC LIMIT 100 OFFSET 0`
         );
 
 
@@ -160,7 +160,7 @@ describe('LPE tests', function() {
              {"lpe": ["not", ["=", ["column", "rvtools.vNetwork.softwarelic1c"], "xxx"]], "id": "rvtools.vNetwork.softwarelic1c", "predicate": "=", "filterValues": ["xxx"], "negationValue": true, "isTemplateFilter": true}, 
              {"lpe": ["~", ["column", "rvtools.vNetwork.starts_connected"], "zzz"], "id": "rvtools.vNetwork.starts_connected", "predicate": "~", "filterValues": ["zzz"], "negationValue": false, "isTemplateFilter": true}, 
              {"lpe": ["not", ["=", ["column", "rvtools.vNetwork.forecast_day_1"], "777"]], "id": "rvtools.vNetwork.forecast_day_1", "predicate": "=", "filterValues": ["777"], "negationValue": true, "isTemplateFilter": false}, 
-             {"lpe": ["not", ["in", ["column", "rvtools.vNetwork.direct_path_io"], ["[", "False", "True"]]], "id": "rvtools.vNetwork.direct_path_io", "predicate": "in", "filterValues": ["False", "True"], "negationValue": true, "isTemplateFilter": true}], "sourceId": "rvtools"}
+             {"lpe": ["not", ["IN", ["column", "rvtools.vNetwork.direct_path_io"], ["False", "True"]]], "id": "rvtools.vNetwork.direct_path_io", "predicate": "in", "filterValues": ["False", "True"], "negationValue": true, "isTemplateFilter": true}], "sourceId": "rvtools"}
 ,
             {"period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
             `SELECT "vNetwork"."cluster","vNetwork"."os_according_to_the_vmware_tools","vNetwork"."connected" FROM vNetwork AS vNetwork WHERE "vNetwork"."period_day" > '2019-09-11' and "vNetwork"."os_according_to_the_configuration_file" IN ('Debian GNU/Linux 10 (64-bit)','Debian GNU/Linux 5 (32-bit)','Debian GNU/Linux 5 (64-bit)','Debian GNU/Linux 6 (64-bit)','Debian GNU/Linux 7 (64-bit)','Debian GNU/Linux 8 (64-bit)','FreeBSD Pre-11 versions (32-bit)','Microsoft Windows 10 (64-bit)','Microsoft Windows 7 (32-bit)') and not "vNetwork"."softwarelic1c" = 'xxx' and "vNetwork"."starts_connected" ~ 'zzz' and not "vNetwork"."forecast_day_1" = '777' and not "vNetwork"."direct_path_io" IN ('False','True') ORDER BY "vNetwork"."cluster","vNetwork"."os_according_to_the_vmware_tools" DESC`
