@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2020/02/25 18:39:24 */ 
+/** [LPE]  Version: 1.0.0 - 2020/06/30 20:06:47 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -5210,7 +5210,7 @@ function generate_report_sql(_cfg, _vars) {
 
 
     var parts = col.split('.');
-    return "\"".concat(parts[1], "\".\"").concat(col_sql, "\"");
+    return "".concat(parts[1], ".").concat(col_sql);
   };
 
   _context['generate_sql_struct_for_report'] = function (cfg) {
@@ -5360,7 +5360,7 @@ function generate_report_sql(_cfg, _vars) {
     }
 
     var target_db_type = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["c" /* get_source_database */])(srcIdent);
-    _context["_target_database"] = target_db_type; // column should always be represented as full path source.cube.ciolumn
+    _context["_target_database"] = target_db_type; // column should always be represented as full path source.cube.column
     // for aggregates we should add func names as suffix ! like source.cube.column.max_avg
 
     var sel = ['select'].concat(cfg["columns"].map(function (h) {
@@ -5370,7 +5370,7 @@ function generate_report_sql(_cfg, _vars) {
 
       if (col_sql === parts[2]) {
         // we have just column name, prepend table alias !
-        col_sql = "\"".concat(parts[1], "\".\"").concat(col_sql, "\"");
+        col_sql = "".concat(parts[1], ".").concat(col_sql);
       } // This is hack to implement AGGFN type !
 
 
@@ -5383,7 +5383,7 @@ function generate_report_sql(_cfg, _vars) {
       }
 
       var wrapped_column_sql = wrap_aggregate_functions(col_sql, h, h["id"]);
-      var as = "\"".concat(h.id, "\"");
+      var as = "".concat(h.id);
 
       if (Array.isArray(h["agg"])) {
         as = "\"".concat(h.id, ".").concat(h["agg"].join('.'), "\"");

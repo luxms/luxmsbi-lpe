@@ -17,7 +17,7 @@ describe('LPE tests', function() {
          "filters": []}
          ,
         {}),
-        `SELECT "locations"."id","locations"."title","units"."id" FROM locations AS locations, units AS units WHERE TRUE`
+        `SELECT locations.id,locations.title,units.id FROM locations AS locations, units AS units WHERE TRUE`
         );
 
     });

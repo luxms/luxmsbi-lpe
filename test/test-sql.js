@@ -146,7 +146,7 @@ describe('LPE tests', function() {
                 "limit": 100
              },
             {"period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
-            `SELECT min( "vNetwork"."cluster" ),avg( sum( "vNetwork"."direct_path_io" ) ),"vNetwork"."os_according_to_the_vmware_tools" FROM vNetwork AS vNetwork WHERE not "vNetwork"."cluster" IN ('SPB99-DMZ02','SPB99-ESXCL02','SPB99-ESXCL04','SPB99-ESXCLMAIL') and not "vNetwork"."folder" ~ 'XXX' and "vNetwork"."adapter" IS NULL  and TRUE GROUP BY "vNetwork"."os_according_to_the_vmware_tools" ORDER BY "vNetwork"."cluster","vNetwork"."direct_path_io" DESC LIMIT 100 OFFSET 0`
+            `SELECT min( vNetwork.cluster ),avg( sum( vNetwork.direct_path_io ) ),vNetwork.os_according_to_the_vmware_tools FROM vNetwork AS vNetwork WHERE not vNetwork.cluster IN ('SPB99-DMZ02','SPB99-ESXCL02','SPB99-ESXCL04','SPB99-ESXCLMAIL') and not vNetwork.folder ~ 'XXX' and vNetwork.adapter IS NULL  and TRUE GROUP BY vNetwork.os_according_to_the_vmware_tools ORDER BY vNetwork.cluster,vNetwork.direct_path_io DESC LIMIT 100 OFFSET 0`
         );
 
 
@@ -163,7 +163,7 @@ describe('LPE tests', function() {
              {"lpe": ["not", ["IN", ["column", "rvtools.vNetwork.direct_path_io"], ["False", "True"]]], "id": "rvtools.vNetwork.direct_path_io", "predicate": "in", "filterValues": ["False", "True"], "negationValue": true, "isTemplateFilter": true}], "sourceId": "rvtools"}
 ,
             {"period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
-            `SELECT "vNetwork"."cluster","vNetwork"."os_according_to_the_vmware_tools","vNetwork"."connected" FROM vNetwork AS vNetwork WHERE "vNetwork"."period_day" > '2019-09-11' and "vNetwork"."os_according_to_the_configuration_file" IN ('Debian GNU/Linux 10 (64-bit)','Debian GNU/Linux 5 (32-bit)','Debian GNU/Linux 5 (64-bit)','Debian GNU/Linux 6 (64-bit)','Debian GNU/Linux 7 (64-bit)','Debian GNU/Linux 8 (64-bit)','FreeBSD Pre-11 versions (32-bit)','Microsoft Windows 10 (64-bit)','Microsoft Windows 7 (32-bit)') and not "vNetwork"."softwarelic1c" = 'xxx' and "vNetwork"."starts_connected" ~ 'zzz' and not "vNetwork"."forecast_day_1" = '777' and not "vNetwork"."direct_path_io" IN ('False','True') ORDER BY "vNetwork"."cluster","vNetwork"."os_according_to_the_vmware_tools" DESC`
+            `SELECT vNetwork.cluster,vNetwork.os_according_to_the_vmware_tools,vNetwork.connected FROM vNetwork AS vNetwork WHERE vNetwork.period_day > '2019-09-11' and vNetwork.os_according_to_the_configuration_file IN ('Debian GNU/Linux 10 (64-bit)','Debian GNU/Linux 5 (32-bit)','Debian GNU/Linux 5 (64-bit)','Debian GNU/Linux 6 (64-bit)','Debian GNU/Linux 7 (64-bit)','Debian GNU/Linux 8 (64-bit)','FreeBSD Pre-11 versions (32-bit)','Microsoft Windows 10 (64-bit)','Microsoft Windows 7 (32-bit)') and not vNetwork.softwarelic1c = 'xxx' and vNetwork.starts_connected ~ 'zzz' and not vNetwork.forecast_day_1 = '777' and not vNetwork.direct_path_io IN ('False','True') ORDER BY vNetwork.cluster,vNetwork.os_according_to_the_vmware_tools DESC`
         );
 
 
@@ -171,7 +171,7 @@ describe('LPE tests', function() {
         assert.equal( lpe.generate_report_sql(
             {"columns": [{"id": "rvtools.vNetwork.period_day", "group": "Periods", "title": "DAY"}], "filters": [{"lpe": ["between", ["column", "rvtools.vNetwork.period_month"], "2019-09-10", "2019-09-20"], "id": "rvtools.vNetwork.period_month", "predicate": "between", "filterValues": ["2019-09-10", "2019-09-20"], "negationValue": false, "isTemplateFilter": false}], "sourceId": "rvtools"}            ,
            {"period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
-           `SELECT "vNetwork"."period_day" FROM vNetwork AS vNetwork WHERE ("vNetwork"."period_month" BETWEEN '2019-09-10' AND '2019-09-20')`
+           `SELECT vNetwork.period_day FROM vNetwork AS vNetwork WHERE (vNetwork.period_month BETWEEN '2019-09-10' AND '2019-09-20')`
        );
 
             // lpe: null
@@ -179,7 +179,7 @@ describe('LPE tests', function() {
         {"columns": [{"sort": 2, "id": "rvtools.vNetwork.direct_path_io", "group": "Dimensions A", "title": "Direct Path IO"}], "filters": [{"lpe": ["not", ["in", ["column", "rvtools.vNetwork.os_according_to_the_vmware_tools"], ["[", "CentOS 7 (64-bit)", "Debian GNU/Linux 6 (64-bit)", "Debian GNU/Linux 9 (64-bit)", "FreeBSD Pre-11 versions (32-bit)", "FreeBSD Pre-11 versions (64-bit)", "Linux 4.15.0-51-generic buster/sid", "Linux 4.15.0-58-generic buster/sid", "Linux 4.15.3-1-generic Astra Linux CE 2.12.13 (Orel)", "Microsoft Windows 10 (64-bit)"]]], "id": "rvtools.vNetwork.os_according_to_the_vmware_tools", "predicate": "in", "filterValues": ["CentOS 7 (64-bit)", "Debian GNU/Linux 6 (64-bit)", "Debian GNU/Linux 9 (64-bit)", "FreeBSD Pre-11 versions (32-bit)", "FreeBSD Pre-11 versions (64-bit)", "Linux 4.15.0-51-generic buster/sid", "Linux 4.15.0-58-generic buster/sid", "Linux 4.15.3-1-generic Astra Linux CE 2.12.13 (Orel)", "Microsoft Windows 10 (64-bit)"], "negationValue": true, "isTemplateFilter": true}, {"lpe": null, "id": "rvtools.vNetwork.starts_connected", "predicate": "~", "filterValues": [], "negationValue": false, "isTemplateFilter": true}, {"lpe": ["not", ["between", ["column", "rvtools.vNetwork.period_month"], "2019-09-09", "2019-09-27"]], "id": "rvtools.vNetwork.period_month", "predicate": "between", "filterValues": ["2019-09-09", "2019-09-27"], "negationValue": true, "isTemplateFilter": true}], "sourceId": "rvtools"}
               ,
        {"period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
-       `SELECT "vNetwork"."direct_path_io" FROM vNetwork AS vNetwork WHERE not "vNetwork"."os_according_to_the_vmware_tools" IN ('CentOS 7 (64-bit)','Debian GNU/Linux 6 (64-bit)','Debian GNU/Linux 9 (64-bit)','FreeBSD Pre-11 versions (32-bit)','FreeBSD Pre-11 versions (64-bit)','Linux 4.15.0-51-generic buster/sid','Linux 4.15.0-58-generic buster/sid','Linux 4.15.3-1-generic Astra Linux CE 2.12.13 (Orel)','Microsoft Windows 10 (64-bit)') and not ("vNetwork"."period_month" BETWEEN '2019-09-09' AND '2019-09-27') ORDER BY "vNetwork"."direct_path_io" DESC`
+       `SELECT vNetwork.direct_path_io FROM vNetwork AS vNetwork WHERE not vNetwork.os_according_to_the_vmware_tools IN ('CentOS 7 (64-bit)','Debian GNU/Linux 6 (64-bit)','Debian GNU/Linux 9 (64-bit)','FreeBSD Pre-11 versions (32-bit)','FreeBSD Pre-11 versions (64-bit)','Linux 4.15.0-51-generic buster/sid','Linux 4.15.0-58-generic buster/sid','Linux 4.15.3-1-generic Astra Linux CE 2.12.13 (Orel)','Microsoft Windows 10 (64-bit)') and not (vNetwork.period_month BETWEEN '2019-09-09' AND '2019-09-27') ORDER BY vNetwork.direct_path_io DESC`
         );
 
 
@@ -197,7 +197,7 @@ describe('LPE tests', function() {
 ,
         {"period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
         `SELECT * FROM (
-          SELECT "vNetwork"."cluster","vNetwork"."os_according_to_the_vmware_tools","vNetwork"."connected" FROM vNetwork vNetwork WHERE "vNetwork"."period_day" > '2019-09-11' and "vNetwork"."os_according_to_the_configuration_file" IN ('Debian GNU/Linux 10 (64-bit)','Debian GNU/Linux 5 (32-bit)','Debian GNU/Linux 5 (64-bit)','Debian GNU/Linux 6 (64-bit)','Debian GNU/Linux 7 (64-bit)','Debian GNU/Linux 8 (64-bit)','FreeBSD Pre-11 versions (32-bit)','Microsoft Windows 10 (64-bit)','Microsoft Windows 7 (32-bit)') and not "vNetwork"."softwarelic1c" = 'xxx' and REGEXP_LIKE( "vNetwork"."starts_connected" , 'zzz' ) and not "vNetwork"."forecast_day_1" = '777' and not "vNetwork"."direct_path_io" IN ('False','True') ORDER BY "vNetwork"."cluster","vNetwork"."os_according_to_the_vmware_tools" DESC
+          SELECT vNetwork.cluster,vNetwork.os_according_to_the_vmware_tools,vNetwork.connected FROM vNetwork vNetwork WHERE vNetwork.period_day > '2019-09-11' and vNetwork.os_according_to_the_configuration_file IN ('Debian GNU/Linux 10 (64-bit)','Debian GNU/Linux 5 (32-bit)','Debian GNU/Linux 5 (64-bit)','Debian GNU/Linux 6 (64-bit)','Debian GNU/Linux 7 (64-bit)','Debian GNU/Linux 8 (64-bit)','FreeBSD Pre-11 versions (32-bit)','Microsoft Windows 10 (64-bit)','Microsoft Windows 7 (32-bit)') and not vNetwork.softwarelic1c = 'xxx' and REGEXP_LIKE( vNetwork.starts_connected , 'zzz' ) and not vNetwork.forecast_day_1 = '777' and not vNetwork.direct_path_io IN ('False','True') ORDER BY vNetwork.cluster,vNetwork.os_according_to_the_vmware_tools DESC
         ) WHERE ROWNUM <= 1000`
     );
     });

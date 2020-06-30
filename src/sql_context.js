@@ -529,7 +529,7 @@ _context["column"] = function(col) {
   }
   // we have just column name, prepend table alias !
   var parts = col.split('.')
-  return `"${parts[1]}"."${col_sql}"`
+  return `${parts[1]}.${col_sql}`
 }
 
 _context['generate_sql_struct_for_report'] = function(cfg) {
@@ -667,7 +667,7 @@ _context['generate_sql_struct_for_report'] = function(cfg) {
   var target_db_type = get_source_database(srcIdent)
   _context["_target_database"] = target_db_type
 
-  // column should always be represented as full path source.cube.ciolumn
+  // column should always be represented as full path source.cube.column
   // for aggregates we should add func names as suffix ! like source.cube.column.max_avg
   var sel = ['select'].concat(cfg["columns"].map(h => {
     var col_info = reports_get_column_info(cfg["sourceId"], h["id"])
@@ -677,7 +677,7 @@ _context['generate_sql_struct_for_report'] = function(cfg) {
     //if ( col_sql.match( /^\S+$/ ) !== null ) {
     if (col_sql === parts[2]) {
       // we have just column name, prepend table alias !
-      col_sql = `"${parts[1]}"."${col_sql}"`
+      col_sql = `${parts[1]}.${col_sql}`
     }
 
     // This is hack to implement AGGFN type !
@@ -688,7 +688,7 @@ _context['generate_sql_struct_for_report'] = function(cfg) {
     }
 
     var wrapped_column_sql = wrap_aggregate_functions(col_sql, h, h["id"]);
-    var as = `"${h.id}"`
+    var as = `${h.id}`
     if (Array.isArray(h["agg"])) {
       as = `"${h.id}.${h["agg"].join('.')}"`
     }
