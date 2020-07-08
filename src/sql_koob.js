@@ -192,7 +192,7 @@ function init_koob_context(_vars) {
 
   _ctx.push(
     (key, val, resolveOptions) => {
-      console.log(`WANT to resolve ${key}`);
+      console.log(`WANT to resolve ${key}`, JSON.stringify(resolveOptions));
       if (_context["_columns"][key]) return key;
       //if (_context["_columns"][_vars.ds][_vars.cube][key]) return `${_vars.ds}.${_vars.cube}.key`;
       
@@ -208,6 +208,9 @@ function init_koob_context(_vars) {
           return `${a[0]} ${key} ${a[1]}`
         }
       }
+
+      console.log(`DID NOT resolved ${key}`);
+
       return key
     }
   )

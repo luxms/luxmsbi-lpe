@@ -27,12 +27,13 @@ export const isFunction = (arg) => (typeof arg === 'function');
  * Get or Set variable in context
  * @param {*} ctx - array, hashmap or function that stores variables 
  * @param {*} varName - the name of variable
- * @param {*} value - optional value to set (undefied if get)
+ * @param {*} value - optional value to set (undefined if get)
+ * @param {*} resolveOptions - options on how to resolve
  */
 function $var$(ctx, varName, value, resolveOptions) {
   if (isArray(ctx)) {                                                           // contexts chain
     for (let theCtx of ctx) {
-      const result = $var$(theCtx, varName);
+      const result = $var$(theCtx, varName, value, resolveOptions);
       if (result === undefined) continue;                                       // no such var in context
       if (value === undefined) return result;                                   // get => we've got a result
       return $var$(theCtx, varName, value, resolveOptions);                                     // set => redirect 'set' to context with variable.
@@ -115,7 +116,7 @@ const SPECIAL_FORMS = {                                                         
   'macroexpand': makeSF(macroexpand),
   'begin': makeSF((ast, ctx) => ast.reduce((acc, astItem) => EVAL(astItem, ctx), null)),
   'do': makeSF((ast, ctx) => { throw new Error('DO not implemented') }),
-  'if': makeSF((ast, ctx, rs) => EVAL(ast[0], ctx, false) ? EVAL(ast[1], ctx, rs) : EVAL(ast[2], ctx, rs)),
+  'if': makeSF((ast, ctx, ro) => EVAL(ast[0], ctx, {...ro, resolveString: false}) ? EVAL(ast[1], ctx, ro) : EVAL(ast[2], ctx, ro)),
   '~': makeSF((ast, ctx, rs) => {                                               // mark as macro
     const f = EVAL(ast[0], ctx, rs);                                            // eval regular function
     f.ast.push(1); // mark as macro
@@ -363,7 +364,7 @@ function EVAL(ast, ctx, resolveOptions) {
         if (value !== undefined) {                                              // variable
           return value;
         }
-        return resolveOptions.resolveString ? ast : undefined;                                 // if string and not in ctx
+        return resolveOptions && resolveOptions.resolveString ? ast : undefined;                                 // if string and not in ctx
       }
       return ast;
     }

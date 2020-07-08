@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2020/07/08 19:50:42 */ 
+/** [LPE]  Version: 1.0.0 - 2020/07/08 20:19:13 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -1553,10 +1553,6 @@ __webpack_require__(77)('asyncIterator');
 
 
 
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
 function _toArray(arr) { return _arrayWithHoles(arr) || _iterableToArray(arr) || _nonIterableRest(); }
 
 function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
@@ -1566,6 +1562,10 @@ function _nonIterableRest() { throw new TypeError("Invalid attempt to destructur
 function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
 
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
 
@@ -1614,7 +1614,8 @@ var isFunction = function isFunction(arg) {
  * Get or Set variable in context
  * @param {*} ctx - array, hashmap or function that stores variables 
  * @param {*} varName - the name of variable
- * @param {*} value - optional value to set (undefied if get)
+ * @param {*} value - optional value to set (undefined if get)
+ * @param {*} resolveOptions - options on how to resolve
  */
 
 function $var$(ctx, varName, value, resolveOptions) {
@@ -1627,7 +1628,7 @@ function $var$(ctx, varName, value, resolveOptions) {
     try {
       for (var _iterator = ctx[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
         var theCtx = _step.value;
-        var result = $var$(theCtx, varName);
+        var result = $var$(theCtx, varName, value, resolveOptions);
         if (result === undefined) continue; // no such var in context
 
         if (value === undefined) return result; // get => we've got a result
@@ -1746,8 +1747,10 @@ var SPECIAL_FORMS = {
   'do': makeSF(function (ast, ctx) {
     throw new Error('DO not implemented');
   }),
-  'if': makeSF(function (ast, ctx, rs) {
-    return EVAL(ast[0], ctx, false) ? EVAL(ast[1], ctx, rs) : EVAL(ast[2], ctx, rs);
+  'if': makeSF(function (ast, ctx, ro) {
+    return EVAL(ast[0], ctx, _objectSpread({}, ro, {
+      resolveString: false
+    })) ? EVAL(ast[1], ctx, ro) : EVAL(ast[2], ctx, ro);
   }),
   '~': makeSF(function (ast, ctx, rs) {
     // mark as macro
@@ -2320,7 +2323,7 @@ function EVAL(ast, ctx, resolveOptions) {
           return value;
         }
 
-        return resolveOptions.resolveString ? ast : undefined; // if string and not in ctx
+        return resolveOptions && resolveOptions.resolveString ? ast : undefined; // if string and not in ctx
       }
 
       return ast;
@@ -6097,7 +6100,7 @@ function init_koob_context(_vars) {
   var _context = _ctx[0];
 
   _ctx.push(function (key, val, resolveOptions) {
-    __WEBPACK_IMPORTED_MODULE_14__console_console__["a" /* default */].log("WANT to resolve ".concat(key));
+    __WEBPACK_IMPORTED_MODULE_14__console_console__["a" /* default */].log("WANT to resolve ".concat(key), JSON.stringify(resolveOptions));
     if (_context["_columns"][key]) return key; //if (_context["_columns"][_vars.ds][_vars.cube][key]) return `${_vars.ds}.${_vars.cube}.key`;
 
     if (key.match(/^\w+$/) && resolveOptions && resolveOptions.wantCallable) {
@@ -6113,6 +6116,7 @@ function init_koob_context(_vars) {
       };
     }
 
+    __WEBPACK_IMPORTED_MODULE_14__console_console__["a" /* default */].log("DID NOT resolved ".concat(key));
     return key;
   });
 
