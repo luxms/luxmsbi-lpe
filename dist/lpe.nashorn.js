@@ -1524,6 +1524,12 @@ if (__webpack_require__(5)(function () { return $toString.call({ source: 'a', fl
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
+/* unused harmony export isArray */
+/* unused harmony export isString */
+/* unused harmony export isNumber */
+/* unused harmony export isBoolean */
+/* unused harmony export isHash */
+/* unused harmony export isFunction */
 /* unused harmony export makeMacro */
 /* unused harmony export makeSF */
 /* harmony export (immutable) */ __webpack_exports__["a"] = eval_lisp;
@@ -1601,27 +1607,21 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
  */
 
 
-
 var isArray = function isArray(arg) {
   return Object.prototype.toString.call(arg) === '[object Array]';
 };
-
 var isString = function isString(arg) {
   return typeof arg === 'string';
 };
-
 var isNumber = function isNumber(arg) {
   return typeof arg === 'number';
 };
-
 var isBoolean = function isBoolean(arg) {
   return arg === true || arg === false;
 };
-
 var isHash = function isHash(arg) {
   return _typeof(arg) === 'object' && arg !== null && !isArray(arg);
 };
-
 var isFunction = function isFunction(arg) {
   return typeof arg === 'function';
 };
@@ -1632,8 +1632,7 @@ var isFunction = function isFunction(arg) {
  * @param {*} value - optional value to set (undefied if get)
  */
 
-
-function $var$(ctx, varName, value) {
+function $var$(ctx, varName, value, resolveOptions) {
   if (isArray(ctx)) {
     // contexts chain
     var _iteratorNormalCompletion = true;
@@ -1648,7 +1647,7 @@ function $var$(ctx, varName, value) {
 
         if (value === undefined) return result; // get => we've got a result
 
-        return $var$(theCtx, varName, value); // set => redirect 'set' to context with variable.
+        return $var$(theCtx, varName, value, resolveOptions); // set => redirect 'set' to context with variable.
       }
     } catch (err) {
       _didIteratorError = true;
@@ -1667,13 +1666,13 @@ function $var$(ctx, varName, value) {
 
     if (value === undefined) return undefined; // get => variable not found in all contexts
 
-    if (ctx.length) $var$(ctx[0], varName, value); // set => set variable to HEAD context
+    if (ctx.length) $var$(ctx[0], varName, value, resolveOptions); // set => set variable to HEAD context
 
     return undefined; // ??? ctx.length = 0
   }
 
   if (isFunction(ctx)) {
-    return ctx(varName, value);
+    return ctx(varName, value, resolveOptions);
   }
 
   if (isHash(ctx)) {
@@ -2324,21 +2323,19 @@ function env_bind(ast, ctx, exprs) {
   return [newCtx, ctx];
 }
 
-function EVAL(ast, ctx) {
-  var resolveString = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
-
+function EVAL(ast, ctx, resolveOptions) {
   while (true) {
     if (!isArray(ast)) {
       // atom
       if (isString(ast)) {
-        var value = $var$(ctx, ast);
+        var value = $var$(ctx, ast, undefined, resolveOptions);
 
         if (value !== undefined) {
           // variable
           return value;
         }
 
-        return resolveString ? ast : undefined; // if string and not in ctx
+        return resolveOptions.resolveString ? ast : undefined; // if string and not in ctx
       }
 
       return ast;
@@ -2355,7 +2352,9 @@ function EVAL(ast, ctx) {
         opAst = _ast2[0],
         argsAst = _ast2.slice(1);
 
-    var op = EVAL(opAst, ctx, resolveString); // evaluate operator
+    var op = EVAL(opAst, ctx, _objectSpread({}, resolveOptions, {
+      wantCallable: true
+    })); // evaluate operator
 
     if (typeof op !== 'function') {
       throw new Error('Error: ' + String(op) + ' is not a function');
@@ -2363,12 +2362,12 @@ function EVAL(ast, ctx) {
 
     if (isSF(op)) {
       // special form
-      var sfResult = op(argsAst, ctx, resolveString);
+      var sfResult = op(argsAst, ctx, resolveOptions);
       return sfResult;
     }
 
     var args = argsAst.map(function (a) {
-      return EVAL(a, ctx, resolveString);
+      return EVAL(a, ctx, resolveOptions);
     }); // evaluate arguments
 
     if (op.ast) {
@@ -3862,7 +3861,7 @@ function sql_where_context(_vars) {
           if (r[0] === '$') {
             /* FIXME !!!
             _context contains just hash with defined vars (key/value).
-            $(expr) inside sql_where should resolve to vars or generate exception with user refer to not defioned var!!!
+            $(expr) inside sql_where should resolve to vars or generate exception with user refer to not defined var!!!
             it is better than default eval_lisp behavior where undefined var reolves to itself (atom). 
             */
             //var_expr = eval_lisp(r[1], _context);
@@ -4386,6 +4385,7 @@ function tokenize(s) {
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["c"] = db_quote_literal;
 /* harmony export (immutable) */ __webpack_exports__["b"] = db_quote_ident;
+/* unused harmony export reports_get_columns */
 /* unused harmony export reports_get_column_info */
 /* unused harmony export reports_get_table_sql */
 /* unused harmony export reports_get_join_path */
@@ -4405,6 +4405,294 @@ function db_quote_literal(intxt) {
 }
 function db_quote_ident(intxt) {
   return '"' + intxt.toString() + '"';
+} // for debugging outside of database !!!
+
+function reports_get_columns(cubeId) {
+  var r = [{
+    "id": "ch.fot_out.dt",
+    "type": "PERIOD",
+    "title": "dt",
+    "sql_query": "dt",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.hcode_id",
+    "type": "NUMBER",
+    "title": "hcode_id",
+    "sql_query": "hcode_id",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.hcode_name",
+    "type": "STRING",
+    "title": "hcode_name",
+    "sql_query": "hcode_name",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.unit_name",
+    "type": "STRING",
+    "title": "unit_name",
+    "sql_query": "unit_name",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.date_type_id",
+    "type": "NUMBER",
+    "title": "date_type_id",
+    "sql_query": "date_type_id",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.dor_id",
+    "type": "NUMBER",
+    "title": "dor_id",
+    "sql_query": "dor_id",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.dor_tlg",
+    "type": "STRING",
+    "title": "dor_tlg",
+    "sql_query": "dor_tlg",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.dor_name",
+    "type": "STRING",
+    "title": "dor_name",
+    "sql_query": "dor_name",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.obj_id",
+    "type": "NUMBER",
+    "title": "obj_id",
+    "sql_query": "obj_id",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.tlg",
+    "type": "STRING",
+    "title": "tlg",
+    "sql_query": "tlg",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.obj_name",
+    "type": "STRING",
+    "title": "obj_name",
+    "sql_query": "obj_name",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.oe_type",
+    "type": "STRING",
+    "title": "oe_type",
+    "sql_query": "oe_type",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.priox_int",
+    "type": "NUMBER",
+    "title": "priox_int",
+    "sql_query": "priox_int",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.type_oe_bi",
+    "type": "STRING",
+    "title": "type_oe_bi",
+    "sql_query": "type_oe_bi",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.dor1",
+    "type": "STRING",
+    "title": "dor1",
+    "sql_query": "dor1",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.dor2",
+    "type": "STRING",
+    "title": "dor2",
+    "sql_query": "dor2",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.dor3",
+    "type": "STRING",
+    "title": "dor3",
+    "sql_query": "dor3",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.dor4",
+    "type": "STRING",
+    "title": "dor4",
+    "sql_query": "dor4",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.dor5",
+    "type": "STRING",
+    "title": "dor5",
+    "sql_query": "dor5",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.dor6",
+    "type": "STRING",
+    "title": "dor6",
+    "sql_query": "dor6",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.branch1",
+    "type": "STRING",
+    "title": "branch1",
+    "sql_query": "branch1",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.branch2",
+    "type": "STRING",
+    "title": "branch2",
+    "sql_query": "branch2",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.branch3",
+    "type": "STRING",
+    "title": "branch3",
+    "sql_query": "branch3",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.branch4",
+    "type": "STRING",
+    "title": "branch4",
+    "sql_query": "branch4",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.branch5",
+    "type": "STRING",
+    "title": "branch5",
+    "sql_query": "branch5",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.branch6",
+    "type": "STRING",
+    "title": "branch6",
+    "sql_query": "branch6",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.ss1",
+    "type": "STRING",
+    "title": "ss1",
+    "sql_query": "ss1",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.ss2",
+    "type": "STRING",
+    "title": "ss2",
+    "sql_query": "ss2",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.ss3",
+    "type": "STRING",
+    "title": "ss3",
+    "sql_query": "ss3",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.ss4",
+    "type": "STRING",
+    "title": "ss4",
+    "sql_query": "ss4",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.ss5",
+    "type": "STRING",
+    "title": "ss5",
+    "sql_query": "ss5",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.ss6",
+    "type": "STRING",
+    "title": "ss6",
+    "sql_query": "ss6",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.indicator_v",
+    "type": "NUMBER",
+    "title": "indicator_v",
+    "sql_query": "indicator_v",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.group_pay_name",
+    "type": "STRING",
+    "title": "group_pay_name",
+    "sql_query": "group_pay_name",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.pay_name",
+    "type": "STRING",
+    "title": "pay_name",
+    "sql_query": "pay_name",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.category_name",
+    "type": "STRING",
+    "title": "category_name",
+    "sql_query": "category_name",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.sex_name",
+    "type": "STRING",
+    "title": "sex_name",
+    "sql_query": "sex_name",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.area_name",
+    "type": "STRING",
+    "title": "area_name",
+    "sql_query": "area_name",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.region_name",
+    "type": "STRING",
+    "title": "region_name",
+    "sql_query": "region_name",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.municipal_name",
+    "type": "STRING",
+    "title": "municipal_name",
+    "sql_query": "municipal_name",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.prod_group_name",
+    "type": "STRING",
+    "title": "prod_group_name",
+    "sql_query": "prod_group_name",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.profession_name",
+    "type": "STRING",
+    "title": "profession_name",
+    "sql_query": "profession_name",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.v_main",
+    "type": "SUM",
+    "title": "v_main",
+    "sql_query": "v_main",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.v_rel_fzp",
+    "type": "SUM",
+    "title": "v_rel_fzp",
+    "sql_query": "v_rel_fzp",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.v_rel_pp",
+    "type": "SUM",
+    "title": "v_rel_pp",
+    "sql_query": "v_rel_pp",
+    "config": {}
+  }];
+  var parts = cubeId.split('.');
+  var res = {};
+  res[parts[0]] = {};
+  var deep = {};
+  r.map(function (el) {
+    var ids = el.id.split('.');
+    el["_ds"] = ids[0];
+    el["_cube"] = ids[1];
+    el["_col"] = ids[2];
+    deep[el["_col"]] = el;
+    res[el.id] = el;
+  });
+  res[parts[0]][parts[1]] = deep;
+  return res;
 }
 function reports_get_column_info(srcId, col) {
   var parts = col.split('.');

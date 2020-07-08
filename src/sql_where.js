@@ -390,7 +390,7 @@ export function sql_where_context(_vars) {
             if (r[0] === '$') {
               /* FIXME !!!
               _context contains just hash with defined vars (key/value).
-              $(expr) inside sql_where should resolve to vars or generate exception with user refer to not defioned var!!!
+              $(expr) inside sql_where should resolve to vars or generate exception with user refer to not defined var!!!
               it is better than default eval_lisp behavior where undefined var reolves to itself (atom). 
               */
               //var_expr = eval_lisp(r[1], _context);

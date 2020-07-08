@@ -8,9 +8,18 @@ export function db_quote_ident(intxt) {
     return plv8.quote_ident(intxt);
 }
 
-/* will make select from the local PostgreSQL */
-/* col must be 3-elements: srcId, table, colname */
 
+export function reports_get_columns(srcId, cubeId) {
+    var rows = plv8.execute( 'SELECT id, sql_query, "type", config FROM koob.dimensions WHERE id LIKE $1', [`${cubeId}%`] );
+    if (rows.length > 0) {
+        return rows;
+    }
+    throw new Error("Can not find column descriptions in the koob.cube " + cubeId);
+
+}
+
+/* will make select from the local PostgreSQL */
+/* col must be 3-elements: srcId.table.colname */
 export function reports_get_column_info(srcId, col) {
     // on Error plv8 will generate Exception!
     var id = col

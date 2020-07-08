@@ -4,6 +4,7 @@ import {deparse} from './lped';
 import {eval_lisp} from './lisp';
 import {sql_where_context, eval_sql_where} from './sql_where';
 import {sql_context, eval_sql_expr, parse_sql_expr, generate_report_sql} from './sql_context';
+import {generate_koob_sql} from './sql_koob';
 
 
 function eval_lpe(lpe, ctx) {
@@ -21,7 +22,8 @@ export {
   eval_sql_where,
   eval_sql_expr,
   parse_sql_expr,
-  generate_report_sql
+  generate_report_sql,
+  generate_koob_sql
 };
 
 

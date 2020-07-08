@@ -15,12 +15,12 @@ import console from './console/console';
 import {parse, LPESyntaxError} from './lpep';
 
 
-const isArray = (arg) => Object.prototype.toString.call(arg) === '[object Array]';
-const isString = (arg) => (typeof arg === 'string');
-const isNumber = (arg) => (typeof arg === 'number');
-const isBoolean = (arg) => arg === true || arg === false;
-const isHash = (arg) => (typeof arg === 'object') && (arg !== null) && !isArray(arg);
-const isFunction = (arg) => (typeof arg === 'function');
+export const isArray = (arg) => Object.prototype.toString.call(arg) === '[object Array]';
+export const isString = (arg) => (typeof arg === 'string');
+export const isNumber = (arg) => (typeof arg === 'number');
+export const isBoolean = (arg) => arg === true || arg === false;
+export const isHash = (arg) => (typeof arg === 'object') && (arg !== null) && !isArray(arg);
+export const isFunction = (arg) => (typeof arg === 'function');
 
 
 /**
@@ -29,21 +29,21 @@ const isFunction = (arg) => (typeof arg === 'function');
  * @param {*} varName - the name of variable
  * @param {*} value - optional value to set (undefied if get)
  */
-function $var$(ctx, varName, value) {
+function $var$(ctx, varName, value, resolveOptions) {
   if (isArray(ctx)) {                                                           // contexts chain
     for (let theCtx of ctx) {
       const result = $var$(theCtx, varName);
       if (result === undefined) continue;                                       // no such var in context
       if (value === undefined) return result;                                   // get => we've got a result
-      return $var$(theCtx, varName, value);                                     // set => redirect 'set' to context with variable.
+      return $var$(theCtx, varName, value, resolveOptions);                                     // set => redirect 'set' to context with variable.
     }
     if (value === undefined) return undefined;                                  // get => variable not found in all contexts
-    if (ctx.length) $var$(ctx[0], varName, value);                              // set => set variable to HEAD context
+    if (ctx.length) $var$(ctx[0], varName, value, resolveOptions);                              // set => set variable to HEAD context
     return undefined;                                                           // ??? ctx.length = 0
   }
   
   if (isFunction(ctx)) {
-    return ctx(varName, value);
+    return ctx(varName, value, resolveOptions);
   }
 
   if (isHash(ctx)) {
@@ -355,15 +355,15 @@ function env_bind(ast, ctx, exprs) {
 }
 
 
-function EVAL(ast, ctx, resolveString = true) {
+function EVAL(ast, ctx, resolveOptions) {
   while (true) {
     if (!isArray(ast)) {                                                        // atom
       if (isString(ast)) {
-        const value = $var$(ctx, ast);
+        const value = $var$(ctx, ast, undefined, resolveOptions);
         if (value !== undefined) {                                              // variable
           return value;
         }
-        return resolveString ? ast : undefined;                                 // if string and not in ctx
+        return resolveOptions.resolveString ? ast : undefined;                                 // if string and not in ctx
       }
       return ast;
     }
@@ -375,18 +375,18 @@ function EVAL(ast, ctx, resolveString = true) {
 
     const [opAst, ...argsAst] = ast;
 
-    const op = EVAL(opAst, ctx, resolveString);                                 // evaluate operator
+    const op = EVAL(opAst, ctx, {... resolveOptions, wantCallable: true});                                 // evaluate operator
 
     if (typeof op !== 'function') {
       throw new Error('Error: ' + String(op) + ' is not a function');
     }
 
     if (isSF(op)) {                                                             // special form
-      const sfResult = op(argsAst, ctx, resolveString);
+      const sfResult = op(argsAst, ctx, resolveOptions);
       return sfResult;
     }
 
-    const args = argsAst.map(a => EVAL(a, ctx, resolveString));                 // evaluate arguments
+    const args = argsAst.map(a => EVAL(a, ctx, resolveOptions));                 // evaluate arguments
 
     if (op.ast) {
       ast = op.ast[0];

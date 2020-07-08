@@ -165,7 +165,8 @@ export function sql_context(_vars) {
         if (a[0] === '::' && a.length == 3) {
           return a[1] + '::' + a[2];
         } else if (a[0] === ':') {
-          return prnt(a[1]) + ' as "' + a[2].replace(/"/,'\\"') + '"';
+          return eval_lisp(a, _context);
+          //return prnt(a[1]) + ' as "' + a[2].replace(/"/,'\\"') + '"';
         } else if (a[0] === "->") {
           // наш LPE использует точку, как разделитель вызовов функций и кодирует её как ->
           // в логических выражениях мы это воспринимаем как ссылку на <ИМЯ СХЕМЫ>.<ИМЯ ТАБЛИЦЫ>
@@ -188,7 +189,13 @@ export function sql_context(_vars) {
   _context['->'] = function() {
     var a = Array.prototype.slice.call(arguments);
     console.log("->   " + JSON.stringify(a));
-    return a.map( a => '"'+ a + '"').join('.');
+    return a.join('.');
+  }
+
+  _context[':'] = function() {
+    var a = Array.prototype.slice.call(arguments);
+    console.log("->   " + JSON.stringify(a));
+    return prnt(a[0]) + ' as ' + a[1].replace(/"/,'\\"');
   }
 
 
@@ -683,7 +690,7 @@ _context['generate_sql_struct_for_report'] = function(cfg) {
     // This is hack to implement AGGFN type !
     if (col_info["config"]["aggFormula"]) {
       // We should remove column from GROUP BY
-      // group_by is global, it is sad
+      // group_by is global, it is sad but true
       group_by = group_by.filter( id => id !== h["id"] )
     }
 
@@ -697,6 +704,7 @@ _context['generate_sql_struct_for_report'] = function(cfg) {
     // oracle has limit 30 chars in identifier!
     // we can skip it for now.
     return `${wrapped_column_sql}`
+    // return [':', `${wrapped_column_sql}`, 'abc']
   }))
 
   if (group_by.length === cfg["columns"].length) {

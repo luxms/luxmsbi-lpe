@@ -202,6 +202,30 @@ describe('LPE tests', function() {
     );
     });
 
+    it('should eval KOOB queries', function() {
+      assert.equal( lpe.generate_koob_sql(
+         {
+            "with":"ch.fot_out",
+              "filters": {
+              "dor1": ["=", "ГОРЬК"],
+              "dor2": ["=", "ПОДГОРЬК"],
+              "dor4": ["=", null],
+              "dor5": ["=", null],
+              "dt": ["BETWEEN", "2020-01", "2020-12"],
+              "sex_name": ["=", "Мужской"],
+              "": [">", ["+",["col1", "col2"]], 100]
+            },
+            "having": {
+              "dt": [">","2020-08"],
+            },
+            "columns": ["dt", "ch.fot_out.branch4", "fot_out.ss1", 'sum((v_main+utils.func(v_rel_fzp))/100):summa', {"new":"obj_name"}, ["sum", ["column","v_rel_pp"]],  {"new":  ["avg", ["+",["column","ch.fot_out.indicator_v"],["column","v_main"]]]} ],
+            "sort": ["-dor1","val1",["-","val2"],"-czt.fot.dor2", "summa"]
+            },
+          {"period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
+          'SELECT a,b,"department_code"."alias",no::TEXT,max(credits) FROM "bm"."tbl" WHERE a > 1 ORDER BY a,b DESC'
+      );
+  });
+
 
 
     
