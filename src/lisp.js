@@ -400,8 +400,8 @@ function EVAL(ast, ctx, resolveOptions) {
 } // EVAL
 
 
-export function eval_lisp(ast, ctx) {
-  const result = EVAL(ast, [ctx || {}, STDLIB]);
+export function eval_lisp(ast, ctx, options) {
+  const result = EVAL(ast, [ctx || {}, STDLIB], options || {"resolveString": true});
   return result;
 }
 

@@ -9,7 +9,7 @@ describe('LPE tests', function() {
         assert.equal( lpe.eval_sql_expr(
             'from(bm.tbl).select(a,b,department_code.alias, no::TEXT, max(credits)).filter(a>1).order_by(a,-b)',
             {"period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
-            'SELECT a,b,"department_code"."alias",no::TEXT,max(credits) FROM "bm"."tbl" WHERE a > 1 ORDER BY a,b DESC'
+            'SELECT a,b,department_code.alias,no::TEXT,max(credits) FROM bm.tbl WHERE a > 1 ORDER BY a,b DESC'
         );
     });
 

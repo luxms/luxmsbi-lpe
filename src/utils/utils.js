@@ -9,7 +9,7 @@ export function db_quote_ident(intxt) {
 
 // for debugging outside of database !!!
 export function reports_get_columns(cubeId) {
-     var r = [{"id":"ch.fot_out.dt","type":"PERIOD","title":"dt","sql_query":"dt","config":{}}, {"id":"ch.fot_out.hcode_id","type":"NUMBER","title":"hcode_id","sql_query":"hcode_id",
+     var r = [{"id":"ch.fot_out.dt","type":"PERIOD","title":"dt","sql_query":"NOW() - INERVAL '1 DAY'","config":{}}, {"id":"ch.fot_out.hcode_id","type":"NUMBER","title":"hcode_id","sql_query":"hcode_id",
      "config":{}}, {"id":"ch.fot_out.hcode_name","type":"STRING","title":"hcode_name","sql_query":"hcode_name","config":{}}, {"id":"ch.fot_out.unit_name","type":"STRING","title":
      "unit_name","sql_query":"unit_name","config":{}}, {"id":"ch.fot_out.date_type_id","type":"NUMBER","title":"date_type_id","sql_query":"date_type_id","config":{}}, {"id"
      :"ch.fot_out.dor_id","type":"NUMBER","title":"dor_id","sql_query":"dor_id","config":{}}, {"id":"ch.fot_out.dor_tlg","type":"STRING","title":"dor_tlg","sql_query":"dor_tlg",
@@ -28,8 +28,8 @@ export function reports_get_columns(cubeId) {
      "sql_query":"ss3","config":{}}, {"id":"ch.fot_out.ss4","type":"STRING","title":"ss4","sql_query":"ss4","config":{}}, {"id":"ch.fot_out.ss5","type":"STRING","title":"ss5",
      "sql_query":"ss5","config":{}}, {"id":"ch.fot_out.ss6","type":"STRING","title":"ss6","sql_query":"ss6","config":{}}, {"id":"ch.fot_out.indicator_v","type":"NUMBER","title":
      "indicator_v","sql_query":"indicator_v","config":{}}, {"id":"ch.fot_out.group_pay_name","type":"STRING","title":"group_pay_name","sql_query":"group_pay_name","config":{}}, 
-     {"id":"ch.fot_out.pay_name","type":"STRING","title":"pay_name","sql_query":"pay_name","config":{}}, {"id":"ch.fot_out.category_name","type":"STRING","title":"category_name"
-     ,"sql_query":"category_name","config":{}}, {"id":"ch.fot_out.sex_name","type":"STRING","title":"sex_name","sql_query":"sex_name","config":{}}, {"id":"ch.fot_out.area_name",
+     {"id":"ch.fot_out.pay_name","type":"STRING","title":"pay_name","sql_query":"pay_name","config":{"memberALL":null}}, {"id":"ch.fot_out.category_name","type":"STRING","title":"category_name"
+     ,"sql_query":"category_name","config":{}}, {"id":"ch.fot_out.sex_name","type":"STRING","title":"sex_name","sql_query":"sex_name","config":{"memberALL":""}}, {"id":"ch.fot_out.area_name",
      "type":"STRING","title":"area_name","sql_query":"area_name","config":{}}, {"id":"ch.fot_out.region_name","type":"STRING","title":"region_name","sql_query":"region_name"
      ,"config":{}}, {"id":"ch.fot_out.municipal_name","type":"STRING","title":"municipal_name","sql_query":"municipal_name","config":{}}, {"id":"ch.fot_out.prod_group_name",
      "type":"STRING","title":"prod_group_name","sql_query":"prod_group_name","config":{}}, {"id":"ch.fot_out.profession_name","type":"STRING","title":"profession_name","sql_query":

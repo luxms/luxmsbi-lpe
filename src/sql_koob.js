@@ -58,7 +58,7 @@ import {
 3) выполнить eval для части columns -> получить массив структур, готовых к построению части SELECT.
    'sum((val3+val1)/100):summa' ===> 
    {
-     expr: ["sum",["/",["+",["column","czt.fot.val3"],["column","czt.fot.val1"]],100]],
+     expr: 'sum((fot.val3+fot.val1)/100)',
      alias: "summa",
      columns: ["czt.fot.val3","czt.fot.val1"],
      agg: true
@@ -68,13 +68,16 @@ import {
 4) на основе columns_struct вычислить group_by, проверить, требуется ли JOIN.
 5) при вычислении фильтров, учесть group_by и сделать дополнение для столбцов, у которых в конфиге указано как селектить ALL
 6) создать какое-то чудо, которое будет печатать SQL из этих структур.
+7) при генерации SQL в ПРОСТОМ случае, когда у нас один единственный куб, генрим КОРОТКИЕ имена столбцов
 */
 
 
 
 /***************************************************************
- * Дописывает имена столбцов в структуре _cfg, до полных имён, используя префикс w, там, где это очевидно
+ * Дописывает имена столбцов в структуре _cfg, до полных имён, используя префикс cube_prefix, там, где это очевидно.
+ * простые тексты переводит в LPE скоботу
  * Считаем, что любой встреченный литерал является именем столбца.
+ * в контексте ctx[_columns] должны быть описания столбцов из базы
  */
 function normalize_koob_config(_cfg, cube_prefix, ctx) {
   var parts = cube_prefix.split('.')
@@ -83,7 +86,7 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
   var ret = {"ds":ds, "cube":cube, "filters":{}, "having":{}, "columns":[], "limit": _cfg["limit"], "offset": _cfg["offset"]}
   var aliases = {}
 
-  /* FIXME: expand_column лучше делать в процессе выполнения LPE, там будет вся инфа про куб, и про его дименшены. 
+  /* expand_column также будем делать в процессе выполнения LPE, там будет вся инфа про куб, и про его дименшены. 
      мы будем точно знать, является ли суффикс именем столбца из куба или нет.
      То есть нужна правильная реализация функции column и правильная реализация для неизвестного литерала, с учётом алиасов !!!
   */
@@ -94,13 +97,15 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
       : col
   }
 
-  // для фильтров заменяем ключи4
+
+  // для фильтров заменяем ключи на полные имена
   Object.keys(_cfg["filters"]).filter(k => k !== "").map( 
-    key => ret["filters"][expand_column(key)] = _cfg["filters"][key] )
+    key => {ret["filters"][expand_column(key)] = _cfg["filters"][key]} )
 
   // probably we should use aliased columns a AS b!!
   Object.keys(_cfg["having"]).filter(k => k !== "").map( 
     key => ret["having"][expand_column(key)] = _cfg["having"][key] )
+
 
 
   // "sort": ["-dor1","val1",["-","val2"],"-czt.fot.dor2", ["-",["column","val3"]]]
@@ -134,12 +139,18 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
   // "columns": ["dor3", "src.cube.dor4", "cube.col", 'sum((val3+val1)/100):summa', {"new":"old"}, ["sum", ["column","val2"]],  {"new":  ["avg", ["+",["column","val2"],["column","val3"]]]} ],
   /* возвращает примерно вот такое:
   [["column","ch.fot_out.dor3"],["->","src","cube","dor4"],["->","cube","col"],[":",["sum",["/",["()",["+","val3","val1"]],100]],"summa"],[":",["column","ch.fot_out.old"],"new"],["sum",["column","val2"]],[":",["avg",["+",["column","val2"],["column","val3"]]],"new"]]
+  простые случаи раскладывает в скоботу сразу, чтобы не запускать eval_lisp
   */
   var expand_column_expression = function(el) {
     if (isString(el)) {
       // do not call parse on simple strings, which looks like column names !!!
       if (el.match(/^[a-zA-Z_]\w+$/) !== null) {
         return ["column", expand_column( el )]
+      }
+
+      // exactly full column name, но может быть лучше это скинуть в ->
+      if (el.match(/^([a-zA-Z_]\w+\.){1,2}[a-zA-Z_]\w+$/) !== null) {
+        return ["column",  el]
       }
       var ast = parse(el)
       if (typeof ast === 'string') {
@@ -163,44 +174,44 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
     }
   })
 
-  //
-
-  console.log(`COLUMNS: ${JSON.stringify(ret)}`)
-       
-
+  //console.log(`COLUMNS: ${JSON.stringify(ret)}`)
 
   return ret;
 }
 
 /*********************************
  * 
- * 
- * 
- * 
+ * init_koob_context
+ * на входе контекст может быть массивом, а может быть хэшем. Стало сложнее с этим работать!
+ * Cчитаем, что на входе может быть только хэш с уже прочитанными именами столбцов!!
  */
 
-function init_koob_context(_vars) {
-  var _ctx = {}
-  if (isArray(_vars)){
-    _vars.unshift(_ctx)
-    _ctx = _vars
-  } else {
+function init_koob_context(_vars, default_ds, default_cube) {
+  var _ctx = [] // это контекст где будет сначала список переменных, включая _columns, и функции
+  if (isHash(_vars)){
     _ctx = [_vars]
   }
-
   var _context = _ctx[0];
 
+  // функция, которая резолвит имена столбцов для случаев, когда имя функции не определено в явном виде в _vars/_context
   _ctx.push(
     (key, val, resolveOptions) => {
-      console.log(`WANT to resolve ${key}`, JSON.stringify(resolveOptions));
-      if (_context["_columns"][key]) return key;
-      //if (_context["_columns"][_vars.ds][_vars.cube][key]) return `${_vars.ds}.${_vars.cube}.key`;
+      //console.log(`WANT to resolve ${key}`, JSON.stringify(resolveOptions));
+      // вызываем функцию column(ПолноеИмяСтолбца) если нашли столбец в дефолтном кубе
+      if (_context["_columns"][key]) return _context["column"](key)
+      if (_context["_columns"][default_ds][default_cube][key]) return _context["column"](`${default_ds}.${default_cube}.${key}`)
       
       if (key.match(/^\w+$/) && resolveOptions && resolveOptions.wantCallable) {
+        if (_context["_result"]){
+          if (['sum','avg','min','max','count'].find(el => el === key) ){
+            _context["_result"]["agg"] = true
+          }
+        }
+
         return function() {
           var a = Array.prototype.slice.call(arguments);
-          console.log(`FUNC RESOLV ${key}`, JSON.stringify(a))
-          return `${key}(...)`
+          //console.log(`FUNC RESOLV ${key}`, JSON.stringify(a))
+          return `${key}(${a.join(',')})`
         }
       } else if (resolveOptions && resolveOptions.wantCallable) {
         return function() {
@@ -209,29 +220,35 @@ function init_koob_context(_vars) {
         }
       }
 
-      console.log(`DID NOT resolved ${key}`);
+      //console.log(`DID NOT resolved ${key}`);
 
       return key
     }
   )
 
+  
   _context["column"] = function(col) {
-
-    /*
-    var col_info = reports_get_column_info(_cfg["sourceId"], col)
-    var col_sql = col_info["sql_query"]
-    if ( col_sql.match( /^\S+$/ ) === null ) {
-      // we have whitespace here, so it is complex expression :-()
-      return `${col_sql}`
+    // считаем, что сюда приходят только полностью резолвенные имена с двумя точками...
+    var c = _context["_columns"][col]
+    if (c) {
+      if (_context["_result"]){
+        _context["_result"]["columns"].push(col)
+      }
+      if (c.sql_query.match( /^\S+$/ ) === null) {
+        // we have whitespace here, so it is complex expression :-()
+        return `(${c.sql_query})`
+      } else {
+        // we have just column name, prepend table alias !
+        var parts = col.split('.')
+        return `${parts[1]}.${parts[2]}`
+      }
     }
-    // we have just column name, prepend table alias !
-    var parts = col.split('.')
-    return `${parts[1]}.${col_sql}`
-    */
-
+    // возможно кто-то вызовет нас с коротким именем - нужно знать дефолт куб!!!
+    //if (_context["_columns"][default_ds][default_cube][key]) return `${default_cube}.${key}`;
     return col;
   }
 
+  // сюда должны попадать только хитрые варианты вызова функций с указанием схемы типа utils.smap()
   _context["->"] = function() {
     var a = Array.prototype.slice.call(arguments);
     console.log("-> !" , JSON.stringify(a))
@@ -246,6 +263,13 @@ function init_koob_context(_vars) {
 
     //console.log("AS   " + JSON.stringify(_ctx));
     var otext = eval_lisp(o, _ctx)
+    if (_context["_result"]){
+      // мы кидаем значение alias в _result, это подходит для столбцов
+      // для TABLE as alias не надо вызывать _result
+      _context["_result"]["alias"] = n
+      return otext
+    }
+  
     return `${otext} as ${n}`
   }
   _context[':'].ast = [[],{},[],1]; // mark as macro
@@ -257,6 +281,38 @@ function init_koob_context(_vars) {
   return _ctx;
 } 
 
+
+  /* В итоге у нас получается явный GROUP BY по указанным столбцам-dimensions и неявный group by по всем остальным dimensions куба.
+   Свободные дименшены могут иметь мембера ALL, и во избежание удвоения сумм, требуется ВКЛЮЧИТЬ мембера ALL в суммирование как некий кэш.
+   Другими словами, по ВСЕМ свободным дименшенам, у которых есть мембер ALL (см. конфиг) требуется добавить фильтр dimX = 'ALL' !
+
+   Для указанных явно дименшенов доп. условий не требуется, клиент сам будет разбираться с результатом
+  */
+
+function  inject_all_member_filters(_cfg, columns) {
+  var h = {};
+  // заполняем хэш h длинными именами столбцов, по которым явно есть GROUP BY
+  _cfg["_group_by"].map(el => {
+    el.columns.map(e => h[e] = true)
+  })
+
+  // Ищем dimensions, по которым явно указан memeber ALL, и которых НЕТ в нашем явном списке...
+  Object.values(columns).map(el => {
+    if (h[el.id] === true) return // столбец уже есть в списке group by!
+    if (isHash(el.config)) {
+      if (el.config.memberALL === null || isString(el.config.memberALL)) {
+         // есть значение для члена ALL, и оно в виде строки или IS NULL
+         // добавляем фильтр, но только если по этому столбцу нет другого фильтра!!!
+         // по ключу filters ещё не было нормализации !!! 
+         if (!isArray(_cfg["filters"][el.id])){
+          _cfg["filters"][el.id] = ["=",el.config.memberALL]
+         }
+      }
+    }
+  })
+
+  return _cfg;
+}
 
 export function generate_koob_sql(_cfg, _vars) {
 
@@ -288,16 +344,59 @@ export function generate_koob_sql(_cfg, _vars) {
     // это корректный префикс: "дс.перв"."куб.2"  так что тупой подсчёт точек не катит.
     if ( w.match( /^("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)$/) !== null ) {
       _cfg = normalize_koob_config(_cfg, w, _context);
+      var target_db_type = get_source_database(w.split('.')[0])
+      _context["_target_database"] = target_db_type
     } else {
       // это строка, но она не поддерживается, так как либо точек слишком много, либо они не там, либо их нет
       throw new Error(`Request contains with key, but it has the wrong format: ${w} Should be datasource.cube with exactly one dot in between.`)
     }
+  } else {
+    throw new Error(`Default cube must be specified in with key`)
   }
 
-  _context = init_koob_context(_context)
+  _context = init_koob_context(_context, _cfg["ds"], _cfg["cube"])
   
-  var res = _cfg["columns"].map(el => eval_lisp(el, _context))
-  return res;
+  console.log("NORMALIZED CONFIG: ", JSON.stringify(_cfg))
+
+  /*
+    while we evaluating each column, koob_context will fill JSON structure in the context like this:
+   {
+     expr: "sum((fot.val3+fot.val1)/100) as summa",
+     alias: "summa",
+     columns: ["czt.fot.val3","czt.fot.val1"],
+     agg: true
+   }
+  */
+
+  var columns_s = [];
+  var columns = _cfg["columns"].map(el => {
+                                      _context[0]["_result"] = {"columns":[]}
+                                      var r = eval_lisp(el, _context)
+                                      columns_s.push(_context[0]["_result"])
+                                      return r})
+  _context[0]["_result"] = null
+  for (var i=0; i<columns.length; i++){
+    columns_s[i]["expr"] = columns[i]
+  }
+
+  // ищем кандидатов для GROUP BY и заполняем оригинальную структуру служебными полями
+  _cfg["_group_by"] = []
+  _cfg["_measures"] = []
+  columns_s.map(el => (el["agg"] === true) ? _cfg["_measures"].push(el) : _cfg["_group_by"].push(el))
+  _cfg["_columns"] = columns_s
+
+  /* В итоге у нас получается явный GROUP BY по указанным столбцам-dimensions и неявный group by по всем остальным dimensions куба.
+   Свободные дименшены могут иметь мембера ALL, и во избежание удвоения сумм, требуется ВКЛЮЧИТЬ мембера ALL в суммирование как некий кэш.
+   Другими словами, по ВСЕМ свободным дименшенам, у которых есть мембер ALL (см. конфиг) требуется добавить фильтр dimX = 'ALL' !
+
+   Для указанных явно дименшенов доп. условий не требуется, клиент сам будет разбираться с результатом
+  */
+
+  //console.log("CONTEXT", JSON.stringify(_context))
+  _cfg = inject_all_member_filters(_cfg, _context[0]["_columns"])
+
+  console.log(JSON.stringify(_cfg))
+  return _cfg;
 
   /* while we wrapping aggregate functions around columns, we should keep track of the free columns, so we will be able to
      generate correct group by !!!!
