@@ -137,3 +137,18 @@ $body$;
 COMMENT ON FUNCTION lpe.generate_report_sql(JSONB,JSONB) IS
 $$Выполняет разбор LPE выражения и выдаёт SQL запрос в виде текста. На вход подаются конфиги для отчётов.$$;
 
+
+CREATE OR REPLACE FUNCTION
+lpe.generate_koob_sql(_struct JSONB, _vars JSONB DEFAULT '{}')
+RETURNS TEXT
+LANGUAGE 'plv8' STABLE
+AS $body$
+
+  return plv8.lpe.generate_koob_sql(_struct, _vars);
+
+$body$;
+
+COMMENT ON FUNCTION lpe.generate_report_sql(JSONB,JSONB) IS
+$$Интерпретирует входящую структуру данных и выдаёт SQL запрос в виде текста.$$;
+
+

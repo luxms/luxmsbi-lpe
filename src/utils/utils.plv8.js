@@ -9,10 +9,25 @@ export function db_quote_ident(intxt) {
 }
 
 
-export function reports_get_columns(srcId, cubeId) {
-    var rows = plv8.execute( 'SELECT id, sql_query, "type", config FROM koob.dimensions WHERE id LIKE $1', [`${cubeId}%`] );
-    if (rows.length > 0) {
-        return rows;
+export function reports_get_columns(cubeId) {
+    var r = plv8.execute( 'SELECT id, sql_query, "type", config FROM koob.dimensions WHERE id LIKE $1', [`${cubeId}%`] );
+    if (r.length > 0) {
+        var parts = cubeId.split('.')
+
+        var res = {}
+        res[parts[0]] = {}
+        
+        var deep = {}
+        r.map(el => {
+             var ids = el.id.split('.')
+             el["_ds"] = ids[0]
+             el["_cube"] = ids[1]
+             el["_col"] = ids[2]
+             deep[el["_col"]] = el
+             res[el.id] = el
+        })
+        res[parts[0]][parts[1]] = deep
+        return res;
     }
     throw new Error("Can not find column descriptions in the koob.cube " + cubeId);
 
@@ -38,10 +53,12 @@ export function reports_get_table_sql(target_db_type, tbl) {
     var rows = plv8.execute( 'SELECT sql_query FROM koob.cubes WHERE id = $1', [id] );
     if (rows.length > 0) {
         var parts = tbl.split('.')
+        var sql = rows[0].sql_query
+        if (sql.match(/ /) !== null) sql = `(${sql})` // it's select ... FROM or something like this
         if (target_db_type === 'oracle') {
-            return `(${rows[0].sql_query}) "${parts[1]}"`
+            return `${sql} ${parts[1]}`
         }
-        return `(${rows[0].sql_query}) AS "${parts[1]}"`
+        return `${sql} AS ${parts[1]}`
     }
     throw new Error("Can not find table description in the koob.cubes for table " + id);
 }

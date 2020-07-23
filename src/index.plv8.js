@@ -55,7 +55,8 @@ export {
   sql_context,
   eval_sql_expr,
   parse_sql_expr,
-  generate_report_sql
+  generate_report_sql,
+  generate_koob_sql
 };
 
 

@@ -208,22 +208,81 @@ describe('LPE tests', function() {
             "with":"ch.fot_out",
               "filters": {
               "dor1": ["=", "ГОРЬК"],
-              "dor2": ["=", "ПОДГОРЬК"],
-              "dor4": ["=", null],
+              "dor2": ["=", "ПОДГОРЬК","ХИМ",null,"ПРОМ"],
+              "dor4": ["=", ''],
               "dor5": ["=", null],
-              "dt": ["BETWEEN", "2020-01", "2020-12"],
+              "dor3": ["=", 'null'],
+              "ss1":[">",5],
+              "ss2":[">","0"],
+              "dt": ["between", "2020-01", "2020-12"],
               "sex_name": ["=", "Мужской"],
               "": [">", ["+",["col1", "col2"]], 100]
             },
             "having": {
               "dt": [">","2020-08"],
             },
-            "columns": ["dt", "ch.fot_out.branch4", "fot_out.ss1", 'sum((v_main+utils.func(v_rel_fzp))/100):summa', {"new":"obj_name"}, ["sum", ["column","v_rel_pp"]],  {"new":  ["avg", ["+",["column","ch.fot_out.indicator_v"],["column","v_main"]]]} ],
-            "sort": ["-dor1","val1",["-","val2"],"-czt.fot.dor2", "summa"]
+            "columns": ["dt", "ch.fot_out.branch4", "fot_out.ss1", 'sum((v_main+utils.func(v_rel_fzp))/100):summa', {"new":"obj_name"}, ["sum", ["column","v_rel_pp"]], 'avg(sum(v_rel_pp))', {"new":  ["avg", ["+",["column","ch.fot_out.indicator_v"],["column","v_main"]]]} ],
+            "sort": ["-dor1","dt",["-","val2"],"-ch.fot_out.dor2", "summa"]
             },
-          {"period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
-          'SELECT a,b,"department_code"."alias",no::TEXT,max(credits) FROM "bm"."tbl" WHERE a > 1 ORDER BY a,b DESC'
+          {"key":null}),
+         `SELECT (NOW() - INERVAL '1 DAY') AS dt, fot_out.branch4 AS branch4, fot_out.ss1, sum((fot_out.v_main + utils.func(fot_out.v_rel_fzp)) / 100) AS summa, fot_out.obj_name AS new, sum(fot_out.v_rel_pp) AS v_rel_pp, avg(sum(fot_out.v_rel_pp)) AS v_rel_pp, avg(fot_out.indicator_v + fot_out.v_main) AS new
+FROM fot_out AS fot_out
+WHERE (fot_out.dor1 = 'ГОРЬК') AND (fot_out.dor2 IN ('ПОДГОРЬК', 'ХИМ', 'ПРОМ') OR fot_out.dor2 IS NULL) AND (fot_out.dor4 = '') AND (fot_out.dor5 IS NULL) AND (fot_out.dor3 = 'null') AND (fot_out.ss1 > '5') AND (fot_out.ss2 > '0') AND ((NOW() - INERVAL '1 DAY') BETWEEN '2020-01' AND '2020-12') AND (fot_out.sex_name = 'Мужской') AND (fot_out.pay_name IS NULL)
+GROUP BY (NOW() - INERVAL '1 DAY'), fot_out.branch4, fot_out.ss1, fot_out.obj_name
+ORDER BY fot_out.dor1 DESC, fot_out.dt, val2 DESC, fot_out.dor2 DESC, summa`
       );
+
+
+         // distinct
+      assert.equal( lpe.generate_koob_sql(
+         {
+            "with":"ch.fot_out",
+            "distinct":[],
+            "columns": ["ss2:title","dor3"]
+            },
+          {"key":null}),
+         `SELECT DISTINCT fot_out.ss2 AS title, fot_out.dor3 AS dor3
+FROM fot_out AS fot_out`
+      );
+
+
+      // group by with filters
+      assert.equal( lpe.generate_koob_sql(
+      {
+         "with":"ch.fot_out",
+           "filters": {
+           "dt": ["between", "2019-01", "2020-12"],
+         },
+         "columns": ["dt", "sex_name","dor2","ch.fot_out.branch3", "sum(v_rel_fzp)"],
+         "sort": ["dt"]
+         },
+         {"key":null}),
+         `SELECT (NOW() - INERVAL '1 DAY') AS dt, fot_out.sex_name AS sex_name, fot_out.dor2 AS dor2, fot_out.branch3 AS branch3, sum(fot_out.v_rel_fzp) AS v_rel_fzp
+FROM fot_out AS fot_out
+WHERE ((NOW() - INERVAL '1 DAY') BETWEEN '2019-01' AND '2020-12') AND (fot_out.pay_name IS NULL)
+GROUP BY (NOW() - INERVAL '1 DAY'), fot_out.sex_name, fot_out.dor2, fot_out.branch3
+ORDER BY fot_out.dt`
+      );
+
+
+            // simple group_by exclude alt filters!
+            assert.equal( lpe.generate_koob_sql(
+               {
+                  "with":"ch.fot_out",
+                    "filters": {
+                    "dt": ["between", "2019-01", "2020-12"]
+                  },
+                  "columns": ["dt", "sex_code", "sum(v_rel_fzp)"],
+                  "sort": ["dt"]
+                  },
+                  {"key":null}),
+`SELECT (NOW() - INERVAL '1 DAY') AS dt, fot_out.sex_code AS sex_code, sum(fot_out.v_rel_fzp) AS v_rel_fzp
+FROM fot_out AS fot_out
+WHERE ((NOW() - INERVAL '1 DAY') BETWEEN '2019-01' AND '2020-12') AND (fot_out.pay_name IS NULL)
+GROUP BY (NOW() - INERVAL '1 DAY'), fot_out.sex_code
+ORDER BY fot_out.dt`
+               );
+
   });
 
 

@@ -1887,7 +1887,7 @@ var STDLIB = _objectSpread({
   '#f': false,
   'NIL': null,
   'null': null,
-  // js specific
+  // we have problems in SQL generation with this constant        // js specific
   'true': true,
   'false': false,
   'Array': Array,
@@ -2384,8 +2384,10 @@ function EVAL(ast, ctx, resolveOptions) {
 } // EVAL
 
 
-function eval_lisp(ast, ctx) {
-  var result = EVAL(ast, [ctx || {}, STDLIB]);
+function eval_lisp(ast, ctx, options) {
+  var result = EVAL(ast, [ctx || {}, STDLIB], options || {
+    "resolveString": true
+  });
   return result;
 } // Use with care
 
@@ -4415,7 +4417,7 @@ function reports_get_columns(cubeId) {
     "id": "ch.fot_out.dt",
     "type": "PERIOD",
     "title": "dt",
-    "sql_query": "dt",
+    "sql_query": "NOW() - INERVAL '1 DAY'",
     "config": {}
   }, {
     "id": "ch.fot_out.hcode_id",
@@ -4620,7 +4622,9 @@ function reports_get_columns(cubeId) {
     "type": "STRING",
     "title": "pay_name",
     "sql_query": "pay_name",
-    "config": {}
+    "config": {
+      "memberALL": null
+    }
   }, {
     "id": "ch.fot_out.category_name",
     "type": "STRING",
@@ -4628,11 +4632,23 @@ function reports_get_columns(cubeId) {
     "sql_query": "category_name",
     "config": {}
   }, {
+    "id": "ch.fot_out.sex_code",
+    "type": "STRING",
+    "title": "sex_code",
+    "sql_query": "sex_code",
+    "config": {
+      "memberALL": "Все",
+      "altDimensions": ["fot_out.sex_name"]
+    }
+  }, {
     "id": "ch.fot_out.sex_name",
     "type": "STRING",
     "title": "sex_name",
     "sql_query": "sex_name",
-    "config": {}
+    "config": {
+      "memberALL": "Все",
+      "altDimensions": ["fot_out.sex_code"]
+    }
   }, {
     "id": "ch.fot_out.area_name",
     "type": "STRING",

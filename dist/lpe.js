@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2020/07/08 20:19:13 */ 
+/** [LPE]  Version: 1.0.0 - 2020/07/23 17:39:28 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -74,7 +74,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 90);
+/******/ 	return __webpack_require__(__webpack_require__.s = 89);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -145,7 +145,7 @@ if (typeof __g == 'number') __g = global; // eslint-disable-line no-undef
 /***/ (function(module, exports, __webpack_require__) {
 
 var anObject = __webpack_require__(1);
-var IE8_DOM_DEFINE = __webpack_require__(62);
+var IE8_DOM_DEFINE = __webpack_require__(63);
 var toPrimitive = __webpack_require__(50);
 var dP = Object.defineProperty;
 
@@ -228,7 +228,7 @@ var global = __webpack_require__(4);
 var hide = __webpack_require__(9);
 var has = __webpack_require__(12);
 var SRC = __webpack_require__(23)('src');
-var $toString = __webpack_require__(101);
+var $toString = __webpack_require__(100);
 var TO_STRING = 'toString';
 var TPL = ('' + $toString).split(TO_STRING);
 
@@ -305,7 +305,7 @@ module.exports = function (it, key) {
 /***/ (function(module, exports, __webpack_require__) {
 
 // to indexed object, toObject with fallback for non-array-like ES3 strings
-var IObject = __webpack_require__(64);
+var IObject = __webpack_require__(65);
 var defined = __webpack_require__(20);
 module.exports = function (it) {
   return IObject(defined(it));
@@ -351,7 +351,7 @@ module.exports = function (fn, that, length) {
 /***/ (function(module, exports, __webpack_require__) {
 
 // 19.1.2.14 / 15.2.3.14 Object.keys(O)
-var $keys = __webpack_require__(72);
+var $keys = __webpack_require__(73);
 var enumBugKeys = __webpack_require__(42);
 
 module.exports = Object.keys || function keys(O) {
@@ -376,7 +376,7 @@ module.exports = function (it) {
 
 "use strict";
 
-__webpack_require__(116);
+__webpack_require__(115);
 var anObject = __webpack_require__(1);
 var $flags = __webpack_require__(31);
 var DESCRIPTORS = __webpack_require__(2);
@@ -408,10 +408,10 @@ if (__webpack_require__(3)(function () { return $toString.call({ source: 'a', fl
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = parse;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_array_find__ = __webpack_require__(80);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_array_find__ = __webpack_require__(51);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_array_find___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_array_find__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__console_console__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__lpel__ = __webpack_require__(91);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__lpel__ = __webpack_require__(90);
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return __WEBPACK_IMPORTED_MODULE_2__lpel__["c"]; });
 
 
@@ -1080,8 +1080,8 @@ module.exports = function (key) {
 
 "use strict";
 
-var addToUnscopables = __webpack_require__(57);
-var step = __webpack_require__(69);
+var addToUnscopables = __webpack_require__(58);
+var step = __webpack_require__(70);
 var Iterators = __webpack_require__(21);
 var toIObject = __webpack_require__(13);
 
@@ -1124,7 +1124,7 @@ addToUnscopables('entries');
 
 var isRegExp = __webpack_require__(43);
 var anObject = __webpack_require__(1);
-var speciesConstructor = __webpack_require__(111);
+var speciesConstructor = __webpack_require__(110);
 var advanceStringIndex = __webpack_require__(41);
 var toLength = __webpack_require__(10);
 var callRegExpExec = __webpack_require__(34);
@@ -1274,18 +1274,18 @@ var shared = __webpack_require__(36);
 var setToStringTag = __webpack_require__(35);
 var uid = __webpack_require__(23);
 var wks = __webpack_require__(0);
-var wksExt = __webpack_require__(78);
-var wksDefine = __webpack_require__(77);
-var enumKeys = __webpack_require__(99);
-var isArray = __webpack_require__(66);
+var wksExt = __webpack_require__(79);
+var wksDefine = __webpack_require__(78);
+var enumKeys = __webpack_require__(98);
+var isArray = __webpack_require__(67);
 var anObject = __webpack_require__(1);
 var isObject = __webpack_require__(6);
 var toIObject = __webpack_require__(13);
 var toPrimitive = __webpack_require__(50);
 var createDesc = __webpack_require__(22);
 var _create = __webpack_require__(46);
-var gOPNExt = __webpack_require__(105);
-var $GOPD = __webpack_require__(70);
+var gOPNExt = __webpack_require__(104);
+var $GOPD = __webpack_require__(71);
 var $DP = __webpack_require__(5);
 var $keys = __webpack_require__(16);
 var gOPD = $GOPD.f;
@@ -1412,7 +1412,7 @@ if (!USE_NATIVE) {
   $DP.f = $defineProperty;
   __webpack_require__(47).f = gOPNExt.f = $getOwnPropertyNames;
   __webpack_require__(33).f = $propertyIsEnumerable;
-  __webpack_require__(71).f = $getOwnPropertySymbols;
+  __webpack_require__(72).f = $getOwnPropertySymbols;
 
   if (DESCRIPTORS && !__webpack_require__(32)) {
     redefine(ObjectProto, 'propertyIsEnumerable', $propertyIsEnumerable, true);
@@ -1501,7 +1501,7 @@ setToStringTag(global.JSON, 'JSON', true);
 /* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(77)('asyncIterator');
+__webpack_require__(78)('asyncIterator');
 
 
 /***/ }),
@@ -1509,22 +1509,22 @@ __webpack_require__(77)('asyncIterator');
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "d", function() { return isArray; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return isString; });
-/* unused harmony export isNumber */
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "c", function() { return isArray; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "d", function() { return isString; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "e", function() { return isNumber; });
 /* unused harmony export isBoolean */
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "c", function() { return isHash; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return isHash; });
 /* unused harmony export isFunction */
 /* unused harmony export makeMacro */
-/* unused harmony export makeSF */
+/* harmony export (immutable) */ __webpack_exports__["f"] = makeSF;
 /* harmony export (immutable) */ __webpack_exports__["a"] = eval_lisp;
 /* unused harmony export init_lisp */
 /* unused harmony export evaluate */
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_string_iterator__ = __webpack_require__(54);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_string_iterator__ = __webpack_require__(55);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_string_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_string_iterator__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_array_from__ = __webpack_require__(51);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_array_from__ = __webpack_require__(52);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_array_from___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_array_from__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es7_object_values__ = __webpack_require__(55);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es7_object_values__ = __webpack_require__(56);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es7_object_values___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_core_js_modules_es7_object_values__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_array_iterator__ = __webpack_require__(24);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_array_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_array_iterator__);
@@ -1872,7 +1872,7 @@ var STDLIB = _objectSpread({
   '#f': false,
   'NIL': null,
   'null': null,
-  // js specific
+  // we have problems in SQL generation with this constant        // js specific
   'true': true,
   'false': false,
   'Array': Array,
@@ -2369,8 +2369,10 @@ function EVAL(ast, ctx, resolveOptions) {
 } // EVAL
 
 
-function eval_lisp(ast, ctx) {
-  var result = EVAL(ast, [ctx || {}, STDLIB]);
+function eval_lisp(ast, ctx, options) {
+  var result = EVAL(ast, [ctx || {}, STDLIB], options || {
+    "resolveString": true
+  });
   return result;
 } // Use with care
 
@@ -2407,7 +2409,7 @@ module.exports = function (it) {
 
 "use strict";
 
-__webpack_require__(115);
+__webpack_require__(114);
 var redefine = __webpack_require__(8);
 var hide = __webpack_require__(9);
 var fails = __webpack_require__(3);
@@ -2545,7 +2547,7 @@ exports.f = {}.propertyIsEnumerable;
 "use strict";
 
 
-var classof = __webpack_require__(59);
+var classof = __webpack_require__(60);
 var builtinExec = RegExp.prototype.exec;
 
  // `RegExpExec` abstract operation
@@ -2678,19 +2680,19 @@ for (var collections = getKeys(DOMIterables), i = 0; i < collections.length; i++
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony export (immutable) */ __webpack_exports__["h"] = db_quote_literal;
-/* harmony export (immutable) */ __webpack_exports__["g"] = db_quote_ident;
-/* harmony export (immutable) */ __webpack_exports__["a"] = reports_get_columns;
-/* harmony export (immutable) */ __webpack_exports__["b"] = reports_get_column_info;
-/* harmony export (immutable) */ __webpack_exports__["e"] = reports_get_table_sql;
-/* harmony export (immutable) */ __webpack_exports__["c"] = reports_get_join_path;
-/* harmony export (immutable) */ __webpack_exports__["f"] = reports_get_join_conditions;
-/* harmony export (immutable) */ __webpack_exports__["d"] = get_source_database;
+/* harmony export (immutable) */ __webpack_exports__["a"] = db_quote_literal;
+/* harmony export (immutable) */ __webpack_exports__["h"] = db_quote_ident;
+/* harmony export (immutable) */ __webpack_exports__["b"] = reports_get_columns;
+/* harmony export (immutable) */ __webpack_exports__["e"] = reports_get_column_info;
+/* harmony export (immutable) */ __webpack_exports__["d"] = reports_get_table_sql;
+/* harmony export (immutable) */ __webpack_exports__["f"] = reports_get_join_path;
+/* harmony export (immutable) */ __webpack_exports__["g"] = reports_get_join_conditions;
+/* harmony export (immutable) */ __webpack_exports__["c"] = get_source_database;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_regexp_split__ = __webpack_require__(25);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_regexp_split___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_regexp_split__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_regexp_to_string__ = __webpack_require__(18);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_regexp_to_string___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_regexp_to_string__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_regexp_replace__ = __webpack_require__(53);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_regexp_replace__ = __webpack_require__(54);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_regexp_replace___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_regexp_replace__);
 
 
@@ -2707,7 +2709,7 @@ function reports_get_columns(cubeId) {
     "id": "ch.fot_out.dt",
     "type": "PERIOD",
     "title": "dt",
-    "sql_query": "dt",
+    "sql_query": "NOW() - INERVAL '1 DAY'",
     "config": {}
   }, {
     "id": "ch.fot_out.hcode_id",
@@ -2912,7 +2914,9 @@ function reports_get_columns(cubeId) {
     "type": "STRING",
     "title": "pay_name",
     "sql_query": "pay_name",
-    "config": {}
+    "config": {
+      "memberALL": null
+    }
   }, {
     "id": "ch.fot_out.category_name",
     "type": "STRING",
@@ -2920,11 +2924,23 @@ function reports_get_columns(cubeId) {
     "sql_query": "category_name",
     "config": {}
   }, {
+    "id": "ch.fot_out.sex_code",
+    "type": "STRING",
+    "title": "sex_code",
+    "sql_query": "sex_code",
+    "config": {
+      "memberALL": "Все",
+      "altDimensions": ["fot_out.sex_name"]
+    }
+  }, {
     "id": "ch.fot_out.sex_name",
     "type": "STRING",
     "title": "sex_name",
     "sql_query": "sex_name",
-    "config": {}
+    "config": {
+      "memberALL": "Все",
+      "altDimensions": ["fot_out.sex_code"]
+    }
   }, {
     "id": "ch.fot_out.area_name",
     "type": "STRING",
@@ -3046,7 +3062,7 @@ module.exports = function (it) {
 
 "use strict";
 
-var at = __webpack_require__(75)(true);
+var at = __webpack_require__(76)(true);
 
  // `AdvanceStringIndex` abstract operation
 // https://tc39.github.io/ecma262/#sec-advancestringindex
@@ -3090,9 +3106,9 @@ var $export = __webpack_require__(7);
 var redefine = __webpack_require__(8);
 var hide = __webpack_require__(9);
 var Iterators = __webpack_require__(21);
-var $iterCreate = __webpack_require__(103);
+var $iterCreate = __webpack_require__(102);
 var setToStringTag = __webpack_require__(35);
-var getPrototypeOf = __webpack_require__(106);
+var getPrototypeOf = __webpack_require__(105);
 var ITERATOR = __webpack_require__(0)('iterator');
 var BUGGY = !([].keys && 'next' in [].keys()); // Safari has buggy iterators w/o `next`
 var FF_ITERATOR = '@@iterator';
@@ -3220,7 +3236,7 @@ var meta = module.exports = {
 
 // 19.1.2.2 / 15.2.3.5 Object.create(O [, Properties])
 var anObject = __webpack_require__(1);
-var dPs = __webpack_require__(104);
+var dPs = __webpack_require__(103);
 var enumBugKeys = __webpack_require__(42);
 var IE_PROTO = __webpack_require__(49)('IE_PROTO');
 var Empty = function () { /* empty */ };
@@ -3229,13 +3245,13 @@ var PROTOTYPE = 'prototype';
 // Create object with fake `null` prototype: use iframe Object with cleared prototype
 var createDict = function () {
   // Thrash, waste and sodomy: IE GC bug
-  var iframe = __webpack_require__(60)('iframe');
+  var iframe = __webpack_require__(61)('iframe');
   var i = enumBugKeys.length;
   var lt = '<';
   var gt = '>';
   var iframeDocument;
   iframe.style.display = 'none';
-  __webpack_require__(102).appendChild(iframe);
+  __webpack_require__(101).appendChild(iframe);
   iframe.src = 'javascript:'; // eslint-disable-line no-script-url
   // createDict = iframe.contentWindow.Object;
   // html.removeChild(iframe);
@@ -3266,7 +3282,7 @@ module.exports = Object.create || function create(O, Properties) {
 /***/ (function(module, exports, __webpack_require__) {
 
 // 19.1.2.7 / 15.2.3.4 Object.getOwnPropertyNames(O)
-var $keys = __webpack_require__(72);
+var $keys = __webpack_require__(73);
 var hiddenKeys = __webpack_require__(42).concat('length', 'prototype');
 
 exports.f = Object.getOwnPropertyNames || function getOwnPropertyNames(O) {
@@ -3374,16 +3390,37 @@ module.exports = function (it, S) {
 
 "use strict";
 
+// 22.1.3.8 Array.prototype.find(predicate, thisArg = undefined)
+var $export = __webpack_require__(7);
+var $find = __webpack_require__(92)(5);
+var KEY = 'find';
+var forced = true;
+// Shouldn't skip holes
+if (KEY in []) Array(1)[KEY](function () { forced = false; });
+$export($export.P + $export.F * forced, 'Array', {
+  find: function find(callbackfn /* , that = undefined */) {
+    return $find(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+  }
+});
+__webpack_require__(58)(KEY);
+
+
+/***/ }),
+/* 52 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
 var ctx = __webpack_require__(15);
 var $export = __webpack_require__(7);
 var toObject = __webpack_require__(17);
-var call = __webpack_require__(67);
-var isArrayIter = __webpack_require__(65);
+var call = __webpack_require__(68);
+var isArrayIter = __webpack_require__(66);
 var toLength = __webpack_require__(10);
-var createProperty = __webpack_require__(98);
-var getIterFn = __webpack_require__(79);
+var createProperty = __webpack_require__(97);
+var getIterFn = __webpack_require__(80);
 
-$export($export.S + $export.F * !__webpack_require__(68)(function (iter) { Array.from(iter); }), 'Array', {
+$export($export.S + $export.F * !__webpack_require__(69)(function (iter) { Array.from(iter); }), 'Array', {
   // 22.1.2.1 Array.from(arrayLike, mapfn = undefined, thisArg = undefined)
   from: function from(arrayLike /* , mapfn = undefined, thisArg = undefined */) {
     var O = toObject(arrayLike);
@@ -3413,7 +3450,7 @@ $export($export.S + $export.F * !__webpack_require__(68)(function (iter) { Array
 
 
 /***/ }),
-/* 52 */
+/* 53 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3460,7 +3497,7 @@ __webpack_require__(30)('match', 1, function (defined, MATCH, $match, maybeCallN
 
 
 /***/ }),
-/* 53 */
+/* 54 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3585,12 +3622,12 @@ __webpack_require__(30)('replace', 2, function (defined, REPLACE, $replace, mayb
 
 
 /***/ }),
-/* 54 */
+/* 55 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var $at = __webpack_require__(75)(true);
+var $at = __webpack_require__(76)(true);
 
 // 21.1.3.27 String.prototype[@@iterator]()
 __webpack_require__(44)(String, 'String', function (iterated) {
@@ -3609,12 +3646,12 @@ __webpack_require__(44)(String, 'String', function (iterated) {
 
 
 /***/ }),
-/* 55 */
+/* 56 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // https://github.com/tc39/proposal-object-values-entries
 var $export = __webpack_require__(7);
-var $values = __webpack_require__(108)(false);
+var $values = __webpack_require__(107)(false);
 
 $export($export.S, 'Object', {
   values: function values(it) {
@@ -3624,7 +3661,7 @@ $export($export.S, 'Object', {
 
 
 /***/ }),
-/* 56 */
+/* 57 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3634,17 +3671,17 @@ $export($export.S, 'Object', {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es7_symbol_async_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_core_js_modules_es7_symbol_async_iterator__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_symbol__ = __webpack_require__(26);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_symbol___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_symbol__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_regexp_search__ = __webpack_require__(117);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_regexp_search__ = __webpack_require__(116);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_regexp_search___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_regexp_search__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_web_dom_iterable__ = __webpack_require__(38);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_web_dom_iterable___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_core_js_modules_web_dom_iterable__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_array_iterator__ = __webpack_require__(24);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_array_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_array_iterator__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es7_object_values__ = __webpack_require__(55);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es7_object_values__ = __webpack_require__(56);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es7_object_values___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_core_js_modules_es7_object_values__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_regexp_match__ = __webpack_require__(52);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_regexp_match__ = __webpack_require__(53);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_regexp_match___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_regexp_match__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_regexp_replace__ = __webpack_require__(53);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_regexp_replace__ = __webpack_require__(54);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_regexp_replace___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_regexp_replace__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_regexp_split__ = __webpack_require__(25);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_regexp_split___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_regexp_split__);
@@ -3709,7 +3746,7 @@ function sql_where_context(_vars) {
   var srcIdent = _vars["sourceId"];
 
   if (srcIdent !== undefined) {
-    var target_db_type = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["d" /* get_source_database */])(srcIdent);
+    var target_db_type = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["c" /* get_source_database */])(srcIdent);
     _vars["_target_database"] = target_db_type;
   }
 
@@ -3757,7 +3794,7 @@ function sql_where_context(_vars) {
 
           if (schema_table.length < 4) {
             res = schema_table.map(function (item) {
-              return regExp.test(item) ? item : __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["g" /* db_quote_ident */])(item);
+              return regExp.test(item) ? item : __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["h" /* db_quote_ident */])(item);
             }).join('.');
           } else {
             throw new Error('Too many dots for column name ' + o);
@@ -3924,7 +3961,7 @@ function sql_where_context(_vars) {
 
   _context["ql"] = function (el) {
     // NULL values should not be quoted
-    return el === null ? null : __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["h" /* db_quote_literal */])(el);
+    return el === null ? null : __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["a" /* db_quote_literal */])(el);
   }; // required for Oracle Reports
 
 
@@ -3960,11 +3997,11 @@ function sql_where_context(_vars) {
 
     var quote_scalar = function quote_scalar(el) {
       if (typeof el === "string") {
-        return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["h" /* db_quote_literal */])(el);
+        return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["a" /* db_quote_literal */])(el);
       } else if (typeof el === "number") {
         return el;
       } else {
-        return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["h" /* db_quote_literal */])(JSON.stringify(el));
+        return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["a" /* db_quote_literal */])(JSON.stringify(el));
       }
     };
 
@@ -4142,7 +4179,7 @@ function sql_where_context(_vars) {
         }).join(',');
       }
 
-      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["h" /* db_quote_literal */])(expr);
+      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__utils_utils__["a" /* db_quote_literal */])(expr);
     };
 
     ctx['$'].ast = [[], {}, [], 1]; // mark as macro
@@ -4285,7 +4322,7 @@ function eval_sql_where(_expr, _vars) {
 }
 
 /***/ }),
-/* 57 */
+/* 58 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 22.1.3.31 Array.prototype[@@unscopables]
@@ -4298,7 +4335,7 @@ module.exports = function (key) {
 
 
 /***/ }),
-/* 58 */
+/* 59 */
 /***/ (function(module, exports) {
 
 module.exports = function (it, Constructor, name, forbiddenField) {
@@ -4309,7 +4346,7 @@ module.exports = function (it, Constructor, name, forbiddenField) {
 
 
 /***/ }),
-/* 59 */
+/* 60 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // getting tag from 19.1.3.6 Object.prototype.toString()
@@ -4338,7 +4375,7 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 60 */
+/* 61 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var isObject = __webpack_require__(6);
@@ -4351,15 +4388,15 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 61 */
+/* 62 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var ctx = __webpack_require__(15);
-var call = __webpack_require__(67);
-var isArrayIter = __webpack_require__(65);
+var call = __webpack_require__(68);
+var isArrayIter = __webpack_require__(66);
 var anObject = __webpack_require__(1);
 var toLength = __webpack_require__(10);
-var getIterFn = __webpack_require__(79);
+var getIterFn = __webpack_require__(80);
 var BREAK = {};
 var RETURN = {};
 var exports = module.exports = function (iterable, entries, fn, that, ITERATOR) {
@@ -4382,20 +4419,20 @@ exports.RETURN = RETURN;
 
 
 /***/ }),
-/* 62 */
+/* 63 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = !__webpack_require__(2) && !__webpack_require__(3)(function () {
-  return Object.defineProperty(__webpack_require__(60)('div'), 'a', { get: function () { return 7; } }).a != 7;
+  return Object.defineProperty(__webpack_require__(61)('div'), 'a', { get: function () { return 7; } }).a != 7;
 });
 
 
 /***/ }),
-/* 63 */
+/* 64 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var isObject = __webpack_require__(6);
-var setPrototypeOf = __webpack_require__(110).set;
+var setPrototypeOf = __webpack_require__(109).set;
 module.exports = function (that, target, C) {
   var S = target.constructor;
   var P;
@@ -4406,7 +4443,7 @@ module.exports = function (that, target, C) {
 
 
 /***/ }),
-/* 64 */
+/* 65 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // fallback for non-array-like ES3 and non-enumerable old V8 strings
@@ -4418,7 +4455,7 @@ module.exports = Object('z').propertyIsEnumerable(0) ? Object : function (it) {
 
 
 /***/ }),
-/* 65 */
+/* 66 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // check on default Array iterator
@@ -4432,7 +4469,7 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 66 */
+/* 67 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 7.2.2 IsArray(argument)
@@ -4443,7 +4480,7 @@ module.exports = Array.isArray || function isArray(arg) {
 
 
 /***/ }),
-/* 67 */
+/* 68 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // call something on iterator step with safe closing on error
@@ -4461,7 +4498,7 @@ module.exports = function (iterator, fn, value, entries) {
 
 
 /***/ }),
-/* 68 */
+/* 69 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var ITERATOR = __webpack_require__(0)('iterator');
@@ -4489,7 +4526,7 @@ module.exports = function (exec, skipClosing) {
 
 
 /***/ }),
-/* 69 */
+/* 70 */
 /***/ (function(module, exports) {
 
 module.exports = function (done, value) {
@@ -4498,7 +4535,7 @@ module.exports = function (done, value) {
 
 
 /***/ }),
-/* 70 */
+/* 71 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var pIE = __webpack_require__(33);
@@ -4506,7 +4543,7 @@ var createDesc = __webpack_require__(22);
 var toIObject = __webpack_require__(13);
 var toPrimitive = __webpack_require__(50);
 var has = __webpack_require__(12);
-var IE8_DOM_DEFINE = __webpack_require__(62);
+var IE8_DOM_DEFINE = __webpack_require__(63);
 var gOPD = Object.getOwnPropertyDescriptor;
 
 exports.f = __webpack_require__(2) ? gOPD : function getOwnPropertyDescriptor(O, P) {
@@ -4520,19 +4557,19 @@ exports.f = __webpack_require__(2) ? gOPD : function getOwnPropertyDescriptor(O,
 
 
 /***/ }),
-/* 71 */
+/* 72 */
 /***/ (function(module, exports) {
 
 exports.f = Object.getOwnPropertySymbols;
 
 
 /***/ }),
-/* 72 */
+/* 73 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var has = __webpack_require__(12);
 var toIObject = __webpack_require__(13);
-var arrayIndexOf = __webpack_require__(92)(false);
+var arrayIndexOf = __webpack_require__(91)(false);
 var IE_PROTO = __webpack_require__(49)('IE_PROTO');
 
 module.exports = function (object, names) {
@@ -4550,7 +4587,7 @@ module.exports = function (object, names) {
 
 
 /***/ }),
-/* 73 */
+/* 74 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var redefine = __webpack_require__(8);
@@ -4561,7 +4598,7 @@ module.exports = function (target, src, safe) {
 
 
 /***/ }),
-/* 74 */
+/* 75 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4581,7 +4618,7 @@ module.exports = function (KEY) {
 
 
 /***/ }),
-/* 75 */
+/* 76 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var toInteger = __webpack_require__(37);
@@ -4604,7 +4641,7 @@ module.exports = function (TO_STRING) {
 
 
 /***/ }),
-/* 76 */
+/* 77 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var isObject = __webpack_require__(6);
@@ -4615,13 +4652,13 @@ module.exports = function (it, TYPE) {
 
 
 /***/ }),
-/* 77 */
+/* 78 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var global = __webpack_require__(4);
 var core = __webpack_require__(14);
 var LIBRARY = __webpack_require__(32);
-var wksExt = __webpack_require__(78);
+var wksExt = __webpack_require__(79);
 var defineProperty = __webpack_require__(5).f;
 module.exports = function (name) {
   var $Symbol = core.Symbol || (core.Symbol = LIBRARY ? {} : global.Symbol || {});
@@ -4630,17 +4667,17 @@ module.exports = function (name) {
 
 
 /***/ }),
-/* 78 */
+/* 79 */
 /***/ (function(module, exports, __webpack_require__) {
 
 exports.f = __webpack_require__(0);
 
 
 /***/ }),
-/* 79 */
+/* 80 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var classof = __webpack_require__(59);
+var classof = __webpack_require__(60);
 var ITERATOR = __webpack_require__(0)('iterator');
 var Iterators = __webpack_require__(21);
 module.exports = __webpack_require__(14).getIteratorMethod = function (it) {
@@ -4648,27 +4685,6 @@ module.exports = __webpack_require__(14).getIteratorMethod = function (it) {
     || it['@@iterator']
     || Iterators[classof(it)];
 };
-
-
-/***/ }),
-/* 80 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-// 22.1.3.8 Array.prototype.find(predicate, thisArg = undefined)
-var $export = __webpack_require__(7);
-var $find = __webpack_require__(93)(5);
-var KEY = 'find';
-var forced = true;
-// Shouldn't skip holes
-if (KEY in []) Array(1)[KEY](function () { forced = false; });
-$export($export.P + $export.F * forced, 'Array', {
-  find: function find(callbackfn /* , that = undefined */) {
-    return $find(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
-  }
-});
-__webpack_require__(57)(KEY);
 
 
 /***/ }),
@@ -4691,7 +4707,7 @@ $export($export.P + $export.F * (fails(function () {
   // V8 bug
   test.sort(null);
   // Old WebKit
-}) || !__webpack_require__(112)($sort)), 'Array', {
+}) || !__webpack_require__(111)($sort)), 'Array', {
   // 22.1.3.25 Array.prototype.sort(comparefn)
   sort: function sort(comparefn) {
     return comparefn === undefined
@@ -4731,7 +4747,7 @@ NAME in FProto || __webpack_require__(2) && dP(FProto, NAME, {
 var toObject = __webpack_require__(17);
 var $keys = __webpack_require__(16);
 
-__webpack_require__(107)('keys', function () {
+__webpack_require__(106)('keys', function () {
   return function keys(it) {
     return $keys(toObject(it));
   };
@@ -4743,7 +4759,7 @@ __webpack_require__(107)('keys', function () {
 /***/ (function(module, exports, __webpack_require__) {
 
 var global = __webpack_require__(4);
-var inheritIfRequired = __webpack_require__(63);
+var inheritIfRequired = __webpack_require__(64);
 var dP = __webpack_require__(5).f;
 var gOPN = __webpack_require__(47).f;
 var isRegExp = __webpack_require__(43);
@@ -4784,7 +4800,7 @@ if (__webpack_require__(2) && (!CORRECT_NEW || __webpack_require__(3)(function (
   __webpack_require__(8)(global, 'RegExp', $RegExp);
 }
 
-__webpack_require__(74)('RegExp');
+__webpack_require__(75)('RegExp');
 
 
 /***/ }),
@@ -4792,36 +4808,15 @@ __webpack_require__(74)('RegExp');
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-
-var strong = __webpack_require__(96);
-var validate = __webpack_require__(76);
-var SET = 'Set';
-
-// 23.2 Set Objects
-module.exports = __webpack_require__(97)(SET, function (get) {
-  return function Set() { return get(this, arguments.length > 0 ? arguments[0] : undefined); };
-}, {
-  // 23.2.3.1 Set.prototype.add(value)
-  add: function add(value) {
-    return strong.def(validate(this, SET), value = value === 0 ? 0 : value, value);
-  }
-}, strong);
-
-
-/***/ }),
-/* 86 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
 // 21.1.3.18 String.prototype.startsWith(searchString [, position ])
 
 var $export = __webpack_require__(7);
 var toLength = __webpack_require__(10);
-var context = __webpack_require__(113);
+var context = __webpack_require__(112);
 var STARTS_WITH = 'startsWith';
 var $startsWith = ''[STARTS_WITH];
 
-$export($export.P + $export.F * __webpack_require__(100)(STARTS_WITH), 'String', {
+$export($export.P + $export.F * __webpack_require__(99)(STARTS_WITH), 'String', {
   startsWith: function startsWith(searchString /* , position = 0 */) {
     var that = context(this, searchString, STARTS_WITH);
     var index = toLength(Math.min(arguments.length > 1 ? arguments[1] : undefined, that.length));
@@ -4834,7 +4829,7 @@ $export($export.P + $export.F * __webpack_require__(100)(STARTS_WITH), 'String',
 
 
 /***/ }),
-/* 87 */
+/* 86 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -4971,7 +4966,7 @@ function deparse(lispExpr) {
 }
 
 /***/ }),
-/* 88 */
+/* 87 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -4979,7 +4974,7 @@ function deparse(lispExpr) {
 /* harmony export (immutable) */ __webpack_exports__["a"] = eval_sql_expr;
 /* harmony export (immutable) */ __webpack_exports__["b"] = parse_sql_expr;
 /* harmony export (immutable) */ __webpack_exports__["c"] = generate_report_sql;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_array_from__ = __webpack_require__(51);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_array_from__ = __webpack_require__(52);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_array_from___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_array_from__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es7_symbol_async_iterator__ = __webpack_require__(27);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es7_symbol_async_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_core_js_modules_es7_symbol_async_iterator__);
@@ -4991,23 +4986,23 @@ function deparse(lispExpr) {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_web_dom_iterable___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_core_js_modules_web_dom_iterable__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es6_array_iterator__ = __webpack_require__(24);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es6_array_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_core_js_modules_es6_array_iterator__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_string_iterator__ = __webpack_require__(54);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_string_iterator__ = __webpack_require__(55);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_string_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_string_iterator__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_set__ = __webpack_require__(85);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_set__ = __webpack_require__(117);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_set___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_set__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_regexp_split__ = __webpack_require__(25);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_regexp_split___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_regexp_split__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_regexp_match__ = __webpack_require__(52);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_regexp_match__ = __webpack_require__(53);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_regexp_match___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_regexp_match__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_10_core_js_modules_es6_regexp_to_string__ = __webpack_require__(18);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_10_core_js_modules_es6_regexp_to_string___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_10_core_js_modules_es6_regexp_to_string__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11_core_js_modules_es6_regexp_replace__ = __webpack_require__(53);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11_core_js_modules_es6_regexp_replace__ = __webpack_require__(54);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_11_core_js_modules_es6_regexp_replace___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_11_core_js_modules_es6_regexp_replace__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12_core_js_modules_es6_array_find__ = __webpack_require__(80);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12_core_js_modules_es6_array_find__ = __webpack_require__(51);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_12_core_js_modules_es6_array_find___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_12_core_js_modules_es6_array_find__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__console_console__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__lisp__ = __webpack_require__(28);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__sql_where__ = __webpack_require__(56);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__sql_where__ = __webpack_require__(57);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_16__lpep__ = __webpack_require__(19);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_17__utils_utils__ = __webpack_require__(39);
 
@@ -5586,7 +5581,7 @@ function generate_report_sql(_cfg, _vars) {
   };
 
   _context["column"] = function (col) {
-    var col_info = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["b" /* reports_get_column_info */])(_cfg["sourceId"], col);
+    var col_info = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["e" /* reports_get_column_info */])(_cfg["sourceId"], col);
     var col_sql = col_info["sql_query"];
 
     if (col_sql.match(/^\S+$/) === null) {
@@ -5658,7 +5653,7 @@ function generate_report_sql(_cfg, _vars) {
           if (in_lpe[1][0] === 'column') {
             if (Array.isArray(in_lpe[2]) && in_lpe[2][0] === '[') {
               // ["=",["column","vNetwork.cluster"],["[","SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]]
-              var info = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["b" /* reports_get_column_info */])(_cfg["sourceId"], in_lpe[1][1]);
+              var info = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["e" /* reports_get_column_info */])(_cfg["sourceId"], in_lpe[1][1]);
 
               if (info["type"] === 'PERIOD' && _context["_target_database"] === 'oracle') {
                 in_lpe[2] = ['['].concat(in_lpe[2].slice(1).map(function (el) {
@@ -5679,7 +5674,7 @@ function generate_report_sql(_cfg, _vars) {
               if (!Array.isArray(in_lpe[2])) {
                 // ANY OPERATOR
                 // ["~",["column","vNetwork.cluster"],"SPB99-DMZ02"]
-                var info = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["b" /* reports_get_column_info */])(_cfg["sourceId"], in_lpe[1][1]);
+                var info = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["e" /* reports_get_column_info */])(_cfg["sourceId"], in_lpe[1][1]);
 
                 if (info["type"] === 'PERIOD' && _context["_target_database"] === 'oracle') {
                   in_lpe[2] = ["to_date", ["ql", in_lpe[2]], "'YYYY-MM-DD'"];
@@ -5692,7 +5687,7 @@ function generate_report_sql(_cfg, _vars) {
                 // between
                 if (!Array.isArray(in_lpe[3])) {
                   //["between",["column","vNetwork.period_month"],"2019-09-10","2019-09-20"]
-                  var info = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["b" /* reports_get_column_info */])(_cfg["sourceId"], in_lpe[1][1]);
+                  var info = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["e" /* reports_get_column_info */])(_cfg["sourceId"], in_lpe[1][1]);
 
                   if (info["type"] === 'PERIOD' && _context["_target_database"] === 'oracle') {
                     in_lpe[3] = ["to_date", ["ql", in_lpe[3]], "'YYYY-MM-DD'"];
@@ -5732,7 +5727,7 @@ function generate_report_sql(_cfg, _vars) {
 
     var uniqTables = _toConsumableArray(new Set(allTables));
 
-    var join_struct = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["c" /* reports_get_join_path */])(uniqTables);
+    var join_struct = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["f" /* reports_get_join_path */])(uniqTables);
 
     if (join_struct.nodes.length === 0) {
       throw new Error("Can not find path to JOIN tables: " + JSON.stringify(uniqTables));
@@ -5745,12 +5740,12 @@ function generate_report_sql(_cfg, _vars) {
       srcIdent = join_struct.nodes[0].split('.')[0];
     }
 
-    var target_db_type = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["d" /* get_source_database */])(srcIdent);
+    var target_db_type = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["c" /* get_source_database */])(srcIdent);
     _context["_target_database"] = target_db_type; // column should always be represented as full path source.cube.column
     // for aggregates we should add func names as suffix ! like source.cube.column.max_avg
 
     var sel = ['select'].concat(cfg["columns"].map(function (h) {
-      var col_info = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["b" /* reports_get_column_info */])(cfg["sourceId"], h["id"]);
+      var col_info = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["e" /* reports_get_column_info */])(cfg["sourceId"], h["id"]);
       var col_sql = col_info["sql_query"];
       var parts = h.id.split('.'); //if ( col_sql.match( /^\S+$/ ) !== null ) {
 
@@ -5792,7 +5787,7 @@ function generate_report_sql(_cfg, _vars) {
 
 
     var from = ['from'].concat(join_struct.nodes.map(function (t) {
-      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["e" /* reports_get_table_sql */])(target_db_type, t);
+      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["d" /* reports_get_table_sql */])(target_db_type, t);
     }));
     var order_by = ['order_by'].concat(cfg["columns"].map(function (h) {
       if (h["sort"] == 1) {
@@ -5812,7 +5807,7 @@ function generate_report_sql(_cfg, _vars) {
     __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("========= reports_get_join_conditions " + JSON.stringify(join_struct));
 
     if (join_struct.nodes.length > 1) {
-      filt = filt.concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["f" /* reports_get_join_conditions */])(join_struct));
+      filt = filt.concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["g" /* reports_get_join_conditions */])(join_struct));
     }
 
     if (filt.length > 1) {
@@ -5847,26 +5842,26 @@ function generate_report_sql(_cfg, _vars) {
 }
 
 /***/ }),
-/* 89 */
+/* 88 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = generate_koob_sql;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_array_from__ = __webpack_require__(51);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_array_from___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_array_from__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es7_symbol_async_iterator__ = __webpack_require__(27);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es7_symbol_async_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_core_js_modules_es7_symbol_async_iterator__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_symbol__ = __webpack_require__(26);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_symbol___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_symbol__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_string_iterator__ = __webpack_require__(54);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_string_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_string_iterator__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_set__ = __webpack_require__(85);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_set___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_set__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es7_object_values__ = __webpack_require__(55);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_string_iterator__ = __webpack_require__(55);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_string_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_string_iterator__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_array_from__ = __webpack_require__(52);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_array_from___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_array_from__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es7_symbol_async_iterator__ = __webpack_require__(27);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es7_symbol_async_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_core_js_modules_es7_symbol_async_iterator__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_symbol__ = __webpack_require__(26);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_symbol___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_symbol__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_array_find__ = __webpack_require__(51);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_array_find___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_array_find__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es7_object_values__ = __webpack_require__(56);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es7_object_values___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_core_js_modules_es7_object_values__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_regexp_to_string__ = __webpack_require__(18);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_regexp_to_string___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_regexp_to_string__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_string_starts_with__ = __webpack_require__(86);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_string_starts_with__ = __webpack_require__(85);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_string_starts_with___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_string_starts_with__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_array_sort__ = __webpack_require__(81);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_array_sort___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_array_sort__);
@@ -5876,7 +5871,7 @@ function generate_report_sql(_cfg, _vars) {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_10_core_js_modules_es6_array_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_10_core_js_modules_es6_array_iterator__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_11_core_js_modules_es6_object_keys__ = __webpack_require__(83);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_11_core_js_modules_es6_object_keys___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_11_core_js_modules_es6_object_keys__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12_core_js_modules_es6_regexp_match__ = __webpack_require__(52);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12_core_js_modules_es6_regexp_match__ = __webpack_require__(53);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_12_core_js_modules_es6_regexp_match___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_12_core_js_modules_es6_regexp_match__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_13_core_js_modules_es6_regexp_split__ = __webpack_require__(25);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_13_core_js_modules_es6_regexp_split___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_13_core_js_modules_es6_regexp_split__);
@@ -5906,8 +5901,6 @@ function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread n
 function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
 
 function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
-
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 /**
     Copyright (c) 2019 Luxms Inc.
@@ -5960,7 +5953,7 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
 3) выполнить eval для части columns -> получить массив структур, готовых к построению части SELECT.
    'sum((val3+val1)/100):summa' ===> 
    {
-     expr: ["sum",["/",["+",["column","czt.fot.val3"],["column","czt.fot.val1"]],100]],
+     expr: 'sum((fot.val3+fot.val1)/100)',
      alias: "summa",
      columns: ["czt.fot.val3","czt.fot.val1"],
      agg: true
@@ -5970,11 +5963,14 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
 4) на основе columns_struct вычислить group_by, проверить, требуется ли JOIN.
 5) при вычислении фильтров, учесть group_by и сделать дополнение для столбцов, у которых в конфиге указано как селектить ALL
 6) создать какое-то чудо, которое будет печатать SQL из этих структур.
+7) при генерации SQL в ПРОСТОМ случае, когда у нас один единственный куб, генрим КОРОТКИЕ имена столбцов
 */
 
 /***************************************************************
- * Дописывает имена столбцов в структуре _cfg, до полных имён, используя префикс w, там, где это очевидно
+ * Дописывает имена столбцов в структуре _cfg, до полных имён, используя префикс cube_prefix, там, где это очевидно.
+ * простые тексты переводит в LPE скоботу
  * Считаем, что любой встреченный литерал является именем столбца.
+ * в контексте ctx[_columns] должны быть описания столбцов из базы
  */
 
 function normalize_koob_config(_cfg, cube_prefix, ctx) {
@@ -5987,68 +5983,85 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
     "filters": {},
     "having": {},
     "columns": [],
+    "sort": [],
     "limit": _cfg["limit"],
     "offset": _cfg["offset"]
   };
   var aliases = {};
-  /* FIXME: expand_column лучше делать в процессе выполнения LPE, там будет вся инфа про куб, и про его дименшены. 
+  if (_cfg["distinct"]) ret["distinct"] = [];
+  /* expand_column также будем делать в процессе выполнения LPE, там будет вся инфа про куб, и про его дименшены. 
      мы будем точно знать, является ли суффикс именем столбца из куба или нет.
      То есть нужна правильная реализация функции column и правильная реализация для неизвестного литерала, с учётом алиасов !!!
   */
 
   var expand_column = function expand_column(col) {
     return col.match(/("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)/) === null ? ctx._columns["".concat(cube_prefix, ".").concat(col)] ? "".concat(cube_prefix, ".").concat(col) : col : col;
-  }; // для фильтров заменяем ключи4
+  }; // для фильтров заменяем ключи на полные имена
 
 
-  Object.keys(_cfg["filters"]).filter(function (k) {
-    return k !== "";
-  }).map(function (key) {
-    return ret["filters"][expand_column(key)] = _cfg["filters"][key];
-  }); // probably we should use aliased columns a AS b!!
+  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["b" /* isHash */])(_cfg["filters"])) {
+    Object.keys(_cfg["filters"]).filter(function (k) {
+      return k !== "";
+    }).map(function (key) {
+      ret["filters"][expand_column(key)] = _cfg["filters"][key];
+    });
+  } // probably we should use aliased columns a AS b!!
 
-  Object.keys(_cfg["having"]).filter(function (k) {
-    return k !== "";
-  }).map(function (key) {
-    return ret["having"][expand_column(key)] = _cfg["having"][key];
-  }); // "sort": ["-dor1","val1",["-","val2"],"-czt.fot.dor2", ["-",["column","val3"]]]
+
+  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["c" /* isArray */])(_cfg["having"])) {
+    Object.keys(_cfg["having"]).filter(function (k) {
+      return k !== "";
+    }).map(function (key) {
+      return ret["having"][expand_column(key)] = _cfg["having"][key];
+    });
+  } // "sort": ["-dor1","val1",["-","val2"],"-czt.fot.dor2", ["-",["column","val3"]]]
   // FIXME: нужна поддержка "sort": [1,3,-2]
   // FIXME: может быть лучше перейти на ORDER BY 2, 1 DESC, 4 ???? 
 
-  ret["sort"] = _cfg["sort"].map(function (el) {
-    if (Array.isArray(el)) {
-      if (el.length === 2) {
-        if (el[0] === "-" || el[0] === "+") {
-          if (Array.isArray(el[1])) {
-            if (el[1][0] === "column") {
-              return [el[0], ["column", expand_column(el[1][1])]];
+
+  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["c" /* isArray */])(_cfg["sort"])) {
+    ret["sort"] = _cfg["sort"].map(function (el) {
+      if (Array.isArray(el)) {
+        if (el.length === 2) {
+          if (el[0] === "-" || el[0] === "+") {
+            if (Array.isArray(el[1])) {
+              if (el[1][0] === "column") {
+                return [el[0], ["column", expand_column(el[1][1])]];
+              }
+            } else {
+              return [el[0], ["column", expand_column(el[1])]];
             }
-          } else {
-            return [el[0], ["column", expand_column(el[1])]];
           }
         }
+      } else if (el && typeof el === 'string') {
+        // тут может быть ссылка как на столбец, так и на alias, надо бы научиться отличать одно от другого
+        if (el.startsWith("-")) {
+          return ["-", ["column", expand_column(el.substring(1))]];
+        } else if (el.startsWith("+")) {
+          return ["+", ["column", expand_column(el.substring(1))]];
+        } else {
+          return ["+", ["column", expand_column(el)]];
+        }
       }
-    } else if (el && typeof el === 'string') {
-      // тут может быть ссылка как на столбец, так и на alias, надо бы научиться отличать одно от другого
-      if (el.startsWith("-")) {
-        return ["-", ["column", expand_column(el.substring(1))]];
-      } else if (el.startsWith("+")) {
-        return ["+", ["column", expand_column(el.substring(1))]];
-      } else {
-        return ["+", ["column", expand_column(el)]];
-      }
-    }
-  }); // "columns": ["dor3", "src.cube.dor4", "cube.col", 'sum((val3+val1)/100):summa', {"new":"old"}, ["sum", ["column","val2"]],  {"new":  ["avg", ["+",["column","val2"],["column","val3"]]]} ],
+    });
+  } // "columns": ["dor3", "src.cube.dor4", "cube.col", 'sum((val3+val1)/100):summa', {"new":"old"}, ["sum", ["column","val2"]],  {"new":  ["avg", ["+",["column","val2"],["column","val3"]]]} ],
 
   /* возвращает примерно вот такое:
   [["column","ch.fot_out.dor3"],["->","src","cube","dor4"],["->","cube","col"],[":",["sum",["/",["()",["+","val3","val1"]],100]],"summa"],[":",["column","ch.fot_out.old"],"new"],["sum",["column","val2"]],[":",["avg",["+",["column","val2"],["column","val3"]]],"new"]]
+  простые случаи раскладывает в скоботу сразу, чтобы не запускать eval_lisp
   */
 
+
   var expand_column_expression = function expand_column_expression(el) {
-    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["b" /* isString */])(el)) {
+    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["d" /* isString */])(el)) {
       // do not call parse on simple strings, which looks like column names !!!
       if (el.match(/^[a-zA-Z_]\w+$/) !== null) {
         return ["column", expand_column(el)];
+      } // exactly full column name, но может быть лучше это скинуть в ->
+
+
+      if (el.match(/^([a-zA-Z_]\w+\.){1,2}[a-zA-Z_]\w+$/) !== null) {
+        return ["column", el];
       }
 
       var ast = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lpep__["a" /* parse */])(el);
@@ -6068,78 +6081,128 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
 
 
   ret["columns"] = _cfg["columns"].map(function (el) {
-    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["c" /* isHash */])(el)) {
+    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["b" /* isHash */])(el)) {
       return [":", expand_column_expression(Object.values(el)[0]), Object.keys(el)[0]];
     } else {
       return expand_column_expression(el);
     }
-  }); //
+  }); //console.log(`COLUMNS: ${JSON.stringify(ret)}`)
 
-  __WEBPACK_IMPORTED_MODULE_14__console_console__["a" /* default */].log("COLUMNS: ".concat(JSON.stringify(ret)));
   return ret;
 }
 /*********************************
  * 
- * 
- * 
- * 
+ * init_koob_context
+ * на входе контекст может быть массивом, а может быть хэшем. Стало сложнее с этим работать!
+ * Cчитаем, что на входе может быть только хэш с уже прочитанными именами столбцов!!
  */
 
 
-function init_koob_context(_vars) {
-  var _ctx = {};
+function init_koob_context(_vars, default_ds, default_cube) {
+  var _ctx = []; // это контекст где будет сначала список переменных, включая _columns, и функции
 
-  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["d" /* isArray */])(_vars)) {
-    _vars.unshift(_ctx);
-
-    _ctx = _vars;
-  } else {
+  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["b" /* isHash */])(_vars)) {
     _ctx = [_vars];
   }
 
-  var _context = _ctx[0];
+  var _context = _ctx[0]; // пытается определить тип аргумента, если это похоже на столбец, то ищет про него инфу в кэше и определяет тип,
+  // а по типу можно уже думать, квотировать значения или нет.
 
-  _ctx.push(function (key, val, resolveOptions) {
-    __WEBPACK_IMPORTED_MODULE_14__console_console__["a" /* default */].log("WANT to resolve ".concat(key), JSON.stringify(resolveOptions));
-    if (_context["_columns"][key]) return key; //if (_context["_columns"][_vars.ds][_vars.cube][key]) return `${_vars.ds}.${_vars.cube}.key`;
+  var shouldQuote = function shouldQuote(col) {
+    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["c" /* isArray */])(col) && col[0] === 'column') {
+      //try to detect column type
+      var c = _context["_columns"][col[1]];
 
-    if (key.match(/^\w+$/) && resolveOptions && resolveOptions.wantCallable) {
-      return function () {
-        var a = Array.prototype.slice.call(arguments);
-        __WEBPACK_IMPORTED_MODULE_14__console_console__["a" /* default */].log("FUNC RESOLV ".concat(key), JSON.stringify(a));
-        return "".concat(key, "(...)");
-      };
-    } else if (resolveOptions && resolveOptions.wantCallable) {
-      return function () {
-        var a = Array.prototype.slice.call(arguments);
-        return "".concat(a[0], " ").concat(key, " ").concat(a[1]);
-      };
+      if (c) {
+        return c.type !== 'NUMBER';
+      }
+
+      return false;
+    }
+  };
+
+  var quoteLiteral = function quoteLiteral(lit) {
+    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["d" /* isString */])(lit) || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["e" /* isNumber */])(lit) || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["c" /* isArray */])(lit) && lit[0] !== "ql") {
+      return ["ql", lit];
     }
 
-    __WEBPACK_IMPORTED_MODULE_14__console_console__["a" /* default */].log("DID NOT resolved ".concat(key));
+    return lit;
+  }; // функция, которая резолвит имена столбцов для случаев, когда имя функции не определено в явном виде в _vars/_context
+
+
+  _ctx.push(function (key, val, resolveOptions) {
+    //console.log(`WANT to resolve ${key}`, JSON.stringify(resolveOptions));
+    // вызываем функцию column(ПолноеИмяСтолбца) если нашли столбец в дефолтном кубе
+    if (_context["_columns"][key]) return _context["column"](key);
+    if (_context["_columns"][default_ds][default_cube][key]) return _context["column"]("".concat(default_ds, ".").concat(default_cube, ".").concat(key));
+
+    if (resolveOptions && resolveOptions.wantCallable) {
+      if (key.match(/^\w+$/)) {
+        if (_context["_result"]) {
+          if (['sum', 'avg', 'min', 'max', 'count'].find(function (el) {
+            return el === key;
+          })) {
+            _context["_result"]["agg"] = true;
+          }
+        }
+
+        return function () {
+          var a = Array.prototype.slice.call(arguments); //console.log(`FUNC RESOLV ${key}`, JSON.stringify(a))
+
+          return "".concat(key, "(").concat(a.join(','), ")");
+        };
+      } else {
+        // -> ~ > < != <> and so on,
+        //  FIXME: мы должны вернуть более умный макрос, который будет искать вызовы column в левой и правой части и делать ql при необходимости
+        return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["f" /* makeSF */])(function (ast, ctx) {
+          //console.log(`ANY FUNC ${key}`, JSON.stringify(ast))
+          var k = key;
+          var col = ast[0];
+          var c = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(col, ctx);
+          var v = ast[1];
+          if (shouldQuote(col)) v = quoteLiteral(v);
+          v = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(v, ctx);
+          return "".concat(c, " ").concat(k, " ").concat(v);
+        });
+      }
+    } //console.log(`DID NOT resolved ${key}`);
+
+
     return key;
   });
 
   _context["column"] = function (col) {
-    /*
-    var col_info = reports_get_column_info(_cfg["sourceId"], col)
-    var col_sql = col_info["sql_query"]
-    if ( col_sql.match( /^\S+$/ ) === null ) {
-      // we have whitespace here, so it is complex expression :-()
-      return `${col_sql}`
-    }
-    // we have just column name, prepend table alias !
-    var parts = col.split('.')
-    return `${parts[1]}.${col_sql}`
-    */
+    // считаем, что сюда приходят только полностью резолвенные имена с двумя точками...
+    var c = _context["_columns"][col];
+
+    if (c) {
+      if (_context["_result"]) {
+        _context["_result"]["columns"].push(col);
+      }
+
+      var parts = col.split('.');
+
+      if (c.sql_query.match(/^\S+$/) === null) {
+        // we have whitespace here, so it is complex expression :-()
+        return "(".concat(c.sql_query, ")");
+      } else {
+        // we have just column name, prepend table alias !
+        return "".concat(parts[1], ".").concat(parts[2]);
+      }
+    } //console.log("COL FAIL", col)
+    // возможно кто-то вызовет нас с коротким именем - нужно знать дефолт куб!!!
+    //if (_context["_columns"][default_ds][default_cube][key]) return `${default_cube}.${key}`;
+
+
     return col;
-  };
+  }; // сюда должны попадать только хитрые варианты вызова функций с указанием схемы типа utils.smap()
+
 
   _context["->"] = function () {
-    var a = Array.prototype.slice.call(arguments);
-    __WEBPACK_IMPORTED_MODULE_14__console_console__["a" /* default */].log("-> !", JSON.stringify(a));
+    var a = Array.prototype.slice.call(arguments); //console.log("-> !" , JSON.stringify(a))
+
     return a.map(function (el) {
-      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["d" /* isArray */])(el) ? __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(el, _ctx) : el;
+      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["c" /* isArray */])(el) ? __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(el, _ctx) : el;
     }).join('.');
   };
 
@@ -6147,10 +6210,18 @@ function init_koob_context(_vars) {
 
   _context[':'] = function (o, n) {
     //var a = Array.prototype.slice.call(arguments);
-    //console.log("->   " + JSON.stringify(a));
+    //console.log(":   " + JSON.stringify(o));
     //return a[0] + ' as ' + a[1].replace(/"/,'\\"');
     //console.log("AS   " + JSON.stringify(_ctx));
     var otext = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(o, _ctx);
+
+    if (_context["_result"]) {
+      // мы кидаем значение alias в _result, это подходит для столбцов
+      // для TABLE as alias не надо вызывать _result
+      _context["_result"]["alias"] = n;
+      return otext;
+    }
+
     return "".concat(otext, " as ").concat(n);
   };
 
@@ -6160,7 +6231,184 @@ function init_koob_context(_vars) {
     return "(".concat(a, ")");
   };
 
+  _context['and'] = function () {
+    var a = Array.prototype.slice.call(arguments);
+    return "(".concat(a.join(') AND ('), ")");
+  };
+
+  _context['or'] = function () {
+    var a = Array.prototype.slice.call(arguments);
+    return "(".concat(a.join(') OR ('), ")");
+  }; // overwrite STDLIB! or we will treat (a = 'null') as (a = null) which is wrong in SQL !
+
+
+  _context['null'] = 'null';
+  _context['true'] = 'true';
+  _context['false'] = 'false';
+
+  _context["ql"] = function (el) {
+    // NULL values should not be quoted
+    return el === null ? null : __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["a" /* db_quote_literal */])(el);
+  };
+
+  _context['between'] = function (col, var1, var2) {
+    if (shouldQuote(col)) {
+      var1 = quoteLiteral(var1);
+      var2 = quoteLiteral(var2);
+    }
+
+    return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(col, _context), " BETWEEN ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(var1, _context), " AND ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(var2, _context));
+  };
+
+  _context['between'].ast = [[], {}, [], 1]; // mark as macro
+
+  _context['='] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["f" /* makeSF */])(function (ast, ctx) {
+    // понимаем a = [null] как a is null
+    // a = [] просто пропускаем, А кстати почему собственно???
+    // a = [null, 1,2] как a in (1,2) or a is null
+    // ["=",["column","vNetwork.cluster"],SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]
+    // var a = Array.prototype.slice.call(arguments)
+    //console.log(JSON.stringify(ast))
+    var col = ast[0];
+    var isText = shouldQuote(col);
+    var c = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(col, _context);
+
+    var resolveValue = function resolveValue(v) {
+      if (isText) v = quoteLiteral(v);
+      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(v, _context);
+    };
+
+    if (ast.length === 1) {
+      return 'TRUE';
+    } else if (ast.length === 2) {
+      var v = resolveValue(ast[1]);
+      return v === null ? "".concat(c, " IS NULL") : "".concat(c, " = ").concat(v);
+    } else {
+      // check if we have null in the array of values...
+      var resolvedV = ast.slice(1).map(function (el) {
+        return resolveValue(el);
+      }).filter(function (el) {
+        return el !== null;
+      });
+      var hasNull = resolvedV.length < ast.length - 1;
+      var ret = "".concat(c, " IN (").concat(resolvedV.join(', '), ")");
+      if (hasNull) ret = "".concat(ret, " OR ").concat(c, " IS NULL");
+      return ret;
+    }
+  });
   return _ctx;
+}
+
+function extend_context_for_order_by(_context, _cfg) {
+  // создаём контекст с двумя макросами + и -, а они вызовут обычный контекст....
+  // можно пробовать переопределить реализацию функции column и поиска литералов/алиасов
+  // но пока что будет так 
+  var aliasContext = [// 
+  {
+    "column": __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["f" /* makeSF */])(function (col) {
+      /* примерно на 222 строке есть обработчик-резолвер литералов, там хардкодный вызов функции 
+        if (_context["_columns"][key]) return _context["column"](key)
+        то есть вызывается функция column в явном виде, а тут мы просто печатаем, что нам прислали.
+         FIXME: ИМЕЕТ смысл сделать функцию colref() и типа ссылаться на какой-то столбец.
+        И тут мы можем умно резолвить имена столбцов и алиасы и подставлять то, что нам надо.
+        ЛИБО объявить тут функцию как МАКРОС и тогда уже правильно отработать column
+        NEW COL: ["ch.fot_out.dor1"]
+        console.log("NEW COLUMN", col)
+      */
+      //console.log("NEW COL:", JSON.stringify(col))
+      var parts = col[0].split('.');
+
+      if (parts.length === 3) {
+        return "".concat(parts[1], ".").concat(parts[2]);
+      } else {
+        return col[0];
+      }
+      /*
+      if (_context[0]["_columns"][key]) return _context["column"](key)
+      if (_context[0]["_columns"][default_ds][default_cube][key]) return _context["column"](`${default_ds}.${default_cube}.${key}`)
+      
+      return col*/
+
+    })
+  }].concat(_toConsumableArray(_context));
+  var _ctx = {};
+  _ctx["+"] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["f" /* makeSF */])(function (ast) {
+    return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(ast[0], aliasContext);
+  });
+  _ctx["-"] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["f" /* makeSF */])(function (ast) {
+    return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(ast[0], aliasContext), " DESC");
+  });
+  return _ctx;
+}
+/* В итоге у нас получается явный GROUP BY по указанным столбцам-dimensions и неявный group by по всем остальным dimensions куба.
+ Свободные дименшены могут иметь мембера ALL, и во избежание удвоения сумм, требуется ВКЛЮЧИТЬ мембера ALL в суммирование как некий кэш.
+ Другими словами, по ВСЕМ свободным дименшенам, у которых есть мембер ALL (см. конфиг) требуется добавить фильтр dimX = 'ALL' !
+  Также можно считать ашрегаты на лету, но для этого требуется ИСКЛЮЧИТЬ memberALL из агрегирования!!!
+  Для указанных явно дименшенов доп. условий не требуется, клиент сам должен задать фильтры и понимать последствия.
+ В любом случае по group by столбцам не будет удыоения, memberAll будет явно представлен отдельно в результатах
+*/
+
+
+function inject_all_member_filters(_cfg, columns) {
+  var h = {}; // заполняем хэш h длинными именами столбцов, по которым явно есть GROUP BY
+
+  _cfg["_group_by"].map(function (el) {
+    el.columns.map(function (e) {
+      return h[e] = true;
+    });
+  });
+
+  __WEBPACK_IMPORTED_MODULE_14__console_console__["a" /* default */].log("FILTERS", JSON.stringify(_cfg["filters"])); // Ищем dimensions, по которым явно указан memeber ALL, и которых НЕТ в нашем явном списке...
+
+  Object.values(columns).map(function (el) {
+    if (h[el.id] === true) return; // столбец уже есть в списке group by!
+
+    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["b" /* isHash */])(el.config)) {
+      if (el.config.memberALL === null || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["d" /* isString */])(el.config.memberALL)) {
+        // есть значение для члена ALL, и оно в виде строки или IS NULL
+        // добавляем фильтр, но только если по этому столбцу нет другого фильтра!!!
+        // по ключу filters ещё не было нормализации !!! 
+        if (!__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["c" /* isArray */])(_cfg["filters"][el.id])) {
+          // Также нужно проверить нет ли уже фильтра по столбцу, который является altId
+          if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["c" /* isArray */])(el.config.altDimensions)) {
+            var _iteratorNormalCompletion = true;
+            var _didIteratorError = false;
+            var _iteratorError = undefined;
+
+            try {
+              for (var _iterator = el.config.altDimensions[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                var alt = _step.value;
+                // names should skip datasource
+                var altId = "".concat(_cfg.ds, ".").concat(alt);
+                __WEBPACK_IMPORTED_MODULE_14__console_console__["a" /* default */].log("ALT", JSON.stringify(altId));
+
+                if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["c" /* isArray */])(_cfg["filters"][altId]) || h[altId] === true) {
+                  // уже есть условие по altId, не включаем новое условие
+                  return;
+                }
+              }
+            } catch (err) {
+              _didIteratorError = true;
+              _iteratorError = err;
+            } finally {
+              try {
+                if (!_iteratorNormalCompletion && _iterator.return != null) {
+                  _iterator.return();
+                }
+              } finally {
+                if (_didIteratorError) {
+                  throw _iteratorError;
+                }
+              }
+            }
+          }
+
+          _cfg["filters"][el.id] = ["=", el.config.memberALL];
+        }
+      }
+    }
+  });
+  return _cfg;
 }
 
 function generate_koob_sql(_cfg, _vars) {
@@ -6185,319 +6433,148 @@ function generate_koob_sql(_cfg, _vars) {
   }
   */
 
-  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["b" /* isString */])(_cfg["with"])) {
+  var target_db_type = null;
+
+  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["d" /* isString */])(_cfg["with"])) {
     var w = _cfg["with"];
-    _context["_columns"] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["a" /* reports_get_columns */])(w); // это корректный префикс: "дс.перв"."куб.2"  так что тупой подсчёт точек не катит.
+    _context["_columns"] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["b" /* reports_get_columns */])(w); // это корректный префикс: "дс.перв"."куб.2"  так что тупой подсчёт точек не катит.
 
     if (w.match(/^("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)$/) !== null) {
       _cfg = normalize_koob_config(_cfg, w, _context);
+      target_db_type = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["c" /* get_source_database */])(w.split('.')[0]);
+      _context["_target_database"] = target_db_type;
     } else {
       // это строка, но она не поддерживается, так как либо точек слишком много, либо они не там, либо их нет
       throw new Error("Request contains with key, but it has the wrong format: ".concat(w, " Should be datasource.cube with exactly one dot in between."));
     }
+  } else {
+    throw new Error("Default cube must be specified in with key");
   }
 
-  _context = init_koob_context(_context);
+  _context = init_koob_context(_context, _cfg["ds"], _cfg["cube"]); //console.log("NORMALIZED CONFIG: ", JSON.stringify(_cfg))
 
-  var res = _cfg["columns"].map(function (el) {
-    return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(el, _context);
-  });
-
-  return res;
-  /* while we wrapping aggregate functions around columns, we should keep track of the free columns, so we will be able to
-     generate correct group by !!!!
+  /*
+    while we evaluating each column, koob_context will fill JSON structure in the context like this:
+   {
+     expr: "sum((fot.val3+fot.val1)/100) as summa",
+     alias: "summa",
+     columns: ["czt.fot.val3","czt.fot.val1"],
+     agg: true
+   }
   */
 
-  var group_by = _cfg["columns"].map(function (h) {
-    return h["id"];
+  var columns_s = [];
+
+  var columns = _cfg["columns"].map(function (el) {
+    _context[0]["_result"] = {
+      "columns": []
+    };
+    var r = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(el, _context);
+    columns_s.push(_context[0]["_result"]);
+    return r;
   });
 
-  var wrap_aggregate_functions = function wrap_aggregate_functions(col, cfg, col_id) {
-    ret = col; // Empty agg arrays can be used for AGGFN type ! We happily support it
+  _context[0]["_result"] = null;
 
-    if (Array.isArray(cfg["agg"])) {
-      group_by = group_by.filter(function (id) {
-        return id !== col_id;
-      });
-      var r = cfg["agg"].reduce(function (a, currentFunc) {
-        return "".concat(currentFunc, "( ").concat(a, " )");
-      }, ret);
-      /* it is a special default formatter, which should be implemented per column with LPE!!!! DISABLED
-      if (_context["_target_database"] === 'oracle' || _context["_target_database"] === 'postgresql') {
-        // automatically format number
-        r = `to_char( ${r}, '999G999G999G999G990D00')`
-      }
-      */
-
-      return r;
-    }
-
-    return ret;
-  };
-
-  _context["column"] = function (col) {
-    var col_info = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["b" /* reports_get_column_info */])(_cfg["sourceId"], col);
-    var col_sql = col_info["sql_query"];
-
-    if (col_sql.match(/^\S+$/) === null) {
-      // we have whitespace here, so it is complex expression :-()
-      return "".concat(col_sql);
-    } // we have just column name, prepend table alias !
+  for (var i = 0; i < columns.length; i++) {
+    columns_s[i]["expr"] = columns[i];
+  } // ищем кандидатов для GROUP BY и заполняем оригинальную структуру служебными полями
 
 
-    var parts = col.split('.');
-    return "".concat(parts[1], ".").concat(col_sql);
-  };
+  _cfg["_group_by"] = [];
+  _cfg["_measures"] = [];
+  columns_s.map(function (el) {
+    return el["agg"] === true ? _cfg["_measures"].push(el) : _cfg["_group_by"].push(el);
+  });
+  _cfg["_columns"] = columns_s; //console.log("RES ", JSON.stringify(columns_s))
 
-  _context['generate_sql_struct_for_report'] = function (cfg) {
-    __WEBPACK_IMPORTED_MODULE_14__console_console__["a" /* default */].log(JSON.stringify(cfg));
+  if (_cfg["_measures"].length === 0) {
+    // do not group if we have no aggregates !!!
+    _cfg["_group_by"] = [];
+  } //console.log("GBY ", JSON.stringify(_cfg["_group_by"]))
 
-    if (_typeof(cfg) === 'object' && Array.isArray(cfg)) {
-      throw new Error("reports_sql expected {...} as argument");
-    }
-    /* нужно сгенерить что-то типа такого:
-    [  'sql-struct',
-    [
-      'select',
-      'a',
-      'b',
-      [ '->', 'department_code', 'alias' ],
-      [ '::', 'no', 'TEXT' ],
-      [ 'max', 'credits' ]
-    ],
-    [ 'from', [ '->', 'bm', 'tbl' ] ],
-    [ 'order_by', 'a', [ '-', 'b' ] ],
-    [ 'filter', [ '()', [Array] ] ]
-    ]
-    */
-
-    /*
-      var convert_in_to_eq = function(in_lpe){
-        if (in_lpe[0] === 'in'){
-          in_lpe[0] = '=';
-        }
-         in_lpe.map(el => {
-           if (Array.isArray(el)) {
-            convert_in_to_eq(el)
-           }      
-          })
-        return in_lpe;
-      }*/
+  /* В итоге у нас получается явный GROUP BY по указанным столбцам-dimensions и неявный group by по всем остальным dimensions куба.
+   Свободные дименшены могут иметь мембера ALL, и во избежание удвоения сумм, требуется ВКЛЮЧИТЬ мембера ALL в суммирование как некий кэш.
+   Другими словами, по ВСЕМ свободным дименшенам, у которых есть мембер ALL (см. конфиг) требуется добавить фильтр dimX = 'ALL' !
+    Для указанных явно дименшенов доп. условий не требуется, клиент сам будет разбираться с результатом
+  */
 
 
-    var convert_in_to_eq = function convert_in_to_eq(in_lpe) {
-      if (!Array.isArray(in_lpe) || in_lpe.length === 0) return in_lpe;
-      return [in_lpe[0] === 'in' ? '=' : in_lpe[0]].concat(_toConsumableArray(in_lpe.slice(1).map(convert_in_to_eq)));
-    }; // на входе вложенная структура из конфига.
-    // расчитываем, что структура создана в GUI и порядок следования элементов стандартный
+  if (_cfg["_group_by"].length > 0) {
+    _cfg = inject_all_member_filters(_cfg, _context[0]["_columns"]);
+  } // at this point we will have something like this:
+
+  /*
+   {"ds":"ch","cube":"fot_out","filters":{"ch.fot_out.dor1":["=","ГОРЬК"],"ch.fot_out.dor2":["=","ПОДГОРЬК"],"ch.fot_out.dor4":["=",null],
+   "ch.fot_out.dor5":["=",null],"ch.fot_out.dt":["BETWEEN","2020-01","2020-12"],"ch.fot_out.sex_name":["=","Мужской"],"ch.fot_out.pay_name":
+   ["=",null]},"having":{"ch.fot_out.dt":[">","2020-08"]},"columns":[["column","ch.fot_out.dt"],["column","ch.fot_out.branch4"],
+   ["column","fot_out.ss1"],[":",["sum",["/",["()",["+","v_main",["->","utils",["func","v_rel_fzp"]]]],100]],"summa"],[":",
+   ["column","ch.fot_out.obj_name"],"new"],["sum",["column","v_rel_pp"]],[":",["avg",["+",["column","ch.fot_out.indicator_v"],["column","v_main"]]],
+   "new"]],"sort":[["-",["column","ch.fot_out.dor1"]],["+",["column","val1"]],["-",["column","val2"]],["-",["column","czt.fot.dor2"]],
+   ["+",["column","summa"]]],"_group_by":[{"columns":["ch.fot_out.dt"],"expr":"(NOW() - INERVAL '1 DAY')"},{"columns":["ch.fot_out.branch4"],
+   "expr":"fot_out.branch4"},{"columns":[],"expr":"fot_out.ss1"},{"columns":["ch.fot_out.obj_name"],"alias":"new","expr":"fot_out.obj_name"}],
+   "_measures":[{"columns":["ch.fot_out.v_main","ch.fot_out.v_rel_fzp"],"agg":true,"alias":"summa","expr":
+   "sum((fot_out.v_main + utils.func(fot_out.v_rel_fzp)) / 100)"},{"columns":["ch.fot_out.v_rel_pp"],"agg":true,"expr":
+   "sum(fot_out.v_rel_pp)"},{"columns":["ch.fot_out.indicator_v","ch.fot_out.v_main"],"agg":true,"alias":"new","expr":
+   "avg(fot_out.indicator_v + fot_out.v_main)"}],"_columns":[{"columns":["ch.fot_out.dt"],"expr":"(NOW() - INERVAL '1 DAY')"},
+   {"columns":["ch.fot_out.branch4"],"expr":"fot_out.branch4"},{"columns":[],"expr":"fot_out.ss1"},{"columns":
+   ["ch.fot_out.v_main","ch.fot_out.v_rel_fzp"],"agg":true,"alias":"summa","expr":"sum((fot_out.v_main + utils.func(fot_out.v_rel_fzp)) / 100)"},
+   {"columns":["ch.fot_out.obj_name"],"alias":"new","expr":"fot_out.obj_name"},{"columns":["ch.fot_out.v_rel_pp"],"agg":true,"expr":
+   "sum(fot_out.v_rel_pp)"},{"columns":["ch.fot_out.indicator_v","ch.fot_out.v_main"],"agg":true,"alias":"new","expr":
+   "avg(fot_out.indicator_v + fot_out.v_main)"}]}
+  */
+  // let's get SQL from it!
 
 
-    var quote_text_constants = function quote_text_constants(in_lpe) {
-      if (!Array.isArray(in_lpe)) return in_lpe;
+  var select = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["c" /* isArray */])(_cfg["distinct"]) ? "SELECT DISTINCT " : "SELECT "; // могут быть ньюансы квотации столбцов, обозначения AS и т.д. поэтому каждый участок приводим к LPE и вызываем SQLPE функции с адаптацией под конкретные базы
 
-      if (in_lpe[0] === 'IN') {
-        // example: ["IN",["column","vNetwork.cluster"],["SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]]
-        // Transform to AST form
-        in_lpe[0] = 'in';
-        in_lpe[2] = ['['].concat(in_lpe[2]); // and process further
-      } //console.log("quote_text_constants" + JSON.stringify(in_lpe))
-
-
-      if (in_lpe[0] === 'in') {
-        if (Array.isArray(in_lpe[1])) {
-          if (in_lpe[1][0] === 'column') {
-            if (Array.isArray(in_lpe[2]) && in_lpe[2][0] === '[') {
-              // ["=",["column","vNetwork.cluster"],["[","SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]]
-              var info = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["b" /* reports_get_column_info */])(_cfg["sourceId"], in_lpe[1][1]);
-
-              if (info["type"] === 'PERIOD' && _context["_target_database"] === 'oracle') {
-                in_lpe[2] = ['['].concat(in_lpe[2].slice(1).map(function (el) {
-                  return ["to_date", ["ql", el], "'YYYY-MM-DD'"];
-                }));
-              } else {
-                in_lpe[2] = ['['].concat(in_lpe[2].slice(1).map(function (el) {
-                  return ["ql", el];
-                }));
-              }
-            }
-          }
-        }
-      } else {
-        if (in_lpe.length > 2 && in_lpe[0] !== 'not') {
-          if (Array.isArray(in_lpe[1])) {
-            if (in_lpe[1][0] === 'column') {
-              if (!Array.isArray(in_lpe[2])) {
-                // ANY OPERATOR
-                // ["~",["column","vNetwork.cluster"],"SPB99-DMZ02"]
-                var info = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["b" /* reports_get_column_info */])(_cfg["sourceId"], in_lpe[1][1]);
-
-                if (info["type"] === 'PERIOD' && _context["_target_database"] === 'oracle') {
-                  in_lpe[2] = ["to_date", ["ql", in_lpe[2]], "'YYYY-MM-DD'"];
-                } else {
-                  in_lpe[2] = ["ql", in_lpe[2]];
-                }
-              }
-
-              if (in_lpe.length === 4) {
-                // between
-                if (!Array.isArray(in_lpe[3])) {
-                  //["between",["column","vNetwork.period_month"],"2019-09-10","2019-09-20"]
-                  var info = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["b" /* reports_get_column_info */])(_cfg["sourceId"], in_lpe[1][1]);
-
-                  if (info["type"] === 'PERIOD' && _context["_target_database"] === 'oracle') {
-                    in_lpe[3] = ["to_date", ["ql", in_lpe[3]], "'YYYY-MM-DD'"];
-                    in_lpe[4] = ["to_date", ["ql", in_lpe[4]], "'YYYY-MM-DD'"];
-                  } else {
-                    in_lpe[3] = ["ql", in_lpe[3]];
-                    in_lpe[4] = ["ql", in_lpe[4]];
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-
-      in_lpe.map(function (el) {
-        //console.log("RECURS" + JSON.stringify(el))
-        quote_text_constants(el);
-      });
-      return in_lpe;
-    };
-
-    var struct = ['sql'];
-    var allSources = cfg["columns"].map(function (h) {
-      return h["id"].split('.')[0];
-    });
-
-    var uniq = _toConsumableArray(new Set(allSources));
-
-    if (uniq.length != 1) {
-      throw new Error("We support select from one source only, joins are not supported! Sources detected: " + JSON.stringify(uniq));
-    }
-
-    var allTables = cfg["columns"].map(function (h) {
-      return h["id"].split('.').slice(0, 2).join('.');
-    }); // !!!!!!!!!!!!! uniq will be used later in from!!!
-
-    var uniqTables = _toConsumableArray(new Set(allTables));
-
-    var join_struct = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["c" /* reports_get_join_path */])(uniqTables);
-
-    if (join_struct.nodes.length === 0) {
-      throw new Error("Can not find path to JOIN tables: " + JSON.stringify(uniqTables));
-    } // HACK as we miss _cfg["sourceId"]
-
-
-    var srcIdent = _cfg["sourceId"];
-
-    if (srcIdent === undefined) {
-      srcIdent = join_struct.nodes[0].split('.')[0];
-    }
-
-    var target_db_type = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["d" /* get_source_database */])(srcIdent);
-    _context["_target_database"] = target_db_type; // column should always be represented as full path source.cube.column
-    // for aggregates we should add func names as suffix ! like source.cube.column.max_avg
-
-    var sel = ['select'].concat(cfg["columns"].map(function (h) {
-      var col_info = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["b" /* reports_get_column_info */])(cfg["sourceId"], h["id"]);
-      var col_sql = col_info["sql_query"];
-      var parts = h.id.split('.'); //if ( col_sql.match( /^\S+$/ ) !== null ) {
-
-      if (col_sql === parts[2]) {
-        // we have just column name, prepend table alias !
-        col_sql = "".concat(parts[1], ".").concat(col_sql);
-      } // This is hack to implement AGGFN type !
-
-
-      if (col_info["config"]["aggFormula"]) {
-        // We should remove column from GROUP BY
-        // group_by is global, it is sad
-        group_by = group_by.filter(function (id) {
-          return id !== h["id"];
-        });
-      }
-
-      var wrapped_column_sql = wrap_aggregate_functions(col_sql, h, h["id"]);
-      var as = "".concat(h.id);
-
-      if (Array.isArray(h["agg"])) {
-        as = "\"".concat(h.id, ".").concat(h["agg"].join('.'), "\"");
-      } //return `${wrapped_column_sql} AS ${as}`
-      // oracle has limit 30 chars in identifier!
-      // we can skip it for now.
-
-
-      return "".concat(wrapped_column_sql);
-    }));
-
-    if (group_by.length === cfg["columns"].length) {
-      group_by = ["group_by"];
+  select = select.concat(_cfg["_columns"].map(function (el) {
+    if (el.alias) {
+      return "".concat(el.expr, " AS ").concat(el.alias);
     } else {
-      // we should provide group_by!
-      group_by = ["group_by"].concat(group_by.map(function (c) {
-        return ["column", c];
-      }));
-    } // will return something like     (select * from abc) AS a
-
-
-    var from = ['from'].concat(join_struct.nodes.map(function (t) {
-      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["e" /* reports_get_table_sql */])(target_db_type, t);
-    }));
-    var order_by = ['order_by'].concat(cfg["columns"].map(function (h) {
-      if (h["sort"] == 1) {
-        return ["+", ["column", h["id"]]];
-      } else if (h["sort"] == 2) {
-        return ["-", ["column", h["id"]]];
+      if (el.columns.length === 1) {
+        var parts = el.columns[0].split('.');
+        return "".concat(el.expr, " AS ").concat(parts[2]);
       }
-    }));
-    order_by = order_by.filter(function (el) {
-      return el !== undefined;
-    });
-    var filt = cfg["filters"].map(function (h) {
-      return h["lpe"] ? convert_in_to_eq(quote_text_constants(h["lpe"])) : null;
-    }).filter(function (el) {
-      return el !== null;
-    });
-    __WEBPACK_IMPORTED_MODULE_14__console_console__["a" /* default */].log("========= reports_get_join_conditions " + JSON.stringify(join_struct));
 
-    if (join_struct.nodes.length > 1) {
-      filt = filt.concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["f" /* reports_get_join_conditions */])(join_struct));
+      return el.expr;
     }
+  }).join(', '));
+  var where = '';
+  var pw = Object.keys(_cfg["filters"]).filter(function (k) {
+    return k !== "";
+  }).map(function (key) {
+    var a = _cfg["filters"][key].splice(1, 0, ["column", key]);
 
-    if (filt.length > 1) {
-      filt = ['and'].concat(filt);
-    } else if (filt.length == 1) {
-      filt = filt[0];
-    }
+    return _cfg["filters"][key];
+  });
 
-    if (filt.length > 0) {
-      filt = ["filter", filt];
-    } else {
-      filt = ["filter"];
-    }
+  if (pw.length > 0) {
+    var wh = ["and"].concat(pw); //console.log("WHERE", JSON.stringify(wh))
 
-    struct.push(sel, from, order_by, filt, group_by);
+    where = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(wh, _context);
+    where = where.length > 2 ? "\nWHERE ".concat(where) : '';
+  }
 
-    if (cfg["limit"] !== undefined) {
-      var offset = cfg["offset"] || 0;
-      struct.push(["slice", offset, cfg["limit"]]);
-    }
+  var group_by = _cfg["_group_by"].map(function (el) {
+    return el.expr;
+  }).join(', ');
 
-    __WEBPACK_IMPORTED_MODULE_14__console_console__["a" /* default */].log(JSON.stringify(struct));
-    __WEBPACK_IMPORTED_MODULE_14__console_console__["a" /* default */].log("USING ".concat(target_db_type, " as target database"));
-    var ret = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(struct, _context);
-    return ret;
-  }; // по хорошему, надо столбцы засунуть в _context в _columns и подгрузить их тип из базы!!!
-  // но мы типы столбцов будем определять здесь (в этой функции) и пытаться закавычить константы заранее....
+  group_by = group_by ? "\nGROUP BY ".concat(group_by) : ''; // нужно дополнить контекст для +,- и суметь сослатья на алиасы!
 
+  var order_by_context = extend_context_for_order_by(_context, _cfg); //console.log("SORT:", JSON.stringify(_cfg["sort"]))
 
-  var ret = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(["generate_sql_struct_for_report", _cfg], _context);
-  return ret;
+  var order_by = _cfg["sort"].map(function (el) {
+    return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(el, order_by_context);
+  }).join(', ');
+
+  order_by = order_by ? "\nORDER BY ".concat(order_by) : '';
+  var from = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["d" /* reports_get_table_sql */])(target_db_type, "".concat(_cfg["ds"], ".").concat(_cfg["cube"]));
+  return "".concat(select, "\nFROM ").concat(from).concat(where).concat(group_by).concat(order_by);
 }
 
 /***/ }),
-/* 90 */
+/* 89 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -6505,11 +6582,11 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "eval_lpe", function() { return eval_lpe; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__console_console__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__lpep__ = __webpack_require__(19);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__lped__ = __webpack_require__(87);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__lped__ = __webpack_require__(86);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__lisp__ = __webpack_require__(28);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__sql_where__ = __webpack_require__(56);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__sql_context__ = __webpack_require__(88);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__sql_koob__ = __webpack_require__(89);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__sql_where__ = __webpack_require__(57);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__sql_context__ = __webpack_require__(87);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__sql_koob__ = __webpack_require__(88);
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "parse", function() { return __WEBPACK_IMPORTED_MODULE_1__lpep__["a"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "deparse", function() { return __WEBPACK_IMPORTED_MODULE_2__lped__["a"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "LPESyntaxError", function() { return __WEBPACK_IMPORTED_MODULE_1__lpep__["b"]; });
@@ -6542,14 +6619,14 @@ function eval_lpe(lpe, ctx) {
 // console.log(result);
 
 /***/ }),
-/* 91 */
+/* 90 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["c"] = LPESyntaxError;
 /* harmony export (immutable) */ __webpack_exports__["a"] = makeError;
 /* harmony export (immutable) */ __webpack_exports__["b"] = tokenize;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_string_starts_with__ = __webpack_require__(86);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_string_starts_with__ = __webpack_require__(85);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_string_starts_with___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_string_starts_with__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_function_name__ = __webpack_require__(82);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_function_name___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_function_name__);
@@ -6849,14 +6926,14 @@ function tokenize(s) {
 /* unused harmony default export */ var _unused_webpack_default_export = (tokenize);
 
 /***/ }),
-/* 92 */
+/* 91 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // false -> Array#indexOf
 // true  -> Array#includes
 var toIObject = __webpack_require__(13);
 var toLength = __webpack_require__(10);
-var toAbsoluteIndex = __webpack_require__(114);
+var toAbsoluteIndex = __webpack_require__(113);
 module.exports = function (IS_INCLUDES) {
   return function ($this, el, fromIndex) {
     var O = toIObject($this);
@@ -6878,7 +6955,7 @@ module.exports = function (IS_INCLUDES) {
 
 
 /***/ }),
-/* 93 */
+/* 92 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 0 -> Array#forEach
@@ -6889,10 +6966,10 @@ module.exports = function (IS_INCLUDES) {
 // 5 -> Array#find
 // 6 -> Array#findIndex
 var ctx = __webpack_require__(15);
-var IObject = __webpack_require__(64);
+var IObject = __webpack_require__(65);
 var toObject = __webpack_require__(17);
 var toLength = __webpack_require__(10);
-var asc = __webpack_require__(95);
+var asc = __webpack_require__(94);
 module.exports = function (TYPE, $create) {
   var IS_MAP = TYPE == 1;
   var IS_FILTER = TYPE == 2;
@@ -6928,11 +7005,11 @@ module.exports = function (TYPE, $create) {
 
 
 /***/ }),
-/* 94 */
+/* 93 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var isObject = __webpack_require__(6);
-var isArray = __webpack_require__(66);
+var isArray = __webpack_require__(67);
 var SPECIES = __webpack_require__(0)('species');
 
 module.exports = function (original) {
@@ -6950,11 +7027,11 @@ module.exports = function (original) {
 
 
 /***/ }),
-/* 95 */
+/* 94 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 9.4.2.3 ArraySpeciesCreate(originalArray, length)
-var speciesConstructor = __webpack_require__(94);
+var speciesConstructor = __webpack_require__(93);
 
 module.exports = function (original, length) {
   return new (speciesConstructor(original))(length);
@@ -6962,23 +7039,23 @@ module.exports = function (original, length) {
 
 
 /***/ }),
-/* 96 */
+/* 95 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 var dP = __webpack_require__(5).f;
 var create = __webpack_require__(46);
-var redefineAll = __webpack_require__(73);
+var redefineAll = __webpack_require__(74);
 var ctx = __webpack_require__(15);
-var anInstance = __webpack_require__(58);
-var forOf = __webpack_require__(61);
+var anInstance = __webpack_require__(59);
+var forOf = __webpack_require__(62);
 var $iterDefine = __webpack_require__(44);
-var step = __webpack_require__(69);
-var setSpecies = __webpack_require__(74);
+var step = __webpack_require__(70);
+var setSpecies = __webpack_require__(75);
 var DESCRIPTORS = __webpack_require__(2);
 var fastKey = __webpack_require__(45).fastKey;
-var validate = __webpack_require__(76);
+var validate = __webpack_require__(77);
 var SIZE = DESCRIPTORS ? '_s' : 'size';
 
 var getEntry = function (that, key) {
@@ -7113,7 +7190,7 @@ module.exports = {
 
 
 /***/ }),
-/* 97 */
+/* 96 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7121,15 +7198,15 @@ module.exports = {
 var global = __webpack_require__(4);
 var $export = __webpack_require__(7);
 var redefine = __webpack_require__(8);
-var redefineAll = __webpack_require__(73);
+var redefineAll = __webpack_require__(74);
 var meta = __webpack_require__(45);
-var forOf = __webpack_require__(61);
-var anInstance = __webpack_require__(58);
+var forOf = __webpack_require__(62);
+var anInstance = __webpack_require__(59);
 var isObject = __webpack_require__(6);
 var fails = __webpack_require__(3);
-var $iterDetect = __webpack_require__(68);
+var $iterDetect = __webpack_require__(69);
 var setToStringTag = __webpack_require__(35);
-var inheritIfRequired = __webpack_require__(63);
+var inheritIfRequired = __webpack_require__(64);
 
 module.exports = function (NAME, wrapper, methods, common, IS_MAP, IS_WEAK) {
   var Base = global[NAME];
@@ -7205,7 +7282,7 @@ module.exports = function (NAME, wrapper, methods, common, IS_MAP, IS_WEAK) {
 
 
 /***/ }),
-/* 98 */
+/* 97 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7220,12 +7297,12 @@ module.exports = function (object, index, value) {
 
 
 /***/ }),
-/* 99 */
+/* 98 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // all enumerable object keys, includes symbols
 var getKeys = __webpack_require__(16);
-var gOPS = __webpack_require__(71);
+var gOPS = __webpack_require__(72);
 var pIE = __webpack_require__(33);
 module.exports = function (it) {
   var result = getKeys(it);
@@ -7241,7 +7318,7 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 100 */
+/* 99 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var MATCH = __webpack_require__(0)('match');
@@ -7259,14 +7336,14 @@ module.exports = function (KEY) {
 
 
 /***/ }),
-/* 101 */
+/* 100 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(36)('native-function-to-string', Function.toString);
 
 
 /***/ }),
-/* 102 */
+/* 101 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var document = __webpack_require__(4).document;
@@ -7274,7 +7351,7 @@ module.exports = document && document.documentElement;
 
 
 /***/ }),
-/* 103 */
+/* 102 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7294,7 +7371,7 @@ module.exports = function (Constructor, NAME, next) {
 
 
 /***/ }),
-/* 104 */
+/* 103 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var dP = __webpack_require__(5);
@@ -7313,7 +7390,7 @@ module.exports = __webpack_require__(2) ? Object.defineProperties : function def
 
 
 /***/ }),
-/* 105 */
+/* 104 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // fallback for IE11 buggy Object.getOwnPropertyNames with iframe and window
@@ -7338,7 +7415,7 @@ module.exports.f = function getOwnPropertyNames(it) {
 
 
 /***/ }),
-/* 106 */
+/* 105 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 19.1.2.9 / 15.2.3.2 Object.getPrototypeOf(O)
@@ -7357,7 +7434,7 @@ module.exports = Object.getPrototypeOf || function (O) {
 
 
 /***/ }),
-/* 107 */
+/* 106 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // most Object methods by ES6 should accept primitives
@@ -7373,7 +7450,7 @@ module.exports = function (KEY, exec) {
 
 
 /***/ }),
-/* 108 */
+/* 107 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var getKeys = __webpack_require__(16);
@@ -7395,7 +7472,7 @@ module.exports = function (isEntries) {
 
 
 /***/ }),
-/* 109 */
+/* 108 */
 /***/ (function(module, exports) {
 
 // 7.2.9 SameValue(x, y)
@@ -7406,7 +7483,7 @@ module.exports = Object.is || function is(x, y) {
 
 
 /***/ }),
-/* 110 */
+/* 109 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Works with __proto__ only. Old v8 can't work with null proto objects.
@@ -7421,7 +7498,7 @@ module.exports = {
   set: Object.setPrototypeOf || ('__proto__' in {} ? // eslint-disable-line
     function (test, buggy, set) {
       try {
-        set = __webpack_require__(15)(Function.call, __webpack_require__(70).f(Object.prototype, '__proto__').set, 2);
+        set = __webpack_require__(15)(Function.call, __webpack_require__(71).f(Object.prototype, '__proto__').set, 2);
         set(test, []);
         buggy = !(test instanceof Array);
       } catch (e) { buggy = true; }
@@ -7437,7 +7514,7 @@ module.exports = {
 
 
 /***/ }),
-/* 111 */
+/* 110 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 7.3.20 SpeciesConstructor(O, defaultConstructor)
@@ -7452,7 +7529,7 @@ module.exports = function (O, D) {
 
 
 /***/ }),
-/* 112 */
+/* 111 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7468,7 +7545,7 @@ module.exports = function (method, arg) {
 
 
 /***/ }),
-/* 113 */
+/* 112 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // helper for String#{startsWith, endsWith, includes}
@@ -7482,7 +7559,7 @@ module.exports = function (that, searchString, NAME) {
 
 
 /***/ }),
-/* 114 */
+/* 113 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var toInteger = __webpack_require__(37);
@@ -7495,7 +7572,7 @@ module.exports = function (index, length) {
 
 
 /***/ }),
-/* 115 */
+/* 114 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7511,7 +7588,7 @@ __webpack_require__(7)({
 
 
 /***/ }),
-/* 116 */
+/* 115 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 21.2.5.3 get RegExp.prototype.flags()
@@ -7522,14 +7599,14 @@ if (__webpack_require__(2) && /./g.flags != 'g') __webpack_require__(5).f(RegExp
 
 
 /***/ }),
-/* 117 */
+/* 116 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 var anObject = __webpack_require__(1);
-var sameValue = __webpack_require__(109);
+var sameValue = __webpack_require__(108);
 var regExpExec = __webpack_require__(34);
 
 // @@search logic
@@ -7557,6 +7634,27 @@ __webpack_require__(30)('search', 1, function (defined, SEARCH, $search, maybeCa
     }
   ];
 });
+
+
+/***/ }),
+/* 117 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var strong = __webpack_require__(95);
+var validate = __webpack_require__(77);
+var SET = 'Set';
+
+// 23.2 Set Objects
+module.exports = __webpack_require__(96)(SET, function (get) {
+  return function Set() { return get(this, arguments.length > 0 ? arguments[0] : undefined); };
+}, {
+  // 23.2.3.1 Set.prototype.add(value)
+  add: function add(value) {
+    return strong.def(validate(this, SET), value = value === 0 ? 0 : value, value);
+  }
+}, strong);
 
 
 /***/ })

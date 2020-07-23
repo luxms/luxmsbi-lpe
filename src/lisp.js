@@ -185,7 +185,7 @@ const STDLIB = {
   '#t': true,
   '#f': false,
   'NIL': null,
-  'null': null,                                                                 // js specific
+  'null': null,                                                                // js specific
   'true': true,
   'false': false,
   'Array': Array,                                                               // TODO: consider removing these properties
