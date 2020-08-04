@@ -1887,7 +1887,7 @@ var STDLIB = _objectSpread({
   '#f': false,
   'NIL': null,
   'null': null,
-  // we have problems in SQL generation with this constant        // js specific
+  // js specific
   'true': true,
   'false': false,
   'Array': Array,

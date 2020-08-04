@@ -204,15 +204,19 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
   // пытается определить тип аргумента, если это похоже на столбец, то ищет про него инфу в кэше и определяет тип,
   // а по типу можно уже думать, квотировать значения или нет.
-  var shouldQuote = function(col) {
+  var shouldQuote = function(col, v) {
     if (isArray(col) && col[0] === 'column') {
       //try to detect column type
       var c = _context["_columns"][col[1]]
       if (c) {
         return (c.type !== 'NUMBER')
       }
-      return false
+      return isString(v);
     }
+
+    // это формула над какими-то столбцами...
+    // смотрим на тип выражения v, если это текст, то возвращаем true,
+    return isString(v);
   }
   
   var quoteLiteral = function (lit) {
@@ -253,7 +257,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
             var c = eval_lisp(col,ctx)
 
             var v = ast[1]
-            if (shouldQuote(col)) v = quoteLiteral(v)
+            if (shouldQuote(col,v)) v = quoteLiteral(v)
             v = eval_lisp(v,ctx)
 
             return `${c} ${k} ${v}`
@@ -343,10 +347,9 @@ function init_koob_context(_vars, default_ds, default_cube) {
   }
 
   _context['between'] = function(col, var1, var2) {
-    if (shouldQuote(col)) {
-      var1 = quoteLiteral(var1)
-      var2 = quoteLiteral(var2)
-    }
+    if (shouldQuote(col,var1)) var1 = quoteLiteral(var1)
+    if (shouldQuote(col,var2)) var2 = quoteLiteral(var2)
+
     return `${eval_lisp(col,_context)} BETWEEN ${eval_lisp(var1,_context)} AND ${eval_lisp(var2,_context)}`
   }
   _context['between'].ast = [[],{},[],1]; // mark as macro
@@ -359,12 +362,12 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
     // ["=",["column","vNetwork.cluster"],SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]
     // var a = Array.prototype.slice.call(arguments)
-    //console.log(JSON.stringify(ast))
+    console.log(JSON.stringify(ast))
     var col = ast[0]
-    var isText = shouldQuote(col)
     var c = eval_lisp(col,_context)
     var resolveValue = function(v) {
-      if (isText) v = quoteLiteral(v)
+
+      if (shouldQuote(col, v)) v = quoteLiteral(v)
       return eval_lisp(v,_context)
     }
     if (ast.length === 1) {

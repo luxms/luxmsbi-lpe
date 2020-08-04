@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2020/07/23 17:39:28 */ 
+/** [LPE]  Version: 1.0.0 - 2020/08/04 14:01:45 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -1872,7 +1872,7 @@ var STDLIB = _objectSpread({
   '#f': false,
   'NIL': null,
   'null': null,
-  // we have problems in SQL generation with this constant        // js specific
+  // js specific
   'true': true,
   'false': false,
   'Array': Array,
@@ -6108,7 +6108,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
   var _context = _ctx[0]; // пытается определить тип аргумента, если это похоже на столбец, то ищет про него инфу в кэше и определяет тип,
   // а по типу можно уже думать, квотировать значения или нет.
 
-  var shouldQuote = function shouldQuote(col) {
+  var shouldQuote = function shouldQuote(col, v) {
     if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["c" /* isArray */])(col) && col[0] === 'column') {
       //try to detect column type
       var c = _context["_columns"][col[1]];
@@ -6117,8 +6117,13 @@ function init_koob_context(_vars, default_ds, default_cube) {
         return c.type !== 'NUMBER';
       }
 
-      return false;
-    }
+      __WEBPACK_IMPORTED_MODULE_14__console_console__["a" /* default */].log("UNKNOWN COLUMN ".concat(col[1], " ").concat(v));
+      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["d" /* isString */])(v);
+    } // это формула над какими-то столбцами...
+    // смотрим на тип выражения v, если это текст, то возвращаем true,
+
+
+    return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["d" /* isString */])(v);
   };
 
   var quoteLiteral = function quoteLiteral(lit) {
@@ -6160,7 +6165,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
           var col = ast[0];
           var c = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(col, ctx);
           var v = ast[1];
-          if (shouldQuote(col)) v = quoteLiteral(v);
+          if (shouldQuote(col, v)) v = quoteLiteral(v);
           v = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(v, ctx);
           return "".concat(c, " ").concat(k, " ").concat(v);
         });
@@ -6252,11 +6257,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
   };
 
   _context['between'] = function (col, var1, var2) {
-    if (shouldQuote(col)) {
-      var1 = quoteLiteral(var1);
-      var2 = quoteLiteral(var2);
-    }
-
+    if (shouldQuote(col, var1)) var1 = quoteLiteral(var1);
+    if (shouldQuote(col, var2)) var2 = quoteLiteral(var2);
     return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(col, _context), " BETWEEN ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(var1, _context), " AND ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(var2, _context));
   };
 
@@ -6268,13 +6270,12 @@ function init_koob_context(_vars, default_ds, default_cube) {
     // a = [null, 1,2] как a in (1,2) or a is null
     // ["=",["column","vNetwork.cluster"],SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]
     // var a = Array.prototype.slice.call(arguments)
-    //console.log(JSON.stringify(ast))
+    __WEBPACK_IMPORTED_MODULE_14__console_console__["a" /* default */].log(JSON.stringify(ast));
     var col = ast[0];
-    var isText = shouldQuote(col);
     var c = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(col, _context);
 
     var resolveValue = function resolveValue(v) {
-      if (isText) v = quoteLiteral(v);
+      if (shouldQuote(col, v)) v = quoteLiteral(v);
       return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(v, _context);
     };
 

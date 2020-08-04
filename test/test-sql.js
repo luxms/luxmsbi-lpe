@@ -283,6 +283,26 @@ GROUP BY (NOW() - INERVAL '1 DAY'), fot_out.sex_code
 ORDER BY fot_out.dt`
                );
 
+
+
+            // quoting of unkbowb columns
+
+            assert.equal( lpe.generate_koob_sql(
+               {"columns":["sum(v_main)","sum(v_rel_pp)","hcode_name"],
+               "distinct":[],
+               "filters":{"dt":["=","2020-03"],
+                           "type_oe_bi":["=","> 1 Дороги"],
+                          "pay_group_name":["=","6 Поощрения"],
+                          "pay_group_name1":[">",655],
+                          "pay_group_name2":[">","  "],
+                        },"with":"ch.fot_out"},
+                  {"key":null}),
+`SELECT DISTINCT sum(fot_out.v_main) AS v_main, sum(fot_out.v_rel_pp) AS v_rel_pp, fot_out.hcode_name AS hcode_name
+FROM fot_out AS fot_out
+WHERE ((NOW() - INERVAL '1 DAY') = '2020-03') AND (fot_out.type_oe_bi = '> 1 Дороги') AND (pay_group_name = '6 Поощрения') AND (pay_group_name1 > 655) AND (pay_group_name2 > '  ') AND (fot_out.pay_name IS NULL) AND (fot_out.sex_code = 'Все')
+GROUP BY fot_out.hcode_name`
+               );
+
   });
 
 
