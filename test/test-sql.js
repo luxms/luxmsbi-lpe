@@ -227,7 +227,7 @@ describe('LPE tests', function() {
           {"key":null}),
          `SELECT (NOW() - INERVAL '1 DAY') AS dt, fot_out.branch4 AS branch4, fot_out.ss1, sum((fot_out.v_main + utils.func(fot_out.v_rel_fzp)) / 100) AS summa, fot_out.obj_name AS new, sum(fot_out.v_rel_pp) AS v_rel_pp, avg(sum(fot_out.v_rel_pp)) AS v_rel_pp, avg(fot_out.indicator_v + fot_out.v_main) AS new
 FROM fot_out AS fot_out
-WHERE (fot_out.dor1 = 'ГОРЬК') AND (fot_out.dor2 IN ('ПОДГОРЬК', 'ХИМ', 'ПРОМ') OR fot_out.dor2 IS NULL) AND (fot_out.dor4 = '') AND (fot_out.dor5 IS NULL) AND (fot_out.dor3 = 'null') AND (fot_out.ss1 > '5') AND (fot_out.ss2 > '0') AND ((NOW() - INERVAL '1 DAY') BETWEEN '2020-01' AND '2020-12') AND (fot_out.sex_name = 'Мужской') AND (fot_out.pay_name IS NULL)
+WHERE (fot_out.dor1 = 'ГОРЬК') AND (fot_out.dor2 IN ('ПОДГОРЬК', 'ХИМ', 'ПРОМ') OR fot_out.dor2 IS NULL) AND (fot_out.dor4 = '') AND (fot_out.dor5 IS NULL) AND (fot_out.dor3 = 'null') AND (fot_out.ss1 > '5') AND (fot_out.ss2 > '0') AND ((NOW() - INERVAL '1 DAY') BETWEEN '2020-01' AND '2020-12') AND (fot_out.sex_name = 'Мужской') AND (fot_out.group_pay_name = 'Не задано') AND (fot_out.pay_code = 'Не задано') AND (fot_out.pay_name = 'Не задано')
 GROUP BY (NOW() - INERVAL '1 DAY'), fot_out.branch4, fot_out.ss1, fot_out.obj_name
 ORDER BY fot_out.dor1 DESC, fot_out.dt, val2 DESC, fot_out.dor2 DESC, summa`
       );
@@ -259,7 +259,7 @@ FROM fot_out AS fot_out`
          {"key":null}),
          `SELECT (NOW() - INERVAL '1 DAY') AS dt, fot_out.sex_name AS sex_name, fot_out.dor2 AS dor2, fot_out.branch3 AS branch3, sum(fot_out.v_rel_fzp) AS v_rel_fzp
 FROM fot_out AS fot_out
-WHERE ((NOW() - INERVAL '1 DAY') BETWEEN '2019-01' AND '2020-12') AND (fot_out.pay_name IS NULL)
+WHERE ((NOW() - INERVAL '1 DAY') BETWEEN '2019-01' AND '2020-12') AND (fot_out.group_pay_name = 'Не задано') AND (fot_out.pay_code = 'Не задано') AND (fot_out.pay_name = 'Не задано')
 GROUP BY (NOW() - INERVAL '1 DAY'), fot_out.sex_name, fot_out.dor2, fot_out.branch3
 ORDER BY fot_out.dt`
       );
@@ -278,12 +278,10 @@ ORDER BY fot_out.dt`
                   {"key":null}),
 `SELECT (NOW() - INERVAL '1 DAY') AS dt, fot_out.sex_code AS sex_code, sum(fot_out.v_rel_fzp) AS v_rel_fzp
 FROM fot_out AS fot_out
-WHERE ((NOW() - INERVAL '1 DAY') BETWEEN '2019-01' AND '2020-12') AND (fot_out.pay_name IS NULL)
+WHERE ((NOW() - INERVAL '1 DAY') BETWEEN '2019-01' AND '2020-12') AND (fot_out.group_pay_name = 'Не задано') AND (fot_out.pay_code = 'Не задано') AND (fot_out.pay_name = 'Не задано')
 GROUP BY (NOW() - INERVAL '1 DAY'), fot_out.sex_code
 ORDER BY fot_out.dt`
                );
-
-
 
             // quoting of unkbowb columns
 
@@ -299,9 +297,49 @@ ORDER BY fot_out.dt`
                   {"key":null}),
 `SELECT DISTINCT sum(fot_out.v_main) AS v_main, sum(fot_out.v_rel_pp) AS v_rel_pp, fot_out.hcode_name AS hcode_name
 FROM fot_out AS fot_out
-WHERE ((NOW() - INERVAL '1 DAY') = '2020-03') AND (fot_out.type_oe_bi = '> 1 Дороги') AND (pay_group_name = '6 Поощрения') AND (pay_group_name1 > 655) AND (pay_group_name2 > '  ') AND (fot_out.pay_name IS NULL) AND (fot_out.sex_code = 'Все')
+WHERE ((NOW() - INERVAL '1 DAY') = '2020-03') AND (fot_out.type_oe_bi = '> 1 Дороги') AND (pay_group_name = '6 Поощрения') AND (pay_group_name1 > 655) AND (pay_group_name2 > '  ') AND (fot_out.group_pay_name = 'Не задано') AND (fot_out.pay_code = 'Не задано') AND (fot_out.pay_name = 'Не задано') AND (fot_out.sex_code IS NULL)
 GROUP BY fot_out.hcode_name`
                );
+
+
+               // do not show where for group by columns!!!
+
+                           // quoting of unkbowb columns
+
+            assert.equal( lpe.generate_koob_sql(
+               {"columns":["sum(v_main)","sum(v_rel_pp)","sum(v_rel_pp_i)","pay_code","pay_name"],
+               "distinct":[],
+               "filters":{"dt":["=","2020-03"]},
+               "with":"ch.fot_out"},
+                  {"key":null}),
+`SELECT DISTINCT sum(fot_out.v_main) AS v_main, sum(fot_out.v_rel_pp) AS v_rel_pp, sum(v_rel_pp_i), fot_out.pay_code AS pay_code, fot_out.pay_name AS pay_name
+FROM fot_out AS fot_out
+WHERE ((NOW() - INERVAL '1 DAY') = '2020-03') AND (fot_out.sex_code IS NULL)
+GROUP BY fot_out.pay_code, fot_out.pay_name`
+               );
+
+
+            assert.equal( lpe.generate_koob_sql(
+               {"columns":["sum(v_main)","sum(v_rel_pp)","sum(v_rel_fzp)","sum(v_rel_pp_i)","group_pay_name"],
+               "distinct":[],
+               "filters":{"dt":["=","2020-03"],
+               "pay_name":["!=","Не задано"],
+               "area_name":["=","Не задано"],
+               "hcode_name":["=","ФЗП"],
+               "type_oe_bi":["=","РЖД"],
+               "region_name":["=","Не задано"],
+               "category_name":["=","Не задано"],
+               "group_pay_name":["!=","Не задано"],
+               "municipal_name":["=","Не задано"],
+               "prod_group_name":["=","Не задано"],
+               "profession_name":["=","Не задано"]},
+               "with":"ch.fot_out"},
+                     {"key":null}),
+`SELECT DISTINCT sum(fot_out.v_main) AS v_main, sum(fot_out.v_rel_pp) AS v_rel_pp, sum(fot_out.v_rel_fzp) AS v_rel_fzp, sum(v_rel_pp_i), fot_out.group_pay_name AS group_pay_name
+FROM fot_out AS fot_out
+WHERE ((NOW() - INERVAL '1 DAY') = '2020-03') AND (fot_out.pay_name != 'Не задано') AND (fot_out.area_name = 'Не задано') AND (fot_out.hcode_name = 'ФЗП') AND (fot_out.type_oe_bi = 'РЖД') AND (fot_out.region_name = 'Не задано') AND (fot_out.category_name = 'Не задано') AND (fot_out.group_pay_name != 'Не задано') AND (fot_out.municipal_name = 'Не задано') AND (fot_out.prod_group_name = 'Не задано') AND (fot_out.profession_name = 'Не задано') AND (fot_out.pay_code != 'Не задано') AND (fot_out.sex_code IS NULL)
+GROUP BY fot_out.group_pay_name`
+                  );
 
   });
 

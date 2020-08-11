@@ -448,7 +448,7 @@ function extend_context_for_order_by(_context, _cfg) {
    Также можно считать ашрегаты на лету, но для этого требуется ИСКЛЮЧИТЬ memberALL из агрегирования!!!
 
    Для указанных явно дименшенов доп. условий не требуется, клиент сам должен задать фильтры и понимать последствия.
-   В любом случае по group by столбцам не будет удыоения, memberAll будет явно представлен отдельно в результатах
+   В любом случае по group by столбцам не будет удвоения, memberAll будет явно представлен отдельно в результатах
   */
 
 function  inject_all_member_filters(_cfg, columns) {
@@ -458,34 +458,79 @@ function  inject_all_member_filters(_cfg, columns) {
     el.columns.map(e => h[e] = true)
   })
 console.log("FILTERS", JSON.stringify(_cfg["filters"]))
+//console.log("columns", JSON.stringify(columns))
   // Ищем dimensions, по которым явно указан memeber ALL, и которых НЕТ в нашем явном списке...
+  // ПО ВСЕМ СТОЛБАМ!!!
   Object.values(columns).map(el => {
-    if (h[el.id] === true) return // столбец уже есть в списке group by!
+    if (h[el.id] === true) {
+      return // столбец уже есть в списке group by!
+    }
     if (isHash(el.config)) {
-      if (el.config.memberALL === null || isString(el.config.memberALL)) {
-         // есть значение для члена ALL, и оно в виде строки или IS NULL
-         // добавляем фильтр, но только если по этому столбцу нет другого фильтра!!!
-         // по ключу filters ещё не было нормализации !!! 
-
-         if (!isArray(_cfg["filters"][el.id])){
-           // Также нужно проверить нет ли уже фильтра по столбцу, который является altId
-            if ( isArray(el.config.altDimensions) ) {
-              for( let alt of el.config.altDimensions) {
-                // names should skip datasource
-                let altId = `${_cfg.ds}.${alt}`
-                console.log("ALT", JSON.stringify(altId))
-                if (isArray(_cfg["filters"][altId]) || h[altId] === true) {
-                  // уже есть условие по altId, не включаем новое условие
-                  return
+      // Если для столбца прописано в конфиге follow=[], и нашего столбца ещё нет в списке фильтров, то надо добавить фильтр
+      if ( isArray(el.config.follow) && !isArray(_cfg["filters"][el.id])) {
+        for( let alt of el.config.follow) {
+          // names should skip datasource
+          let altId = `${_cfg.ds}.${alt}`
+          console.log(`###checking ${el.config.follow} ${altId}`, JSON.stringify(_cfg["filters"][el.id]) )
+          // По столбцу за которым мы следуем есть условие
+          if (isArray(_cfg["filters"][altId])) {
+            if ((_cfg["filters"][altId]).length == 2) {
+              // у столбца описан memberAll
+              if (columns[altId].config.memberALL === null || isString(columns[altId].config.memberALL)) {
+                var f = _cfg["filters"][altId];
+                if (f[1]==columns[altId].config.memberALL) {
+                  // Есть условие по столбцу, которому мы должны следовать, надо добавить такое же условие!
+                  _cfg["filters"][el.id] = [f[0],f[1]];
+                  break;
                 }
               }
             }
+            // так как есть условие по основному столбцу, мы не знаем точно, какое наше значение ему соответствует, 
+            // и чтобы не добавлялся memberALL ниже, мы пропускаем наш столбец
+            return;
+          }
+        }
+      }
+
+
+      if (el.config.memberALL === null || isString(el.config.memberALL)) {
+        // есть значение для члена ALL, и оно в виде строки или IS NULL
+        // добавляем фильтр, но только если по этому столбцу нет другого фильтра (который задали в конфиге)!!!
+        // NOTE: по ключу filters ещё не было нормализации !!! 
+
+        if (!isArray(_cfg["filters"][el.id])){
+          // Также нужно проверить нет ли уже фильтра по столбцу, который является altId
+          if ( isArray(el.config.altDimensions) ) {
+            for( let alt of el.config.altDimensions) {
+              // names should skip datasource
+              let altId = `${_cfg.ds}.${alt}`
+              console.log("ALT", JSON.stringify(altId))
+              if (isArray(_cfg["filters"][altId]) || h[altId] === true) {
+                // уже есть условие по столбцу из altId, не добавляем новое условие
+                // но только в том случае, если у нас явно просят этот столбец в выдачу
+                // if ( h[])
+                return
+              }
+            }
+          }
+          console.log(`!!!!checking  ${el.id} children`, JSON.stringify(el.config.children) )
+          // Если есть дочерние столбцы, то надо проверить нет ли их в GROUP BY или В Фильтрах
+          if ( isArray(el.config.children) ) {
+            for( let alt of el.config.children) {
+              let altId = `${_cfg.ds}.${alt}`
+              if (isArray(_cfg["filters"][altId]) || h[altId] === true) {
+                // children уже специфицированы, не надо добавлять меня!
+                return
+              }
+            }
+          }
+
           _cfg["filters"][el.id] = ["=",el.config.memberALL]
-         }
+        }
       }
     }
   })
-
+  console.log("FILTERS AFTER", JSON.stringify(_cfg["filters"]))
 
   return _cfg;
 }

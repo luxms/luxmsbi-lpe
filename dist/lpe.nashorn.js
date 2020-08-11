@@ -4616,14 +4616,28 @@ function reports_get_columns(cubeId) {
     "type": "STRING",
     "title": "group_pay_name",
     "sql_query": "group_pay_name",
-    "config": {}
+    "config": {
+      "follow": ["fot_out.group_pay_id"],
+      "children": ["fot_out.pay_name", "fot_out.pay_code"],
+      "memberALL": "Не задано"
+    }
+  }, {
+    "id": "ch.fot_out.pay_code",
+    "type": "STRING",
+    "title": "pay_code",
+    "sql_query": "pay_code",
+    "config": {
+      "memberALL": "Не задано",
+      "follow": ["fot_out.pay_name"]
+    }
   }, {
     "id": "ch.fot_out.pay_name",
     "type": "STRING",
     "title": "pay_name",
     "sql_query": "pay_name",
     "config": {
-      "memberALL": null
+      "memberALL": "Не задано",
+      "follow": ["fot_out.pay_code"]
     }
   }, {
     "id": "ch.fot_out.category_name",
@@ -4637,7 +4651,7 @@ function reports_get_columns(cubeId) {
     "title": "sex_code",
     "sql_query": "sex_code",
     "config": {
-      "memberALL": "Все",
+      "memberALL": null,
       "altDimensions": ["fot_out.sex_name"]
     }
   }, {

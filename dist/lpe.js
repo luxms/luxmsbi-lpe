@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2020/08/04 14:01:45 */ 
+/** [LPE]  Version: 1.0.0 - 2020/08/11 14:23:59 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -2908,14 +2908,28 @@ function reports_get_columns(cubeId) {
     "type": "STRING",
     "title": "group_pay_name",
     "sql_query": "group_pay_name",
-    "config": {}
+    "config": {
+      "follow": ["fot_out.group_pay_id"],
+      "children": ["fot_out.pay_name", "fot_out.pay_code"],
+      "memberALL": "Не задано"
+    }
+  }, {
+    "id": "ch.fot_out.pay_code",
+    "type": "STRING",
+    "title": "pay_code",
+    "sql_query": "pay_code",
+    "config": {
+      "memberALL": "Не задано",
+      "follow": ["fot_out.pay_name"]
+    }
   }, {
     "id": "ch.fot_out.pay_name",
     "type": "STRING",
     "title": "pay_name",
     "sql_query": "pay_name",
     "config": {
-      "memberALL": null
+      "memberALL": "Не задано",
+      "follow": ["fot_out.pay_code"]
     }
   }, {
     "id": "ch.fot_out.category_name",
@@ -2929,7 +2943,7 @@ function reports_get_columns(cubeId) {
     "title": "sex_code",
     "sql_query": "sex_code",
     "config": {
-      "memberALL": "Все",
+      "memberALL": null,
       "altDimensions": ["fot_out.sex_name"]
     }
   }, {
@@ -6117,7 +6131,6 @@ function init_koob_context(_vars, default_ds, default_cube) {
         return c.type !== 'NUMBER';
       }
 
-      __WEBPACK_IMPORTED_MODULE_14__console_console__["a" /* default */].log("UNKNOWN COLUMN ".concat(col[1], " ").concat(v));
       return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["d" /* isString */])(v);
     } // это формула над какими-то столбцами...
     // смотрим на тип выражения v, если это текст, то возвращаем true,
@@ -6346,7 +6359,7 @@ function extend_context_for_order_by(_context, _cfg) {
  Другими словами, по ВСЕМ свободным дименшенам, у которых есть мембер ALL (см. конфиг) требуется добавить фильтр dimX = 'ALL' !
   Также можно считать ашрегаты на лету, но для этого требуется ИСКЛЮЧИТЬ memberALL из агрегирования!!!
   Для указанных явно дименшенов доп. условий не требуется, клиент сам должен задать фильтры и понимать последствия.
- В любом случае по group by столбцам не будет удыоения, memberAll будет явно представлен отдельно в результатах
+ В любом случае по group by столбцам не будет удвоения, memberAll будет явно представлен отдельно в результатах
 */
 
 
@@ -6359,46 +6372,136 @@ function inject_all_member_filters(_cfg, columns) {
     });
   });
 
-  __WEBPACK_IMPORTED_MODULE_14__console_console__["a" /* default */].log("FILTERS", JSON.stringify(_cfg["filters"])); // Ищем dimensions, по которым явно указан memeber ALL, и которых НЕТ в нашем явном списке...
+  __WEBPACK_IMPORTED_MODULE_14__console_console__["a" /* default */].log("FILTERS", JSON.stringify(_cfg["filters"])); //console.log("columns", JSON.stringify(columns))
+  // Ищем dimensions, по которым явно указан memeber ALL, и которых НЕТ в нашем явном списке...
+  // ПО ВСЕМ СТОЛБАМ!!!
 
   Object.values(columns).map(function (el) {
-    if (h[el.id] === true) return; // столбец уже есть в списке group by!
+    if (h[el.id] === true) {
+      return; // столбец уже есть в списке group by!
+    }
 
     if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["b" /* isHash */])(el.config)) {
+      // Если для столбца прописано в конфиге follow=[], и нашего столбца ещё нет в списке фильтров, то надо добавить фильтр
+      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["c" /* isArray */])(el.config.follow) && !__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["c" /* isArray */])(_cfg["filters"][el.id])) {
+        var _iteratorNormalCompletion = true;
+        var _didIteratorError = false;
+        var _iteratorError = undefined;
+
+        try {
+          for (var _iterator = el.config.follow[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+            var alt = _step.value;
+            // names should skip datasource
+            var altId = "".concat(_cfg.ds, ".").concat(alt);
+            __WEBPACK_IMPORTED_MODULE_14__console_console__["a" /* default */].log("###checking ".concat(el.config.follow, " ").concat(altId), JSON.stringify(_cfg["filters"][el.id])); // По столбцу за которым мы следуем есть условие
+
+            if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["c" /* isArray */])(_cfg["filters"][altId])) {
+              if (_cfg["filters"][altId].length == 2) {
+                // у столбца описан memberAll
+                if (columns[altId].config.memberALL === null || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["d" /* isString */])(columns[altId].config.memberALL)) {
+                  var f = _cfg["filters"][altId];
+
+                  if (f[1] == columns[altId].config.memberALL) {
+                    // Есть условие по столбцу, которому мы должны следовать, надо добавить такое же условие!
+                    _cfg["filters"][el.id] = [f[0], f[1]];
+                    break;
+                  }
+                }
+              } // так как есть условие по основному столбцу, мы не знаем точно, какое наше значение ему соответствует, 
+              // и чтобы не добавлялся memberALL ниже, мы пропускаем наш столбец
+
+
+              return;
+            }
+          }
+        } catch (err) {
+          _didIteratorError = true;
+          _iteratorError = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion && _iterator.return != null) {
+              _iterator.return();
+            }
+          } finally {
+            if (_didIteratorError) {
+              throw _iteratorError;
+            }
+          }
+        }
+      }
+
       if (el.config.memberALL === null || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["d" /* isString */])(el.config.memberALL)) {
         // есть значение для члена ALL, и оно в виде строки или IS NULL
-        // добавляем фильтр, но только если по этому столбцу нет другого фильтра!!!
-        // по ключу filters ещё не было нормализации !!! 
+        // добавляем фильтр, но только если по этому столбцу нет другого фильтра (который задали в конфиге)!!!
+        // NOTE: по ключу filters ещё не было нормализации !!! 
         if (!__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["c" /* isArray */])(_cfg["filters"][el.id])) {
           // Также нужно проверить нет ли уже фильтра по столбцу, который является altId
           if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["c" /* isArray */])(el.config.altDimensions)) {
-            var _iteratorNormalCompletion = true;
-            var _didIteratorError = false;
-            var _iteratorError = undefined;
+            var _iteratorNormalCompletion2 = true;
+            var _didIteratorError2 = false;
+            var _iteratorError2 = undefined;
 
             try {
-              for (var _iterator = el.config.altDimensions[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                var alt = _step.value;
-                // names should skip datasource
-                var altId = "".concat(_cfg.ds, ".").concat(alt);
-                __WEBPACK_IMPORTED_MODULE_14__console_console__["a" /* default */].log("ALT", JSON.stringify(altId));
+              for (var _iterator2 = el.config.altDimensions[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+                var _alt = _step2.value;
 
-                if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["c" /* isArray */])(_cfg["filters"][altId]) || h[altId] === true) {
-                  // уже есть условие по altId, не включаем новое условие
+                // names should skip datasource
+                var _altId = "".concat(_cfg.ds, ".").concat(_alt);
+
+                __WEBPACK_IMPORTED_MODULE_14__console_console__["a" /* default */].log("ALT", JSON.stringify(_altId));
+
+                if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["c" /* isArray */])(_cfg["filters"][_altId]) || h[_altId] === true) {
+                  // уже есть условие по столбцу из altId, не добавляем новое условие
+                  // но только в том случае, если у нас явно просят этот столбец в выдачу
+                  // if ( h[])
                   return;
                 }
               }
             } catch (err) {
-              _didIteratorError = true;
-              _iteratorError = err;
+              _didIteratorError2 = true;
+              _iteratorError2 = err;
             } finally {
               try {
-                if (!_iteratorNormalCompletion && _iterator.return != null) {
-                  _iterator.return();
+                if (!_iteratorNormalCompletion2 && _iterator2.return != null) {
+                  _iterator2.return();
                 }
               } finally {
-                if (_didIteratorError) {
-                  throw _iteratorError;
+                if (_didIteratorError2) {
+                  throw _iteratorError2;
+                }
+              }
+            }
+          }
+
+          __WEBPACK_IMPORTED_MODULE_14__console_console__["a" /* default */].log("!!!!checking  ".concat(el.id, " children"), JSON.stringify(el.config.children)); // Если есть дочерние столбцы, то надо проверить нет ли их в GROUP BY или В Фильтрах
+
+          if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["c" /* isArray */])(el.config.children)) {
+            var _iteratorNormalCompletion3 = true;
+            var _didIteratorError3 = false;
+            var _iteratorError3 = undefined;
+
+            try {
+              for (var _iterator3 = el.config.children[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+                var _alt2 = _step3.value;
+
+                var _altId2 = "".concat(_cfg.ds, ".").concat(_alt2);
+
+                if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["c" /* isArray */])(_cfg["filters"][_altId2]) || h[_altId2] === true) {
+                  // children уже специфицированы, не надо добавлять меня!
+                  return;
+                }
+              }
+            } catch (err) {
+              _didIteratorError3 = true;
+              _iteratorError3 = err;
+            } finally {
+              try {
+                if (!_iteratorNormalCompletion3 && _iterator3.return != null) {
+                  _iterator3.return();
+                }
+              } finally {
+                if (_didIteratorError3) {
+                  throw _iteratorError3;
                 }
               }
             }
@@ -6409,6 +6512,7 @@ function inject_all_member_filters(_cfg, columns) {
       }
     }
   });
+  __WEBPACK_IMPORTED_MODULE_14__console_console__["a" /* default */].log("FILTERS AFTER", JSON.stringify(_cfg["filters"]));
   return _cfg;
 }
 
