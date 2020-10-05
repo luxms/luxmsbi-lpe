@@ -33,6 +33,7 @@ import {
   get_source_database,
   db_quote_literal
 } from './utils/utils';
+import { isObject } from 'core-js/fn/object';
 
 /* Постановка
 На входе имеем структуру данных из браузера:
@@ -105,7 +106,22 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
   if (isHash(_cfg["filters"])) {
     Object.keys(_cfg["filters"]).filter(k => k !== "").map( 
       key => {ret["filters"][expand_column(key)] = _cfg["filters"][key]} )
-    }
+  }
+
+  // для фильтров заменяем ключи на полные имена, но у нас может быть массив [{},{}]
+  if (isArray(_cfg["filters"])) {
+    var processed = _cfg["filters"].map(obj => {
+        var result = {}
+        if (isHash(obj)) {
+          Object.keys(obj).filter(k => k !== "").map( 
+              key => {result[expand_column(key)] = obj[key]})
+        }
+        return result
+        }
+    )
+    ret["filters"] = processed; // [{},{}]
+  }
+
 
   // probably we should use aliased columns a AS b!!
   if (isArray(_cfg["having"])) {
@@ -452,12 +468,27 @@ function extend_context_for_order_by(_context, _cfg) {
   */
 
 function  inject_all_member_filters(_cfg, columns) {
+  /* _cfg.filters может быть {} а может быть [{},{}] и тут у нас дикий код */
+
+  var processed = {}
+  if (isHash(_cfg["filters"])){
+    _cfg["filters"] = get_all_member_filters(_cfg, columns, _cfg["filters"]);
+  } else if (isArray(_cfg["filters"])){
+    _cfg["filters"] = _cfg["filters"].map(obj => get_all_member_filters(_cfg, columns, obj))
+  }
+  return _cfg;
+}
+
+
+
+function get_all_member_filters(_cfg, columns, _filters) {
+  var processed = {} // лучше его использовать как аккумулятор для накопления ответа, это вам не Clojure!
   var h = {};
   // заполняем хэш h длинными именами столбцов, по которым явно есть GROUP BY
   _cfg["_group_by"].map(el => {
     el.columns.map(e => h[e] = true)
   })
-console.log("FILTERS", JSON.stringify(_cfg["filters"]))
+console.log("FILTERS", JSON.stringify(_filters))
 //console.log("columns", JSON.stringify(columns))
   // Ищем dimensions, по которым явно указан memeber ALL, и которых НЕТ в нашем явном списке...
   // ПО ВСЕМ СТОЛБАМ!!!
@@ -467,20 +498,20 @@ console.log("FILTERS", JSON.stringify(_cfg["filters"]))
     }
     if (isHash(el.config)) {
       // Если для столбца прописано в конфиге follow=[], и нашего столбца ещё нет в списке фильтров, то надо добавить фильтр
-      if ( isArray(el.config.follow) && !isArray(_cfg["filters"][el.id])) {
+      if ( isArray(el.config.follow) && !isArray(_filters[el.id])) {
         for( let alt of el.config.follow) {
           // names should skip datasource
           let altId = `${_cfg.ds}.${alt}`
-          console.log(`###checking ${el.config.follow} ${altId}`, JSON.stringify(_cfg["filters"][el.id]) )
+          console.log(`###checking ${el.config.follow} ${altId}`, JSON.stringify(_filters[el.id]) )
           // По столбцу за которым мы следуем есть условие
-          if (isArray(_cfg["filters"][altId])) {
-            if ((_cfg["filters"][altId]).length == 2) {
+          if (isArray(_filters[altId])) {
+            if ((_filters[altId]).length == 2) {
               // у столбца описан memberAll
               if (columns[altId].config.memberALL === null || isString(columns[altId].config.memberALL)) {
-                var f = _cfg["filters"][altId];
+                var f = _filters[altId];
                 if (f[1]==columns[altId].config.memberALL) {
                   // Есть условие по столбцу, которому мы должны следовать, надо добавить такое же условие!
-                  _cfg["filters"][el.id] = [f[0],f[1]];
+                  _filters[el.id] = [f[0],f[1]];
                   break;
                 }
               }
@@ -498,14 +529,19 @@ console.log("FILTERS", JSON.stringify(_cfg["filters"]))
         // добавляем фильтр, но только если по этому столбцу нет другого фильтра (который задали в конфиге)!!!
         // NOTE: по ключу filters ещё не было нормализации !!! 
 
-        if (!isArray(_cfg["filters"][el.id])){
+        if (!isArray(_filters[el.id])){
           // Также нужно проверить нет ли уже фильтра по столбцу, который является altId
           if ( isArray(el.config.altDimensions) ) {
             for( let alt of el.config.altDimensions) {
-              // names should skip datasource
-              let altId = `${_cfg.ds}.${alt}`
+              // names must skip datasource, but may skip cube, let's add our cube if it is missed...
+              let altId = ''
+              if (alt.includes('.')) {
+                altId = `${_cfg.ds}.${alt}`
+              } else {
+                altId = `${_cfg.ds}.${_cfg.cube}.${alt}`
+              }
               console.log("ALT", JSON.stringify(altId))
-              if (isArray(_cfg["filters"][altId]) || h[altId] === true) {
+              if (isArray(_filters[altId]) || h[altId] === true) {
                 // уже есть условие по столбцу из altId, не добавляем новое условие
                 // но только в том случае, если у нас явно просят этот столбец в выдачу
                 // if ( h[])
@@ -517,22 +553,26 @@ console.log("FILTERS", JSON.stringify(_cfg["filters"]))
           // Если есть дочерние столбцы, то надо проверить нет ли их в GROUP BY или В Фильтрах
           if ( isArray(el.config.children) ) {
             for( let alt of el.config.children) {
-              let altId = `${_cfg.ds}.${alt}`
-              if (isArray(_cfg["filters"][altId]) || h[altId] === true) {
+              let altId = ''
+              if (alt.includes('.')) {
+                altId = `${_cfg.ds}.${alt}`
+              } else {
+                altId = `${_cfg.ds}.${_cfg.cube}.${alt}`
+              }
+              if (isArray(_filters[altId]) || h[altId] === true) {
                 // children уже специфицированы, не надо добавлять меня!
                 return
               }
             }
           }
-
-          _cfg["filters"][el.id] = ["=",el.config.memberALL]
+          _filters[el.id] = ["=",el.config.memberALL]
         }
       }
     }
   })
-  console.log("FILTERS AFTER", JSON.stringify(_cfg["filters"]))
+  console.log("FILTERS AFTER", JSON.stringify(_filters))
 
-  return _cfg;
+  return _filters;
 }
 
 export function generate_koob_sql(_cfg, _vars) {
@@ -577,7 +617,7 @@ export function generate_koob_sql(_cfg, _vars) {
 
   _context = init_koob_context(_context, _cfg["ds"], _cfg["cube"])
   
-  //console.log("NORMALIZED CONFIG: ", JSON.stringify(_cfg))
+  console.log("NORMALIZED CONFIG: ", JSON.stringify(_cfg["filters"]))
 
   /*
     while we evaluating each column, koob_context will fill JSON structure in the context like this:
@@ -626,18 +666,24 @@ export function generate_koob_sql(_cfg, _vars) {
 
   // at this point we will have something like this:
   /*
-   {"ds":"ch","cube":"fot_out","filters":{"ch.fot_out.dor1":["=","ГОРЬК"],"ch.fot_out.dor2":["=","ПОДГОРЬК"],"ch.fot_out.dor4":["=",null],
+   {"ds":"ch",
+   "cube":"fot_out",
+   "filters":{"ch.fot_out.dor1":["=","ГОРЬК"],"ch.fot_out.dor2":["=","ПОДГОРЬК"],"ch.fot_out.dor4":["=",null],
    "ch.fot_out.dor5":["=",null],"ch.fot_out.dt":["BETWEEN","2020-01","2020-12"],"ch.fot_out.sex_name":["=","Мужской"],"ch.fot_out.pay_name":
-   ["=",null]},"having":{"ch.fot_out.dt":[">","2020-08"]},"columns":[["column","ch.fot_out.dt"],["column","ch.fot_out.branch4"],
+   ["=",null]},
+   "having":{"ch.fot_out.dt":[">","2020-08"]},
+   "columns":[["column","ch.fot_out.dt"],["column","ch.fot_out.branch4"],
    ["column","fot_out.ss1"],[":",["sum",["/",["()",["+","v_main",["->","utils",["func","v_rel_fzp"]]]],100]],"summa"],[":",
    ["column","ch.fot_out.obj_name"],"new"],["sum",["column","v_rel_pp"]],[":",["avg",["+",["column","ch.fot_out.indicator_v"],["column","v_main"]]],
    "new"]],"sort":[["-",["column","ch.fot_out.dor1"]],["+",["column","val1"]],["-",["column","val2"]],["-",["column","czt.fot.dor2"]],
-   ["+",["column","summa"]]],"_group_by":[{"columns":["ch.fot_out.dt"],"expr":"(NOW() - INERVAL '1 DAY')"},{"columns":["ch.fot_out.branch4"],
+   ["+",["column","summa"]]],
+   "_group_by":[{"columns":["ch.fot_out.dt"],"expr":"(NOW() - INERVAL '1 DAY')"},{"columns":["ch.fot_out.branch4"],
    "expr":"fot_out.branch4"},{"columns":[],"expr":"fot_out.ss1"},{"columns":["ch.fot_out.obj_name"],"alias":"new","expr":"fot_out.obj_name"}],
    "_measures":[{"columns":["ch.fot_out.v_main","ch.fot_out.v_rel_fzp"],"agg":true,"alias":"summa","expr":
    "sum((fot_out.v_main + utils.func(fot_out.v_rel_fzp)) / 100)"},{"columns":["ch.fot_out.v_rel_pp"],"agg":true,"expr":
    "sum(fot_out.v_rel_pp)"},{"columns":["ch.fot_out.indicator_v","ch.fot_out.v_main"],"agg":true,"alias":"new","expr":
-   "avg(fot_out.indicator_v + fot_out.v_main)"}],"_columns":[{"columns":["ch.fot_out.dt"],"expr":"(NOW() - INERVAL '1 DAY')"},
+   "avg(fot_out.indicator_v + fot_out.v_main)"}],
+   "_columns":[{"columns":["ch.fot_out.dt"],"expr":"(NOW() - INERVAL '1 DAY')"},
    {"columns":["ch.fot_out.branch4"],"expr":"fot_out.branch4"},{"columns":[],"expr":"fot_out.ss1"},{"columns":
    ["ch.fot_out.v_main","ch.fot_out.v_rel_fzp"],"agg":true,"alias":"summa","expr":"sum((fot_out.v_main + utils.func(fot_out.v_rel_fzp)) / 100)"},
    {"columns":["ch.fot_out.obj_name"],"alias":"new","expr":"fot_out.obj_name"},{"columns":["ch.fot_out.v_rel_pp"],"agg":true,"expr":
@@ -661,17 +707,34 @@ export function generate_koob_sql(_cfg, _vars) {
   }).join(', '))
   
 
-  var where = ''
-  var pw = Object.keys(_cfg["filters"]).filter(k => k !== "").map( 
-    key => {var a = _cfg["filters"][key].splice(1,0,["column",key]); return _cfg["filters"][key]} );
-
-  if (pw.length > 0) {
-    var wh = ["and"].concat(pw)
-
-    //console.log("WHERE", JSON.stringify(wh))
-    where = eval_lisp(wh, _context)
-    where = where.length > 2 ? "\nWHERE ".concat(where) : ''
+  var where = '';
+  var filters_array = _cfg["filters"];
+  if (isHash(filters_array)) {
+    filters_array = [filters_array]
   }
+  filters_array = filters_array.map(_filters => {
+      var part_where = null
+      var pw = Object.keys(_filters).filter(k => k !== "").map( 
+        key => {
+                  var a = _filters[key].splice(1,0,["column",key])
+                  return _filters[key]
+                });
+
+      if (pw.length > 0) {
+        var wh = ["and"].concat(pw)
+
+        //console.log("WHERE", JSON.stringify(wh))
+        part_where = eval_lisp(wh, _context)
+      }
+      return part_where
+  }).filter(el => el !== null && el.length > 0)
+
+  if (filters_array.length == 1){
+    where = "\nWHERE ".concat( filters_array[0] )
+  } else if (filters_array.length > 1){
+    where = "\nWHERE ".concat( `(${filters_array.join(")\n   OR (")})` )
+  }
+  
   
 
   var group_by = _cfg["_group_by"].map(el => el.expr).join(', ')
