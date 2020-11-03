@@ -3737,7 +3737,7 @@ function sql_where_context(_vars) {
       __WEBPACK_IMPORTED_MODULE_12__console_console__["a" /* default */].log("PRNT:" + JSON.stringify(ar));
 
       if (ar instanceof Array) {
-        if (ar[0] === '$' || ar[0] === '"' || ar[0] === "'" || ar[0] === "str" || ar[0] === "[" || ar[0] === 'parse_kv' || ar[0] === "=" || ar[0] === "ql" || ar[0] === "pg_interval" || ar[0] === "lpe_pg_tstz_at_time_zone" || ar[0] === "column") {
+        if (ar[0] === '$' || ar[0] === '"' || ar[0] === "'" || ar[0] === "str" || ar[0] === "[" || ar[0] === 'parse_kv' || ar[0] === 'parse_cond' || ar[0] === "=" || ar[0] === "ql" || ar[0] === "pg_interval" || ar[0] === "lpe_pg_tstz_at_time_zone" || ar[0] === "column") {
           return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lisp__["a" /* eval_lisp */])(ar, ctx);
         } else {
           if (ar.length == 2) {
@@ -3945,6 +3945,38 @@ function sql_where_context(_vars) {
     };
 
     ctx['parse_kv'].ast = [[], {}, [], 1]; // mark as macro
+    // we should parse all logic: & | ! () but we are cheating at the moment....
+
+    ctx['parse_cond'] = function (expr) {
+      if (expr instanceof Array) {
+        if (expr[0] === '->') {
+          var sql = 'select "' + expr[2] + '" from "' + expr[1] + '" where id = $1::INT';
+          var id_val = resolve_literal(expr[1].replace(/.$/, "_id")); //console.log('SQL: ', sql, " val:", id_val);
+
+          var res_json = plv8.execute(sql, [id_val]); //var res_json = [{"src_id":"dor_id=96&obj_id=64024775"}];
+
+          var frst = res_json[0]; //console.log('SQL RES: ', frst);
+
+          if (frst !== undefined && frst[expr[2]] !== null && frst[expr[2]].length > 0) {
+            var axis_condition = function axis_condition(e) {
+              var result = e.split('&').map(function (e2) {
+                return e2;
+              }).join(' and ');
+              return result;
+            };
+
+            var result = axis_condition(frst[expr[2]]);
+            if (result === undefined || result.length == 0) return '(/*cond not resolved*/ 0=1)';
+            return result;
+          }
+        }
+      } // return everything, FIXME: is it right thing to do ?
+
+
+      return '(/*parse_cond EMPTY*/ 1=1)';
+    };
+
+    ctx['parse_cond'].ast = [[], {}, [], 1]; // mark as macro
 
     var ret = []; //console.log("where IN: ", JSON.stringify(Array.prototype.slice.call(arguments)));
 

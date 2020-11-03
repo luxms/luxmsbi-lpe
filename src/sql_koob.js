@@ -403,6 +403,40 @@ function init_koob_context(_vars, default_ds, default_cube) {
       return ret
     }
   })
+
+
+  _context['!='] = makeSF( (ast,ctx) => {
+    // понимаем a != [null] как a is not null
+    // a != [] просто пропускаем, А кстати почему собственно???
+    // a != [null, 1,2] как a not in (1,2) and a is not null
+
+    // ["!=",["column","vNetwork.cluster"],SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]
+    // var a = Array.prototype.slice.call(arguments)
+    console.log(JSON.stringify(ast))
+    var col = ast[0]
+    var c = eval_lisp(col,_context)
+    var resolveValue = function(v) {
+
+      if (shouldQuote(col, v)) v = quoteLiteral(v)
+      return eval_lisp(v,_context)
+    }
+    if (ast.length === 1) {
+      return 'TRUE'
+    } else if (ast.length === 2) {
+      var v = resolveValue(ast[1])
+      return v === null 
+      ? `${c} IS NOT NULL` 
+      : `${c} != ${v}`
+    } else {
+      // check if we have null in the array of values...
+      
+      var resolvedV = ast.slice(1).map(el => resolveValue(el)).filter(el => el !== null)
+      const hasNull = resolvedV.length < ast.length - 1;
+      var ret = `${c} NOT IN (${resolvedV.join(', ')})`
+      if(hasNull) ret = `${ret} AND ${c} IS NOT NULL`
+      return ret
+    }
+  })
   
   return _ctx;
 } 
