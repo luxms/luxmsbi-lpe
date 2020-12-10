@@ -517,7 +517,7 @@ export function sql_where_context(_vars) {
               col["search"] !== undefined
               ? ["ilike", col["search"], ["'", '%' + fts + '%']]
               : null
-            ).filter(el => el !== null).reduce((ac, el) => ['or',ac,el]);
+            ).filter(el => el !== null).reduce((ac, el) => ac ? ['or',ac,el] : el, null) || [];
 
           //console.log( "FTS PARSED: ",  JSON.stringify(ilike));
           //console.log( "FTS PARSED: ",  JSON.stringify(tree));

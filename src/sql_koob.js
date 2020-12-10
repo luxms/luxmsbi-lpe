@@ -370,6 +370,18 @@ function init_koob_context(_vars, default_ds, default_cube) {
   }
   _context['between'].ast = [[],{},[],1]; // mark as macro
 
+  _context['~'] = function(col, tmpl) {
+    // в каждой базе свои regexp
+    if (_vars["_target_database"] === 'oracle') {
+      return `REGEXP_LIKE( ${eval_lisp(col,_context)} , ${eval_lisp(tmpl,_context)} )` 
+    } else if (_vars["_target_database"] === 'mysql') {
+      return `${eval_lisp(col,_context)} REGEXP ${eval_lisp(tmpl,_context)}` 
+    } else if (_vars["_target_database"] === 'clickhouse') {
+      return `MATCH( ${eval_lisp(col,_context)} , ${eval_lisp(tmpl,_context)} )` 
+    } else {
+      return `${eval_lisp(col,_context)} ~ ${eval_lisp(tmpl,_context)}`
+    }
+  }
 
   _context['='] = makeSF( (ast,ctx) => {
     // понимаем a = [null] как a is null
@@ -541,7 +553,10 @@ console.log("FILTERS", JSON.stringify(_filters))
           if (isArray(_filters[altId])) {
             if ((_filters[altId]).length == 2) {
               // у столбца описан memberAll
-              if (columns[altId].config.memberALL === null || isString(columns[altId].config.memberALL)) {
+              if (columns[altId].config.memberALL === null || 
+                  isString(columns[altId].config.memberALL) || 
+                  isNumber(columns[altId].config.memberALL)
+                ) {
                 var f = _filters[altId];
                 if (f[1]==columns[altId].config.memberALL) {
                   // Есть условие по столбцу, которому мы должны следовать, надо добавить такое же условие!
@@ -558,7 +573,10 @@ console.log("FILTERS", JSON.stringify(_filters))
       }
 
 
-      if (el.config.memberALL === null || isString(el.config.memberALL)) {
+      if (el.config.memberALL === null ||
+         isString(el.config.memberALL) ||
+         isNumber(el.config.memberALL)
+         ) {
         // есть значение для члена ALL, и оно в виде строки или IS NULL
         // добавляем фильтр, но только если по этому столбцу нет другого фильтра (который задали в конфиге)!!!
         // NOTE: по ключу filters ещё не было нормализации !!! 

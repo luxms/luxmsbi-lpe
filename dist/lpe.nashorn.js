@@ -3993,8 +3993,8 @@ function sql_where_context(_vars) {
         }).filter(function (el) {
           return el !== null;
         }).reduce(function (ac, el) {
-          return ['or', ac, el];
-        }); //console.log( "FTS PARSED: ",  JSON.stringify(ilike));
+          return ac ? ['or', ac, el] : el;
+        }, null) || []; //console.log( "FTS PARSED: ",  JSON.stringify(ilike));
         //console.log( "FTS PARSED: ",  JSON.stringify(tree));
 
         if (ilike !== undefined && ilike.length > 0) {

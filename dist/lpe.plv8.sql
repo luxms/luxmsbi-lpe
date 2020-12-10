@@ -4205,8 +4205,8 @@ function sql_where_context(_vars) {
         }).filter(function (el) {
           return el !== null;
         }).reduce(function (ac, el) {
-          return ['or', ac, el];
-        }); //console.log( "FTS PARSED: ",  JSON.stringify(ilike));
+          return ac ? ['or', ac, el] : el;
+        }, null) || []; //console.log( "FTS PARSED: ",  JSON.stringify(ilike));
         //console.log( "FTS PARSED: ",  JSON.stringify(tree));
 
         if (ilike !== undefined && ilike.length > 0) {
@@ -6422,6 +6422,19 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
   _context['between'].ast = [[], {}, [], 1]; // mark as macro
 
+  _context['~'] = function (col, tmpl) {
+    // в каждой базе свои regexp
+    if (_vars["_target_database"] === 'oracle') {
+      return "REGEXP_LIKE( ".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(col, _context), " , ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(tmpl, _context), " )");
+    } else if (_vars["_target_database"] === 'mysql') {
+      return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(col, _context), " REGEXP ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(tmpl, _context));
+    } else if (_vars["_target_database"] === 'clickhouse') {
+      return "MATCH( ".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(col, _context), " , ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(tmpl, _context), " )");
+    } else {
+      return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(col, _context), " ~ ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(tmpl, _context));
+    }
+  };
+
   _context['='] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["f" /* makeSF */])(function (ast, ctx) {
     // понимаем a = [null] как a is null
     // a = [] просто пропускаем, А кстати почему собственно???
@@ -6593,7 +6606,7 @@ function get_all_member_filters(_cfg, columns, _filters) {
             if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["c" /* isArray */])(_filters[altId])) {
               if (_filters[altId].length == 2) {
                 // у столбца описан memberAll
-                if (columns[altId].config.memberALL === null || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["d" /* isString */])(columns[altId].config.memberALL)) {
+                if (columns[altId].config.memberALL === null || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["d" /* isString */])(columns[altId].config.memberALL) || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["e" /* isNumber */])(columns[altId].config.memberALL)) {
                   var f = _filters[altId];
 
                   if (f[1] == columns[altId].config.memberALL) {
@@ -6625,7 +6638,7 @@ function get_all_member_filters(_cfg, columns, _filters) {
         }
       }
 
-      if (el.config.memberALL === null || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["d" /* isString */])(el.config.memberALL)) {
+      if (el.config.memberALL === null || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["d" /* isString */])(el.config.memberALL) || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["e" /* isNumber */])(el.config.memberALL)) {
         // есть значение для члена ALL, и оно в виде строки или IS NULL
         // добавляем фильтр, но только если по этому столбцу нет другого фильтра (который задали в конфиге)!!!
         // NOTE: по ключу filters ещё не было нормализации !!! 
