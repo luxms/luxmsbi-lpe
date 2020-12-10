@@ -371,6 +371,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
   _context['between'].ast = [[],{},[],1]; // mark as macro
 
   _context['~'] = function(col, tmpl) {
+    if (shouldQuote(col,tmpl)) tmpl = quoteLiteral(tmpl)
     // в каждой базе свои regexp
     if (_vars["_target_database"] === 'oracle') {
       return `REGEXP_LIKE( ${eval_lisp(col,_context)} , ${eval_lisp(tmpl,_context)} )` 
@@ -383,6 +384,9 @@ function init_koob_context(_vars, default_ds, default_cube) {
       return `${eval_lisp(col,_context)} ~ ${eval_lisp(tmpl,_context)}`
     }
   }
+  _context['~'].ast = [[],{},[],1]; // mark as macro
+
+
 
   _context['='] = makeSF( (ast,ctx) => {
     // понимаем a = [null] как a is null

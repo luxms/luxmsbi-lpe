@@ -6423,7 +6423,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
   _context['between'].ast = [[], {}, [], 1]; // mark as macro
 
   _context['~'] = function (col, tmpl) {
-    // в каждой базе свои regexp
+    if (shouldQuote(col, tmpl)) tmpl = quoteLiteral(tmpl); // в каждой базе свои regexp
+
     if (_vars["_target_database"] === 'oracle') {
       return "REGEXP_LIKE( ".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(col, _context), " , ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(tmpl, _context), " )");
     } else if (_vars["_target_database"] === 'mysql') {
@@ -6435,6 +6436,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
       return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(col, _context), " ~ ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(tmpl, _context));
     }
   };
+
+  _context['~'].ast = [[], {}, [], 1]; // mark as macro
 
   _context['='] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["f" /* makeSF */])(function (ast, ctx) {
     // понимаем a = [null] как a is null
