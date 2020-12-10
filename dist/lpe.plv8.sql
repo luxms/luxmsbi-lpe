@@ -6429,7 +6429,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
     } else if (_vars["_target_database"] === 'mysql') {
       return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(col, _context), " REGEXP ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(tmpl, _context));
     } else if (_vars["_target_database"] === 'clickhouse') {
-      return "MATCH( ".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(col, _context), " , ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(tmpl, _context), " )");
+      // case is important !!!
+      return "match( ".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(col, _context), " , ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(tmpl, _context), " )");
     } else {
       return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(col, _context), " ~ ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(tmpl, _context));
     }

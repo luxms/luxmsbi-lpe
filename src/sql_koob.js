@@ -377,7 +377,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
     } else if (_vars["_target_database"] === 'mysql') {
       return `${eval_lisp(col,_context)} REGEXP ${eval_lisp(tmpl,_context)}` 
     } else if (_vars["_target_database"] === 'clickhouse') {
-      return `MATCH( ${eval_lisp(col,_context)} , ${eval_lisp(tmpl,_context)} )` 
+      // case is important !!!
+      return `match( ${eval_lisp(col,_context)} , ${eval_lisp(tmpl,_context)} )` 
     } else {
       return `${eval_lisp(col,_context)} ~ ${eval_lisp(tmpl,_context)}`
     }
