@@ -74,6 +74,9 @@ import { isObject } from 'core-js/fn/object';
 */
 
 
+function any_db_quote_literal(el) {
+  return "'" + el.toString().replace(/'/g, "''") + "'";
+}
 
 /***************************************************************
  * Дописывает имена столбцов в структуре _cfg, до полных имён, используя префикс cube_prefix, там, где это очевидно.
@@ -359,7 +362,9 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
   _context["ql"] = function(el) {
     // NULL values should not be quoted
-    return el === null ? null : db_quote_literal(el)
+    // plv8 version of db_quote_literal returns E'\\d\\d' for '\d\d' which is not supported in ClickHose :-()
+    // so we created our own version...
+    return el === null ? null : any_db_quote_literal(el)
   }
 
   _context['between'] = function(col, var1, var2) {
@@ -386,7 +391,9 @@ function init_koob_context(_vars, default_ds, default_cube) {
   }
   _context['~'].ast = [[],{},[],1]; // mark as macro
 
-
+  _context['!~'] = makeSF( (ast,ctx) => {
+    return "NOT " + eval_lisp(["~"].concat(ast), ctx);
+  });
 
   _context['='] = makeSF( (ast,ctx) => {
     // понимаем a = [null] как a is null

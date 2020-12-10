@@ -344,16 +344,17 @@ GROUP BY fot_out.group_pay_name`
                   assert.equal( lpe.generate_koob_sql(
                      {"columns":["sum(v_main)","sum(v_rel_pp)","sum(v_rel_fzp)","sum(v_rel_pp_i)","group_pay_name"],
                      "distinct":[],
-                     "filters":{"dt":["~","\\d{4}"],
-                     "pay_name":["!=","Не задано"],
-                     "area_name":["=","Не задано"],
-                     "hcode_name":["=","ФЗП"],
-                     "type_oe_bi":["=","РЖД"]},
+                     "filters":{
+                        "dt":["!~","\\d{4}"],
+                        "pay_name":["!=","Не задано"],
+                        "area_name":["=","Не задано"],
+                        "hcode_name":["=","ФЗП"],
+                        "type_oe_bi":["=","РЖД"]},
                      "with":"ch.fot_out"},
                            {"key":null}),
 `SELECT DISTINCT sum(fot_out.v_main) AS v_main, sum(fot_out.v_rel_pp) AS v_rel_pp, sum(fot_out.v_rel_fzp) AS v_rel_fzp, sum(v_rel_pp_i), fot_out.group_pay_name AS group_pay_name
 FROM fot_out AS fot_out
-WHERE ((NOW() - INERVAL '1 DAY') ~ '\\d{4}') AND (fot_out.pay_name != 'Не задано') AND (fot_out.area_name = 'Не задано') AND (fot_out.hcode_name = 'ФЗП') AND (fot_out.type_oe_bi = 'РЖД') AND (fot_out.pay_code != 'Не задано') AND (fot_out.sex_code IS NULL)
+WHERE (NOT (NOW() - INERVAL '1 DAY') ~ '\\d{4}') AND (fot_out.pay_name != 'Не задано') AND (fot_out.area_name = 'Не задано') AND (fot_out.hcode_name = 'ФЗП') AND (fot_out.type_oe_bi = 'РЖД') AND (fot_out.pay_code != 'Не задано') AND (fot_out.sex_code IS NULL)
 GROUP BY fot_out.group_pay_name`
                         );
 
