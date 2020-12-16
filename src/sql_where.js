@@ -23,7 +23,7 @@
 import console from './console/console';
 import {parse} from './lpep';
 import {db_quote_literal, db_quote_ident, get_source_database} from './utils/utils';
-import {eval_lisp} from './lisp';
+import {eval_lisp, isString} from './lisp';
 
 
 /*
@@ -128,7 +128,7 @@ export function sql_where_context(_vars) {
     }
 
     for(var key in _vars) ctx[key] = _vars[key];
-    // так как order_by будет выполнять eval_lisp, когда встретит имя стольба с минусом -a, то мы
+    // так как order_by будет выполнять eval_lisp, когда встретит имя столба с минусом -a, то мы
     // с помощью макросов + и - в этом случае перехватим вызов и сделаем обработку.
     // а вот когда работает обработчик аргументов where - там eval_lisp почти никогда не вызывается...
     ctx['+'] = function (a) {
@@ -612,6 +612,15 @@ export function eval_sql_where(_expr, _vars) {
      
   )) {
     // ok
+    if (sexpr[0]==='order_by' && isString(_vars['sort']) && _vars['sort'].length > 0) {
+      // we should inject content of the sort key, which is coming from the GUI.
+      // do it in a safe way
+      var extra_srt_expr = parse(`order_by(${_vars['sort']})`)
+      //console.log('sql_where ORDER BY MIXED0: ', JSON.stringify(extra_srt_expr));
+      //console.log('sql_where ORDER BY MIXED1: ', JSON.stringify(_vars));
+      sexpr = sexpr.concat( extra_srt_expr.slice(1))
+      //console.log('sql_where ORDER BY MIXED: ', JSON.stringify(sexpr));
+    }
   } else {
     throw("only single where() or order_by() could be evaluated. Found: " + sexpr[0])
   }

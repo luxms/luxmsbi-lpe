@@ -355,12 +355,15 @@ describe('LPE tests', function() {
         // extra order by
         assert.equal( lpe.eval_sql_where(
             'order_by(+addr, -perek_check, -b)',
-            {"fts": "Карго", "limit": "LIMIT 100", "filter": "Карго", "offset": "OFFSET 0", 
+            {"fts": "Карго", "limit": "LIMIT 100", "filter": "Карго", "offset": "OFFSET 0",
+            "sort": "-c",
             "dataset": "0ce0d124-495d-11e8-867c-bf44ef619f60", "metrics": ["382"], "periods": ["2019040100000036"], 
             "_columns": {"addr": {"name": "addr", "order": "a.ADDR", "title": "Адрес", "order_extra":"nulls first"},
               "b": {"name": "b", "order": "some-crazy-Schema.b", "title": "Й"},
-             "perek_check": {"name": "perek_check", "title": "Причина", "search": "perek_check", "order_extra":"nulls last"}}, "lookupId": "9", "order_by": "", "locations": ["3"], "metric_id": 382, "period.id": "2019040100000036", "period_id": 2019040100000036, "parameters": ["382"], "period.qty": "1", "location_id": 3, "limit_offset": "LIMIT 100 OFFSET 0", "period.start_time": "2019-04-01T00:00:00", "period.period_type": "6"}),
-            'ORDER BY a.ADDR nulls first,perek_check DESC nulls last,"some-crazy-Schema".b DESC'
+             "perek_check": {"name": "perek_check", "title": "Причина", "search": "perek_check", "order_extra":"nulls last"},
+             "c": {"name": "c", "order": "some-crazy-Schema.c", "title": "КОЛ"},
+              }, "lookupId": "9", "order_by": "", "locations": ["3"], "metric_id": 382, "period.id": "2019040100000036", "period_id": 2019040100000036, "parameters": ["382"], "period.qty": "1", "location_id": 3, "limit_offset": "LIMIT 100 OFFSET 0", "period.start_time": "2019-04-01T00:00:00", "period.period_type": "6"}),
+            'ORDER BY a.ADDR nulls first,perek_check DESC nulls last,"some-crazy-Schema".b DESC,"some-crazy-Schema".c DESC'
         );
 
         // one ilike
