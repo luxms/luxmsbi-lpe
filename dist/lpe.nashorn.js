@@ -4077,11 +4077,10 @@ function eval_sql_where(_expr, _vars) {
     if (sexpr[0] === 'order_by' && __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lisp__["b" /* isString */])(_vars['sort']) && _vars['sort'].length > 0) {
       // we should inject content of the sort key, which is coming from the GUI.
       // do it in a safe way
-      var extra_srt_expr = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lpep__["a" /* parse */])("order_by(".concat(_vars['sort'], ")"));
-      __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log('sql_where ORDER BY MIXED0: ', JSON.stringify(extra_srt_expr));
-      __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log('sql_where ORDER BY MIXED1: ', JSON.stringify(_vars));
-      sexpr = sexpr.concat(extra_srt_expr.slice(1));
-      __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log('sql_where ORDER BY MIXED: ', JSON.stringify(sexpr));
+      var extra_srt_expr = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lpep__["a" /* parse */])("order_by(".concat(_vars['sort'], ")")); //console.log('sql_where ORDER BY MIXED0: ', JSON.stringify(extra_srt_expr));
+      //console.log('sql_where ORDER BY MIXED1: ', JSON.stringify(_vars));
+
+      sexpr = sexpr.concat(extra_srt_expr.slice(1)); //console.log('sql_where ORDER BY MIXED: ', JSON.stringify(sexpr));
     }
   } else {
     throw "only single where() or order_by() could be evaluated. Found: " + sexpr[0];

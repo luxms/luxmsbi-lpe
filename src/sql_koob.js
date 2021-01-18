@@ -147,18 +147,21 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
                 return [el[0], ["column", expand_column(el[1][1])]]
               }
             } else {
-              return [el[0], ["column", expand_column(el[1])]]
+              return [el[0], ["colref", el[1]]]
             }
           }
         }
       } else if (el && typeof el === 'string') {
         // тут может быть ссылка как на столбец, так и на alias, надо бы научиться отличать одно от другого
+        // чтобы отличить alias от столбца - не делаем expand_column сейчас, и используем вызов colref!
+        // FIXME: colref сейчас объявлен только для контекста sort!
+        // FIXME: мы теряем имя куба: cube_prefix
         if (el.startsWith("-")) {
-          return ["-", ["column", expand_column( el.substring(1))]]
+          return ["-", ["colref", el.substring(1)]]
         } else if (el.startsWith("+")) {
-          return ["+", ["column", expand_column( el.substring(1))]]
+          return ["+", ["colref", el.substring(1)]]
         } else {
-          return ["+", ["column", expand_column( el )]]
+          return ["+", ["colref", el]]
         }
       }
     })
@@ -299,12 +302,11 @@ function init_koob_context(_vars, default_ds, default_cube) {
         _context["_result"]["columns"].push(col)
       }
       var parts = col.split('.')
-      if (c.sql_query.match( /^\S+$/ ) === null) {
-        // we have whitespace here, so it is complex expression :-()
-        return `(${c.sql_query})`
-      } else {
+      if (parts[2].localeCompare(c.sql_query, undefined, { sensitivity: 'accent' }) === 0 ) {
         // we have just column name, prepend table alias !
-        return `${parts[1]}.${parts[2]}`
+        return `${parts[1]}.${c.sql_query}`
+      } else {
+        return `(${c.sql_query})`
       }
     }
     //console.log("COL FAIL", col)
@@ -474,6 +476,30 @@ function extend_context_for_order_by(_context, _cfg) {
   var aliasContext = [
     // 
     {
+      "colref": makeSF((col) => {
+        /* col[0] содержит ровно то, что было в изначальном конфиге на входе!
+        */
+          console.log("NEW COLREF!!!:", JSON.stringify(col))
+          if (col[0] in _cfg["_aliases"]) {
+            return col[0]
+          }
+  
+          var parts = col[0].split('.')
+  
+          if (parts.length === 3) {
+            return `${parts[1]}.${parts[2]}`
+            //return parts[2]
+          } else {
+            return col[0]
+          }
+  
+  
+          /*
+          if (_context[0]["_columns"][key]) return _context["column"](key)
+          if (_context[0]["_columns"][default_ds][default_cube][key]) return _context["column"](`${default_ds}.${default_cube}.${key}`)
+          
+        return col*/
+      }),
       "column": makeSF((col) => {
       /* примерно на 222 строке есть обработчик-резолвер литералов, там хардкодный вызов функции 
         if (_context["_columns"][key]) return _context["column"](key)
@@ -483,15 +509,20 @@ function extend_context_for_order_by(_context, _cfg) {
         И тут мы можем умно резолвить имена столбцов и алиасы и подставлять то, что нам надо.
         ЛИБО объявить тут функцию как МАКРОС и тогда уже правильно отработать column
         NEW COL: ["ch.fot_out.dor1"]
-        console.log("NEW COLUMN", col)
+        console.log("NEW COL", col)
+
+        _context[0]["_columns"] содержит описания из БД
       */
-        //console.log("NEW COL:", JSON.stringify(col))
         var parts = col[0].split('.')
+
         if (parts.length === 3) {
           return `${parts[1]}.${parts[2]}`
+          //return parts[2]
         } else {
           return col[0]
         }
+
+
         /*
         if (_context[0]["_columns"][key]) return _context["column"](key)
         if (_context[0]["_columns"][default_ds][default_cube][key]) return _context["column"](`${default_ds}.${default_cube}.${key}`)
@@ -519,7 +550,7 @@ function extend_context_for_order_by(_context, _cfg) {
    Свободные дименшены могут иметь мембера ALL, и во избежание удвоения сумм, требуется ВКЛЮЧИТЬ мембера ALL в суммирование как некий кэш.
    Другими словами, по ВСЕМ свободным дименшенам, у которых есть мембер ALL (см. конфиг) требуется добавить фильтр dimX = 'ALL' !
 
-   Также можно считать ашрегаты на лету, но для этого требуется ИСКЛЮЧИТЬ memberALL из агрегирования!!!
+   Также можно считать агрегаты на лету, но для этого требуется ИСКЛЮЧИТЬ memberALL из агрегирования!!!
 
    Для указанных явно дименшенов доп. условий не требуется, клиент сам должен задать фильтры и понимать последствия.
    В любом случае по group by столбцам не будет удвоения, memberAll будет явно представлен отдельно в результатах
@@ -639,6 +670,37 @@ console.log("FILTERS", JSON.stringify(_filters))
   return _filters;
 }
 
+/* Добавляем ключ "_aliases", чтобы можно было легко найти столбец по алиасу */
+function cache_alias_keys(_cfg) {
+  /*
+  "_columns":[{"columns":["ch.fot_out.dt"],"expr":"(NOW() - INERVAL '1 DAY')"},
+   {"columns":["ch.fot_out.branch4"],"expr":"fot_out.branch4"},{"columns":[],"expr":"fot_out.ss1"},{"columns":
+   ["ch.fot_out.v_main","ch.fot_out.v_rel_fzp"],"agg":true,"alias":"summa","expr":"sum((fot_out.v_main + utils.func(fot_out.v_rel_fzp)) / 100)"},
+   {"columns":["ch.fot_out.obj_name"],"alias":"new","expr":"fot_out.obj_name"},{"columns":["ch.fot_out.v_rel_pp"],"agg":true,"expr":
+   "sum(fot_out.v_rel_pp)"},{"columns":["ch.fot_out.indicator_v","ch.fot_out.v_main"],"agg":true,"alias":"new","expr":
+   "avg(fot_out.indicator_v + fot_out.v_main)"}]
+   */
+
+  _cfg["_aliases"] = {}
+  _cfg["_columns"].map( el => {
+    var k = el["alias"]
+
+    if (k && k.length > 0) {
+      // включаем это в кэш
+      if (_cfg["_aliases"][k]) {
+        // EXCEPTION, duplicate aliases
+        throw Error(`Duplicate alias ${k} for ${JSON.stringify(el)}`)
+      }
+      _cfg["_aliases"][k] = el
+    } else {
+      // SKIPPED, no Alias found !!!
+    }
+  })
+  //console.log("######", JSON.stringify(_cfg))
+  return _cfg
+
+}
+
 export function generate_koob_sql(_cfg, _vars) {
 
   var _context = _vars;
@@ -754,6 +816,8 @@ export function generate_koob_sql(_cfg, _vars) {
    "sum(fot_out.v_rel_pp)"},{"columns":["ch.fot_out.indicator_v","ch.fot_out.v_main"],"agg":true,"alias":"new","expr":
    "avg(fot_out.indicator_v + fot_out.v_main)"}]}
   */
+
+  _cfg = cache_alias_keys(_cfg)
   
   // let's get SQL from it!
   var select = isArray(_cfg["distinct"]) ? "SELECT DISTINCT " : "SELECT "
@@ -804,7 +868,7 @@ export function generate_koob_sql(_cfg, _vars) {
   var group_by = _cfg["_group_by"].map(el => el.expr).join(', ')
   group_by = group_by ? "\nGROUP BY ".concat(group_by) : ''
 
-  // нужно дополнить контекст для +,- и суметь сослатья на алиасы!
+  // нужно дополнить контекст для +,- и суметь сослатся на алиасы!
   var order_by_context = extend_context_for_order_by(_context, _cfg)
   //console.log("SORT:", JSON.stringify(_cfg["sort"]))
   var order_by = _cfg["sort"].map(el => eval_lisp(el, order_by_context)).join(', ')

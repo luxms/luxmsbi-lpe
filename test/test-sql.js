@@ -221,15 +221,15 @@ describe('LPE tests', function() {
             "having": {
               "dt": [">","2020-08"],
             },
-            "columns": ["dt", "ch.fot_out.branch4", "fot_out.ss1", 'sum((v_main+utils.func(v_rel_fzp))/100):summa', {"new":"obj_name"}, ["sum", ["column","v_rel_pp"]], 'avg(sum(v_rel_pp))', {"new":  ["avg", ["+",["column","ch.fot_out.indicator_v"],["column","v_main"]]]} ],
+            "columns": ["dt", "ch.fot_out.branch4", "fot_out.ss1", 'sum((v_main+utils.func(v_rel_fzp))/100):summa', {"new1":"obj_name"}, ["sum", ["column","v_rel_pp"]], 'avg(sum(v_rel_pp))', {"new":  ["avg", ["+",["column","ch.fot_out.indicator_v"],["column","v_main"]]]} ],
             "sort": ["-dor1","dt",["-","val2"],"-ch.fot_out.dor2", "summa"]
             },
           {"key":null}),
-         `SELECT (NOW() - INERVAL '1 DAY') AS dt, fot_out.branch4 AS branch4, fot_out.ss1, sum((fot_out.v_main + utils.func(fot_out.v_rel_fzp)) / 100) AS summa, fot_out.obj_name AS new, sum(fot_out.v_rel_pp) AS v_rel_pp, avg(sum(fot_out.v_rel_pp)) AS v_rel_pp, avg(fot_out.indicator_v + fot_out.v_main) AS new
+         `SELECT (NOW() - INERVAL '1 DAY') AS dt, fot_out.branch4 AS branch4, fot_out.ss1, sum((fot_out.v_main + utils.func(fot_out.v_rel_fzp)) / 100) AS summa, fot_out.obj_name AS new1, sum(fot_out.v_rel_pp) AS v_rel_pp, avg(sum(fot_out.v_rel_pp)) AS v_rel_pp, avg(fot_out.indicator_v + fot_out.v_main) AS new
 FROM fot_out AS fot_out
 WHERE (fot_out.dor1 = 'ГОРЬК') AND (fot_out.dor2 IN ('ПОДГОРЬК', 'ХИМ', 'ПРОМ') OR fot_out.dor2 IS NULL) AND (fot_out.dor4 = '') AND (fot_out.dor5 IS NULL) AND (fot_out.dor3 = 'null') AND (fot_out.ss1 > '5') AND (fot_out.ss2 > '0') AND ((NOW() - INERVAL '1 DAY') BETWEEN '2020-01' AND '2020-12') AND (fot_out.sex_name = 'Мужской') AND (fot_out.group_pay_name = 'Не задано') AND (fot_out.pay_code = 'Не задано') AND (fot_out.pay_name = 'Не задано')
 GROUP BY (NOW() - INERVAL '1 DAY'), fot_out.branch4, fot_out.ss1, fot_out.obj_name
-ORDER BY fot_out.dor1 DESC, fot_out.dt, val2 DESC, fot_out.dor2 DESC, summa`
+ORDER BY dor1 DESC, dt, val2 DESC, fot_out.dor2 DESC, summa`
       );
 
 
@@ -261,7 +261,7 @@ FROM fot_out AS fot_out`
 FROM fot_out AS fot_out
 WHERE ((NOW() - INERVAL '1 DAY') BETWEEN '2019-01' AND '2020-12') AND (fot_out.group_pay_name = 'Не задано') AND (fot_out.pay_code = 'Не задано') AND (fot_out.pay_name = 'Не задано')
 GROUP BY (NOW() - INERVAL '1 DAY'), fot_out.sex_name, fot_out.dor2, fot_out.branch3
-ORDER BY fot_out.dt`
+ORDER BY dt`
       );
 
 
@@ -280,7 +280,7 @@ ORDER BY fot_out.dt`
 FROM fot_out AS fot_out
 WHERE ((NOW() - INERVAL '1 DAY') BETWEEN '2019-01' AND '2020-12') AND (fot_out.group_pay_name = 'Не задано') AND (fot_out.pay_code = 'Не задано') AND (fot_out.pay_name = 'Не задано')
 GROUP BY (NOW() - INERVAL '1 DAY'), fot_out.sex_code
-ORDER BY fot_out.dt`
+ORDER BY dt`
                );
 
             // quoting of unkbowb columns
