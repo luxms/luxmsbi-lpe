@@ -4738,6 +4738,18 @@ function reports_get_columns(cubeId) {
     "sql_query": "profession_name",
     "config": {}
   }, {
+    "id": "ch.fot_out.v_agg",
+    "type": "AGGFN",
+    "title": "v_agg",
+    "sql_query": "max(sum(v_main))",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.v_rel_fzp",
+    "type": "SUM",
+    "title": "v_rel_fzp",
+    "sql_query": "v_rel_fzp",
+    "config": {}
+  }, {
     "id": "ch.fot_out.v_main",
     "type": "SUM",
     "title": "v_main",

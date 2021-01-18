@@ -35,7 +35,8 @@ export function reports_get_columns(cubeId) {
      "type":"STRING","title":"area_name","sql_query":"area_name","config":{}}, {"id":"ch.fot_out.region_name","type":"STRING","title":"region_name","sql_query":"region_name"
      ,"config":{}}, {"id":"ch.fot_out.municipal_name","type":"STRING","title":"municipal_name","sql_query":"municipal_name","config":{}}, {"id":"ch.fot_out.prod_group_name",
      "type":"STRING","title":"prod_group_name","sql_query":"prod_group_name","config":{}}, {"id":"ch.fot_out.profession_name","type":"STRING","title":"profession_name","sql_query":
-     "profession_name","config":{}}, {"id":"ch.fot_out.v_main","type":"SUM","title":"v_main","sql_query":"v_main","config":{}}, {"id":"ch.fot_out.v_rel_fzp","type":"SUM",
+     "profession_name","config":{}}, {"id":"ch.fot_out.v_agg","type":"AGGFN","title":"v_agg","sql_query":"max(sum(v_main))","config":{}}, {"id":"ch.fot_out.v_rel_fzp","type":"SUM",
+     "title":"v_rel_fzp","sql_query":"v_rel_fzp","config":{}}, {"id":"ch.fot_out.v_main","type":"SUM","title":"v_main","sql_query":"v_main","config":{}}, {"id":"ch.fot_out.v_rel_fzp","type":"SUM",
      "title":"v_rel_fzp","sql_query":"v_rel_fzp","config":{}}, {"id":"ch.fot_out.v_rel_pp","type":"SUM","title":"v_rel_pp","sql_query":"v_rel_pp","config":{}}];
 
      var parts = cubeId.split('.')

@@ -298,8 +298,12 @@ function init_koob_context(_vars, default_ds, default_cube) {
     // считаем, что сюда приходят только полностью резолвенные имена с двумя точками...
     var c = _context["_columns"][col]
     if (c) {
+      // side-effect to return structure (one per call)
       if (_context["_result"]){
         _context["_result"]["columns"].push(col)
+        if (c["type"] === "AGGFN") {
+          _context["_result"]["agg"] = true
+        }
       }
       var parts = col.split('.')
       if (parts[2].localeCompare(c.sql_query, undefined, { sensitivity: 'accent' }) === 0 ) {
@@ -404,7 +408,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
     // ["=",["column","vNetwork.cluster"],SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]
     // var a = Array.prototype.slice.call(arguments)
-    console.log(JSON.stringify(ast))
+    //console.log(JSON.stringify(ast))
     var col = ast[0]
     var c = eval_lisp(col,_context)
     var resolveValue = function(v) {
@@ -438,7 +442,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
     // ["!=",["column","vNetwork.cluster"],SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]
     // var a = Array.prototype.slice.call(arguments)
-    console.log(JSON.stringify(ast))
+    //console.log(JSON.stringify(ast))
     var col = ast[0]
     var c = eval_lisp(col,_context)
     var resolveValue = function(v) {
@@ -479,7 +483,7 @@ function extend_context_for_order_by(_context, _cfg) {
       "colref": makeSF((col) => {
         /* col[0] содержит ровно то, что было в изначальном конфиге на входе!
         */
-          console.log("NEW COLREF!!!:", JSON.stringify(col))
+          //console.log("NEW COLREF!!!:", JSON.stringify(col))
           if (col[0] in _cfg["_aliases"]) {
             return col[0]
           }
@@ -577,7 +581,7 @@ function get_all_member_filters(_cfg, columns, _filters) {
   _cfg["_group_by"].map(el => {
     el.columns.map(e => h[e] = true)
   })
-console.log("FILTERS", JSON.stringify(_filters))
+//console.log("FILTERS", JSON.stringify(_filters))
 //console.log("columns", JSON.stringify(columns))
   // Ищем dimensions, по которым явно указан memeber ALL, и которых НЕТ в нашем явном списке...
   // ПО ВСЕМ СТОЛБАМ!!!
@@ -591,7 +595,7 @@ console.log("FILTERS", JSON.stringify(_filters))
         for( let alt of el.config.follow) {
           // names should skip datasource
           let altId = `${_cfg.ds}.${alt}`
-          console.log(`###checking ${el.config.follow} ${altId}`, JSON.stringify(_filters[el.id]) )
+          //console.log(`###checking ${el.config.follow} ${altId}`, JSON.stringify(_filters[el.id]) )
           // По столбцу за которым мы следуем есть условие
           if (isArray(_filters[altId])) {
             if ((_filters[altId]).length == 2) {
@@ -635,7 +639,7 @@ console.log("FILTERS", JSON.stringify(_filters))
               } else {
                 altId = `${_cfg.ds}.${_cfg.cube}.${alt}`
               }
-              console.log("ALT", JSON.stringify(altId))
+              //console.log("ALT", JSON.stringify(altId))
               if (isArray(_filters[altId]) || h[altId] === true) {
                 // уже есть условие по столбцу из altId, не добавляем новое условие
                 // но только в том случае, если у нас явно просят этот столбец в выдачу
@@ -644,7 +648,7 @@ console.log("FILTERS", JSON.stringify(_filters))
               }
             }
           }
-          console.log(`!!!!checking  ${el.id} children`, JSON.stringify(el.config.children) )
+          //console.log(`!!!!checking  ${el.id} children`, JSON.stringify(el.config.children) )
           // Если есть дочерние столбцы, то надо проверить нет ли их в GROUP BY или В Фильтрах
           if ( isArray(el.config.children) ) {
             for( let alt of el.config.children) {
@@ -665,7 +669,7 @@ console.log("FILTERS", JSON.stringify(_filters))
       }
     }
   })
-  console.log("FILTERS AFTER", JSON.stringify(_filters))
+  //console.log("FILTERS AFTER", JSON.stringify(_filters))
 
   return _filters;
 }
@@ -743,8 +747,8 @@ export function generate_koob_sql(_cfg, _vars) {
 
   _context = init_koob_context(_context, _cfg["ds"], _cfg["cube"])
   
-  console.log("NORMALIZED CONFIG: ", JSON.stringify(_cfg["filters"]))
-
+  //console.log("NORMALIZED CONFIG FILTERS: ", JSON.stringify(_cfg["filters"]))
+  //console.log("NORMALIZED CONFIG COLUMNS: ", JSON.stringify(_cfg["columns"]))
   /*
     while we evaluating each column, koob_context will fill JSON structure in the context like this:
    {
@@ -757,6 +761,8 @@ export function generate_koob_sql(_cfg, _vars) {
 
   var columns_s = [];
   var columns = _cfg["columns"].map(el => {
+                                      // eval should fill in _context[0]["_result"] object
+                                      // hackers way to get results!!!!
                                       _context[0]["_result"] = {"columns":[]}
                                       var r = eval_lisp(el, _context)
                                       columns_s.push(_context[0]["_result"])

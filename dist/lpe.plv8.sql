@@ -6361,8 +6361,13 @@ function init_koob_context(_vars, default_ds, default_cube) {
     var c = _context["_columns"][col];
 
     if (c) {
+      // side-effect to return structure (one per call)
       if (_context["_result"]) {
         _context["_result"]["columns"].push(col);
+
+        if (c["type"] === "AGGFN") {
+          _context["_result"]["agg"] = true;
+        }
       }
 
       var parts = col.split('.');
@@ -6473,7 +6478,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     // a = [null, 1,2] как a in (1,2) or a is null
     // ["=",["column","vNetwork.cluster"],SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]
     // var a = Array.prototype.slice.call(arguments)
-    __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log(JSON.stringify(ast));
+    //console.log(JSON.stringify(ast))
     var col = ast[0];
     var c = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context);
 
@@ -6506,7 +6511,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     // a != [null, 1,2] как a not in (1,2) and a is not null
     // ["!=",["column","vNetwork.cluster"],SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]
     // var a = Array.prototype.slice.call(arguments)
-    __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log(JSON.stringify(ast));
+    //console.log(JSON.stringify(ast))
     var col = ast[0];
     var c = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context);
 
@@ -6545,8 +6550,7 @@ function extend_context_for_order_by(_context, _cfg) {
     "colref": __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["f" /* makeSF */])(function (col) {
       /* col[0] содержит ровно то, что было в изначальном конфиге на входе!
       */
-      __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log("NEW COLREF!!!:", JSON.stringify(col));
-
+      //console.log("NEW COLREF!!!:", JSON.stringify(col))
       if (col[0] in _cfg["_aliases"]) {
         return col[0];
       }
@@ -6633,11 +6637,11 @@ function get_all_member_filters(_cfg, columns, _filters) {
     el.columns.map(function (e) {
       return h[e] = true;
     });
-  });
-
-  __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log("FILTERS", JSON.stringify(_filters)); //console.log("columns", JSON.stringify(columns))
+  }); //console.log("FILTERS", JSON.stringify(_filters))
+  //console.log("columns", JSON.stringify(columns))
   // Ищем dimensions, по которым явно указан memeber ALL, и которых НЕТ в нашем явном списке...
   // ПО ВСЕМ СТОЛБАМ!!!
+
 
   Object.values(columns).map(function (el) {
     if (h[el.id] === true) {
@@ -6655,8 +6659,8 @@ function get_all_member_filters(_cfg, columns, _filters) {
           for (var _iterator = el.config.follow[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
             var alt = _step.value;
             // names should skip datasource
-            var altId = "".concat(_cfg.ds, ".").concat(alt);
-            __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log("###checking ".concat(el.config.follow, " ").concat(altId), JSON.stringify(_filters[el.id])); // По столбцу за которым мы следуем есть условие
+            var altId = "".concat(_cfg.ds, ".").concat(alt); //console.log(`###checking ${el.config.follow} ${altId}`, JSON.stringify(_filters[el.id]) )
+            // По столбцу за которым мы следуем есть условие
 
             if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(_filters[altId])) {
               if (_filters[altId].length == 2) {
@@ -6714,9 +6718,8 @@ function get_all_member_filters(_cfg, columns, _filters) {
                   _altId = "".concat(_cfg.ds, ".").concat(_alt);
                 } else {
                   _altId = "".concat(_cfg.ds, ".").concat(_cfg.cube, ".").concat(_alt);
-                }
+                } //console.log("ALT", JSON.stringify(altId))
 
-                __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log("ALT", JSON.stringify(_altId));
 
                 if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(_filters[_altId]) || h[_altId] === true) {
                   // уже есть условие по столбцу из altId, не добавляем новое условие
@@ -6739,9 +6742,9 @@ function get_all_member_filters(_cfg, columns, _filters) {
                 }
               }
             }
-          }
+          } //console.log(`!!!!checking  ${el.id} children`, JSON.stringify(el.config.children) )
+          // Если есть дочерние столбцы, то надо проверить нет ли их в GROUP BY или В Фильтрах
 
-          __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log("!!!!checking  ".concat(el.id, " children"), JSON.stringify(el.config.children)); // Если есть дочерние столбцы, то надо проверить нет ли их в GROUP BY или В Фильтрах
 
           if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(el.config.children)) {
             var _iteratorNormalCompletion3 = true;
@@ -6784,8 +6787,8 @@ function get_all_member_filters(_cfg, columns, _filters) {
         }
       }
     }
-  });
-  __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log("FILTERS AFTER", JSON.stringify(_filters));
+  }); //console.log("FILTERS AFTER", JSON.stringify(_filters))
+
   return _filters;
 }
 /* Добавляем ключ "_aliases", чтобы можно было легко найти столбец по алиасу */
@@ -6861,8 +6864,9 @@ function generate_koob_sql(_cfg, _vars) {
     throw new Error("Default cube must be specified in with key");
   }
 
-  _context = init_koob_context(_context, _cfg["ds"], _cfg["cube"]);
-  __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log("NORMALIZED CONFIG: ", JSON.stringify(_cfg["filters"]));
+  _context = init_koob_context(_context, _cfg["ds"], _cfg["cube"]); //console.log("NORMALIZED CONFIG FILTERS: ", JSON.stringify(_cfg["filters"]))
+  //console.log("NORMALIZED CONFIG COLUMNS: ", JSON.stringify(_cfg["columns"]))
+
   /*
     while we evaluating each column, koob_context will fill JSON structure in the context like this:
    {
@@ -6876,6 +6880,8 @@ function generate_koob_sql(_cfg, _vars) {
   var columns_s = [];
 
   var columns = _cfg["columns"].map(function (el) {
+    // eval should fill in _context[0]["_result"] object
+    // hackers way to get results!!!!
     _context[0]["_result"] = {
       "columns": []
     };
