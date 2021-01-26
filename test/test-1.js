@@ -1,35 +1,61 @@
 var assert = require('assert');
 var lpe = require('../dist/lpe');
 
+/*
+{"columns": 
+["doc_currcy", "fm_area", "loc_currcy", "fiscper", 
+"running(sum, deb_cre_lc, -fiscper):rs",
+"running(lead, rs):lead",
+"rs - lead",
+"(lead / rs * 100):perda"
+]
+select loc_currcy,fiscper, deb_cre_lc,  deb_cre_lc_accum, perda, prev from (
+SELECT
+    fiscper,doc_currcy,loc_currcy,
+    finalizeAggregation(mnt) AS deb_cre_lc,
+    runningAccumulate(mnt, (doc_currcy,loc_currcy)) AS deb_cre_lc_accum,
+    finalizeAggregation(mnt) / runningAccumulate(mnt, (doc_currcy,loc_currcy)) * 100  as perda,
+    runningAccumulate(mnt, (doc_currcy,loc_currcy)) - finalizeAggregation(mnt)  as prev
+FROM
+(
+select fiscper,doc_currcy,loc_currcy, initializeAggregation('sumState',count(deb_cre_lc )) as mnt 
+from gpn.zgrccp410_out zv 
+group by fiscper,doc_currcy ,loc_currcy
+order by doc_currcy,loc_currcy,fiscper
+)
+) where fiscper = '2019-03-01'
+
+*/
 
 describe('LPE tests', function() {
 
-  it('should eval KOOB queries: AGGFN', function() {
+  it('should eval KOOB WINDOW FUNCTIONS FOR Clickhouse', function() {
    assert.equal( lpe.generate_koob_sql(
-      {"columns":["sum(v_main):v_main","sum(v_rel_pp)","sum(v_rel_fzp)","sum(v_rel_pp_i)","group_pay_name", 'v_agg'],
+      {"columns":[
+                  "running(lead, rs):lead",
+                  "running(sum, v_main, -hcode_name):rs",
+                  "(rs/100):div",
+                  "(lead / rs * 100):perda",
+                  "sum(v_rel_pp)",
+                  "group_pay_name", 'hcode_name'],
       "distinct":[],
-      "filters":{"dt":["!=","2020-03","2020-04"],
-      "pay_name":["!=","Не задано"],
-      "area_name":["=","Не задано"],
-      "hcode_name":["=","ФЗП"],
-      "type_oe_bi":["=","РЖД"],
-      "region_name":["=","Не задано"],
-      "category_name":["=","Не задано"],
-      "group_pay_name":["!=","Не задано"],
-      "municipal_name":["=","Не задано"],
-      "prod_group_name":["=","Не задано"],
-      "profession_name":["=","Не задано"]},
-      "sort":["group_pay_name","v_main","v_agg"],
+      "filters":{"hcode_name": ["between", "2019-01-01", "2020-03-01"]},
+      "sort":["perda","-lead"],
+      "limit": 100,
+      "offset": 10,
       "with":"ch.fot_out"},
-            {"key":null}),
-`SELECT DISTINCT sum(fot_out.v_main) AS v_main, sum(fot_out.v_rel_pp) AS v_rel_pp, sum(fot_out.v_rel_fzp) AS v_rel_fzp, sum(v_rel_pp_i), fot_out.group_pay_name AS group_pay_name, (max(sum(v_main))) AS v_agg
+            {"_target_database": "clickhouse"}),
+`SELECT DISTINCT finalizeAggregation(_w_f_1) AS lead, runningAccumulate(_w_f_1, (group_pay_name)) AS rs, rs / 100 AS div, lead / rs * 100 AS perda, v_rel_pp AS v_rel_pp, group_pay_name AS group_pay_name, hcode_name AS hcode_name
+FROM (
+SELECT initializeAggregation('sumState',sum(v_main)) AS _w_f_1, sum(fot_out.v_rel_pp) AS v_rel_pp, fot_out.group_pay_name AS group_pay_name, fot_out.hcode_name AS hcode_name
 FROM fot_out AS fot_out
-WHERE ((NOW() - INERVAL '1 DAY') NOT IN ('2020-03', '2020-04')) AND (fot_out.pay_name != 'Не задано') AND (fot_out.area_name = 'Не задано') AND (fot_out.hcode_name = 'ФЗП') AND (fot_out.type_oe_bi = 'РЖД') AND (fot_out.region_name = 'Не задано') AND (fot_out.category_name = 'Не задано') AND (fot_out.group_pay_name != 'Не задано') AND (fot_out.municipal_name = 'Не задано') AND (fot_out.prod_group_name = 'Не задано') AND (fot_out.profession_name = 'Не задано') AND (fot_out.pay_code != 'Не задано') AND (fot_out.sex_code IS NULL)
-GROUP BY fot_out.group_pay_name
-ORDER BY group_pay_name, v_main, v_agg`
+GROUP BY fot_out.group_pay_name, fot_out.hcode_name
+HAVING (hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
+ORDER BY fot_out.group_pay_name, fot_out.hcode_name
+)
+ORDER BY perda, lead DESC LIMIT 100 OFFSET 100
+SETTINGS max_threads = 12`
          );
-
-
 
   });
 

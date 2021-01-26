@@ -34,6 +34,7 @@ import {
   db_quote_literal
 } from './utils/utils';
 import { isObject } from 'core-js/fn/object';
+import { has } from 'core-js/fn/dict';
 
 /* Постановка
 На входе имеем структуру данных из браузера:
@@ -238,6 +239,10 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
     // это формула над какими-то столбцами...
     // смотрим на тип выражения v, если это текст, то возвращаем true,
+    // но сначала проверим, вдруг это alias???
+    if (_context["_aliases"][v]) {
+      return false;
+    }
     return isString(v);
   }
   
@@ -255,7 +260,24 @@ function init_koob_context(_vars, default_ds, default_cube) {
       // вызываем функцию column(ПолноеИмяСтолбца) если нашли столбец в дефолтном кубе
       if (_context["_columns"][key]) return _context["column"](key)
       if (_context["_columns"][default_ds][default_cube][key]) return _context["column"](`${default_ds}.${default_cube}.${key}`)
-      
+      // reference to alias!
+      //console.log("DO WE HAVE ALIAS?" , JSON.stringify(_context["_aliases"]))
+      if (_context["_aliases"][key]) {
+        if (!isArray(_context["_result"]["columns"])){
+          _context["_result"]["columns"] = []
+        }
+        // remeber reference to alias as column name!
+        _context["_result"]["columns"].push(key)
+        // mark our expression same as target
+        // FIXME: setting window will result in BUGS
+        //_context["_result"]["window"] = _context["_aliases"][key]["window"]
+        _context["_result"]["agg"] = _context["_aliases"][key]["agg"]
+
+        // Mark agg function to display expr as is
+        _context["_result"]["outerVerbatim"] = true 
+
+        return key;
+      }
       if (resolveOptions && resolveOptions.wantCallable){
         if (key.match(/^\w+$/) ) {
           if (_context["_result"]){
@@ -293,6 +315,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     }
   )
 
+  _context["_sequence"] = 0;
   
   _context["column"] = function(col) {
     // считаем, что сюда приходят только полностью резолвенные имена с двумя точками...
@@ -308,6 +331,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
       var parts = col.split('.')
       if (parts[2].localeCompare(c.sql_query, undefined, { sensitivity: 'accent' }) === 0 ) {
         // we have just column name, prepend table alias !
+        //return `${c.sql_query}`
         return `${parts[1]}.${c.sql_query}`
       } else {
         return `(${c.sql_query})`
@@ -318,6 +342,73 @@ function init_koob_context(_vars, default_ds, default_cube) {
     //if (_context["_columns"][default_ds][default_cube][key]) return `${default_cube}.${key}`;
     return col;
   }
+
+  /*
+     expr: "initializeAggregation('sumState',sum(s2.deb_cre_lc )) as mnt",
+     alias: "mnt",
+     columns: ["czt.fot.val3","czt.fot.val1"],
+     agg: true,
+     window: true,
+     outer_expr: "runningAccumulate(mnt, (comp_code,gl_account)) as col1",
+     outer_alias: 'col1'
+  */
+
+  _context["running"] = function() {
+    _context["_result"]["agg"] = true // mark that we are aggregate function for correct 'group by'
+    _context["_result"]["window"] = true
+
+    var a = Array.prototype.slice.call(arguments)
+    //console.log("RUNNING" , JSON.stringify(a))
+    //console.log("Flavor" , JSON.stringify(_context._target_database))
+
+    if (_context._target_database !== 'clickhouse') {
+      throw Error('running function is only supported for clickhouse SQL flavour')
+    }
+
+    //
+    // we have 3 args ["sum","v_main",["-","hcode_name"]]
+    // or we have 2 args: ["lead","rs"]
+    // and should generate: initializeAggregation('sumState',sum(s2.deb_cre_lc )) as mnt 
+    var fname = a[0];
+    var colname = a[1];
+
+    var order_by = ''
+    var expr = ''
+    if (fname === 'sum') {
+      order_by = a[2]; // array!
+      order_by = order_by[1]; // FIXME! may crash on wrong input!!! use eval !!!
+      // We have 2 phases, inner and outer.
+      // For inner phase we should generate init:
+      expr = `initializeAggregation('${fname}State',${fname}(${colname}))`;
+
+      // For outer phase we should generate 
+      // runningAccumulate(wf1, (comp_code,gl_account)) AS end_lc,
+      // BUT WIITHOUT AS end_lc
+      var alias = '_w_f_' + ++_context["_sequence"]
+      _context["_result"]["expr"] = expr
+      _context["_result"]["columns"] = [colname]
+      _context["_result"]["inner_order_by_excl"] = order_by
+      _context["_result"]["outer_expr"] = `runningAccumulate(${alias}, (partition_columns()))` //it should not be used as is
+      _context["_result"]["outer_expr_eval"] = true // please eval outer_expr !!!
+      _context["_result"]["outer_alias"] = alias
+    } else if (fname === 'lead'){
+      // or we have 2 args: ["lead","rs"]
+      // if this column is placed BEFORE referenced column, we can not create correct outer_expr
+      // in this case we provide placeholder...
+      var init = _context["_aliases"][colname]
+      if (isHash(init) && init["alias"]) {
+        _context["_result"]["outer_expr"] = `finalizeAggregation(${init["alias"]})`
+      } else {
+        _context["_result"]["outer_expr"] = `finalizeAggregation(resolve_alias())`
+        _context["_result"]["outer_expr_eval"] = true 
+        _context["_result"]["eval_reference_to"] = colname
+      } 
+      expr = null // no inner expr for this func!
+    }
+      return expr
+  }
+  _context['running'].ast = [[],{},[],1]; // mark as macro
+
 
   // сюда должны попадать только хитрые варианты вызова функций с указанием схемы типа utils.smap()
   _context["->"] = function() {
@@ -337,7 +428,14 @@ function init_koob_context(_vars, default_ds, default_cube) {
     if (_context["_result"]){
       // мы кидаем значение alias в _result, это подходит для столбцов
       // для TABLE as alias не надо вызывать _result
-      _context["_result"]["alias"] = n
+
+      // также есть outer_alias для оконных функций, мы его поменяем!!!
+      if (_context["_result"]["outer_alias"]) {
+        _context["_result"]["alias"] = _context["_result"]["outer_alias"]
+        _context["_result"]["outer_alias"] = n
+      } else {
+        _context["_result"]["alias"] = n
+      }
       return otext
     }
   
@@ -731,12 +829,17 @@ export function generate_koob_sql(_cfg, _vars) {
   if ( isString( _cfg["with"]) ) {
     var w = _cfg["with"]
     _context["_columns"] = reports_get_columns(w)
+    _context["_aliases"] = {} // will be filled while we are parsing columns
 
     // это корректный префикс: "дс.перв"."куб.2"  так что тупой подсчёт точек не катит.
     if ( w.match( /^("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)$/) !== null ) {
       _cfg = normalize_koob_config(_cfg, w, _context);
       target_db_type = get_source_database(w.split('.')[0])
       _context["_target_database"] = target_db_type
+
+      // FIXME: FOR TESTS ONLY !!!!
+      //_context["_target_database"] = 'clickhouse'
+      // ========================
     } else {
       // это строка, но она не поддерживается, так как либо точек слишком много, либо они не там, либо их нет
       throw new Error(`Request contains with key, but it has the wrong format: ${w} Should be datasource.cube with exactly one dot in between.`)
@@ -757,6 +860,18 @@ export function generate_koob_sql(_cfg, _vars) {
      columns: ["czt.fot.val3","czt.fot.val1"],
      agg: true
    }
+
+   For window func clickhouse flavor we may get this inner/outer SQL:
+  {
+     expr: "runningAccumulate(mnt, (comp_code,gl_account)) as col1",
+     alias: "col1",
+     columns: ["czt.fot.val3","czt.fot.val1"],
+     agg: true,
+     window: true,
+     inner_expr: "initializeAggregation('sumState',sum(s2.deb_cre_lc )) as mnt",
+     inner_alias: 'mnt'
+
+  } 
   */
 
   var columns_s = [];
@@ -765,11 +880,28 @@ export function generate_koob_sql(_cfg, _vars) {
                                       // hackers way to get results!!!!
                                       _context[0]["_result"] = {"columns":[]}
                                       var r = eval_lisp(el, _context)
-                                      columns_s.push(_context[0]["_result"])
+                                      var col = _context[0]["_result"]
+                                      columns_s.push(col)
+                                      if (col["alias"]) {
+                                        _context[0]["_aliases"][col["alias"]] = col
+                                      }
+                                      //FIXME: we should have nested settings for inner/outer 
+                                      // Hope aliases will not collide!
+                                      if (col["outer_alias"]) {
+                                        _context[0]["_aliases"][col["outer_alias"]] = col
+                                      }
+
                                       return r})
   _context[0]["_result"] = null
+  _cfg["_aliases"] = _context[0]["_aliases"]
+  var has_window = null
   for (var i=0; i<columns.length; i++){
     columns_s[i]["expr"] = columns[i]
+    if (!has_window && columns_s[i]["window"]) {
+      //FIXME: for now store here usefull info about order by !!!
+      // it will be used later on the SQL generation stage
+      has_window = columns_s[i]["inner_order_by_excl"]
+    }
   }
 
   // ищем кандидатов для GROUP BY и заполняем оригинальную структуру служебными полями
@@ -778,7 +910,7 @@ export function generate_koob_sql(_cfg, _vars) {
   columns_s.map(el => (el["agg"] === true) ? _cfg["_measures"].push(el) : _cfg["_group_by"].push(el))
   _cfg["_columns"] = columns_s
 
-  //console.log("RES ", JSON.stringify(columns_s))
+  //console.log("RES ", JSON.stringify(_cfg))
 
   if (_cfg["_measures"].length === 0) {
     // do not group if we have no aggregates !!!
@@ -823,23 +955,35 @@ export function generate_koob_sql(_cfg, _vars) {
    "avg(fot_out.indicator_v + fot_out.v_main)"}]}
   */
 
-  _cfg = cache_alias_keys(_cfg)
+  // we populate it dynamically now!
+  //_cfg = cache_alias_keys(_cfg)
   
-  // let's get SQL from it!
-  var select = isArray(_cfg["distinct"]) ? "SELECT DISTINCT " : "SELECT "
-  // могут быть ньюансы квотации столбцов, обозначения AS и т.д. поэтому каждый участок приводим к LPE и вызываем SQLPE функции с адаптацией под конкретные базы
-  select = select.concat(_cfg["_columns"].map(el => {
-    if (el.alias){
-      return `${el.expr} AS ${el.alias}`
-    } else {
-      if (el.columns.length === 1) {
-        var parts = el.columns[0].split('.')
-        return `${el.expr} AS ${parts[2]}`
+  // let's get SQL from it! BUT what about window functions ???
+
+  if (has_window) {
+    if (_context[0]["_target_database"] != 'clickhouse'){
+      throw Error(`No Window functions support for flavor: ${_context[0]["_target_database"]}`)
+    }
+    // Try to replace column func to return short names!
+    _context[0]["column"] = function(col) {
+      // считаем, что сюда приходят только полностью резолвенные имена с двумя точками...
+      var c = _context[0]["_columns"][col]
+      if (c) {
+        var parts = col.split('.')
+        if (parts[2].localeCompare(c.sql_query, undefined, { sensitivity: 'accent' }) === 0 ) {
+          // we have just column name, prepend table alias !
+          return `${c.sql_query}`
+          //return `${parts[1]}.${c.sql_query}`
+        } else {
+          return `(${c.sql_query})`
+        }
       }
-      return el.expr
-    } 
-  }).join(', '))
-  
+      //console.log("COL FAIL", col)
+      // возможно кто-то вызовет нас с коротким именем - нужно знать дефолт куб!!!
+      //if (_context["_columns"][default_ds][default_cube][key]) return `${default_cube}.${key}`;
+      return col;
+    }
+  }  
 
   var where = '';
   var filters_array = _cfg["filters"];
@@ -856,8 +1000,7 @@ export function generate_koob_sql(_cfg, _vars) {
 
       if (pw.length > 0) {
         var wh = ["and"].concat(pw)
-
-        //console.log("WHERE", JSON.stringify(wh))
+        //console.log("WHERE", _context[0]["column"])
         part_where = eval_lisp(wh, _context)
       }
       return part_where
@@ -871,17 +1014,160 @@ export function generate_koob_sql(_cfg, _vars) {
   
   
 
-  var group_by = _cfg["_group_by"].map(el => el.expr).join(', ')
-  group_by = group_by ? "\nGROUP BY ".concat(group_by) : ''
+  var group_by = _cfg["_group_by"].map(el => el.expr)
 
   // нужно дополнить контекст для +,- и суметь сослатся на алиасы!
   var order_by_context = extend_context_for_order_by(_context, _cfg)
   //console.log("SORT:", JSON.stringify(_cfg["sort"]))
-  var order_by = _cfg["sort"].map(el => eval_lisp(el, order_by_context)).join(', ')
-  order_by = order_by ? "\nORDER BY ".concat(order_by) : ''
+  var order_by = _cfg["sort"].map(el => eval_lisp(el, order_by_context))
 
   var from = reports_get_table_sql(target_db_type, `${_cfg["ds"]}.${_cfg["cube"]}`)
 
-  return `${select}\nFROM ${from}${where}${group_by}${order_by}`;
+  // FIXME: USE FLAVORS FOR Oracle & MS SQL
+  var limit = isNumber(_cfg["limit"]) ? ` LIMIT ${_cfg["limit"]}` : ''
+  var offset = isNumber(_cfg["offset"]) ? ` OFFSET ${_cfg["limit"]}` : ''
+
+  if (has_window) {
+    // assuming we are working for clickhouse only....
+    // we should generate correct order_by, even though each window func may require it's own order by
+    // FIXME: we use only ONE SUCH FUNC FOR NOW, IGNORING ALL OTHERS
+
+    // skip all columns which are references to window funcs!
+    var innerSelect = "SELECT "
+    // могут быть ньюансы квотации столбцов, обозначения AS и т.д. поэтому каждый участок приводим к LPE и вызываем SQLPE функции с адаптацией под конкретные базы
+    innerSelect = innerSelect.concat(_cfg["_columns"].map(el => {
+      //console.log('1: ' + JSON.stringify(el) + " alias:" + el.alias)
+      if (el.expr === null) {
+        return null
+      }
+      if (el.alias){
+        for (var part of el.columns) {
+          //console.log('2 part:' + part)
+          // if we reference some known alias
+          var target = _cfg["_aliases"][part]
+          if (target && target.window) {
+            // if we reference window function, skip such column from inner select!
+            return null;
+          }
+        }
+        return `${el.expr} AS ${el.alias}`
+      } else {
+        if (el.columns.length === 1) {
+          var parts = el.columns[0].split('.')
+          return `${el.expr} AS ${parts[2]}`
+        }
+        return el.expr
+      } 
+    }).filter(el=> el !== null).join(', '))
+
+    var expand_column = (col) => {
+      var cube_prefix = `${_cfg["ds"]}.${_cfg["cube"]}`
+      return col.match(/("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)/) === null
+        ? (_context[0]._columns[`${cube_prefix}.${col}`] ? `${_cfg["cube"]}.${col}` : col )
+        : col
+    }
+    var excl_col = expand_column(has_window)
+    //console.log(`${_cfg["ds"]}.${_cfg["cube"]}` + " EXPANDING " + has_window + " to " + excl_col)
+    //console.log(JSON.stringify(_context[0]["_columns"]))
+
+    // Put excl_col to the last position, so running window will accumulate data over it!
+    var inner_order_by = group_by.filter(el => el !== excl_col).concat(excl_col)
+
+    inner_order_by = inner_order_by.length ? "\nORDER BY ".concat(inner_order_by.join(', ')) : ''
+
+    var having = where.replace("WHERE","HAVING")
+
+    var inner_group_by = group_by.length ? "\nGROUP BY ".concat(group_by.join(', ')) : ''
+    var inner = `${innerSelect}\nFROM ${from}${inner_group_by}${having}${inner_order_by}`
+
+    // NOW WE NEED OUTER !
+
+    function get_outer_expr(el) {
+      if (el.outer_expr) {
+        if (el.outer_expr_eval) {
+          if (el.eval_reference_to) {
+            // resolve_reference!!
+            var init = _cfg["_aliases"][el.eval_reference_to]
+            return el.outer_expr.replace('resolve_alias()', init["alias"])
+          } else {
+            // FIXME, currently we just do simple replace! love LISP: do eval!!!
+            var part_columns = group_by.filter( el => el != excl_col)
+            part_columns = part_columns.length ? part_columns.map(el=>{
+                var p = el.split('.')
+                return p[p.length-1]
+                }).join(', ') : ''
+            return el.outer_expr.replace('partition_columns()', part_columns)
+          }
+        } else {
+          var parts = el.outer_expr.match(/("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)/)
+          if (parts) {
+            return parts[2]
+          }
+          return el.outer_expr
+        }
+      } else {
+        // FIXME: stupid Javascript IF
+        if ((el.agg === true) && (el.outerVerbatim !== true)) {
+          // try to just use alias or column name!!!
+          //console.log("DEPARSE " + JSON.stringify(el))
+          if (el.alias) {
+            return el.alias
+          } else {
+            var parts = el.columns[0].match(/("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)/)
+            if (parts) {
+              return parts[3]
+            }
+          }
+        } else {
+          var parts = el.expr.match(/("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)/)
+          if (parts) {
+            return parts[2]
+          }
+        }
+        return el.expr
+      }
+    }
+
+    var select = isArray(_cfg["distinct"]) ? "SELECT DISTINCT " : "SELECT "
+    select = select.concat(_cfg["_columns"].map(el => {
+      //console.log('outer1: ' + JSON.stringify(el) + " alias:" + el.alias)
+      if (el.outer_alias) {
+          return `${get_outer_expr(el)} AS ${el.outer_alias}`
+      } else if (el.alias) {
+          return `${get_outer_expr(el)} AS ${el.alias}`
+      } else {
+        if (el.columns.length === 1) {
+          var parts = el.columns[0].match(/("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)/)
+          //console.log(`outer2: ${get_outer_expr(el)}` + JSON.stringify(parts))
+          if (parts) {
+            return `${get_outer_expr(el)} AS ${parts[3]}`
+          }
+          return `${get_outer_expr(el)}`
+        }
+        return `${get_outer_expr(el)}`
+      } 
+    }).filter(el=> el !== null).join(', '))
+
+    order_by = order_by.length ? "\nORDER BY ".concat(order_by.join(', ')) : ''
+    return `${select}\nFROM (\n${inner}\n)${order_by}${limit}${offset}\nSETTINGS max_threads = 12`
+  } else {
+    var select = isArray(_cfg["distinct"]) ? "SELECT DISTINCT " : "SELECT "
+    // могут быть ньюансы квотации столбцов, обозначения AS и т.д. поэтому каждый участок приводим к LPE и вызываем SQLPE функции с адаптацией под конкретные базы
+    select = select.concat(_cfg["_columns"].map(el => {
+      if (el.alias){
+        return `${el.expr} AS ${el.alias}`
+      } else {
+        if (el.columns.length === 1) {
+          var parts = el.columns[0].split('.')
+          return `${el.expr} AS ${parts[2]}`
+        }
+        return el.expr
+      } 
+    }).join(', '))
+
+    order_by = order_by.length ? "\nORDER BY ".concat(order_by.join(', ')) : ''
+    group_by = group_by.length ? "\nGROUP BY ".concat(group_by.join(', ')) : ''
+    return `${select}\nFROM ${from}${where}${group_by}${order_by}${limit}${offset}`
+  }
 
 }
