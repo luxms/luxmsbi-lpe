@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2021/01/26 17:54:35 */ 
+/** [LPE]  Version: 1.0.0 - 2021/01/26 18:46:02 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -6604,12 +6604,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
       //_context["_result"]["window"] = _context["_aliases"][key]["window"]
 
 
-      _context["_result"]["agg"] = _context["_aliases"][key]["agg"];
-
-      if (_context["_aliases"][key]["window_ref"] || _context["_aliases"][key]["window"]) {
-        _context["_result"]["window_ref"] = true;
-      } // Mark agg function to display expr as is
-
+      _context["_result"]["agg"] = _context["_aliases"][key]["agg"]; // Mark agg function to display expr as is
 
       _context["_result"]["outerVerbatim"] = true;
       return key;
@@ -6750,7 +6745,6 @@ function init_koob_context(_vars, default_ds, default_cube) {
       // or we have 2 args: ["lead","rs"]
       // if this column is placed BEFORE referenced column, we can not create correct outer_expr
       // in this case we provide placeholder...
-      _context["_result"]["window_ref"] = true;
       var init = _context["_aliases"][colname];
 
       if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(init) && init["alias"]) {
@@ -7333,14 +7327,12 @@ function generate_koob_sql(_cfg, _vars) {
           var col = _cfg["_aliases"][al]; //console.log("ITER1 " + JSON.stringify(col))
 
           if (col) {
-            if (col.window && col.agg || col.window_ref) {
-              // we have alias to the window func, do the magic
+            if (col.agg) {
+              // we have alias to the agg func, do the magic
               columns_s[i]["agg"] = true;
               columns_s[i]["outer_expr"] = columns_s[i]["expr"]; // so we can skip it in the inner select...
 
               columns_s[i]["expr"] = null;
-              columns_s[i]["window_ref"] = true; // mark column as reference to window func. transitive!
-
               break;
             }
           }
@@ -7360,13 +7352,52 @@ function generate_koob_sql(_cfg, _vars) {
         }
       }
     }
+  } // try to make transitive agg
+  // FIXME: try to resolve full column names as well!
+
+
+  for (var _i = 0; _i < columns_s.length; _i++) {
+    var el = columns_s[_i];
+
+    if (el["agg"] !== true) {
+      var _iteratorNormalCompletion6 = true;
+      var _didIteratorError6 = false;
+      var _iteratorError6 = undefined;
+
+      try {
+        for (var _iterator6 = el["columns"][Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+          var al = _step6.value;
+          var col = _cfg["_aliases"][al];
+
+          if (col) {
+            if (col.agg) {
+              el["agg"] = true;
+              break;
+            }
+          }
+        }
+      } catch (err) {
+        _didIteratorError6 = true;
+        _iteratorError6 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion6 && _iterator6.return != null) {
+            _iterator6.return();
+          }
+        } finally {
+          if (_didIteratorError6) {
+            throw _iteratorError6;
+          }
+        }
+      }
+    }
   } // ищем кандидатов для GROUP BY и заполняем оригинальную структуру служебными полями
 
 
   _cfg["_group_by"] = [];
   _cfg["_measures"] = [];
   columns_s.map(function (el) {
-    return el["agg"] === true || el["window_ref"] === true ? _cfg["_measures"].push(el) : _cfg["_group_by"].push(el);
+    return el["agg"] === true ? _cfg["_measures"].push(el) : _cfg["_group_by"].push(el);
   });
   _cfg["_columns"] = columns_s; //console.log("RES ", JSON.stringify(_cfg["_columns"]))
 

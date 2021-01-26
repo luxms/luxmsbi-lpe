@@ -283,9 +283,6 @@ function init_koob_context(_vars, default_ds, default_cube) {
         // FIXME: setting window will result in BUGS
         //_context["_result"]["window"] = _context["_aliases"][key]["window"]
         _context["_result"]["agg"] = _context["_aliases"][key]["agg"]
-        if (_context["_aliases"][key]["window_ref"] || _context["_aliases"][key]["window"]){
-          _context["_result"]["window_ref"] = true
-        }
 
         // Mark agg function to display expr as is
         _context["_result"]["outerVerbatim"] = true 
@@ -420,7 +417,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
       // or we have 2 args: ["lead","rs"]
       // if this column is placed BEFORE referenced column, we can not create correct outer_expr
       // in this case we provide placeholder...
-      _context["_result"]["window_ref"] = true
+
       var init = _context["_aliases"][colname]
       if (isHash(init) && init["alias"]) {
         _context["_result"]["outer_expr"] = `finalizeAggregation(${init["alias"]})`
@@ -941,12 +938,27 @@ export function generate_koob_sql(_cfg, _vars) {
         var col = _cfg["_aliases"][al]
         //console.log("ITER1 " + JSON.stringify(col))
         if (col) {
-          if ((col.window && col.agg) || col.window_ref) {
-            // we have alias to the window func, do the magic
+          if ( col.agg ) {
+            // we have alias to the agg func, do the magic
             columns_s[i]["agg"] = true
             columns_s[i]["outer_expr"] = columns_s[i]["expr"] // so we can skip it in the inner select...
             columns_s[i]["expr"] = null
-            columns_s[i]["window_ref"] = true // mark column as reference to window func. transitive!
+            break
+          }
+        }
+      }
+    }
+  }
+
+  // try to make transitive agg
+  // FIXME: try to resolve full column names as well!
+  for (var el of columns_s){
+    if (el["agg"] !== true){
+      for (var al of el["columns"]) {
+        var col = _cfg["_aliases"][al]
+        if (col) {
+          if ( col.agg ) {
+            el["agg"] = true
             break
           }
         }
@@ -958,7 +970,7 @@ export function generate_koob_sql(_cfg, _vars) {
   _cfg["_group_by"] = []
   _cfg["_measures"] = []
   columns_s.map(el => 
-    (el["agg"] === true || el["window_ref"] === true)
+    (el["agg"] === true)
        ? _cfg["_measures"].push(el) 
        : _cfg["_group_by"].push(el))
   _cfg["_columns"] = columns_s
