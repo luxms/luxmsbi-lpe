@@ -243,6 +243,17 @@ function init_koob_context(_vars, default_ds, default_cube) {
     if (_context["_aliases"][v]) {
       return false;
     }
+
+
+    // left and right side looks like a column names, don't quote
+    if ( isString(col) && isString(v) &&
+         (col.match(/^[A-Za-z_]+\w*$/) || col.match(/^[A-Za-z_]+\w*\.[A-Za-z_]+\w*$/))
+         &&
+         (v.match(/^[A-Za-z_]+\w*$/) || v.match(/^[A-Za-z_]+\w*\.[A-Za-z_]+\w*$/))
+    ) {
+      return false
+    }
+
     return isString(v);
   }
   
@@ -261,7 +272,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
       if (_context["_columns"][key]) return _context["column"](key)
       if (_context["_columns"][default_ds][default_cube][key]) return _context["column"](`${default_ds}.${default_cube}.${key}`)
       // reference to alias!
-      //console.log("DO WE HAVE ALIAS?" , JSON.stringify(_context["_aliases"]))
+      //console.log("DO WE HAVE SUCH ALIAS?" , JSON.stringify(_context["_aliases"]))
       if (_context["_aliases"][key]) {
         if (!isArray(_context["_result"]["columns"])){
           _context["_result"]["columns"] = []
@@ -272,12 +283,16 @@ function init_koob_context(_vars, default_ds, default_cube) {
         // FIXME: setting window will result in BUGS
         //_context["_result"]["window"] = _context["_aliases"][key]["window"]
         _context["_result"]["agg"] = _context["_aliases"][key]["agg"]
+        if (_context["_aliases"][key]["window_ref"] || _context["_aliases"][key]["window"]){
+          _context["_result"]["window_ref"] = true
+        }
 
         // Mark agg function to display expr as is
         _context["_result"]["outerVerbatim"] = true 
 
         return key;
       }
+
       if (resolveOptions && resolveOptions.wantCallable){
         if (key.match(/^\w+$/) ) {
           if (_context["_result"]){
@@ -306,6 +321,16 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
             return `${c} ${k} ${v}`
           })
+        }
+      }
+
+      // We may have references to yet unresolved aliases....
+      if (isHash(_context["_result"])){
+        if (key.match(/^[A-Za-z_]+\w*$/)) {
+          if (!isArray(_context["_result"]["unresolved_aliases"])){
+            _context["_result"]["unresolved_aliases"] = []
+          }
+          _context["_result"]["unresolved_aliases"].push(key)
         }
       }
 
@@ -395,6 +420,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
       // or we have 2 args: ["lead","rs"]
       // if this column is placed BEFORE referenced column, we can not create correct outer_expr
       // in this case we provide placeholder...
+      _context["_result"]["window_ref"] = true
       var init = _context["_aliases"][colname]
       if (isHash(init) && init["alias"]) {
         _context["_result"]["outer_expr"] = `finalizeAggregation(${init["alias"]})`
@@ -894,6 +920,9 @@ export function generate_koob_sql(_cfg, _vars) {
                                       return r})
   _context[0]["_result"] = null
   _cfg["_aliases"] = _context[0]["_aliases"]
+
+  //console.log("ALIASES: ", JSON.stringify(_cfg["_aliases"]))
+
   var has_window = null
   for (var i=0; i<columns.length; i++){
     columns_s[i]["expr"] = columns[i]
@@ -904,13 +933,37 @@ export function generate_koob_sql(_cfg, _vars) {
     }
   }
 
+  for (var i=0; i<columns_s.length; i++){
+    // Also, try to resolve unresolved aliases
+    //console.log("ITER0 " + JSON.stringify(columns_s[i]))
+    if (isArray(columns_s[i]["unresolved_aliases"])) {
+      for (var al of columns_s[i]["unresolved_aliases"]) {
+        var col = _cfg["_aliases"][al]
+        //console.log("ITER1 " + JSON.stringify(col))
+        if (col) {
+          if ((col.window && col.agg) || col.window_ref) {
+            // we have alias to the window func, do the magic
+            columns_s[i]["agg"] = true
+            columns_s[i]["outer_expr"] = columns_s[i]["expr"] // so we can skip it in the inner select...
+            columns_s[i]["expr"] = null
+            columns_s[i]["window_ref"] = true // mark column as reference to window func. transitive!
+            break
+          }
+        }
+      }
+    }
+  }
+
   // ищем кандидатов для GROUP BY и заполняем оригинальную структуру служебными полями
   _cfg["_group_by"] = []
   _cfg["_measures"] = []
-  columns_s.map(el => (el["agg"] === true) ? _cfg["_measures"].push(el) : _cfg["_group_by"].push(el))
+  columns_s.map(el => 
+    (el["agg"] === true || el["window_ref"] === true)
+       ? _cfg["_measures"].push(el) 
+       : _cfg["_group_by"].push(el))
   _cfg["_columns"] = columns_s
 
-  //console.log("RES ", JSON.stringify(_cfg))
+  //console.log("RES ", JSON.stringify(_cfg["_columns"]))
 
   if (_cfg["_measures"].length === 0) {
     // do not group if we have no aggregates !!!

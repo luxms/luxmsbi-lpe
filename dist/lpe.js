@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2021/01/26 11:17:59 */ 
+/** [LPE]  Version: 1.0.0 - 2021/01/26 17:54:35 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -6567,6 +6567,11 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
     if (_context["_aliases"][v]) {
       return false;
+    } // left and right side looks like a column names, don't quote
+
+
+    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isString */])(col) && __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isString */])(v) && (col.match(/^[A-Za-z_]+\w*$/) || col.match(/^[A-Za-z_]+\w*\.[A-Za-z_]+\w*$/)) && (v.match(/^[A-Za-z_]+\w*$/) || v.match(/^[A-Za-z_]+\w*\.[A-Za-z_]+\w*$/))) {
+      return false;
     }
 
     return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isString */])(v);
@@ -6586,7 +6591,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     // вызываем функцию column(ПолноеИмяСтолбца) если нашли столбец в дефолтном кубе
     if (_context["_columns"][key]) return _context["column"](key);
     if (_context["_columns"][default_ds][default_cube][key]) return _context["column"]("".concat(default_ds, ".").concat(default_cube, ".").concat(key)); // reference to alias!
-    //console.log("DO WE HAVE ALIAS?" , JSON.stringify(_context["_aliases"]))
+    //console.log("DO WE HAVE SUCH ALIAS?" , JSON.stringify(_context["_aliases"]))
 
     if (_context["_aliases"][key]) {
       if (!__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(_context["_result"]["columns"])) {
@@ -6599,7 +6604,12 @@ function init_koob_context(_vars, default_ds, default_cube) {
       //_context["_result"]["window"] = _context["_aliases"][key]["window"]
 
 
-      _context["_result"]["agg"] = _context["_aliases"][key]["agg"]; // Mark agg function to display expr as is
+      _context["_result"]["agg"] = _context["_aliases"][key]["agg"];
+
+      if (_context["_aliases"][key]["window_ref"] || _context["_aliases"][key]["window"]) {
+        _context["_result"]["window_ref"] = true;
+      } // Mark agg function to display expr as is
+
 
       _context["_result"]["outerVerbatim"] = true;
       return key;
@@ -6633,6 +6643,17 @@ function init_koob_context(_vars, default_ds, default_cube) {
           v = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(v, ctx);
           return "".concat(c, " ").concat(k, " ").concat(v);
         });
+      }
+    } // We may have references to yet unresolved aliases....
+
+
+    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(_context["_result"])) {
+      if (key.match(/^[A-Za-z_]+\w*$/)) {
+        if (!__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(_context["_result"]["unresolved_aliases"])) {
+          _context["_result"]["unresolved_aliases"] = [];
+        }
+
+        _context["_result"]["unresolved_aliases"].push(key);
       }
     } //console.log(`DID NOT resolved ${key}`);
 
@@ -6729,6 +6750,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
       // or we have 2 args: ["lead","rs"]
       // if this column is placed BEFORE referenced column, we can not create correct outer_expr
       // in this case we provide placeholder...
+      _context["_result"]["window_ref"] = true;
       var init = _context["_aliases"][colname];
 
       if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(init) && init["alias"]) {
@@ -7283,7 +7305,8 @@ function generate_koob_sql(_cfg, _vars) {
   });
 
   _context[0]["_result"] = null;
-  _cfg["_aliases"] = _context[0]["_aliases"];
+  _cfg["_aliases"] = _context[0]["_aliases"]; //console.log("ALIASES: ", JSON.stringify(_cfg["_aliases"]))
+
   var has_window = null;
 
   for (var i = 0; i < columns.length; i++) {
@@ -7294,15 +7317,58 @@ function generate_koob_sql(_cfg, _vars) {
       // it will be used later on the SQL generation stage
       has_window = columns_s[i]["inner_order_by_excl"];
     }
+  }
+
+  for (var i = 0; i < columns_s.length; i++) {
+    // Also, try to resolve unresolved aliases
+    //console.log("ITER0 " + JSON.stringify(columns_s[i]))
+    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(columns_s[i]["unresolved_aliases"])) {
+      var _iteratorNormalCompletion4 = true;
+      var _didIteratorError4 = false;
+      var _iteratorError4 = undefined;
+
+      try {
+        for (var _iterator4 = columns_s[i]["unresolved_aliases"][Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+          var al = _step4.value;
+          var col = _cfg["_aliases"][al]; //console.log("ITER1 " + JSON.stringify(col))
+
+          if (col) {
+            if (col.window && col.agg || col.window_ref) {
+              // we have alias to the window func, do the magic
+              columns_s[i]["agg"] = true;
+              columns_s[i]["outer_expr"] = columns_s[i]["expr"]; // so we can skip it in the inner select...
+
+              columns_s[i]["expr"] = null;
+              columns_s[i]["window_ref"] = true; // mark column as reference to window func. transitive!
+
+              break;
+            }
+          }
+        }
+      } catch (err) {
+        _didIteratorError4 = true;
+        _iteratorError4 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion4 && _iterator4.return != null) {
+            _iterator4.return();
+          }
+        } finally {
+          if (_didIteratorError4) {
+            throw _iteratorError4;
+          }
+        }
+      }
+    }
   } // ищем кандидатов для GROUP BY и заполняем оригинальную структуру служебными полями
 
 
   _cfg["_group_by"] = [];
   _cfg["_measures"] = [];
   columns_s.map(function (el) {
-    return el["agg"] === true ? _cfg["_measures"].push(el) : _cfg["_group_by"].push(el);
+    return el["agg"] === true || el["window_ref"] === true ? _cfg["_measures"].push(el) : _cfg["_group_by"].push(el);
   });
-  _cfg["_columns"] = columns_s; //console.log("RES ", JSON.stringify(_cfg))
+  _cfg["_columns"] = columns_s; //console.log("RES ", JSON.stringify(_cfg["_columns"]))
 
   if (_cfg["_measures"].length === 0) {
     // do not group if we have no aggregates !!!
@@ -7498,13 +7564,13 @@ function generate_koob_sql(_cfg, _vars) {
       }
 
       if (el.alias) {
-        var _iteratorNormalCompletion4 = true;
-        var _didIteratorError4 = false;
-        var _iteratorError4 = undefined;
+        var _iteratorNormalCompletion5 = true;
+        var _didIteratorError5 = false;
+        var _iteratorError5 = undefined;
 
         try {
-          for (var _iterator4 = el.columns[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-            var part = _step4.value;
+          for (var _iterator5 = el.columns[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+            var part = _step5.value;
             //console.log('2 part:' + part)
             // if we reference some known alias
             var target = _cfg["_aliases"][part];
@@ -7515,16 +7581,16 @@ function generate_koob_sql(_cfg, _vars) {
             }
           }
         } catch (err) {
-          _didIteratorError4 = true;
-          _iteratorError4 = err;
+          _didIteratorError5 = true;
+          _iteratorError5 = err;
         } finally {
           try {
-            if (!_iteratorNormalCompletion4 && _iterator4.return != null) {
-              _iterator4.return();
+            if (!_iteratorNormalCompletion5 && _iterator5.return != null) {
+              _iterator5.return();
             }
           } finally {
-            if (_didIteratorError4) {
-              throw _iteratorError4;
+            if (_didIteratorError5) {
+              throw _iteratorError5;
             }
           }
         }
