@@ -37,17 +37,46 @@ describe('LPE tests', function() {
                   "running(lead, rs):lead",
                   "running(sum, v_main, -hcode_name):rs",
                   "(rs/100):div",
-                  "sum(v_rel_pp)",
-                  "group_pay_name", 'hcode_name'
+                  "sum(v_rel_pp)"
                ],
-      "distinct":[],
       "filters":{"hcode_name": ["between", "2019-01-01", "2020-03-01"]},
       "sort":["perda","-lead"],
       "limit": 100,
       "offset": 10,
       "with":"ch.fot_out"},
             {"_target_database": "clickhouse"}),
-`SELECT DISTINCT lead / rs * 100 AS perda, finalizeAggregation(_w_f_1) AS lead, runningAccumulate(_w_f_1, (group_pay_name)) AS rs, rs / 100 AS div, v_rel_pp AS v_rel_pp, group_pay_name AS group_pay_name, hcode_name AS hcode_name
+`SELECT lead / rs * 100 AS perda, finalizeAggregation(_w_f_1) AS lead, runningAccumulate(_w_f_1, tuple(null)) AS rs, rs / 100 AS div, v_rel_pp AS v_rel_pp
+FROM (
+SELECT initializeAggregation('sumState',sum(v_main)) AS _w_f_1, sum(fot_out.v_rel_pp) AS v_rel_pp
+FROM fot_out AS fot_out
+HAVING (hcode_name BETWEEN '2019-01-01' AND '2020-03-01')
+)
+ORDER BY perda, lead DESC LIMIT 100 OFFSET 100
+SETTINGS max_threads = 12`
+         );
+
+  });
+
+
+
+  it('should eval KOOB WINDOW FUNCTIONS FOR Clickhouse', function() {
+    assert.equal( lpe.generate_koob_sql(
+       {"columns":[
+                   "(lead / rs * 100):perda",
+                   "running(lead, rs):lead",
+                   "running(sum, v_main, -hcode_name):rs",
+                   "(rs/100):div",
+                   "sum(v_rel_pp)",
+                   "group_pay_name", 'hcode_name'
+                ],
+       "distinct":[],
+       "filters":{"hcode_name": ["between", "2019-01-01", "2020-03-01"]},
+       "sort":["perda","-lead"],
+       "limit": 100,
+       "offset": 10,
+       "with":"ch.fot_out"},
+             {"_target_database": "clickhouse"}),
+ `SELECT DISTINCT lead / rs * 100 AS perda, finalizeAggregation(_w_f_1) AS lead, runningAccumulate(_w_f_1, (group_pay_name)) AS rs, rs / 100 AS div, v_rel_pp AS v_rel_pp, group_pay_name AS group_pay_name, hcode_name AS hcode_name
 FROM (
 SELECT initializeAggregation('sumState',sum(v_main)) AS _w_f_1, sum(fot_out.v_rel_pp) AS v_rel_pp, fot_out.group_pay_name AS group_pay_name, fot_out.hcode_name AS hcode_name
 FROM fot_out AS fot_out
@@ -57,10 +86,9 @@ ORDER BY fot_out.group_pay_name, fot_out.hcode_name
 )
 ORDER BY perda, lead DESC LIMIT 100 OFFSET 100
 SETTINGS max_threads = 12`
-         );
-
-  });
-
+          );
+ 
+   });
 
     
 });

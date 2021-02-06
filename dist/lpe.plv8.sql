@@ -6539,7 +6539,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
       _context["_result"]["expr"] = expr;
       _context["_result"]["columns"] = [colname];
       _context["_result"]["inner_order_by_excl"] = order_by;
-      _context["_result"]["outer_expr"] = "runningAccumulate(".concat(alias, ", (partition_columns()))"); //it should not be used as is
+      _context["_result"]["outer_expr"] = "runningAccumulate(".concat(alias, ", partition_columns())"); //it should not be used as is
 
       _context["_result"]["outer_expr_eval"] = true; // please eval outer_expr !!!
 
@@ -7348,10 +7348,17 @@ function generate_koob_sql(_cfg, _vars) {
               var p = el.split('.');
               return p[p.length - 1];
             }).join(', ') : '';
+
+            if (part_columns === '') {
+              part_columns = 'tuple(null)';
+            } else {
+              part_columns = "(".concat(part_columns, ")");
+            }
+
             return el.outer_expr.replace('partition_columns()', part_columns);
           }
         } else {
-          var parts = el.outer_expr.match(/("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)/);
+          var parts = el.outer_expr.match(/^("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)$/);
 
           if (parts) {
             return parts[2];
@@ -7367,14 +7374,14 @@ function generate_koob_sql(_cfg, _vars) {
           if (el.alias) {
             return el.alias;
           } else {
-            var parts = el.columns[0].match(/("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)/);
+            var parts = el.columns[0].match(/^("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)$/);
 
             if (parts) {
               return parts[3];
             }
           }
         } else {
-          var parts = el.expr.match(/("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)/);
+          var parts = el.expr.match(/^("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)$/);
 
           if (parts) {
             return parts[2];
@@ -7451,9 +7458,16 @@ function generate_koob_sql(_cfg, _vars) {
     //console.log(JSON.stringify(_context[0]["_columns"]))
     // Put excl_col to the last position, so running window will accumulate data over it!
 
-    var inner_order_by = group_by.filter(function (el) {
-      return el !== excl_col;
-    }).concat(excl_col);
+    var inner_order_by = [];
+
+    if (group_by.find(function (el) {
+      return el === excl_col;
+    })) {
+      inner_order_by = group_by.filter(function (el) {
+        return el !== excl_col;
+      }).concat(excl_col);
+    }
+
     inner_order_by = inner_order_by.length ? "\nORDER BY ".concat(inner_order_by.join(', ')) : '';
     var having = where.replace("WHERE", "HAVING");
     var inner_group_by = group_by.length ? "\nGROUP BY ".concat(group_by.join(', ')) : '';
@@ -7467,7 +7481,7 @@ function generate_koob_sql(_cfg, _vars) {
         return "".concat(get_outer_expr(el), " AS ").concat(el.alias);
       } else {
         if (el.columns.length === 1) {
-          var parts = el.columns[0].match(/("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)/); //console.log(`outer2: ${get_outer_expr(el)}` + JSON.stringify(parts))
+          var parts = el.columns[0].match(/^("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)$/); //console.log(`outer2: ${get_outer_expr(el)}` + JSON.stringify(parts))
 
           if (parts) {
             return "".concat(get_outer_expr(el), " AS ").concat(parts[3]);
