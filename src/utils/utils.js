@@ -29,6 +29,7 @@ export function reports_get_columns(cubeId) {
      "sql_query":"ss5","config":{}}, {"id":"ch.fot_out.ss6","type":"STRING","title":"ss6","sql_query":"ss6","config":{}}, {"id":"ch.fot_out.indicator_v","type":"NUMBER","title":
      "indicator_v","sql_query":"indicator_v","config":{}}, {"id":"ch.fot_out.group_pay_name","type":"STRING","title":"group_pay_name","sql_query":"group_pay_name","config":{"follow": ["fot_out.group_pay_id"], "children": ["fot_out.pay_name", "fot_out.pay_code"], "memberALL": "Не задано"}},
      {"id":"ch.fot_out.pay_code","type":"STRING","title":"pay_code","sql_query":"pay_code","config":{"memberALL":"Не задано", "follow": ["fot_out.pay_name"]}},
+     {"id":"ch.fot_out.pay_title","type":"STRING","title":"pay_title","sql_query":"dictGet('gpn.group_pay_dict', 'some_real_field', tuple(pay_code))","config":{}},
      {"id":"ch.fot_out.pay_name","type":"STRING","title":"pay_name","sql_query":"pay_name","config":{"memberALL":"Не задано", "follow": ["fot_out.pay_code"]}}, {"id":"ch.fot_out.category_name","type":"STRING","title":"category_name"
      ,"sql_query":"category_name","config":{}}, {"id":"ch.fot_out.sex_code","type":"STRING","title":"sex_code","sql_query":"sex_code","config":{"memberALL":null,"altDimensions":["fot_out.sex_name"]}},
      {"id":"ch.fot_out.sex_name","type":"STRING","title":"sex_name","sql_query":"sex_name","config":{"memberALL":"Все","altDimensions":["fot_out.sex_code"]}}, {"id":"ch.fot_out.area_name",

@@ -356,6 +356,37 @@ function init_koob_context(_vars, default_ds, default_cube) {
         //return `${c.sql_query}`
         return `${parts[1]}.${c.sql_query}`
       } else {
+        //console.log(`OPANKI: ${c.sql_query}`)
+        // FIXME: WE JSUT TRY TO match getDict, if ANY. there should be a better way!!!
+        // dictGet('gpn.group_pay_dict', some_real_field, tuple(pay_code))
+        //console.log(`OPANKI: ${c.sql_query}`, JSON.stringify(_context))
+        if (_context._target_database == 'clickhouse') {
+          // for the SELECT part make sure we produce different things for INNER and OUTER SQL
+          // SELECT part is denoted by _context["_result"]
+          if (_context["_result"] && c.sql_query.match(/dictGet\(/)){
+            //console.log(`OPANKI1: ${c.sql_query}`)
+            _context["_result"]["outer_expr"] = c.sql_query
+            _context["_result"]["outer_alias"] = parts[2]
+            var m = c.sql_query.match(/,[^,]+,(.*)/)
+            if (m) {
+              m = m[1]
+              //console.log(`OPANKI11: ${m}`)
+              // ' tuple(pay_code))'
+              var t = m.match(/tuple\((\w+)\)/)
+              if (t) {
+                //console.log(`OPANKI22: ${c.sql_query}  ${t[1]}`)
+                _context["_result"]["alias"] = t[1]
+                return t[1]
+              } else {
+                t = m.match(/(\w+)/)
+                if (t) {
+                  _context["_result"]["alias"] = t[1]
+                  return t[1]
+                }
+              }
+            }
+          }
+        }
         return `(${c.sql_query})`
       }
     }
@@ -520,6 +551,35 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
   _context['!~'] = makeSF( (ast,ctx) => {
     return "NOT " + eval_lisp(["~"].concat(ast), ctx);
+  });
+
+  /*
+  f1 / lpe_total(sum, f2)
+  We should make subselect with full aggregation, but using our local WHERE!!!
+  local WHERE is not Yet known, so we should post=pone execution???
+
+  But we probably can inject EVAL part into _context["_result"]["expr"] ??
+  if (_context["_result"]){
+
+  */
+  _context['lpe_subtotal'] = makeSF( (ast,ctx) => {
+    if (_context["_result"]){
+      var seq = ++_context["_sequence"]
+      if (!isHash(_context["_result"]["lpe_subtotals"])){
+        _context["_result"]["lpe_subtotals"] = {}
+      }
+      //console.log("AST: ", ast)
+      // FIXME: pleaqse check that we have agg func in the AST, overwise we will get SQL errors from the DB
+      //AST:  [ [ 'sum', 'v_rel_pp' ] ]
+      //AST:  [ [ '+', [ 'avg', 'v_rel_pp' ], 99 ] ]
+      _context["_result"]["lpe_subtotals"][`lpe_subtotal_${seq}`] = {"ast": ast, "expr": `${eval_lisp(ast[0], ctx)}`}
+      // in simple cases we wil have this: {"lpe_totals":{
+      // "lpe_total_2":{"ast":[["avg", "v_rel_pp"]],"expr":"avg(fot_out.v_rel_pp)"}}
+
+      _context["_result"]["eval_expr"] = true
+    }
+    // naive!!!
+    return `lpe_subtotal_${seq}()` // ${ast[0]}, ${ast[1]}
   });
 
   _context['='] = makeSF( (ast,ctx) => {
@@ -1055,6 +1115,8 @@ export function generate_koob_sql(_cfg, _vars) {
   if (isHash(filters_array)) {
     filters_array = [filters_array]
   }
+
+  //_context[0]["column"] - это функция для резолва столбца в его текстовое представление
   filters_array = filters_array.map(_filters => {
       var part_where = null
       var pw = Object.keys(_filters).filter(k => k !== "").map( 
@@ -1065,7 +1127,7 @@ export function generate_koob_sql(_cfg, _vars) {
 
       if (pw.length > 0) {
         var wh = ["and"].concat(pw)
-        //console.log("WHERE", _context[0]["column"])
+        //console.log("WHERE", wh)
         part_where = eval_lisp(wh, _context)
       }
       return part_where
@@ -1091,6 +1153,28 @@ export function generate_koob_sql(_cfg, _vars) {
   // FIXME: USE FLAVORS FOR Oracle & MS SQL
   var limit = isNumber(_cfg["limit"]) ? ` LIMIT ${_cfg["limit"]}` : ''
   var offset = isNumber(_cfg["offset"]) ? ` OFFSET ${_cfg["limit"]}` : ''
+
+  var ending = ''
+  if (_context[0]["_target_database"] === 'clickhouse'){
+    ending = "\nSETTINGS max_threads = 12"
+  }
+
+  var expand_outer_expr = function(el) {
+    if (el["eval_expr"]===true) {
+      //console.log("FOUND EVAL", JSON.stringify(el))
+      // only one kind of expressions for now...
+      // {"lpe_totals":{
+      // "lpe_total_2":{"ast":["avg","v_rel_pp"],"expr":"avg(fot_out.v_rel_pp)"}}
+      var expr = el.expr;
+      for (var total in el.lpe_subtotals) {
+        var hash = el.lpe_subtotals[total]
+        expr = expr.replace(`${total}()`, `(SELECT ${hash["expr"]} FROM ${from}${where})`)
+      }
+      return expr;
+    } else {
+      return el.expr
+    }
+  }
 
   if (has_window) {
     // assuming we are working for clickhouse only....
@@ -1176,7 +1260,7 @@ export function generate_koob_sql(_cfg, _vars) {
             return el.outer_expr.replace('partition_columns()', part_columns)
           }
         } else {
-          var parts = el.outer_expr.match(/^("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)$/)
+          var parts = el.outer_expr.match(/^("[^"]+"|[A-Za-z_][\w]*)\.("[^"]+"|[A-Za-z_][\w]*)$/)
           if (parts) {
             return parts[2]
           }
@@ -1190,13 +1274,13 @@ export function generate_koob_sql(_cfg, _vars) {
           if (el.alias) {
             return el.alias
           } else {
-            var parts = el.columns[0].match(/^("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)$/)
+            var parts = el.columns[0].match(/^("[^"]+"|[A-Za-z_][\w]*)\.("[^"]+"|[A-Za-z_][\w]*)\.("[^"]+"|[A-Za-z_][\w]*)$/)
             if (parts) {
               return parts[3]
             }
           }
         } else {
-          var parts = el.expr.match(/^("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)$/)
+          var parts = el.expr.match(/^("[^"]+"|[A-Za-z_][\w]*)\.("[^"]+"|[A-Za-z_][\w]*)$/)
           if (parts) {
             return parts[2]
           }
@@ -1214,7 +1298,7 @@ export function generate_koob_sql(_cfg, _vars) {
           return `${get_outer_expr(el)} AS ${el.alias}`
       } else {
         if (el.columns.length === 1) {
-          var parts = el.columns[0].match(/^("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)$/)
+          var parts = el.columns[0].match(/^("[^"]+"|[A-Za-z_][\w]*)\.("[^"]+"|[A-Za-z_][\w]*)\.("[^"]+"|[A-Za-z_][\w]*)$/)
           //console.log(`outer2: ${get_outer_expr(el)}` + JSON.stringify(parts))
           if (parts) {
             return `${get_outer_expr(el)} AS ${parts[3]}`
@@ -1226,25 +1310,38 @@ export function generate_koob_sql(_cfg, _vars) {
     }).filter(el=> el !== null).join(', '))
 
     order_by = order_by.length ? "\nORDER BY ".concat(order_by.join(', ')) : ''
-    return `${select}\nFROM (\n${inner}\n)${order_by}${limit}${offset}\nSETTINGS max_threads = 12`
+    return `${select}\nFROM (\n${inner}\n)${order_by}${limit}${offset}${ending}`
   } else {
     var select = isArray(_cfg["distinct"]) ? "SELECT DISTINCT " : "SELECT "
     // могут быть ньюансы квотации столбцов, обозначения AS и т.д. поэтому каждый участок приводим к LPE и вызываем SQLPE функции с адаптацией под конкретные базы
     select = select.concat(_cfg["_columns"].map(el => {
+
+      // It is only to support dictionaries for Clickhouse!!!
+      // FIXME: switch to stacked SELECT idea
+      if (el.outer_alias) {
+        el.alias = el.outer_alias
+      }
+
+      if (el.outer_expr) {
+        el.expr = el.outer_expr
+      }
+      /////////////////////////////////////////////////////
+      //console.log("COLUMN:", JSON.stringify(el))
       if (el.alias){
-        return `${el.expr} AS ${el.alias}`
+        return `${expand_outer_expr(el)} AS ${el.alias}`
       } else {
         if (el.columns.length === 1) {
           var parts = el.columns[0].split('.')
-          return `${el.expr} AS ${parts[2]}`
+          return `${expand_outer_expr(el)} AS ${parts[2]}`
         }
-        return el.expr
+        return expand_outer_expr(el)
       } 
     }).join(', '))
 
     order_by = order_by.length ? "\nORDER BY ".concat(order_by.join(', ')) : ''
     group_by = group_by.length ? "\nGROUP BY ".concat(group_by.join(', ')) : ''
-    return `${select}\nFROM ${from}${where}${group_by}${order_by}${limit}${offset}`
+
+    return `${select}\nFROM ${from}${where}${group_by}${order_by}${limit}${offset}${ending}`
   }
 
 }

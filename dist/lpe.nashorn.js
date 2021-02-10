@@ -4675,6 +4675,12 @@ function reports_get_columns(cubeId) {
       "follow": ["fot_out.pay_name"]
     }
   }, {
+    "id": "ch.fot_out.pay_title",
+    "type": "STRING",
+    "title": "pay_title",
+    "sql_query": "dictGet('gpn.group_pay_dict', 'some_real_field', tuple(pay_code))",
+    "config": {}
+  }, {
     "id": "ch.fot_out.pay_name",
     "type": "STRING",
     "title": "pay_name",
