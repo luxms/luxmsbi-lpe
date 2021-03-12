@@ -301,6 +301,11 @@ function init_koob_context(_vars, default_ds, default_cube) {
           return function() {
             var a = Array.prototype.slice.call(arguments);
             //console.log(`FUNC RESOLV ${key}`, JSON.stringify(a))
+            if (key.match(/^between$/i)) {
+              //console.log(`between(${a.join(',')})`)
+              var e = eval_lisp(["between"].concat(a),_ctx)
+              return e
+            }
             return `${key}(${a.join(',')})`
           }
         } else {

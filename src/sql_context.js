@@ -688,7 +688,8 @@ _context['generate_sql_struct_for_report'] = function(cfg) {
     }
 
     // This is hack to implement AGGFN type !
-    if (col_info["config"]["aggFormula"]) {
+    // aggFormula should be used in the same way as AGGFN
+    if (col_info["config"]["aggFormula"] || col_info["type"] == "AGGFN") {
       // We should remove column from GROUP BY
       // group_by is global, it is sad but true
       group_by = group_by.filter( id => id !== h["id"] )

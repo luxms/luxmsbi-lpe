@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2021/02/10 15:56:34 */ 
+/** [LPE]  Version: 1.0.0 - 2021/03/12 18:22:22 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -6160,9 +6160,10 @@ function generate_report_sql(_cfg, _vars) {
         // we have just column name, prepend table alias !
         col_sql = "".concat(parts[1], ".").concat(col_sql);
       } // This is hack to implement AGGFN type !
+      // aggFormula should be used in the same way as AGGFN
 
 
-      if (col_info["config"]["aggFormula"]) {
+      if (col_info["config"]["aggFormula"] || col_info["type"] == "AGGFN") {
         // We should remove column from GROUP BY
         // group_by is global, it is sad but true
         group_by = group_by.filter(function (id) {
@@ -6628,6 +6629,12 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
         return function () {
           var a = Array.prototype.slice.call(arguments); //console.log(`FUNC RESOLV ${key}`, JSON.stringify(a))
+
+          if (key.match(/^between$/i)) {
+            //console.log(`between(${a.join(',')})`)
+            var e = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(["between"].concat(a), _ctx);
+            return e;
+          }
 
           return "".concat(key, "(").concat(a.join(','), ")");
         };
