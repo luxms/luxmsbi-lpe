@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2021/03/12 18:22:22 */ 
+/** [LPE]  Version: 1.0.0 - 2021/04/20 19:09:18 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -6950,7 +6950,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     };
 
     if (ast.length === 1) {
-      return 'TRUE';
+      return '1=1';
     } else if (ast.length === 2) {
       var v = resolveValue(ast[1]);
       return v === null ? "".concat(c, " IS NULL") : "".concat(c, " = ").concat(v);
@@ -6983,7 +6983,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     };
 
     if (ast.length === 1) {
-      return 'TRUE';
+      return '1=1';
     } else if (ast.length === 2) {
       var v = resolveValue(ast[1]);
       return v === null ? "".concat(c, " IS NOT NULL") : "".concat(c, " != ").concat(v);
@@ -7492,8 +7492,10 @@ function generate_koob_sql(_cfg, _vars) {
     Для указанных явно дименшенов доп. условий не требуется, клиент сам будет разбираться с результатом
   */
 
+  /* Если есть хотя бы один явный столбец group_by, а иначе, если просто считаем агрегаты по всей таблице без группировки по столбцам */
 
-  if (_cfg["_group_by"].length > 0) {
+
+  if (_cfg["_group_by"].length > 0 || _cfg["_measures"].length > 0) {
     _cfg = inject_all_member_filters(_cfg, _context[0]["_columns"]);
   } // at this point we will have something like this:
 
