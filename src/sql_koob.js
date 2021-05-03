@@ -74,6 +74,14 @@ import { has } from 'core-js/fn/dict';
 7) при генерации SQL в ПРОСТОМ случае, когда у нас один единственный куб, генрим КОРОТКИЕ имена столбцов
 */
 
+function quot_as_expression(db, src, alias) {
+  if (db === 'mysql'){
+    return `${src} as ` + "`" + `${alias}` + "`"
+  } else {
+    return `${src} as "${alias}"`
+  }
+}
+
 
 function any_db_quote_literal(el) {
   return "'" + el.toString().replace(/'/g, "''") + "'";
@@ -497,8 +505,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
       }
       return otext
     }
-  
-    return `${otext} as ${n}`
+    
+    return quot_as_expression(_context["_target_database"], otext, n)
   }
   _context[':'].ast = [[],{},[],1]; // mark as macro
 
@@ -534,7 +542,28 @@ function init_koob_context(_vars, default_ds, default_cube) {
     if (shouldQuote(col,var1)) var1 = quoteLiteral(var1)
     if (shouldQuote(col,var2)) var2 = quoteLiteral(var2)
 
-    return `${eval_lisp(col,_context)} BETWEEN ${eval_lisp(var1,_context)} AND ${eval_lisp(var2,_context)}`
+    var l = eval_lisp(var1,_context);
+    var r = eval_lisp(var2,_context);
+
+    if (l === null || (isString(l) && (l.length === 0 || l === "''"))) {
+      if (r === null || (isString(r) && (r.length === 0 || r === "''"))) {
+        // both are empty, we should not generate any conditions!
+        // FIXME: Should we return null?
+        return '1=1'
+      } else {
+        // l is null, r is real
+        return `${eval_lisp(col,_context)} <= ${r}`
+      }
+    } else {
+      if (r === null || (isString(r) && (r.length === 0 || r === "''"))) {
+        // l is real, r is null
+        return `${eval_lisp(col,_context)} >= ${l}`
+      } else {
+        // both l and r is real
+        return `${eval_lisp(col,_context)} BETWEEN ${l} AND ${r}`
+      }
+    }
+    
   }
   _context['between'].ast = [[],{},[],1]; // mark as macro
 
@@ -1206,11 +1235,11 @@ export function generate_koob_sql(_cfg, _vars) {
             return null;
           }
         }
-        return `${el.expr} AS ${el.alias}`
+        return quot_as_expression(_context[0]["_target_database"], el.expr, el.alias)
       } else {
         if (el.columns.length === 1) {
           var parts = el.columns[0].split('.')
-          return `${el.expr} AS ${parts[2]}`
+          return quot_as_expression(_context[0]["_target_database"], el.expr, parts[2])
         }
         return el.expr
       } 
@@ -1300,15 +1329,15 @@ export function generate_koob_sql(_cfg, _vars) {
     select = select.concat(_cfg["_columns"].map(el => {
       //console.log('outer1: ' + JSON.stringify(el) + " alias:" + el.alias)
       if (el.outer_alias) {
-          return `${get_outer_expr(el)} AS ${el.outer_alias}`
+          return quot_as_expression(_context[0]["_target_database"], get_outer_expr(el), el.outer_alias)
       } else if (el.alias) {
-          return `${get_outer_expr(el)} AS ${el.alias}`
+          return quot_as_expression(_context[0]["_target_database"], get_outer_expr(el), el.alias)
       } else {
         if (el.columns.length === 1) {
           var parts = el.columns[0].match(/^("[^"]+"|[A-Za-z_][\w]*)\.("[^"]+"|[A-Za-z_][\w]*)\.("[^"]+"|[A-Za-z_][\w]*)$/)
           //console.log(`outer2: ${get_outer_expr(el)}` + JSON.stringify(parts))
           if (parts) {
-            return `${get_outer_expr(el)} AS ${parts[3]}`
+            return quot_as_expression(_context[0]["_target_database"], get_outer_expr(el), parts[3])
           }
           return `${get_outer_expr(el)}`
         }
@@ -1335,11 +1364,11 @@ export function generate_koob_sql(_cfg, _vars) {
       /////////////////////////////////////////////////////
       //console.log("COLUMN:", JSON.stringify(el))
       if (el.alias){
-        return `${expand_outer_expr(el)} AS ${el.alias}`
+        return quot_as_expression(_context[0]["_target_database"], expand_outer_expr(el), el.alias)
       } else {
         if (el.columns.length === 1) {
           var parts = el.columns[0].split('.')
-          return `${expand_outer_expr(el)} AS ${parts[2]}`
+          return quot_as_expression(_context[0]["_target_database"], expand_outer_expr(el), parts[2])
         }
         return expand_outer_expr(el)
       } 

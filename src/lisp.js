@@ -165,18 +165,19 @@ const SPECIAL_FORMS = {                                                         
     const result = eval_lisp(lisp, ctx);
     return result;
   }),
-  'filterit': (ast, ctx, rs) => {
+  'filterit': makeSF((ast, ctx, rs) => {
+    //console.log("FILTERIT: " + JSON.stringify(ast))
     const array = eval_lisp(ast[0], ctx, rs);
     const conditionAST = ast[1];
     const result = Array.prototype.filter.call(array, (it, idx) => !!eval_lisp(conditionAST, [{it, idx}, ctx], rs));
     return result;
-  },
-  'mapit': (ast, ctx, rs) => {
+  }),
+  'mapit': makeSF((ast, ctx, rs) => {
     const array = eval_lisp(ast[0], ctx, rs);
     const conditionAST = ast[1];
     const result = Array.prototype.map.call(array, (it, idx) => eval_lisp(conditionAST, [{it, idx}, ctx], rs));
     return result;
-  },
+  }),
 };
 
 
@@ -264,6 +265,8 @@ const STDLIB = {
   '->': makeMacro((acc, ...ast) => {                                            // thread first macro
     // императивная лапша для макроса ->
     // надо вот так: https://clojuredocs.org/clojure.core/-%3E%3E
+    //console.log("AST" + JSON.stringify(ast))
+    // AST[["filterit",[">",1,0]]]
     for (let arr of ast) {
       if (!isArray(arr)) {
         arr = [".-", acc, arr];                                                 // это может быть обращение к хэшу или массиву через индекс или ключ....
@@ -271,7 +274,11 @@ const STDLIB = {
         arr = [".-", acc, arr[1]];
       } else {
         arr = arr.slice(0);                                                     // must copy array before modify
-        arr.splice(1, 0, acc);                                                  // подставляем "вычисленное" ранее значение в качестве первого аргумента... классика thread first
+        arr.splice(1, 0, acc);  
+        //console.log("AST !!!!" + JSON.stringify(arr))     
+        // AST[["filterit",[">",1,0]]]
+        // AST !!!!["filterit","locations",[">",1,0]]                                  
+        // подставляем "вычисленное" ранее значение в качестве первого аргумента... классика thread first
       }
       acc = arr;
     }
@@ -319,6 +326,7 @@ const STDLIB = {
 
 function macroexpand(ast, ctx, resolveString = true) {
   while (true) {
+    //console.log("MACROEXPAND: " + JSON.stringify(ast))
     if (!isArray(ast)) break;
     if (!isString(ast[0])) break;
 
@@ -329,6 +337,7 @@ function macroexpand(ast, ctx, resolveString = true) {
 
     ast = v.apply(v, ast.slice(1));                                             // Это макрос! 3-й элемент макроса установлен в 1 через push
   }
+  //console.log("MACROEXPAND RETURN: " + JSON.stringify(ast))
   return ast;
 }
 
@@ -374,6 +383,7 @@ function EVAL(ast, ctx, resolveOptions) {
     if (!Array.isArray(ast)) return ast;                                        // TODO: do we need eval here?
     if (ast.length === 0) return null;                                          // TODO: [] => empty list (or, maybe return vector [])
 
+    //console.log("EVAL1: ", JSON.stringify(ast))
     const [opAst, ...argsAst] = ast;
 
     const op = EVAL(opAst, ctx, {... resolveOptions, wantCallable: true});                                 // evaluate operator
@@ -382,17 +392,20 @@ function EVAL(ast, ctx, resolveOptions) {
       throw new Error('Error: ' + String(op) + ' is not a function');
     }
 
-    if (isSF(op)) {                                                             // special form
+    if (isSF(op)) {                                                          // special form
       const sfResult = op(argsAst, ctx, resolveOptions);
       return sfResult;
     }
 
+      
     const args = argsAst.map(a => EVAL(a, ctx, resolveOptions));                 // evaluate arguments
-
+    //console.log("EVAL NOT SF evaluated args: ", JSON.stringify(args)) 
     if (op.ast) {
+      //console.log("EVAL NOT SF evaluated args AST: ", JSON.stringify(ast)) 
       ast = op.ast[0];
       ctx = env_bind(op.ast[2], op.ast[1], args);                               // TCO
     } else {
+      //console.log("EVAL NOT SF evaluated args APPLY: ", op.name, ' ', JSON.stringify(args)) 
       const fnResult = op.apply(op, args);
       return fnResult;
     }

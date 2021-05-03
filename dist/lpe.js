@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2021/04/20 19:09:18 */ 
+/** [LPE]  Version: 1.0.0 - 2021/04/30 20:09:29 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -2076,7 +2076,8 @@ var SPECIAL_FORMS = {
     var result = eval_lisp(lisp, ctx);
     return result;
   }),
-  'filterit': function filterit(ast, ctx, rs) {
+  'filterit': makeSF(function (ast, ctx, rs) {
+    //console.log("FILTERIT: " + JSON.stringify(ast))
     var array = eval_lisp(ast[0], ctx, rs);
     var conditionAST = ast[1];
     var result = Array.prototype.filter.call(array, function (it, idx) {
@@ -2086,8 +2087,8 @@ var SPECIAL_FORMS = {
       }, ctx], rs);
     });
     return result;
-  },
-  'mapit': function mapit(ast, ctx, rs) {
+  }),
+  'mapit': makeSF(function (ast, ctx, rs) {
     var array = eval_lisp(ast[0], ctx, rs);
     var conditionAST = ast[1];
     var result = Array.prototype.map.call(array, function (it, idx) {
@@ -2097,7 +2098,7 @@ var SPECIAL_FORMS = {
       }, ctx], rs);
     });
     return result;
-  }
+  })
 };
 
 var STDLIB = _objectSpread({
@@ -2435,6 +2436,8 @@ var STDLIB = _objectSpread({
     // thread first macro
     // императивная лапша для макроса ->
     // надо вот так: https://clojuredocs.org/clojure.core/-%3E%3E
+    //console.log("AST" + JSON.stringify(ast))
+    // AST[["filterit",[">",1,0]]]
     for (var _i2 = 0; _i2 < ast.length; _i2++) {
       var arr = ast[_i2];
 
@@ -2445,7 +2448,10 @@ var STDLIB = _objectSpread({
       } else {
         arr = arr.slice(0); // must copy array before modify
 
-        arr.splice(1, 0, acc); // подставляем "вычисленное" ранее значение в качестве первого аргумента... классика thread first
+        arr.splice(1, 0, acc); //console.log("AST !!!!" + JSON.stringify(arr))     
+        // AST[["filterit",[">",1,0]]]
+        // AST !!!!["filterit","locations",[">",1,0]]                                  
+        // подставляем "вычисленное" ранее значение в качестве первого аргумента... классика thread first
       }
 
       acc = arr;
@@ -2509,13 +2515,15 @@ function macroexpand(ast, ctx) {
   var resolveString = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
 
   while (true) {
+    //console.log("MACROEXPAND: " + JSON.stringify(ast))
     if (!isArray(ast)) break;
     if (!isString(ast[0])) break;
     var v = $var$(ctx, ast[0]);
     if (!isFunction(v)) break;
     if (!isMacro(v)) break;
     ast = v.apply(v, ast.slice(1)); // Это макрос! 3-й элемент макроса установлен в 1 через push
-  }
+  } //console.log("MACROEXPAND RETURN: " + JSON.stringify(ast))
+
 
   return ast;
 }
@@ -2568,6 +2576,7 @@ function EVAL(ast, ctx, resolveOptions) {
     if (!Array.isArray(ast)) return ast; // TODO: do we need eval here?
 
     if (ast.length === 0) return null; // TODO: [] => empty list (or, maybe return vector [])
+    //console.log("EVAL1: ", JSON.stringify(ast))
 
     var _ast = ast,
         _ast2 = _toArray(_ast),
@@ -2591,11 +2600,14 @@ function EVAL(ast, ctx, resolveOptions) {
     var args = argsAst.map(function (a) {
       return EVAL(a, ctx, resolveOptions);
     }); // evaluate arguments
+    //console.log("EVAL NOT SF evaluated args: ", JSON.stringify(args)) 
 
     if (op.ast) {
+      //console.log("EVAL NOT SF evaluated args AST: ", JSON.stringify(ast)) 
       ast = op.ast[0];
       ctx = env_bind(op.ast[2], op.ast[1], args); // TCO
     } else {
+      //console.log("EVAL NOT SF evaluated args APPLY: ", op.name, ' ', JSON.stringify(args)) 
       var fnResult = op.apply(op, args);
       return fnResult;
     }
@@ -4260,8 +4272,7 @@ function sql_where_context(_vars) {
     };
 
     var prnt = function prnt(ar) {
-      __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("PRNT:" + JSON.stringify(ar));
-
+      //console.log("PRNT:" + JSON.stringify(ar))
       if (ar instanceof Array) {
         if (ar[0] === '$' || ar[0] === '"' || ar[0] === "'" || ar[0] === "str" || ar[0] === "[" || ar[0] === 'parse_kv' || ar[0] === 'parse_cond' || ar[0] === "=" || ar[0] === "ql" || ar[0] === "pg_interval" || ar[0] === "lpe_pg_tstz_at_time_zone" || ar[0] === "column") {
           return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lisp__["a" /* eval_lisp */])(ar, ctx);
@@ -6389,6 +6400,14 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 7) при генерации SQL в ПРОСТОМ случае, когда у нас один единственный куб, генрим КОРОТКИЕ имена столбцов
 */
 
+function quot_as_expression(db, src, alias) {
+  if (db === 'mysql') {
+    return "".concat(src, " as ") + "`" + "".concat(alias) + "`";
+  } else {
+    return "".concat(src, " as \"").concat(alias, "\"");
+  }
+}
+
 function any_db_quote_literal(el) {
   return "'" + el.toString().replace(/'/g, "''") + "'";
 }
@@ -6843,7 +6862,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
       return otext;
     }
 
-    return "".concat(otext, " as ").concat(n);
+    return quot_as_expression(_context["_target_database"], otext, n);
   };
 
   _context[':'].ast = [[], {}, [], 1]; // mark as macro
@@ -6877,7 +6896,27 @@ function init_koob_context(_vars, default_ds, default_cube) {
   _context['between'] = function (col, var1, var2) {
     if (shouldQuote(col, var1)) var1 = quoteLiteral(var1);
     if (shouldQuote(col, var2)) var2 = quoteLiteral(var2);
-    return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), " BETWEEN ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(var1, _context), " AND ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(var2, _context));
+    var l = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(var1, _context);
+    var r = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(var2, _context);
+
+    if (l === null || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isString */])(l) && (l.length === 0 || l === "''")) {
+      if (r === null || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isString */])(r) && (r.length === 0 || r === "''")) {
+        // both are empty, we should not generate any conditions!
+        // FIXME: Should we return null?
+        return '1=1';
+      } else {
+        // l is null, r is real
+        return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), " <= ").concat(r);
+      }
+    } else {
+      if (r === null || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isString */])(r) && (r.length === 0 || r === "''")) {
+        // l is real, r is null
+        return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), " >= ").concat(l);
+      } else {
+        // both l and r is real
+        return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), " BETWEEN ").concat(l, " AND ").concat(r);
+      }
+    }
   };
 
   _context['between'].ast = [[], {}, [], 1]; // mark as macro
@@ -7740,11 +7779,11 @@ function generate_koob_sql(_cfg, _vars) {
           }
         }
 
-        return "".concat(el.expr, " AS ").concat(el.alias);
+        return quot_as_expression(_context[0]["_target_database"], el.expr, el.alias);
       } else {
         if (el.columns.length === 1) {
           var parts = el.columns[0].split('.');
-          return "".concat(el.expr, " AS ").concat(parts[2]);
+          return quot_as_expression(_context[0]["_target_database"], el.expr, parts[2]);
         }
 
         return el.expr;
@@ -7780,15 +7819,15 @@ function generate_koob_sql(_cfg, _vars) {
     select = select.concat(_cfg["_columns"].map(function (el) {
       //console.log('outer1: ' + JSON.stringify(el) + " alias:" + el.alias)
       if (el.outer_alias) {
-        return "".concat(get_outer_expr(el), " AS ").concat(el.outer_alias);
+        return quot_as_expression(_context[0]["_target_database"], get_outer_expr(el), el.outer_alias);
       } else if (el.alias) {
-        return "".concat(get_outer_expr(el), " AS ").concat(el.alias);
+        return quot_as_expression(_context[0]["_target_database"], get_outer_expr(el), el.alias);
       } else {
         if (el.columns.length === 1) {
           var parts = el.columns[0].match(/^("[^"]+"|[A-Za-z_][\w]*)\.("[^"]+"|[A-Za-z_][\w]*)\.("[^"]+"|[A-Za-z_][\w]*)$/); //console.log(`outer2: ${get_outer_expr(el)}` + JSON.stringify(parts))
 
           if (parts) {
-            return "".concat(get_outer_expr(el), " AS ").concat(parts[3]);
+            return quot_as_expression(_context[0]["_target_database"], get_outer_expr(el), parts[3]);
           }
 
           return "".concat(get_outer_expr(el));
@@ -7818,11 +7857,11 @@ function generate_koob_sql(_cfg, _vars) {
 
 
       if (el.alias) {
-        return "".concat(expand_outer_expr(el), " AS ").concat(el.alias);
+        return quot_as_expression(_context[0]["_target_database"], expand_outer_expr(el), el.alias);
       } else {
         if (el.columns.length === 1) {
           var parts = el.columns[0].split('.');
-          return "".concat(expand_outer_expr(el), " AS ").concat(parts[2]);
+          return quot_as_expression(_context[0]["_target_database"], expand_outer_expr(el), parts[2]);
         }
 
         return expand_outer_expr(el);

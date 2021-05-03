@@ -1867,7 +1867,8 @@ var SPECIAL_FORMS = {
     var result = eval_lisp(lisp, ctx);
     return result;
   }),
-  'filterit': function filterit(ast, ctx, rs) {
+  'filterit': makeSF(function (ast, ctx, rs) {
+    //console.log("FILTERIT: " + JSON.stringify(ast))
     var array = eval_lisp(ast[0], ctx, rs);
     var conditionAST = ast[1];
     var result = Array.prototype.filter.call(array, function (it, idx) {
@@ -1877,8 +1878,8 @@ var SPECIAL_FORMS = {
       }, ctx], rs);
     });
     return result;
-  },
-  'mapit': function mapit(ast, ctx, rs) {
+  }),
+  'mapit': makeSF(function (ast, ctx, rs) {
     var array = eval_lisp(ast[0], ctx, rs);
     var conditionAST = ast[1];
     var result = Array.prototype.map.call(array, function (it, idx) {
@@ -1888,7 +1889,7 @@ var SPECIAL_FORMS = {
       }, ctx], rs);
     });
     return result;
-  }
+  })
 };
 
 var STDLIB = _objectSpread({
@@ -2226,6 +2227,8 @@ var STDLIB = _objectSpread({
     // thread first macro
     // императивная лапша для макроса ->
     // надо вот так: https://clojuredocs.org/clojure.core/-%3E%3E
+    //console.log("AST" + JSON.stringify(ast))
+    // AST[["filterit",[">",1,0]]]
     for (var _i2 = 0; _i2 < ast.length; _i2++) {
       var arr = ast[_i2];
 
@@ -2236,7 +2239,10 @@ var STDLIB = _objectSpread({
       } else {
         arr = arr.slice(0); // must copy array before modify
 
-        arr.splice(1, 0, acc); // подставляем "вычисленное" ранее значение в качестве первого аргумента... классика thread first
+        arr.splice(1, 0, acc); //console.log("AST !!!!" + JSON.stringify(arr))     
+        // AST[["filterit",[">",1,0]]]
+        // AST !!!!["filterit","locations",[">",1,0]]                                  
+        // подставляем "вычисленное" ранее значение в качестве первого аргумента... классика thread first
       }
 
       acc = arr;
@@ -2300,13 +2306,15 @@ function macroexpand(ast, ctx) {
   var resolveString = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
 
   while (true) {
+    //console.log("MACROEXPAND: " + JSON.stringify(ast))
     if (!isArray(ast)) break;
     if (!isString(ast[0])) break;
     var v = $var$(ctx, ast[0]);
     if (!isFunction(v)) break;
     if (!isMacro(v)) break;
     ast = v.apply(v, ast.slice(1)); // Это макрос! 3-й элемент макроса установлен в 1 через push
-  }
+  } //console.log("MACROEXPAND RETURN: " + JSON.stringify(ast))
+
 
   return ast;
 }
@@ -2359,6 +2367,7 @@ function EVAL(ast, ctx, resolveOptions) {
     if (!Array.isArray(ast)) return ast; // TODO: do we need eval here?
 
     if (ast.length === 0) return null; // TODO: [] => empty list (or, maybe return vector [])
+    //console.log("EVAL1: ", JSON.stringify(ast))
 
     var _ast = ast,
         _ast2 = _toArray(_ast),
@@ -2382,11 +2391,14 @@ function EVAL(ast, ctx, resolveOptions) {
     var args = argsAst.map(function (a) {
       return EVAL(a, ctx, resolveOptions);
     }); // evaluate arguments
+    //console.log("EVAL NOT SF evaluated args: ", JSON.stringify(args)) 
 
     if (op.ast) {
+      //console.log("EVAL NOT SF evaluated args AST: ", JSON.stringify(ast)) 
       ast = op.ast[0];
       ctx = env_bind(op.ast[2], op.ast[1], args); // TCO
     } else {
+      //console.log("EVAL NOT SF evaluated args APPLY: ", op.name, ' ', JSON.stringify(args)) 
       var fnResult = op.apply(op, args);
       return fnResult;
     }
@@ -3737,8 +3749,7 @@ function sql_where_context(_vars) {
     };
 
     var prnt = function prnt(ar) {
-      __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("PRNT:" + JSON.stringify(ar));
-
+      //console.log("PRNT:" + JSON.stringify(ar))
       if (ar instanceof Array) {
         if (ar[0] === '$' || ar[0] === '"' || ar[0] === "'" || ar[0] === "str" || ar[0] === "[" || ar[0] === 'parse_kv' || ar[0] === 'parse_cond' || ar[0] === "=" || ar[0] === "ql" || ar[0] === "pg_interval" || ar[0] === "lpe_pg_tstz_at_time_zone" || ar[0] === "column") {
           return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lisp__["a" /* eval_lisp */])(ar, ctx);

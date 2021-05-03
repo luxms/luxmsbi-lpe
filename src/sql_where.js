@@ -248,7 +248,7 @@ export function sql_where_context(_vars) {
       }
 
       var prnt = function(ar) {
-        console.log("PRNT:" + JSON.stringify(ar))
+        //console.log("PRNT:" + JSON.stringify(ar))
         if (ar instanceof Array) {
           if (  ar[0] === '$' ||
                 ar[0] === '"' ||

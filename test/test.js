@@ -236,6 +236,13 @@ describe('LPE tests', function() {
             "WHERE (ctime in ('2018-01-01','2017-01-01')) AND (cnt = 2)"
         );
 
+        // pluck&&filterit
+        assert.equal( lpe.eval_sql_where(
+            'where ( loc_id in ($(locations.filterit(it.is_hidden != 0).pluck(id))) )',
+            {"locations":[{"is_hidden":0,"id":2324342},{"id":9890798,"is_hidden":1}], "period": {"title":"Noyabr","id":2131}}),
+            "WHERE loc_id in (9890798)" 
+        );
+
         // + interval generation from period_type
         assert.equal( lpe.eval_sql_where(
             'where(pg_interval(1,7) or pg_interval(2,"day") or pg_interval(3,period_type))',
