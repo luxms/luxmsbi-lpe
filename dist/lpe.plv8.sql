@@ -1255,6 +1255,8 @@ var make_parse = function make_parse() {
       if (false) {
         // специальный парсер для where - logical expression.
         // тут у нас выражение с использованием скобок, and, or, not и никаких запятых...
+        // DIMA 2021: expr function will be generic name for logical things
+        // where should be deprecated and replcaed to where(expr(....)) by all projects
         new_expression_scope("logical");
         var e = expression(0);
         m_expr_scope.pop();
@@ -6329,7 +6331,7 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
         return ["column", el];
       }
 
-      var ast = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lpep__["a" /* parse */])(el);
+      var ast = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lpep__["a" /* parse */])("expr(".concat(el, ")"));
 
       if (typeof ast === 'string') {
         // but if it was string, try to expand
@@ -6668,6 +6670,11 @@ function init_koob_context(_vars, default_ds, default_cube) {
     return "(".concat(a, ")");
   };
 
+  _context['expr'] = function (a) {
+    // Just placeholder for logical expressions, which should keep ()
+    return a;
+  };
+
   _context['and'] = function () {
     var a = Array.prototype.slice.call(arguments);
     return "(".concat(a.join(') AND ('), ")");
@@ -6836,6 +6843,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
       return ret;
     }
   });
+  __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log('CONTEXT!', _context['()']);
   return _ctx;
 }
 
@@ -7215,8 +7223,7 @@ function generate_koob_sql(_cfg, _vars) {
   });
 
   _context[0]["_result"] = null;
-  _cfg["_aliases"] = _context[0]["_aliases"]; //console.log("ALIASES: ", JSON.stringify(_cfg["_aliases"]))
-
+  _cfg["_aliases"] = _context[0]["_aliases"];
   var has_window = null;
 
   for (var i = 0; i < columns.length; i++) {

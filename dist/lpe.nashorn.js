@@ -1094,6 +1094,8 @@ var make_parse = function make_parse() {
       if (false) {
         // специальный парсер для where - logical expression.
         // тут у нас выражение с использованием скобок, and, or, not и никаких запятых...
+        // DIMA 2021: expr function will be generic name for logical things
+        // where should be deprecated and replcaed to where(expr(....)) by all projects
         new_expression_scope("logical");
         var e = expression(0);
         m_expr_scope.pop();

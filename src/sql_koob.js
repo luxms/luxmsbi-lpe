@@ -192,7 +192,7 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
       if (el.match(/^([a-zA-Z_]\w+\.){1,2}[a-zA-Z_]\w+$/) !== null) {
         return ["column",  el]
       }
-      var ast = parse(el)
+      var ast = parse(`expr(${el})`)
       if (typeof ast === 'string') {
         // but if it was string, try to expand
         return ["column", expand_column( ast )]
@@ -515,6 +515,11 @@ function init_koob_context(_vars, default_ds, default_cube) {
     return `(${a})`
   }
 
+  _context['expr'] = function(a) {
+    // Just placeholder for logical expressions, which should keep ()
+    return a
+  }
+
   _context['and'] = function() {
     var a = Array.prototype.slice.call(arguments)
     return `(${a.join(') AND (')})`
@@ -683,6 +688,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     }
   })
   
+  console.log('CONTEXT!', _context['()'])
   return _ctx;
 } 
 
@@ -1012,7 +1018,6 @@ export function generate_koob_sql(_cfg, _vars) {
   _context[0]["_result"] = null
   _cfg["_aliases"] = _context[0]["_aliases"]
 
-  //console.log("ALIASES: ", JSON.stringify(_cfg["_aliases"]))
 
   var has_window = null
   for (var i=0; i<columns.length; i++){

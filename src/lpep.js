@@ -31,7 +31,7 @@ var make_parse = function () {
   var m_token_nr;
 
   // стэк для типов выражений
-  var m_expr_scope = { pop: function () {}};                                    // для разбора логических выражений типа (A and B or C)
+  var m_expr_scope = { pop: function () {}};  // для разбора логических выражений типа (A and B or C)
 
   // для хранения алиасов для операций
   var m_operator_aliases = {};
@@ -392,9 +392,11 @@ var make_parse = function () {
     }
     // dima support for missed function arguments...
     if (m_token.id !== ")") {
-      if (false && left.value == "where") {
+      if (false && (left.value == "where" || left.value == "expr")) {
         // специальный парсер для where - logical expression.
         // тут у нас выражение с использованием скобок, and, or, not и никаких запятых...
+        // DIMA 2021: expr function will be generic name for logical things
+        // where should be deprecated and replcaed to where(expr(....)) by all projects
         new_expression_scope("logical");
         var e = expression(0);
         m_expr_scope.pop();
