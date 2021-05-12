@@ -7129,6 +7129,12 @@ function cache_alias_keys(_cfg) {
 
   return _cfg;
 }
+/* в _vars могут быть доп. настройки для контекста. Например объявленные переменные.
+Вообще говоря это должен быть настоящий контекст! с помощью init_koob_context() мы дописываем в этот 
+контекст новые ключи, типа _columns, _aliases и т.д. Снаружи мы можем получить доп. фильтры. в ключе
+_access_filter
+*/
+
 
 function generate_koob_sql(_cfg, _vars) {
   var _context = _vars;
@@ -7421,7 +7427,7 @@ function generate_koob_sql(_cfg, _vars) {
     });
 
     if (pw.length > 0) {
-      var wh = ["and"].concat(pw); //console.log("WHERE", wh)
+      var wh = ["and"].concat(pw); //console.log("WHERE", wh)        
 
       part_where = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(wh, _context);
     }
@@ -7429,13 +7435,43 @@ function generate_koob_sql(_cfg, _vars) {
     return part_where;
   }).filter(function (el) {
     return el !== null && el.length > 0;
-  });
+  }); // access filters
+
+  var filters = _context[0]["_access_filters"];
+  var ast = [];
+  __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log("WHERE access filters", filters);
+
+  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isString */])(filters) && filters.length > 0) {
+    var ast = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lpep__["a" /* parse */])("expr(".concat(filters, ")"));
+    ast.splice(0, 1, '()'); // replace expr with ()
+  } else if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(filters) && filters.length > 0) {
+    ast = ['()', filters];
+  } else {
+    //warning
+    __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log('Access filters are missed.');
+  }
+
+  __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log("WHERE access filters AST", JSON.stringify(ast));
+  var access_where = '';
+
+  if (ast.length > 0) {
+    // array
+    access_where = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(ast, _context);
+  }
+
+  var fw = '';
 
   if (filters_array.length == 1) {
-    where = "\nWHERE ".concat(filters_array[0]);
+    fw = filters_array[0];
   } else if (filters_array.length > 1) {
-    where = "\nWHERE ".concat("(".concat(filters_array.join(")\n   OR ("), ")"));
+    fw = "(".concat(filters_array.join(")\n   OR ("), ")");
   }
+
+  if (fw.length > 0 && access_where.length > 0) {
+    fw = "(".concat(fw, ")\n   AND\n   (").concat(access_where, ")");
+  }
+
+  where = "\nWHERE ".concat(fw);
 
   var group_by = _cfg["_group_by"].map(function (el) {
     return el.expr;

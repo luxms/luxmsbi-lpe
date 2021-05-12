@@ -926,6 +926,12 @@ function cache_alias_keys(_cfg) {
 
 }
 
+
+/* в _vars могут быть доп. настройки для контекста. Например объявленные переменные.
+Вообще говоря это должен быть настоящий контекст! с помощью init_koob_context() мы дописываем в этот 
+контекст новые ключи, типа _columns, _aliases и т.д. Снаружи мы можем получить доп. фильтры. в ключе
+_access_filter
+*/
 export function generate_koob_sql(_cfg, _vars) {
 
   var _context = _vars;
@@ -1168,17 +1174,43 @@ export function generate_koob_sql(_cfg, _vars) {
 
       if (pw.length > 0) {
         var wh = ["and"].concat(pw)
-        //console.log("WHERE", wh)
+        //console.log("WHERE", wh)        
         part_where = eval_lisp(wh, _context)
       }
       return part_where
   }).filter(el => el !== null && el.length > 0)
 
-  if (filters_array.length == 1){
-    where = "\nWHERE ".concat( filters_array[0] )
-  } else if (filters_array.length > 1){
-    where = "\nWHERE ".concat( `(${filters_array.join(")\n   OR (")})` )
+  // access filters
+  var filters = _context[0]["_access_filters"]
+  var ast = []
+  console.log("WHERE access filters", filters)
+  if (isString(filters) && filters.length > 0) {
+    var ast = parse(`expr(${filters})`)
+    ast.splice(0, 1, '()') // replace expr with ()
+  } else if (isArray(filters) && filters.length > 0){
+    ast = ['()',filters]
+  } else {
+    //warning
+    console.log('Access filters are missed.')
   }
+  console.log("WHERE access filters AST", JSON.stringify(ast))
+
+  var access_where = ''
+  if (ast.length > 0) { // array
+    access_where = eval_lisp(ast, _context)
+  }
+
+  var fw = ''
+  if (filters_array.length == 1){
+    fw = filters_array[0]
+  } else if (filters_array.length > 1){
+    fw = `(${filters_array.join(")\n   OR (")})`
+  }
+
+  if (fw.length > 0 && access_where.length > 0) {
+    fw = `(${fw})\n   AND\n   (${access_where})`
+  }
+  where = `\nWHERE ${fw}`
   
   
 
