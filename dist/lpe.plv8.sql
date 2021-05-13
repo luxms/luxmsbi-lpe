@@ -7158,6 +7158,18 @@ function generate_koob_sql(_cfg, _vars) {
   }
   */
 
+  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(_vars["_data_source"]) && __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isString */])(_vars["_data_source"]["url"])) {
+    var url = _vars["_data_source"]["url"];
+    var matched = url.match(/^jdbc\:([^:]+)\:/);
+    __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log("JSON DATA SOURCE URL MATCHED ".concat(JSON.stringify(matched)));
+
+    if (matched != null && matched.length > 1) {
+      _context["_target_database"] = matched[1];
+    } else {
+      _context["_target_database"] = 'postgresql';
+    }
+  }
+
   var target_db_type = null;
 
   if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isString */])(_cfg["with"])) {
@@ -7168,10 +7180,11 @@ function generate_koob_sql(_cfg, _vars) {
 
     if (w.match(/^("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)$/) !== null) {
       _cfg = normalize_koob_config(_cfg, w, _context);
-      target_db_type = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_20__utils_utils__["b" /* get_source_database */])(w.split('.')[0]);
-      _context["_target_database"] = target_db_type; // FIXME: FOR TESTS ONLY !!!!
-      //_context["_target_database"] = 'clickhouse'
-      // ========================
+
+      if (_context["_target_database"] === undefined) {
+        target_db_type = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_20__utils_utils__["b" /* get_source_database */])(w.split('.')[0]);
+        _context["_target_database"] = target_db_type;
+      }
     } else {
       // это строка, но она не поддерживается, так как либо точек слишком много, либо они не там, либо их нет
       throw new Error("Request contains with key, but it has the wrong format: ".concat(w, " Should be datasource.cube with exactly one dot in between."));

@@ -45,11 +45,11 @@ describe('LPE tests', function() {
       "offset": 10,
       "with":"ch.fot_out"},
             {"_target_database": "clickhouse"}),
-`SELECT lead / rs * 100 AS perda, finalizeAggregation(_w_f_1) AS lead, runningAccumulate(_w_f_1, tuple(null)) AS rs, rs / 100 AS div, v_rel_pp AS v_rel_pp
+`SELECT (lead / rs * 100) as "perda", finalizeAggregation(_w_f_1) as "lead", runningAccumulate(_w_f_1, tuple(null)) as "rs", (rs / 100) as "div", v_rel_pp as "v_rel_pp"
 FROM (
-SELECT initializeAggregation('sumState',sum(v_main)) AS _w_f_1, sum(fot_out.v_rel_pp) AS v_rel_pp
+SELECT initializeAggregation('sumState',sum(v_main)) as "_w_f_1", sum(fot_out.v_rel_pp) as "v_rel_pp"
 FROM fot_out AS fot_out
-HAVING (hcode_name BETWEEN '2019-01-01' AND '2020-03-01')
+HAVING (hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
 )
 ORDER BY perda, lead DESC LIMIT 100 OFFSET 100
 SETTINGS max_threads = 12`
@@ -76,9 +76,9 @@ SETTINGS max_threads = 12`
        "offset": 10,
        "with":"ch.fot_out"},
              {"_target_database": "clickhouse"}),
- `SELECT DISTINCT lead / rs * 100 AS perda, finalizeAggregation(_w_f_1) AS lead, runningAccumulate(_w_f_1, (group_pay_name)) AS rs, rs / 100 AS div, v_rel_pp AS v_rel_pp, group_pay_name AS group_pay_name, hcode_name AS hcode_name
+ `SELECT DISTINCT (lead / rs * 100) as "perda", finalizeAggregation(_w_f_1) as "lead", runningAccumulate(_w_f_1, (group_pay_name)) as "rs", (rs / 100) as "div", v_rel_pp as "v_rel_pp", group_pay_name as "group_pay_name", hcode_name as "hcode_name"
 FROM (
-SELECT initializeAggregation('sumState',sum(v_main)) AS _w_f_1, sum(fot_out.v_rel_pp) AS v_rel_pp, fot_out.group_pay_name AS group_pay_name, fot_out.hcode_name AS hcode_name
+SELECT initializeAggregation('sumState',sum(v_main)) as "_w_f_1", sum(fot_out.v_rel_pp) as "v_rel_pp", fot_out.group_pay_name as "group_pay_name", fot_out.hcode_name as "hcode_name"
 FROM fot_out AS fot_out
 GROUP BY fot_out.group_pay_name, fot_out.hcode_name
 HAVING (hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
@@ -108,9 +108,9 @@ SETTINGS max_threads = 12`
          "offset": 10,
          "with":"ch.fot_out"},
                {"_target_database": "clickhouse"}),
-   `SELECT DISTINCT lead / rs * 100 AS perda, finalizeAggregation(_w_f_1) AS lead, runningAccumulate(_w_f_1, (pay_code)) AS rs, rs / 100 AS div, v_rel_pp AS v_rel_pp, dictGet('gpn.group_pay_dict', 'some_real_field', tuple(pay_code)) AS pay_title, hcode_name AS hcode_name
+   `SELECT DISTINCT (lead / rs * 100) as "perda", finalizeAggregation(_w_f_1) as "lead", runningAccumulate(_w_f_1, (pay_code)) as "rs", (rs / 100) as "div", v_rel_pp as "v_rel_pp", dictGet('gpn.group_pay_dict', 'some_real_field', tuple(pay_code)) as "pay_title", hcode_name as "hcode_name"
 FROM (
-SELECT initializeAggregation('sumState',sum(v_main)) AS _w_f_1, sum(fot_out.v_rel_pp) AS v_rel_pp, pay_code AS pay_code, fot_out.hcode_name AS hcode_name
+SELECT initializeAggregation('sumState',sum(v_main)) as "_w_f_1", sum(fot_out.v_rel_pp) as "v_rel_pp", pay_code as "pay_code", fot_out.hcode_name as "hcode_name"
 FROM fot_out AS fot_out
 GROUP BY pay_code, fot_out.hcode_name
 HAVING (hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
@@ -135,7 +135,7 @@ SETTINGS max_threads = 12`
          "offset": 10,
          "with":"ch.fot_out"},
                {"_target_database": "clickhouse"}),
-   `SELECT DISTINCT sum(fot_out.v_rel_pp) AS v_rel_pp, dictGet('gpn.group_pay_dict', 'some_real_field', tuple(pay_code)) AS pay_title, fot_out.hcode_name AS hcode_name
+   `SELECT DISTINCT sum(fot_out.v_rel_pp) as "v_rel_pp", dictGet('gpn.group_pay_dict', 'some_real_field', tuple(pay_code)) as "pay_title", fot_out.hcode_name as "hcode_name"
 FROM fot_out AS fot_out
 WHERE (fot_out.hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND (fot_out.group_pay_name = 'Не задано') AND (fot_out.pay_code = 'Не задано') AND (fot_out.pay_name = 'Не задано') AND (fot_out.sex_code IS NULL)
 GROUP BY pay_code, fot_out.hcode_name
@@ -157,7 +157,7 @@ SETTINGS max_threads = 12`
          "offset": 10,
          "with":"ch.fot_out"},
                {"_target_database": "clickhouse"}),
-   `SELECT sum(fot_out.v_rel_pp) AS sum, fot_out.hcode_name AS hcode_name
+   `SELECT sum(fot_out.v_rel_pp) as "sum", fot_out.hcode_name as "hcode_name"
 FROM fot_out AS fot_out
 WHERE (fot_out.hcode_name > '2019-01-01') AND ((dictGet('gpn.group_pay_dict', 'some_real_field', tuple(pay_code))) IN ('2019-01-01', '2020-03-01')) AND (fot_out.group_pay_name = 'Не задано') AND (fot_out.pay_code = 'Не задано') AND (fot_out.pay_name = 'Не задано') AND (fot_out.sex_code IS NULL)
 GROUP BY fot_out.hcode_name LIMIT 100 OFFSET 100

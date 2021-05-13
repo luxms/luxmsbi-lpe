@@ -954,6 +954,17 @@ export function generate_koob_sql(_cfg, _vars) {
 "sort": ["-dor1","val1",["-","val2"],"-czt.fot.dor2"] 
 }
 */
+
+  if (isHash(_vars["_data_source"]) && isString(_vars["_data_source"]["url"]) ) {
+    var url = _vars["_data_source"]["url"]
+    var matched = url.match(/^jdbc\:([^:]+)\:/)
+    console.log(`JSON DATA SOURCE URL MATCHED ${JSON.stringify(matched)}`)
+    if (matched != null && matched.length > 1) {
+      _context["_target_database"] = matched[1]
+    } else {
+      _context["_target_database"] = 'postgresql'
+    }
+  }
   var target_db_type = null
   if ( isString( _cfg["with"]) ) {
     var w = _cfg["with"]
@@ -963,12 +974,10 @@ export function generate_koob_sql(_cfg, _vars) {
     // это корректный префикс: "дс.перв"."куб.2"  так что тупой подсчёт точек не катит.
     if ( w.match( /^("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)$/) !== null ) {
       _cfg = normalize_koob_config(_cfg, w, _context);
-      target_db_type = get_source_database(w.split('.')[0])
-      _context["_target_database"] = target_db_type
-
-      // FIXME: FOR TESTS ONLY !!!!
-      //_context["_target_database"] = 'clickhouse'
-      // ========================
+      if ( _context["_target_database"] === undefined) {
+        target_db_type = get_source_database(w.split('.')[0])
+        _context["_target_database"] = target_db_type
+      }
     } else {
       // это строка, но она не поддерживается, так как либо точек слишком много, либо они не там, либо их нет
       throw new Error(`Request contains with key, but it has the wrong format: ${w} Should be datasource.cube with exactly one dot in between.`)
