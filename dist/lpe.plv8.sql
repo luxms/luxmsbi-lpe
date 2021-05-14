@@ -7483,10 +7483,12 @@ function generate_koob_sql(_cfg, _vars) {
   }
 
   if (fw.length > 0 && access_where.length > 0) {
-    fw = "(".concat(fw, ")\n   AND\n   (").concat(access_where, ")");
+    fw = "(".concat(fw, ")\n   AND\n   ").concat(access_where);
   }
 
-  where = "\nWHERE ".concat(fw);
+  if (fw.length > 0) {
+    where = "\nWHERE ".concat(fw);
+  }
 
   var group_by = _cfg["_group_by"].map(function (el) {
     return el.expr;

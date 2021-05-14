@@ -1223,9 +1223,12 @@ export function generate_koob_sql(_cfg, _vars) {
   }
 
   if (fw.length > 0 && access_where.length > 0) {
-    fw = `(${fw})\n   AND\n   (${access_where})`
+    fw = `(${fw})\n   AND\n   ${access_where}`
   }
-  where = `\nWHERE ${fw}`
+
+  if (fw.length > 0) {
+    where = `\nWHERE ${fw}`
+  }
   
   
 

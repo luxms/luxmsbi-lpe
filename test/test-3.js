@@ -13,7 +13,7 @@ describe('LPE tests', function() {
 FROM fot_out AS fot_out
 WHERE ((fot_out.group_pay_name = 'Не задано') AND (fot_out.pay_code = 'Не задано') AND (fot_out.pay_name = 'Не задано') AND (fot_out.sex_code IS NULL))
    AND
-   (((fot_out.v_main > 1) AND (((v_rel_pp_i < 0) OR (v_rel_pp_i = 0)))))
+   ((fot_out.v_main > 1) AND (((v_rel_pp_i < 0) OR (v_rel_pp_i = 0))))
 GROUP BY v_rel_pp_i / (100 * (fot_out.v_main + 1))`
               );
         })
@@ -27,7 +27,7 @@ GROUP BY v_rel_pp_i / (100 * (fot_out.v_main + 1))`
 FROM fot_out AS fot_out
 WHERE ((fot_out.group_pay_name = 'Не задано') AND (fot_out.pay_code = 'Не задано') AND (fot_out.pay_name = 'Не задано') AND (fot_out.sex_code IS NULL))
    AND
-   (((fot_out.v_main > 1) AND (((v_rel_pp_i < 0) OR (v_rel_pp_i = 0)))))
+   ((fot_out.v_main > 1) AND (((v_rel_pp_i < 0) OR (v_rel_pp_i = 0))))
 GROUP BY v_rel_pp_i / (100 * (fot_out.v_main + 1))`
                   );
             })
@@ -41,7 +41,7 @@ GROUP BY v_rel_pp_i / (100 * (fot_out.v_main + 1))`
 FROM fot_out AS fot_out
 WHERE ((fot_out.group_pay_name = 'Не задано') AND (fot_out.pay_code = 'Не задано') AND (fot_out.pay_name = 'Не задано') AND (fot_out.sex_code IS NULL))
    AND
-   (((fot_out.v_main > 1) AND (((v_rel_pp_i < 0) OR (v_rel_pp_i = 0)))))
+   ((fot_out.v_main > 1) AND (((v_rel_pp_i < 0) OR (v_rel_pp_i = 0))))
 GROUP BY v_rel_pp_i / (100 * (fot_out.v_main + 1))`
                     );
                 })
