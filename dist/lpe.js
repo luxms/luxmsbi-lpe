@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2021/05/13 16:15:27 */ 
+/** [LPE]  Version: 1.0.0 - 2021/05/14 16:49:43 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -7045,8 +7045,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
       if (hasNull) ret = "".concat(ret, " AND ").concat(c, " IS NOT NULL");
       return ret;
     }
-  });
-  __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log('CONTEXT!', _context['()']);
+  }); //console.log('CONTEXT!', _context['()'])
+
   return _ctx;
 }
 
@@ -7363,8 +7363,7 @@ function generate_koob_sql(_cfg, _vars) {
 
   if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(_vars["_data_source"]) && __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isString */])(_vars["_data_source"]["url"])) {
     var url = _vars["_data_source"]["url"];
-    var matched = url.match(/^jdbc\:([^:]+)\:/);
-    __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log("JSON DATA SOURCE URL MATCHED ".concat(JSON.stringify(matched)));
+    var matched = url.match(/^jdbc\:([^:]+)\:/); //console.log(`JSON DATA SOURCE URL MATCHED ${JSON.stringify(matched)}`)
 
     if (matched != null && matched.length > 1) {
       _context["_target_database"] = matched[1];
@@ -7654,20 +7653,23 @@ function generate_koob_sql(_cfg, _vars) {
   }); // access filters
 
   var filters = _context[0]["_access_filters"];
-  var ast = [];
-  __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log("WHERE access filters", filters);
+  var ast = []; //console.log("WHERE access filters", filters)
 
   if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isString */])(filters) && filters.length > 0) {
     var ast = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lpep__["a" /* parse */])("expr(".concat(filters, ")"));
     ast.splice(0, 1, '()'); // replace expr with ()
   } else if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(filters) && filters.length > 0) {
-    ast = ['()', filters];
-  } else {
-    //warning
-    __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log('Access filters are missed.');
-  }
+    if (filters[0] === 'expr') {
+      filters[0] = '()';
+      ast = filters;
+    } else if (filters[0] !== '()') {
+      ast = ['()', filters];
+    }
+  } else {} //warning
+  //console.log('Access filters are missed.')
+  //console.log("WHERE access filters AST", JSON.stringify(ast))
 
-  __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log("WHERE access filters AST", JSON.stringify(ast));
+
   var access_where = '';
 
   if (ast.length > 0) {

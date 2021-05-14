@@ -688,7 +688,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     }
   })
   
-  console.log('CONTEXT!', _context['()'])
+  //console.log('CONTEXT!', _context['()'])
   return _ctx;
 } 
 
@@ -958,13 +958,14 @@ export function generate_koob_sql(_cfg, _vars) {
   if (isHash(_vars["_data_source"]) && isString(_vars["_data_source"]["url"]) ) {
     var url = _vars["_data_source"]["url"]
     var matched = url.match(/^jdbc\:([^:]+)\:/)
-    console.log(`JSON DATA SOURCE URL MATCHED ${JSON.stringify(matched)}`)
+    //console.log(`JSON DATA SOURCE URL MATCHED ${JSON.stringify(matched)}`)
     if (matched != null && matched.length > 1) {
       _context["_target_database"] = matched[1]
     } else {
       _context["_target_database"] = 'postgresql'
     }
   }
+
   var target_db_type = null
   if ( isString( _cfg["with"]) ) {
     var w = _cfg["with"]
@@ -1192,17 +1193,22 @@ export function generate_koob_sql(_cfg, _vars) {
   // access filters
   var filters = _context[0]["_access_filters"]
   var ast = []
-  console.log("WHERE access filters", filters)
+  //console.log("WHERE access filters", filters)
   if (isString(filters) && filters.length > 0) {
     var ast = parse(`expr(${filters})`)
     ast.splice(0, 1, '()') // replace expr with ()
   } else if (isArray(filters) && filters.length > 0){
-    ast = ['()',filters]
+    if (filters[0] === 'expr') {
+      filters[0] = '()'
+      ast = filters
+    } else if (filters[0] !== '()') {
+      ast = ['()',filters]
+    }
   } else {
     //warning
-    console.log('Access filters are missed.')
+    //console.log('Access filters are missed.')
   }
-  console.log("WHERE access filters AST", JSON.stringify(ast))
+  //console.log("WHERE access filters AST", JSON.stringify(ast))
 
   var access_where = ''
   if (ast.length > 0) { // array
