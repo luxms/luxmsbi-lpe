@@ -247,6 +247,11 @@ const STDLIB = {
   'slice': (a, b, ...end) => a.slice(b, end.length > 0 ? end[0] : a.length),
   'first': (a) => a.length > 0 ? a[0] : null,
   'last': (a) => a[a.length - 1],
+  'sort': (a) => isArray(a) ? a.sort() : [],
+  // https://stackoverflow.com/questions/1669190/find-the-min-max-element-of-an-array-in-javascript
+  // only for numbers!
+  'max': (a) => isArray(a) ? a.reduce(function (p, v) {return ( p > v ? p : v );}) : [],
+  'min': (a) => isArray(a) ? a.reduce(function (p, v) {return ( p < v ? p : v );}) : [],
   'apply': (f, ...b) => f.apply(f, b),
   'concat': (...a) => [].concat.apply([], a),
   'pr-str': (...a) => a.map(x => JSON.stringify(x)).join(' '),

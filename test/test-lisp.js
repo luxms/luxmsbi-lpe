@@ -41,4 +41,10 @@ describe('LISP tests', function() {
     assert.deepEqual(lpe.eval_lisp(["if", "a", 1, 2], {}), 2);
     assert.deepEqual(lpe.eval_lisp(["if", ["=", "a", ["'", "a"]], 1, 2], {a: "a"}), 1);
   });
+
+  it('arrays', function() {
+    assert.deepEqual(lpe.eval_lisp(["sort", ["[", 3, 2, 1]]), [1,2,3]);
+    assert.deepEqual(lpe.eval_lisp(["min", ["[", 3, 2, 1]]), 1);
+    assert.deepEqual(lpe.eval_lisp(["max", ["[", 3, 2, 1]]), 3);
+  });
 });

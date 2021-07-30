@@ -530,6 +530,9 @@ function init_koob_context(_vars, default_ds, default_cube) {
     return `(${a.join(') OR (')})`
   }
 
+  _context["'"] = function(a) {
+    return any_db_quote_literal(a)
+  }
 
   // overwrite STDLIB! or we will treat (a = 'null') as (a = null) which is wrong in SQL !
   _context['null'] = 'null'
@@ -930,7 +933,7 @@ function cache_alias_keys(_cfg) {
 /* в _vars могут быть доп. настройки для контекста. Например объявленные переменные.
 Вообще говоря это должен быть настоящий контекст! с помощью init_koob_context() мы дописываем в этот 
 контекст новые ключи, типа _columns, _aliases и т.д. Снаружи мы можем получить доп. фильтры. в ключе
-_access_filter
+_access_filters
 */
 export function generate_koob_sql(_cfg, _vars) {
 
@@ -1193,7 +1196,7 @@ export function generate_koob_sql(_cfg, _vars) {
   // access filters
   var filters = _context[0]["_access_filters"]
   var ast = []
-  //console.log("WHERE access filters", filters)
+  //console.log("WHERE access filters: ", JSON.stringify(filters))
   if (isString(filters) && filters.length > 0) {
     var ast = parse(`expr(${filters})`)
     ast.splice(0, 1, '()') // replace expr with ()
@@ -1222,8 +1225,14 @@ export function generate_koob_sql(_cfg, _vars) {
     fw = `(${filters_array.join(")\n   OR (")})`
   }
 
-  if (fw.length > 0 && access_where.length > 0) {
-    fw = `(${fw})\n   AND\n   ${access_where}`
+  if (fw.length > 0) {
+    if (access_where.length > 0) {
+      fw = `(${fw})\n   AND\n   ${access_where}`
+    }
+  } else {
+    if (access_where.length > 0) {
+      fw = access_where
+    }
   }
 
   if (fw.length > 0) {
