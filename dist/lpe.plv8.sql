@@ -7532,7 +7532,7 @@ function generate_koob_sql(_cfg, _vars) {
   var from = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_20__utils_utils__["c" /* reports_get_table_sql */])(target_db_type, "".concat(_cfg["ds"], ".").concat(_cfg["cube"])); // FIXME: USE FLAVORS FOR Oracle & MS SQL
 
   var limit = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["e" /* isNumber */])(_cfg["limit"]) ? " LIMIT ".concat(_cfg["limit"]) : '';
-  var offset = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["e" /* isNumber */])(_cfg["offset"]) ? " OFFSET ".concat(_cfg["limit"]) : '';
+  var offset = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["e" /* isNumber */])(_cfg["offset"]) ? " OFFSET ".concat(_cfg["offset"]) : '';
   var ending = '';
 
   if (_context[0]["_target_database"] === 'clickhouse') {

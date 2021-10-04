@@ -1252,7 +1252,7 @@ export function generate_koob_sql(_cfg, _vars) {
 
   // FIXME: USE FLAVORS FOR Oracle & MS SQL
   var limit = isNumber(_cfg["limit"]) ? ` LIMIT ${_cfg["limit"]}` : ''
-  var offset = isNumber(_cfg["offset"]) ? ` OFFSET ${_cfg["limit"]}` : ''
+  var offset = isNumber(_cfg["offset"]) ? ` OFFSET ${_cfg["offset"]}` : ''
 
   var ending = ''
   if (_context[0]["_target_database"] === 'clickhouse'){
