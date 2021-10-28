@@ -591,9 +591,47 @@ function init_koob_context(_vars, default_ds, default_cube) {
   }
   _context['~'].ast = [[],{},[],1]; // mark as macro
 
+
+  _context['~*'] = function(col, tmpl) {
+    if (shouldQuote(col,tmpl)) tmpl = quoteLiteral(tmpl)
+    // в каждой базе свои regexp
+    if (_vars["_target_database"] === 'oracle') {
+      return `REGEXP_LIKE( ${eval_lisp(col,_context)} , ${eval_lisp(tmpl,_context)}, 'i')` 
+    } else if (_vars["_target_database"] === 'mysql') {
+      return `REGEXP_LIKE( ${eval_lisp(col,_context)}, ${eval_lisp(tmpl,_context)}, 'i')` 
+    } else if (_vars["_target_database"] === 'clickhouse') {
+      // case is not important !!!
+      var pattern = eval_lisp(tmpl,_context); // should be in quotes! 'ddff'
+      pattern = `(?i:${pattern.slice(1,-1)})` 
+      return `match( ${eval_lisp(col,_context)} , '${pattern}' )` 
+    } else {
+      return `${eval_lisp(col,_context)} ~* ${eval_lisp(tmpl,_context)}`
+    }
+  }
+  _context['~*'].ast = [[],{},[],1]; // mark as macro
+
+
   _context['!~'] = makeSF( (ast,ctx) => {
     return "NOT " + eval_lisp(["~"].concat(ast), ctx);
   });
+
+  _context['!~*'] = makeSF( (ast,ctx) => {
+    return "NOT " + eval_lisp(["~*"].concat(ast), ctx);
+  });
+
+  
+  _context['like'] = function(col, tmpl) {
+    if (shouldQuote(col,tmpl)) tmpl = quoteLiteral(tmpl)
+    return `${eval_lisp(col,_context)} LIKE ${eval_lisp(tmpl,_context)}` 
+  }
+  _context['like'].ast = [[],{},[],1]; // mark as macro
+
+  _context['ilike'] = function(col, tmpl) {
+    if (shouldQuote(col,tmpl)) tmpl = quoteLiteral(tmpl)
+    return `${eval_lisp(col,_context)} ILIKE ${eval_lisp(tmpl,_context)}` 
+  }
+  _context['ilike'].ast = [[],{},[],1]; // mark as macro
+
 
   /*
   f1 / lpe_total(sum, f2)

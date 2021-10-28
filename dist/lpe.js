@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2021/10/04 11:40:54 */ 
+/** [LPE]  Version: 1.0.0 - 2021/10/28 15:57:13 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -6973,9 +6973,47 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
   _context['~'].ast = [[], {}, [], 1]; // mark as macro
 
+  _context['~*'] = function (col, tmpl) {
+    if (shouldQuote(col, tmpl)) tmpl = quoteLiteral(tmpl); // в каждой базе свои regexp
+
+    if (_vars["_target_database"] === 'oracle') {
+      return "REGEXP_LIKE( ".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), " , ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _context), ", 'i')");
+    } else if (_vars["_target_database"] === 'mysql') {
+      return "REGEXP_LIKE( ".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), ", ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _context), ", 'i')");
+    } else if (_vars["_target_database"] === 'clickhouse') {
+      // case is not important !!!
+      var pattern = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _context); // should be in quotes! 'ddff'
+
+      pattern = "(?i:".concat(pattern.slice(1, -1), ")");
+      return "match( ".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), " , '").concat(pattern, "' )");
+    } else {
+      return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), " ~* ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _context));
+    }
+  };
+
+  _context['~*'].ast = [[], {}, [], 1]; // mark as macro
+
   _context['!~'] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["f" /* makeSF */])(function (ast, ctx) {
     return "NOT " + __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(["~"].concat(ast), ctx);
   });
+  _context['!~*'] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["f" /* makeSF */])(function (ast, ctx) {
+    return "NOT " + __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(["~*"].concat(ast), ctx);
+  });
+
+  _context['like'] = function (col, tmpl) {
+    if (shouldQuote(col, tmpl)) tmpl = quoteLiteral(tmpl);
+    return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), " LIKE ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _context));
+  };
+
+  _context['like'].ast = [[], {}, [], 1]; // mark as macro
+
+  _context['ilike'] = function (col, tmpl) {
+    if (shouldQuote(col, tmpl)) tmpl = quoteLiteral(tmpl);
+    return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), " ILIKE ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _context));
+  };
+
+  _context['ilike'].ast = [[], {}, [], 1]; // mark as macro
+
   /*
   f1 / lpe_total(sum, f2)
   We should make subselect with full aggregation, but using our local WHERE!!!
