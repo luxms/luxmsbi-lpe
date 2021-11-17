@@ -41,6 +41,7 @@ export function reports_get_columns(cubeId) {
      "title":"v_rel_fzp","sql_query":"v_rel_fzp","config":{}}, {"id":"ch.fot_out.v_rel_pp","type":"SUM","title":"v_rel_pp","sql_query":"v_rel_pp","config":{}},
      {"id":"ch.fot_out.fackt","type":"SUM","title":"fackt","sql_query":"round(v_main,2)","config":{}}];
 
+     //r = globalThis.mockCubeJSON;
      var parts = cubeId.split('.')
 
      var res = {}
@@ -68,9 +69,9 @@ export function reports_get_column_info(srcId, col) {
  export function reports_get_table_sql(target_db_type, tbl) {
      var table_name = tbl.split('.')[1]
      if (target_db_type === 'oracle') {
-          return `${table_name} ${table_name}`
+          return {"query": `${table_name} ${table_name}`, "is_template": 0}
      }
-     return `${table_name} AS ${table_name}`
+     return {"query": `${table_name} AS ${table_name}`, "is_template": 0}
  }
 
 /* should find path to JOIN all tables listed in cubes array */

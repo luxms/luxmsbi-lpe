@@ -411,6 +411,10 @@ function EVAL(ast, ctx, resolveOptions) {
       ctx = env_bind(op.ast[2], op.ast[1], args);                               // TCO
     } else {
       //console.log("EVAL NOT SF evaluated args APPLY: ", op.name, ' ', JSON.stringify(args)) 
+      /*
+        toString.apply(toString, ['aa'])
+        '[object Function]'
+      */
       const fnResult = op.apply(op, args);
       return fnResult;
     }

@@ -2419,6 +2419,11 @@ function EVAL(ast, ctx, resolveOptions) {
       ctx = env_bind(op.ast[2], op.ast[1], args); // TCO
     } else {
       //console.log("EVAL NOT SF evaluated args APPLY: ", op.name, ' ', JSON.stringify(args)) 
+
+      /*
+        toString.apply(toString, ['aa'])
+        '[object Function]'
+      */
       var fnResult = op.apply(op, args);
       return fnResult;
     }
@@ -4840,7 +4845,8 @@ function reports_get_columns(cubeId) {
     "title": "fackt",
     "sql_query": "round(v_main,2)",
     "config": {}
-  }];
+  }]; //r = globalThis.mockCubeJSON;
+
   var parts = cubeId.split('.');
   var res = {};
   res[parts[0]] = {};
@@ -4869,10 +4875,16 @@ function reports_get_table_sql(target_db_type, tbl) {
   var table_name = tbl.split('.')[1];
 
   if (target_db_type === 'oracle') {
-    return "".concat(table_name, " ").concat(table_name);
+    return {
+      "query": "".concat(table_name, " ").concat(table_name),
+      "is_template": 0
+    };
   }
 
-  return "".concat(table_name, " AS ").concat(table_name);
+  return {
+    "query": "".concat(table_name, " AS ").concat(table_name),
+    "is_template": 0
+  };
 }
 /* should find path to JOIN all tables listed in cubes array */
 

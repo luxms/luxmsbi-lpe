@@ -2584,6 +2584,11 @@ function EVAL(ast, ctx, resolveOptions) {
       ctx = env_bind(op.ast[2], op.ast[1], args); // TCO
     } else {
       //console.log("EVAL NOT SF evaluated args APPLY: ", op.name, ' ', JSON.stringify(args)) 
+
+      /*
+        toString.apply(toString, ['aa'])
+        '[object Function]'
+      */
       var fnResult = op.apply(op, args);
       return fnResult;
     }
@@ -3268,7 +3273,7 @@ function reports_get_column_info(srcId, col) {
 function reports_get_table_sql(target_db_type, tbl) {
   // on Error plv8 will generate Exception!
   var id = tbl;
-  var rows = plv8.execute('SELECT sql_query FROM koob.cubes WHERE id = $1', [id]);
+  var rows = plv8.execute("SELECT sql_query, config->'is_template' as is_template FROM koob.cubes WHERE id = $1", [id]);
 
   if (rows.length > 0) {
     var parts = tbl.split('.');
@@ -3276,10 +3281,16 @@ function reports_get_table_sql(target_db_type, tbl) {
     if (sql.match(/ /) !== null) sql = "(".concat(sql, ")"); // it's select ... FROM or something like this
 
     if (target_db_type === 'oracle') {
-      return "".concat(sql, " ").concat(parts[1]);
+      return {
+        "query": "".concat(sql, " ").concat(parts[1]),
+        "is_template": rows[0].is_template
+      };
     }
 
-    return "".concat(sql, " AS ").concat(parts[1]);
+    return {
+      "query": "".concat(sql, " AS ").concat(parts[1]),
+      "is_template": rows[0].is_template
+    };
   }
 
   throw new Error("Can not find table description in the koob.cubes for table " + id);
@@ -6268,6 +6279,7 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
     }).map(function (key) {
       ret["filters"][expand_column(key)] = _cfg["filters"][key];
     });
+    ret["filters"][""] = _cfg["filters"][""];
   } // для фильтров заменяем ключи на полные имена, но у нас может быть массив [{},{}]
 
 
@@ -6281,6 +6293,7 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
         }).map(function (key) {
           result[expand_column(key)] = obj[key];
         });
+        result[""] = obj[""];
       }
 
       return result;
@@ -6470,6 +6483,15 @@ function init_koob_context(_vars, default_ds, default_cube) {
             //console.log(`between(${a.join(',')})`)
             var e = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(["between"].concat(a), _ctx);
             return e;
+          }
+
+          if (key === 'count') {
+            if (_context._target_database == 'clickhouse') {
+              // console.log('COUNT:' + JSON.stringify(a))
+              // у нас всегда должен быть один аргумент и он уже прошёл eval !!!
+              // Это БАГ в тыкдоме = отдаёт текстом значения, если count делать Ж-()
+              return "toUInt32(count(".concat(a[0], "))");
+            }
           }
 
           return "".concat(key, "(").concat(a.join(','), ")");
@@ -6684,8 +6706,43 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
   _context[':'].ast = [[], {}, [], 1]; // mark as macro
 
+  _context['toString'] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["f" /* makeSF */])(function (ast, ctx) {
+    // понимаем a = [null] как a is null
+    // a = [] просто пропускаем, А кстати почему собственно???
+    // a = [null, 1,2] как a in (1,2) or a is null
+    // ["=",["column","vNetwork.cluster"],SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]
+    // var a = Array.prototype.slice.call(arguments)
+    //console.log(JSON.stringify(ast))
+    var col = ast[0];
+    var c = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context);
+    return "toString(".concat(c, ")");
+  });
+  _context['pointInPolygon'] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["f" /* makeSF */])(function (ast, ctx) {
+    //console.log(JSON.stringify(ast))
+    // [["tuple","lat","lng"],["[",["tuple",0,0],["tuple",0,1],["tuple",1,0],["tuple",1,1]]]
+    var point = ast[0];
+    var pnt = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(point, _context); // point as first argument
+
+    var poly = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(ast[1], _context);
+    return "pointInPolygon(".concat(pnt, ", [").concat(poly, "])");
+  });
+
+  _context['pointInEllipses'] = function () {
+    var a = Array.prototype.slice.call(arguments);
+
+    if ((a.length - 2) % 4 != 0) {
+      throw Error("pointInEllipses should contain correct number of coordinates!");
+    }
+
+    return "pointInEllipses(".concat(a.join(','), ")");
+  };
+
   _context['()'] = function (a) {
     return "(".concat(a, ")");
+  };
+
+  _context['tuple'] = function (first, second) {
+    return "tuple(".concat(first, ",").concat(second, ")");
   };
 
   _context['expr'] = function (a) {
@@ -6718,6 +6775,22 @@ function init_koob_context(_vars, default_ds, default_cube) {
     // so we created our own version...
     return el === null ? null : any_db_quote_literal(el);
   };
+  /* тут мы не пометили AGG !!!
+  _context['count'] = makeSF( (ast,ctx) => {
+    var a;
+    if (ast.length == 1) {
+      a = ast[0]
+    } else {
+      a = ast
+    }
+    if (_context._target_database == 'clickhouse') {
+      // Это БАГ в тыкдоме = отдаёт текстом значения, если count делать Ж-()
+      return `toUInt32(count(${eval_lisp(a, ctx)}))`
+    } else {
+      return `count(${eval_lisp(a, ctx)})`
+    }
+  });*/
+
 
   _context['between'] = function (col, var1, var2) {
     if (shouldQuote(col, var1)) var1 = quoteLiteral(var1);
@@ -7481,6 +7554,7 @@ function generate_koob_sql(_cfg, _vars) {
   }
 
   var where = '';
+  var part_where = '1=1';
   var filters_array = _cfg["filters"];
 
   if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(filters_array)) {
@@ -7497,6 +7571,14 @@ function generate_koob_sql(_cfg, _vars) {
 
       return _filters[key];
     });
+
+    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(_filters[""])) {
+      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(pw)) {
+        pw.push(_filters[""]);
+      } else {
+        pw = _filters[""];
+      }
+    }
 
     if (pw.length > 0) {
       var wh = ["and"].concat(pw); //console.log("WHERE", wh)        
@@ -7554,6 +7636,7 @@ function generate_koob_sql(_cfg, _vars) {
 
   if (fw.length > 0) {
     where = "\nWHERE ".concat(fw);
+    part_where = fw;
   }
 
   var group_by = _cfg["_group_by"].map(function (el) {
@@ -7567,7 +7650,9 @@ function generate_koob_sql(_cfg, _vars) {
     return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(el, order_by_context);
   });
 
-  var from = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_20__utils_utils__["c" /* reports_get_table_sql */])(target_db_type, "".concat(_cfg["ds"], ".").concat(_cfg["cube"])); // FIXME: USE FLAVORS FOR Oracle & MS SQL
+  var cube_query_template = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_20__utils_utils__["c" /* reports_get_table_sql */])(target_db_type, "".concat(_cfg["ds"], ".").concat(_cfg["cube"])); //console.log("SQL:", JSON.stringify(cube_query_template))
+
+  var from = cube_query_template.query; // FIXME: USE FLAVORS FOR Oracle & MS SQL
 
   var limit = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["e" /* isNumber */])(_cfg["limit"]) ? " LIMIT ".concat(_cfg["limit"]) : '';
   var offset = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["e" /* isNumber */])(_cfg["offset"]) ? " OFFSET ".concat(_cfg["offset"]) : '';
@@ -7792,7 +7877,15 @@ function generate_koob_sql(_cfg, _vars) {
     }).join(', '));
     order_by = order_by.length ? "\nORDER BY ".concat(order_by.join(', ')) : '';
     group_by = group_by.length ? "\nGROUP BY ".concat(group_by.join(', ')) : '';
-    return "".concat(select, "\nFROM ").concat(from).concat(where).concat(group_by).concat(order_by).concat(limit).concat(offset).concat(ending);
+
+    if (cube_query_template.is_template) {
+      // надо подставить WHERE аккуратно
+      var re = /\$\{filters\}/gi;
+      var processed_from = from.replace(re, part_where);
+      return "".concat(select, "\nFROM ").concat(processed_from).concat(group_by).concat(order_by).concat(limit).concat(offset).concat(ending);
+    } else {
+      return "".concat(select, "\nFROM ").concat(from).concat(where).concat(group_by).concat(order_by).concat(limit).concat(offset).concat(ending);
+    }
   }
 }
 

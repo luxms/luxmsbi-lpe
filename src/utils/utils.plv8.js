@@ -50,15 +50,15 @@ export function reports_get_column_info(srcId, col) {
 export function reports_get_table_sql(target_db_type, tbl) {
     // on Error plv8 will generate Exception!
     var id = tbl
-    var rows = plv8.execute( 'SELECT sql_query FROM koob.cubes WHERE id = $1', [id] );
+    var rows = plv8.execute( "SELECT sql_query, config->'is_template' as is_template FROM koob.cubes WHERE id = $1", [id] );
     if (rows.length > 0) {
         var parts = tbl.split('.')
         var sql = rows[0].sql_query
         if (sql.match(/ /) !== null) sql = `(${sql})` // it's select ... FROM or something like this
         if (target_db_type === 'oracle') {
-            return `${sql} ${parts[1]}`
+            return {"query": `${sql} ${parts[1]}`, "is_template": rows[0].is_template }
         }
-        return `${sql} AS ${parts[1]}`
+        return {"query": `${sql} AS ${parts[1]}`, "is_template": rows[0].is_template }
     }
     throw new Error("Can not find table description in the koob.cubes for table " + id);
 }

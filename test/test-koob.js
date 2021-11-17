@@ -1,6 +1,8 @@
 var assert = require('assert');
 var lpe = require('../dist/lpe');
 
+globalThis.mockCubeJSON = '[]';
+
 
 describe('LPE tests', function() {
 
@@ -190,6 +192,28 @@ WHERE ((fot_out.group_pay_name = 'Не задано') AND (fot_out.pay_code = '�
 GROUP BY v_rel_pp_i / (100 * (fot_out.v_main + 1))`
                     );
                 })
+
+
+   it('should eval KOOB concat', function() {
+                  assert.equal( lpe.generate_koob_sql(
+                     {"columns":[
+                                 "concat(toString(v_rel_pp), '*', v_rel_pp, hcode_name ):v_rel_pp",
+                                 "toString(group_pay_name)", 
+                                 'hcode_name'
+                              ],
+                     "filters":{"hcode_name": ["between", "2019-01-01", "2020-03-01"]},
+                     "sort":["perda","-lead"],
+                     "limit": 100,
+                     "offset": 10,
+                     "with":"ch.fot_out"},
+                           {"_target_database": "clickhouse"}),
+               `SELECT concat(toString(v_rel_pp),'*',fot_out.v_rel_pp,fot_out.hcode_name) as "v_rel_pp", toString(group_pay_name), fot_out.hcode_name as "hcode_name"
+               FROM fot_out AS fot_out
+               WHERE (fot_out.hcode_name BETWEEN '2019-01-01' AND '2020-03-01')
+               ORDER BY perda, lead DESC LIMIT 100 OFFSET 10
+               SETTINGS max_threads = 12`
+                        );
+   });
 
     
 });

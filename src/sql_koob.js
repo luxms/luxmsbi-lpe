@@ -118,6 +118,7 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
   if (isHash(_cfg["filters"])) {
     Object.keys(_cfg["filters"]).filter(k => k !== "").map( 
       key => {ret["filters"][expand_column(key)] = _cfg["filters"][key]} )
+    ret["filters"][""] = _cfg["filters"][""]
   }
 
   // для фильтров заменяем ключи на полные имена, но у нас может быть массив [{},{}]
@@ -127,6 +128,7 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
         if (isHash(obj)) {
           Object.keys(obj).filter(k => k !== "").map( 
               key => {result[expand_column(key)] = obj[key]})
+          result[""] = obj[""]
         }
         return result
         }
@@ -313,6 +315,15 @@ function init_koob_context(_vars, default_ds, default_cube) {
               //console.log(`between(${a.join(',')})`)
               var e = eval_lisp(["between"].concat(a),_ctx)
               return e
+            }
+
+            if (key === 'count') {
+              if (_context._target_database == 'clickhouse') {
+                // console.log('COUNT:' + JSON.stringify(a))
+                // у нас всегда должен быть один аргумент и он уже прошёл eval !!!
+                // Это БАГ в тыкдоме = отдаёт текстом значения, если count делать Ж-()
+                return `toUInt32(count(${a[0]}))`
+              }
             }
             return `${key}(${a.join(',')})`
           }
@@ -511,8 +522,44 @@ function init_koob_context(_vars, default_ds, default_cube) {
   _context[':'].ast = [[],{},[],1]; // mark as macro
 
 
+  _context['toString'] = makeSF( (ast,ctx) => {
+    // понимаем a = [null] как a is null
+    // a = [] просто пропускаем, А кстати почему собственно???
+    // a = [null, 1,2] как a in (1,2) or a is null
+
+    // ["=",["column","vNetwork.cluster"],SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]
+    // var a = Array.prototype.slice.call(arguments)
+    //console.log(JSON.stringify(ast))
+    var col = ast[0]
+    var c = eval_lisp(col,_context)
+    return `toString(${c})`
+
+  })
+
+  _context['pointInPolygon'] = makeSF( (ast,ctx) => {
+    //console.log(JSON.stringify(ast))
+    // [["tuple","lat","lng"],["[",["tuple",0,0],["tuple",0,1],["tuple",1,0],["tuple",1,1]]]
+    var point = ast[0]
+    var pnt = eval_lisp(point,_context) // point as first argument
+    
+    var poly = eval_lisp(ast[1],_context) 
+    return `pointInPolygon(${pnt}, [${poly}])`
+  })
+
+  _context['pointInEllipses'] = function() {
+    var a = Array.prototype.slice.call(arguments)
+    if ( (a.length - 2) % 4 != 0) {
+      throw Error(`pointInEllipses should contain correct number of coordinates!`)
+    }
+    return `pointInEllipses(${a.join(',')})`
+  }
+
   _context['()'] = function(a) {
     return `(${a})`
+  }
+
+  _context['tuple'] = function(first, second) {
+    return `tuple(${first},${second})`
   }
 
   _context['expr'] = function(a) {
@@ -545,6 +592,22 @@ function init_koob_context(_vars, default_ds, default_cube) {
     // so we created our own version...
     return el === null ? null : any_db_quote_literal(el)
   }
+
+  /* тут мы не пометили AGG !!!
+  _context['count'] = makeSF( (ast,ctx) => {
+    var a;
+    if (ast.length == 1) {
+      a = ast[0]
+    } else {
+      a = ast
+    }
+    if (_context._target_database == 'clickhouse') {
+      // Это БАГ в тыкдоме = отдаёт текстом значения, если count делать Ж-()
+      return `toUInt32(count(${eval_lisp(a, ctx)}))`
+    } else {
+      return `count(${eval_lisp(a, ctx)})`
+    }
+  });*/
 
   _context['between'] = function(col, var1, var2) {
     if (shouldQuote(col,var1)) var1 = quoteLiteral(var1)
@@ -619,7 +682,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     return "NOT " + eval_lisp(["~*"].concat(ast), ctx);
   });
 
-  
+
   _context['like'] = function(col, tmpl) {
     if (shouldQuote(col,tmpl)) tmpl = quoteLiteral(tmpl)
     return `${eval_lisp(col,_context)} LIKE ${eval_lisp(tmpl,_context)}` 
@@ -631,6 +694,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
     return `${eval_lisp(col,_context)} ILIKE ${eval_lisp(tmpl,_context)}` 
   }
   _context['ilike'].ast = [[],{},[],1]; // mark as macro
+
+  
 
 
   /*
@@ -728,7 +793,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
       return ret
     }
   })
-  
+
   //console.log('CONTEXT!', _context['()'])
   return _ctx;
 } 
@@ -1209,6 +1274,8 @@ export function generate_koob_sql(_cfg, _vars) {
   }  
 
   var where = '';
+  var part_where = '1=1';
+
   var filters_array = _cfg["filters"];
   if (isHash(filters_array)) {
     filters_array = [filters_array]
@@ -1222,6 +1289,14 @@ export function generate_koob_sql(_cfg, _vars) {
                   var a = _filters[key].splice(1,0,["column",key])
                   return _filters[key]
                 });
+      
+      if (isArray(_filters[""])) {
+        if (isArray(pw)){
+          pw.push(_filters[""])
+        } else {
+          pw = _filters[""]
+        }
+      }
 
       if (pw.length > 0) {
         var wh = ["and"].concat(pw)
@@ -1275,6 +1350,7 @@ export function generate_koob_sql(_cfg, _vars) {
 
   if (fw.length > 0) {
     where = `\nWHERE ${fw}`
+    part_where = fw
   }
   
   
@@ -1286,7 +1362,10 @@ export function generate_koob_sql(_cfg, _vars) {
   //console.log("SORT:", JSON.stringify(_cfg["sort"]))
   var order_by = _cfg["sort"].map(el => eval_lisp(el, order_by_context))
 
-  var from = reports_get_table_sql(target_db_type, `${_cfg["ds"]}.${_cfg["cube"]}`)
+  var cube_query_template = reports_get_table_sql(target_db_type, `${_cfg["ds"]}.${_cfg["cube"]}`)
+
+  //console.log("SQL:", JSON.stringify(cube_query_template))
+  var from = cube_query_template.query
 
   // FIXME: USE FLAVORS FOR Oracle & MS SQL
   var limit = isNumber(_cfg["limit"]) ? ` LIMIT ${_cfg["limit"]}` : ''
@@ -1479,7 +1558,14 @@ export function generate_koob_sql(_cfg, _vars) {
     order_by = order_by.length ? "\nORDER BY ".concat(order_by.join(', ')) : ''
     group_by = group_by.length ? "\nGROUP BY ".concat(group_by.join(', ')) : ''
 
-    return `${select}\nFROM ${from}${where}${group_by}${order_by}${limit}${offset}${ending}`
+    if (cube_query_template.is_template) {
+      // надо подставить WHERE аккуратно
+      let re = /\$\{filters\}/gi;
+      let processed_from = from.replace(re, part_where);
+      return `${select}\nFROM ${processed_from}${group_by}${order_by}${limit}${offset}${ending}`
+    } else {
+      return `${select}\nFROM ${from}${where}${group_by}${order_by}${limit}${offset}${ending}`
+    }
   }
 
 }
