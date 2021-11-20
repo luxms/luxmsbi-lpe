@@ -52,7 +52,7 @@ FROM fot_out AS fot_out
 HAVING (hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
 )
 ORDER BY perda, lead DESC LIMIT 100 OFFSET 10
-SETTINGS max_threads = 12`
+SETTINGS max_threads = 1`
          );
 
   });
@@ -85,7 +85,7 @@ HAVING (hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND (pay_code = 'Не 
 ORDER BY fot_out.group_pay_name, fot_out.hcode_name
 )
 ORDER BY perda, lead DESC LIMIT 100 OFFSET 10
-SETTINGS max_threads = 12`
+SETTINGS max_threads = 1`
           );
  
    });
@@ -117,7 +117,7 @@ HAVING (hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND (group_pay_name = 
 ORDER BY pay_code, fot_out.hcode_name
 )
 ORDER BY perda, lead DESC LIMIT 100 OFFSET 10
-SETTINGS max_threads = 12`
+SETTINGS max_threads = 1`
             );
      });
 
@@ -140,7 +140,7 @@ FROM fot_out AS fot_out
 WHERE (fot_out.hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND (fot_out.group_pay_name = 'Не задано') AND (fot_out.pay_code = 'Не задано') AND (fot_out.pay_name = 'Не задано') AND (fot_out.sex_code IS NULL)
 GROUP BY pay_code, fot_out.hcode_name
 ORDER BY perda LIMIT 100 OFFSET 10
-SETTINGS max_threads = 12`
+SETTINGS max_threads = 1`
             );
    });
 
@@ -161,7 +161,29 @@ SETTINGS max_threads = 12`
 FROM fot_out AS fot_out
 WHERE (fot_out.hcode_name > '2019-01-01') AND ((dictGet('gpn.group_pay_dict', 'some_real_field', tuple(pay_code))) IN ('2019-01-01', '2020-03-01')) AND (fot_out.group_pay_name = 'Не задано') AND (fot_out.pay_code = 'Не задано') AND (fot_out.pay_name = 'Не задано') AND (fot_out.sex_code IS NULL)
 GROUP BY fot_out.hcode_name LIMIT 100 OFFSET 10
-SETTINGS max_threads = 12`
+SETTINGS max_threads = 1`
+            );
+   });
+
+
+
+   it('should eval KOOB TEMPLATE except', function() {
+      assert.equal( lpe.generate_koob_sql(
+         {"columns":[
+                     "count(v_rel_pp):sum",
+                     'hcode_name'
+                  ],
+         "filters":{"hcode_name": [">","2019-01-01"],
+                     "pay_title": ["=", "2019-01-01", "2020-03-01"]},
+         "limit": 100,
+         "offset": 10,
+         "with":"ch.fot_out"},
+               {"_target_database": "clickhouse"}),
+   `SELECT toUInt32(count(fot_out.v_rel_pp)) as "sum", fot_out.hcode_name as "hcode_name"
+FROM fot_out AS fot_out
+WHERE (fot_out.hcode_name > '2019-01-01') AND ((dictGet('gpn.group_pay_dict', 'some_real_field', tuple(pay_code))) IN ('2019-01-01', '2020-03-01')) AND (fot_out.group_pay_name = 'Не задано') AND (fot_out.pay_code = 'Не задано') AND (fot_out.pay_name = 'Не задано') AND (fot_out.sex_code IS NULL)
+GROUP BY fot_out.hcode_name LIMIT 100 OFFSET 10
+SETTINGS max_threads = 1`
             );
    });
 

@@ -6873,7 +6873,13 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
   _context['ilike'] = function (col, tmpl) {
     if (shouldQuote(col, tmpl)) tmpl = quoteLiteral(tmpl);
-    return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), " ILIKE ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _context));
+
+    if (_vars["_target_database"] === 'clickhouse') {
+      // FIXME: detect column type !!!
+      return "toString(".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), ") ILIKE ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _context));
+    } else {
+      return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), " ILIKE ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _context));
+    }
   };
 
   _context['ilike'].ast = [[], {}, [], 1]; // mark as macro
@@ -7230,6 +7236,70 @@ function get_all_member_filters(_cfg, columns, _filters) {
 
   return _filters;
 }
+/* возвращает все или некоторые фильтры в виде массива
+если указаны required_columns и negate == falsy, то возвращает фильтры, соответсвующие required_columns
+если указаны required_columns и negate == trufy, то возвращает все, кроме указанных в required_columns фильтров
+Это спец. функционал для апробации
+*/
+
+
+function get_filters_array(context, filters_array, cube, required_columns, negate) {
+  var comparator = function comparator(k) {
+    return k !== "";
+  };
+
+  var second_time = false;
+
+  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(required_columns) && required_columns.length > 0) {
+    second_time = true; // for templates, which will process _cfg second time!!!
+
+    required_columns = required_columns.map(function (el) {
+      return cube + '.' + el;
+    });
+
+    if (negate) {
+      comparator = function comparator(k) {
+        return k !== "" && !required_columns.includes(k);
+      };
+    } else {
+      comparator = function comparator(k) {
+        return k !== "" && required_columns.includes(k);
+      };
+    }
+  }
+
+  var ret = filters_array.map(function (_filters) {
+    var part_where = null;
+    var pw = Object.keys(_filters).filter(function (k) {
+      return comparator(k);
+    }).map(function (key) {
+      if (!second_time) {
+        var a = _filters[key].splice(1, 0, ["column", key]);
+      }
+
+      return _filters[key];
+    });
+
+    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(_filters[""])) {
+      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(pw)) {
+        pw.push(_filters[""]);
+      } else {
+        pw = _filters[""];
+      }
+    }
+
+    if (pw.length > 0) {
+      var wh = ["and"].concat(pw); //console.log("WHERE", wh)        
+
+      part_where = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(wh, context);
+    }
+
+    return part_where;
+  }).filter(function (el) {
+    return el !== null && el.length > 0;
+  });
+  return ret;
+}
 /* Добавляем ключ "_aliases", чтобы можно было легко найти столбец по алиасу */
 
 
@@ -7562,34 +7632,7 @@ function generate_koob_sql(_cfg, _vars) {
   } //_context[0]["column"] - это функция для резолва столбца в его текстовое представление
 
 
-  filters_array = filters_array.map(function (_filters) {
-    var part_where = null;
-    var pw = Object.keys(_filters).filter(function (k) {
-      return k !== "";
-    }).map(function (key) {
-      var a = _filters[key].splice(1, 0, ["column", key]);
-
-      return _filters[key];
-    });
-
-    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(_filters[""])) {
-      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(pw)) {
-        pw.push(_filters[""]);
-      } else {
-        pw = _filters[""];
-      }
-    }
-
-    if (pw.length > 0) {
-      var wh = ["and"].concat(pw); //console.log("WHERE", wh)        
-
-      part_where = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(wh, _context);
-    }
-
-    return part_where;
-  }).filter(function (el) {
-    return el !== null && el.length > 0;
-  }); // access filters
+  filters_array = get_filters_array(_context, filters_array, ''); // access filters
 
   var filters = _context[0]["_access_filters"];
   var ast = []; //console.log("WHERE access filters: ", JSON.stringify(filters))
@@ -7659,7 +7702,7 @@ function generate_koob_sql(_cfg, _vars) {
   var ending = '';
 
   if (_context[0]["_target_database"] === 'clickhouse') {
-    ending = "\nSETTINGS max_threads = 12";
+    ending = "\nSETTINGS max_threads = 1";
   }
 
   var expand_outer_expr = function expand_outer_expr(el) {
@@ -7879,9 +7922,47 @@ function generate_koob_sql(_cfg, _vars) {
     group_by = group_by.length ? "\nGROUP BY ".concat(group_by.join(', ')) : '';
 
     if (cube_query_template.is_template) {
-      // надо подставить WHERE аккуратно
-      var re = /\$\{filters\}/gi;
-      var processed_from = from.replace(re, part_where);
+      var except_replacer = function except_replacer(match, columns_text, offset, string) {
+        var columns = columns_text.split(',');
+        var filters_array = _cfg["filters"];
+
+        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(filters_array)) {
+          filters_array = [filters_array];
+        } else {
+          throw new Error("Can not split OR SQL WHERE into template parts filters(except(...))). Sorry.");
+        } //console.log(JSON.stringify(_cfg["filters"]))
+
+
+        var subst = get_filters_array(_context, filters_array, _cfg.ds + '.' + _cfg.cube, columns, true);
+        return subst;
+      };
+
+      var inclusive_replacer = function inclusive_replacer(match, columns_text, offset, string) {
+        var columns = columns_text.split(',');
+        var filters_array = _cfg["filters"];
+
+        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(filters_array)) {
+          filters_array = [filters_array];
+        } else {
+          throw new Error("Can not split OR SQL WHERE into template parts filters(...). Sorry.");
+        } //console.log(JSON.stringify(_cfg["filters"]))
+
+
+        var subst = get_filters_array(_context, filters_array, _cfg.ds + '.' + _cfg.cube, columns, false);
+        return subst;
+      };
+
+      // надо подставить WHERE аккуратно, это уже посчитано, заменяем ${filters} и ${filters()}
+      var re = /\$\{filters(?:\(\))?\}/gi;
+      var processed_from = from.replace(re, part_where); // ищем except()
+      // FIXME: не делаем access_filters :()
+
+      re = /\$\{filters\(except\(([^\)]*)\)\)\}/gi;
+      processed_from = processed_from.replace(re, except_replacer); // ищем filters(a,v,c)
+      // FIXME: не делаем access_filters :()
+
+      re = /\$\{filters\(([^\)]+)\)\}/gi;
+      processed_from = processed_from.replace(re, inclusive_replacer);
       return "".concat(select, "\nFROM ").concat(processed_from).concat(group_by).concat(order_by).concat(limit).concat(offset).concat(ending);
     } else {
       return "".concat(select, "\nFROM ").concat(from).concat(where).concat(group_by).concat(order_by).concat(limit).concat(offset).concat(ending);

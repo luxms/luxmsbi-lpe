@@ -72,6 +72,7 @@ export function reports_get_column_info(srcId, col) {
           return {"query": `${table_name} ${table_name}`, "is_template": 0}
      }
      return {"query": `${table_name} AS ${table_name}`, "is_template": 0}
+     //return {"query": `${table_name} AS ${table_name}` + '${filters(hcode_name)}', "is_template": 1}
  }
 
 /* should find path to JOIN all tables listed in cubes array */
