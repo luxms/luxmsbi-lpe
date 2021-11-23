@@ -170,8 +170,8 @@ SETTINGS max_threads = 1`
    it('should eval KOOB TEMPLATE except', function() {
       assert.equal( lpe.generate_koob_sql(
          {"columns":[
-                     "count(v_rel_pp):sum",
-                     'hcode_name'
+                     "count(v_rel_pp):'АХТУНГ'",
+                     'hcode_name:AHTUNG'
                   ],
          "filters":{"hcode_name": [">","2019-01-01"],
                      "pay_title": ["=", "2019-01-01", "2020-03-01"]},

@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2021/11/20 17:19:47 */ 
+/** [LPE]  Version: 1.0.0 - 2021/11/23 17:09:56 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -6654,7 +6654,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
 
   _ctx.push(function (key, val, resolveOptions) {
-    //console.log(`WANT to resolve ${key}`, JSON.stringify(resolveOptions));
+    // console.log(`WANT to resolve ${key} ${val}`, JSON.stringify(resolveOptions));
     // вызываем функцию column(ПолноеИмяСтолбца) если нашли столбец в дефолтном кубе
     if (_context["_columns"][key]) return _context["column"](key);
     if (_context["_columns"][default_ds][default_cube][key]) return _context["column"]("".concat(default_ds, ".").concat(default_cube, ".").concat(key)); // reference to alias!
@@ -6760,8 +6760,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
         sensitivity: 'accent'
       }) === 0) {
         // we have just column name, prepend table alias !
-        //return `${c.sql_query}`
-        return "".concat(parts[1], ".").concat(c.sql_query);
+        return "".concat(c.sql_query); // temporarily disabled by DIMA FIXME
+        //return `${parts[1]}.${c.sql_query}`
       } else {
         //console.log(`OPANKI: ${c.sql_query}`)
         // FIXME: WE JSUT TRY TO match getDict, if ANY. there should be a better way!!!
@@ -6893,9 +6893,16 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
   _context[':'] = function (o, n) {
     //var a = Array.prototype.slice.call(arguments);
-    //console.log(":   " + JSON.stringify(o));
+    //console.log(":   " + JSON.stringify(o) + ` ${JSON.stringify(n)}`);
     //return a[0] + ' as ' + a[1].replace(/"/,'\\"');
-    //console.log("AS   " + JSON.stringify(_ctx));
+    // если нам придёт вот такое "count(v_rel_pp):'АХТУНГ'",
+    var al = n;
+
+    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(n) && n[0] == "'" || n[0] == '"') {
+      al = n[1];
+    } //console.log("AS   " + JSON.stringify(_ctx));
+
+
     var otext = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(o, _ctx);
 
     if (_context["_result"]) {
@@ -6904,9 +6911,9 @@ function init_koob_context(_vars, default_ds, default_cube) {
       // также есть outer_alias для оконных функций, мы его поменяем!!!
       if (_context["_result"]["outer_alias"]) {
         _context["_result"]["alias"] = _context["_result"]["outer_alias"];
-        _context["_result"]["outer_alias"] = n;
+        _context["_result"]["outer_alias"] = al;
       } else {
-        _context["_result"]["alias"] = n;
+        _context["_result"]["alias"] = al;
       }
 
       return otext;
@@ -7606,7 +7613,7 @@ function generate_koob_sql(_cfg, _vars) {
     throw new Error("Default cube must be specified in with key");
   }
 
-  _context = init_koob_context(_context, _cfg["ds"], _cfg["cube"]); //console.log("NORMALIZED CONFIG FILTERS: ", JSON.stringify(_cfg["filters"]))
+  _context = init_koob_context(_context, _cfg["ds"], _cfg["cube"]); //console.log("NORMALIZED CONFIG FILTERS: ", JSON.stringify(_cfg))
   //console.log("NORMALIZED CONFIG COLUMNS: ", JSON.stringify(_cfg["columns"]))
 
   /*
@@ -7655,7 +7662,8 @@ function generate_koob_sql(_cfg, _vars) {
   });
 
   _context[0]["_result"] = null;
-  _cfg["_aliases"] = _context[0]["_aliases"];
+  _cfg["_aliases"] = _context[0]["_aliases"]; //console.log("ALIASES" + JSON.stringify(_cfg["_aliases"]))
+
   var has_window = null;
 
   for (var i = 0; i < columns.length; i++) {
@@ -8145,6 +8153,11 @@ function generate_koob_sql(_cfg, _vars) {
 
 
         var subst = get_filters_array(_context, filters_array, _cfg.ds + '.' + _cfg.cube, columns, true);
+
+        if (subst.length == 0) {
+          return "1=1";
+        }
+
         return subst;
       };
 
@@ -8160,6 +8173,11 @@ function generate_koob_sql(_cfg, _vars) {
 
 
         var subst = get_filters_array(_context, filters_array, _cfg.ds + '.' + _cfg.cube, columns, false);
+
+        if (subst.length == 0) {
+          return "1=1";
+        }
+
         return subst;
       };
 
