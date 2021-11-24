@@ -97,7 +97,8 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
   var parts = cube_prefix.split('.')
   var ds = parts[0]
   var cube = parts[1]
-  var ret = {"ds":ds, "cube":cube, "filters":{}, "having":{}, "columns":[], "sort": [], "limit": _cfg["limit"], "offset": _cfg["offset"]}
+  var ret = {"ds":ds, "cube":cube, "filters":{}, "having":{}, "columns":[], "sort": [], 
+  "limit": _cfg["limit"], "offset": _cfg["offset"], "subtotals": _cfg["subtotals"]}
   var aliases = {}
 
   if (_cfg["distinct"]) ret["distinct"]=[]
@@ -1601,7 +1602,23 @@ export function generate_koob_sql(_cfg, _vars) {
     }).join(', '))
 
     order_by = order_by.length ? "\nORDER BY ".concat(order_by.join(', ')) : ''
-    group_by = group_by.length ? "\nGROUP BY ".concat(group_by.join(', ')) : ''
+
+    if (group_by.length == 0) {
+      group_by = ''
+    } else {
+      if (_cfg["subtotals"] === 'cube') {
+        if (_context[0]["_target_database"]==='clickhouse') {
+          group_by =`\nGROUP BY ${group_by.join(', ')} WITH CUBE`
+        } else {
+          // postgresql
+          group_by =`\nGROUP BY CUBE (${group_by.join(', ')})`
+        }
+
+      } else {
+        group_by ="\nGROUP BY ".concat(group_by.join(', '))
+      }
+    }
+
 
     if (cube_query_template.is_template) {
       // надо подставить WHERE аккуратно, это уже посчитано, заменяем ${filters} и ${filters()}

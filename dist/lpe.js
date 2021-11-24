@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2021/11/24 14:52:00 */ 
+/** [LPE]  Version: 1.0.0 - 2021/11/24 16:12:48 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -6470,7 +6470,8 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
     "columns": [],
     "sort": [],
     "limit": _cfg["limit"],
-    "offset": _cfg["offset"]
+    "offset": _cfg["offset"],
+    "subtotals": _cfg["subtotals"]
   };
   var aliases = {};
   if (_cfg["distinct"]) ret["distinct"] = [];
@@ -8138,7 +8139,21 @@ function generate_koob_sql(_cfg, _vars) {
       }
     }).join(', '));
     order_by = order_by.length ? "\nORDER BY ".concat(order_by.join(', ')) : '';
-    group_by = group_by.length ? "\nGROUP BY ".concat(group_by.join(', ')) : '';
+
+    if (group_by.length == 0) {
+      group_by = '';
+    } else {
+      if (_cfg["subtotals"] === 'cube') {
+        if (_context[0]["_target_database"] === 'clickhouse') {
+          group_by = "\nGROUP BY ".concat(group_by.join(', '), " WITH CUBE");
+        } else {
+          // postgresql
+          group_by = "\nGROUP BY CUBE (".concat(group_by.join(', '), ")");
+        }
+      } else {
+        group_by = "\nGROUP BY ".concat(group_by.join(', '));
+      }
+    }
 
     if (cube_query_template.is_template) {
       var except_replacer = function except_replacer(match, columns_text, offset, string) {

@@ -177,6 +177,7 @@ SETTINGS max_threads = 1`
                      "pay_title": ["=", "2019-01-01", "2020-03-01"]},
          "limit": 100,
          "offset": 10,
+         "subtotals":"cube",
          "with":"ch.fot_out"},
                {"_target_database": "clickhouse"}),
    `SELECT toUInt32(count(fot_out.v_rel_pp)) as "sum", fot_out.hcode_name as "hcode_name"
