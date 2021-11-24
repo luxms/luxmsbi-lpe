@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2021/11/23 17:09:56 */ 
+/** [LPE]  Version: 1.0.0 - 2021/11/24 14:52:00 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -8183,8 +8183,14 @@ function generate_koob_sql(_cfg, _vars) {
 
       // надо подставить WHERE аккуратно, это уже посчитано, заменяем ${filters} и ${filters()}
       var re = /\$\{filters(?:\(\))?\}/gi;
-      var processed_from = from.replace(re, part_where); // ищем except()
-      // FIXME: не делаем access_filters :()
+      var processed_from = from.replace(re, part_where); // access_filters
+
+      if (access_where.length == 0) {
+        access_where = '1=1';
+      }
+
+      var re = /\$\{access_filters(?:\(\))?\}/gi;
+      var processed_from = processed_from.replace(re, access_where); // ищем except()
 
       re = /\$\{filters\(except\(([^\)]*)\)\)\}/gi;
       processed_from = processed_from.replace(re, except_replacer); // ищем filters(a,v,c)
