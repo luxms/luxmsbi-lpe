@@ -6732,10 +6732,22 @@ function init_koob_context(_vars, default_ds, default_cube) {
     var pnt = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(point, _context); // point as first argument
 
     var poly = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(ast[1], _context);
-    return "pointInPolygon(".concat(pnt, ", [").concat(poly, "])");
+
+    if (_context._target_database === 'clickhouse') {
+      return "pointInPolygon(".concat(pnt, ", [").concat(poly, "])");
+    } else if (_context._target_database === 'postgresql') {
+      // circle '((0,0),2)' @> point '(1,1)'        	polygon '((0,0),(1,1))'
+      return "polygon '(".concat(poly, ")' @> point").concat(pnt);
+    } else {
+      throw Error("pointInPolygon is not supported in ".concat(_context._target_database));
+    }
   });
 
   _context['pointInEllipses'] = function () {
+    if (_context._target_database !== 'clickhouse') {
+      throw Error("pointInEllipses is not supported in ".concat(_context._target_database));
+    }
+
     var a = Array.prototype.slice.call(arguments);
 
     if ((a.length - 2) % 4 != 0) {
@@ -6745,12 +6757,37 @@ function init_koob_context(_vars, default_ds, default_cube) {
     return "pointInEllipses(".concat(a.join(','), ")");
   };
 
+  _context['pointInCircle'] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["f" /* makeSF */])(function (ast, ctx) {
+    // ["lat","lng", 0,0,R]
+    var point = ast[0];
+    var x = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(ast[0], ctx); // point x
+
+    var y = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(ast[1], ctx);
+    var cx = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(ast[2], ctx); // center of circle 
+
+    var cy = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(ast[3], ctx); // center of circle 
+
+    var R = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(ast[4], ctx);
+
+    if (_context._target_database === 'clickhouse') {
+      return "pointInEllipses(".concat(x, ",").concat(y, ",").concat(cx, ",").concat(cy, ",").concat(R, ",").concat(R, ")");
+    } else if (_context._target_database === 'postgresql') {
+      return "circle(point(".concat(cx, ",").concat(cy, "),").concat(R, ") @> point(").concat(x, ",").concat(y, ")");
+    } else {
+      throw Error("pointInPolygon is not supported in ".concat(_context._target_database));
+    }
+  });
+
   _context['()'] = function (a) {
     return "(".concat(a, ")");
   };
 
   _context['tuple'] = function (first, second) {
-    return "tuple(".concat(first, ",").concat(second, ")");
+    if (_context._target_database === 'clickhouse') {
+      return "tuple(".concat(first, ",").concat(second, ")");
+    } else {
+      return "(".concat(first, ",").concat(second, ")");
+    }
   };
 
   _context['expr'] = function (a) {
@@ -7286,13 +7323,16 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
       }
 
       return _filters[key];
-    });
+    }); // условия по пустому ключу "" подставляем только если у нас генерация полного условия WHERE,
+    // а если это filter(col1,col2) то не надо
 
-    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(_filters[""])) {
-      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(pw)) {
-        pw.push(_filters[""]);
-      } else {
-        pw = _filters[""];
+    if (required_columns === undefined || negate === true) {
+      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(_filters[""])) {
+        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(pw)) {
+          pw.push(_filters[""]);
+        } else {
+          pw = _filters[""];
+        }
       }
     }
 

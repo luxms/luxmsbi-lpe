@@ -548,13 +548,25 @@ function init_koob_context(_vars, default_ds, default_cube) {
     //console.log(JSON.stringify(ast))
     // [["tuple","lat","lng"],["[",["tuple",0,0],["tuple",0,1],["tuple",1,0],["tuple",1,1]]]
     var point = ast[0]
+
     var pnt = eval_lisp(point,_context) // point as first argument
     
-    var poly = eval_lisp(ast[1],_context) 
-    return `pointInPolygon(${pnt}, [${poly}])`
+    var poly = eval_lisp(ast[1],_context)
+    if (_context._target_database === 'clickhouse'){
+      return `pointInPolygon(${pnt}, [${poly}])`
+    } else if (_context._target_database === 'postgresql'){
+      // circle '((0,0),2)' @> point '(1,1)'        	polygon '((0,0),(1,1))'
+      return `polygon '(${poly})' @> point${pnt}`
+    } else {
+      throw Error(`pointInPolygon is not supported in ${_context._target_database}`)
+    }
   })
 
   _context['pointInEllipses'] = function() {
+    if (_context._target_database !== 'clickhouse'){
+      throw Error(`pointInEllipses is not supported in ${_context._target_database}`)
+    }
+
     var a = Array.prototype.slice.call(arguments)
     if ( (a.length - 2) % 4 != 0) {
       throw Error(`pointInEllipses should contain correct number of coordinates!`)
@@ -562,12 +574,34 @@ function init_koob_context(_vars, default_ds, default_cube) {
     return `pointInEllipses(${a.join(',')})`
   }
 
+  _context['pointInCircle'] = makeSF( (ast,ctx) => {
+    // ["lat","lng", 0,0,R]
+    var point = ast[0]
+
+    var x = eval_lisp(ast[0],ctx) // point x
+    var y = eval_lisp(ast[1],ctx)
+    var cx = eval_lisp(ast[2],ctx) // center of circle 
+    var cy = eval_lisp(ast[3],ctx) // center of circle 
+    var R = eval_lisp(ast[4],ctx) 
+    if (_context._target_database === 'clickhouse'){
+      return `pointInEllipses(${x},${y},${cx},${cy},${R},${R})`
+    } else if (_context._target_database === 'postgresql'){
+      return `circle(point(${cx},${cy}),${R}) @> point(${x},${y})`
+    } else {
+      throw Error(`pointInPolygon is not supported in ${_context._target_database}`)
+    }
+  })
+
   _context['()'] = function(a) {
     return `(${a})`
   }
 
   _context['tuple'] = function(first, second) {
-    return `tuple(${first},${second})`
+    if (_context._target_database === 'clickhouse'){
+      return `tuple(${first},${second})`
+    } else {
+      return `(${first},${second})`
+    }
   }
 
   _context['expr'] = function(a) {
@@ -1049,12 +1083,15 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
                   }
                   return _filters[key]
                 });
-      
-      if (isArray(_filters[""])) {
-        if (isArray(pw)){
-          pw.push(_filters[""])
-        } else {
-          pw = _filters[""]
+      // условия по пустому ключу "" подставляем только если у нас генерация полного условия WHERE,
+      // а если это filter(col1,col2) то не надо
+      if (required_columns === undefined || negate === true) {
+        if (isArray(_filters[""])) {
+          if (isArray(pw)){
+            pw.push(_filters[""])
+          } else {
+            pw = _filters[""]
+          }
         }
       }
 
