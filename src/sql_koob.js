@@ -97,8 +97,11 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
   var parts = cube_prefix.split('.')
   var ds = parts[0]
   var cube = parts[1]
-  var ret = {"ds":ds, "cube":cube, "filters":{}, "having":{}, "columns":[], "sort": [], 
-  "limit": _cfg["limit"], "offset": _cfg["offset"], "subtotals": _cfg["subtotals"]}
+  var ret = {
+    "ds":ds, "cube":cube, "filters":{}, "having":{}, "columns":[], "sort": [], 
+    "limit": _cfg["limit"], "offset": _cfg["offset"], "subtotals": _cfg["subtotals"],
+    "options": isArray(_cfg["options"]) ? _cfg["options"] : []
+  }
   var aliases = {}
 
   if (_cfg["distinct"]) ret["distinct"]=[]
@@ -544,6 +547,36 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
   })
 
+  // Clickhouse way.... will create extra dataset
+  // range(end), range([start, ] end [, step])
+  // Returns an array of UInt numbers from start to end - 1 by step.
+  // either 1 or 3 args !!!
+  _context['range'] = function(from, to, step) {
+    if (_context._target_database === 'clickhouse'){
+      if (to === undefined) {
+        return `ArrayJoin(range(${from}))`
+      } else {
+        if (step === undefined){
+          return `ArrayJoin(range(${from},${to}))`
+        } else {
+          return `ArrayJoin(range(${from},${to}, ${step}))`
+        }
+      }
+    } else if (_context._target_database === 'postgresql'){
+      if (to === undefined) {
+        return `generate_series(0, ${from}-1)`
+      } else {
+        if (step === undefined){
+          return `generate_series(${from}, ${to}-1)`
+        } else {
+          return `generate_series(${from}, ${to}-1, ${step})`
+        }
+      }
+    } else {
+      throw Error(`pointInPolygon is not supported in ${_context._target_database}`)
+    }
+  }
+
   _context['pointInPolygon'] = makeSF( (ast,ctx) => {
     //console.log(JSON.stringify(ast))
     // [["tuple","lat","lng"],["[",["tuple",0,0],["tuple",0,1],["tuple",1,0],["tuple",1,1]]]
@@ -946,7 +979,43 @@ function  inject_all_member_filters(_cfg, columns) {
   return _cfg;
 }
 
+function inject_parallel_hierarchy_filters(_cfg, columns) {
+  /* _cfg.filters может быть {} а может быть [{},{}] и тут у нас дикий код */
+  var processed = {}
+  if (isHash(_cfg["filters"])){
+    _cfg["filters"] = get_parallel_hierarchy_filters(_cfg, columns, _cfg["filters"]);
+  } else if (isArray(_cfg["filters"])){
+    _cfg["filters"] = _cfg["filters"].map(obj => get_parallel_hierarchy_filters(_cfg, columns, obj))
+  }
+  return _cfg;
+}
 
+
+function get_parallel_hierarchy_filters(_cfg, columns, _filters) {
+
+//console.log("FILTERS", JSON.stringify(_filters))
+//console.log("columns", JSON.stringify(columns))
+  // Ищем dimensions, у которых тип parallel и они ещё не указаны в фильтрах
+  // ПО ВСЕМ СТОЛБАМ!!!
+  Object.values(columns).map(el => {
+    if (isHash(el.config)) {
+      // если это параллельный дименшн и нет явно фильтра по нему
+      if (el.config.hierarchyType === 'parallel' && !isArray(_filters[el.id])){
+        _filters[el.id] = ["=",el.config.defaultValue]
+      }
+    }
+  })
+  return _filters;
+}
+
+
+/*
+Если у нас есть group by, то используем memeberALL,
+
+Потом, к тем фильтрам, которые получились, добавляем фильтры по столбцам, где есть ключ "hierarchy_type":"parallel"
+и делаем фильтр "default_value", НО ТОЛЬКО ЕСЛИ В ЗАПРОСЕ НЕТУ КЛЮЧА "distinct": "force"
+
+*/
 
 function get_all_member_filters(_cfg, columns, _filters) {
   var processed = {} // лучше его использовать как аккумулятор для накопления ответа, это вам не Clojure!
@@ -1316,9 +1385,17 @@ export function generate_koob_sql(_cfg, _vars) {
    Для указанных явно дименшенов доп. условий не требуется, клиент сам будет разбираться с результатом
   */
 
+
+  var cube_query_template = reports_get_table_sql(target_db_type, `${_cfg["ds"]}.${_cfg["cube"]}`)
+
   /* Если есть хотя бы один явный столбец group_by, а иначе, если просто считаем агрегаты по всей таблице без группировки по столбцам */
-  if (_cfg["_group_by"].length > 0 || _cfg["_measures"].length > 0) {
+  
+  if (_cfg["options"].includes('!MemberALL') === false && (_cfg["_group_by"].length > 0 || _cfg["_measures"].length > 0)) {
     _cfg = inject_all_member_filters(_cfg, _context[0]["_columns"])
+  }
+
+  if (_cfg["options"].includes('!ParallelHierarchyFilters') === false) {
+    _cfg = inject_parallel_hierarchy_filters(_cfg, _context[0]["_columns"])
   }
 
   // at this point we will have something like this:
@@ -1444,8 +1521,6 @@ export function generate_koob_sql(_cfg, _vars) {
   var order_by_context = extend_context_for_order_by(_context, _cfg)
   //console.log("SORT:", JSON.stringify(_cfg["sort"]))
   var order_by = _cfg["sort"].map(el => eval_lisp(el, order_by_context))
-
-  var cube_query_template = reports_get_table_sql(target_db_type, `${_cfg["ds"]}.${_cfg["cube"]}`)
 
   //console.log("SQL:", JSON.stringify(cube_query_template))
   var from = cube_query_template.query
@@ -1657,7 +1732,7 @@ export function generate_koob_sql(_cfg, _vars) {
     }
 
 
-    if (cube_query_template.is_template) {
+    if (cube_query_template.config.is_template) {
       // надо подставить WHERE аккуратно, это уже посчитано, заменяем ${filters} и ${filters()}
       var re = /\$\{filters(?:\(\))?\}/gi;
       var processed_from = from.replace(re, part_where);

@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2021/11/25 10:07:39 */ 
+/** [LPE]  Version: 1.0.0 - 2021/12/08 19:04:46 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -1745,11 +1745,11 @@ __webpack_require__(96)('asyncIterator');
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "c", function() { return isArray; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return isArray; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "d", function() { return isString; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "e", function() { return isNumber; });
 /* unused harmony export isBoolean */
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return isHash; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "c", function() { return isHash; });
 /* unused harmony export isFunction */
 /* unused harmony export makeMacro */
 /* harmony export (immutable) */ __webpack_exports__["f"] = makeSF;
@@ -3522,13 +3522,17 @@ function reports_get_table_sql(target_db_type, tbl) {
   if (target_db_type === 'oracle') {
     return {
       "query": "".concat(table_name, " ").concat(table_name),
-      "is_template": 0
+      "config": {
+        "is_template": 0
+      }
     };
   }
 
   return {
     "query": "".concat(table_name, " AS ").concat(table_name),
-    "is_template": 0 //return {"query": `${table_name} AS ${table_name}` + '${filters(hcode_name)}', "is_template": 1}
+    "config": {
+      "is_template": 0
+    } //return {"query": `${table_name} AS ${table_name}` + '${filters(hcode_name)}', "config": {"is_template": 1}}
 
   };
 }
@@ -6471,7 +6475,8 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
     "sort": [],
     "limit": _cfg["limit"],
     "offset": _cfg["offset"],
-    "subtotals": _cfg["subtotals"]
+    "subtotals": _cfg["subtotals"],
+    "options": __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isArray */])(_cfg["options"]) ? _cfg["options"] : []
   };
   var aliases = {};
   if (_cfg["distinct"]) ret["distinct"] = [];
@@ -6485,7 +6490,7 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
   }; // для фильтров заменяем ключи на полные имена
 
 
-  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(_cfg["filters"])) {
+  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isHash */])(_cfg["filters"])) {
     Object.keys(_cfg["filters"]).filter(function (k) {
       return k !== "";
     }).map(function (key) {
@@ -6495,11 +6500,11 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
   } // для фильтров заменяем ключи на полные имена, но у нас может быть массив [{},{}]
 
 
-  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(_cfg["filters"])) {
+  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isArray */])(_cfg["filters"])) {
     var processed = _cfg["filters"].map(function (obj) {
       var result = {};
 
-      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(obj)) {
+      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isHash */])(obj)) {
         Object.keys(obj).filter(function (k) {
           return k !== "";
         }).map(function (key) {
@@ -6515,7 +6520,7 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
   } // probably we should use aliased columns a AS b!!
 
 
-  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(_cfg["having"])) {
+  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isArray */])(_cfg["having"])) {
     Object.keys(_cfg["having"]).filter(function (k) {
       return k !== "";
     }).map(function (key) {
@@ -6526,7 +6531,7 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
   // FIXME: может быть лучше перейти на ORDER BY 2, 1 DESC, 4 ???? 
 
 
-  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(_cfg["sort"])) {
+  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isArray */])(_cfg["sort"])) {
     ret["sort"] = _cfg["sort"].map(function (el) {
       if (Array.isArray(el)) {
         if (el.length === 2) {
@@ -6591,7 +6596,7 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
 
 
   ret["columns"] = _cfg["columns"].map(function (el) {
-    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(el)) {
+    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isHash */])(el)) {
       return [":", expand_column_expression(Object.values(el)[0]), Object.keys(el)[0]];
     } else {
       return expand_column_expression(el);
@@ -6611,7 +6616,7 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
 function init_koob_context(_vars, default_ds, default_cube) {
   var _ctx = []; // это контекст где будет сначала список переменных, включая _columns, и функции
 
-  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(_vars)) {
+  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isHash */])(_vars)) {
     _ctx = [_vars];
   }
 
@@ -6619,7 +6624,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
   // а по типу можно уже думать, квотировать значения или нет.
 
   var shouldQuote = function shouldQuote(col, v) {
-    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(col) && col[0] === 'column') {
+    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isArray */])(col) && col[0] === 'column') {
       //try to detect column type
       var c = _context["_columns"][col[1]];
 
@@ -6646,7 +6651,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
   };
 
   var quoteLiteral = function quoteLiteral(lit) {
-    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isString */])(lit) || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["e" /* isNumber */])(lit) || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(lit) && lit[0] !== "ql") {
+    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isString */])(lit) || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["e" /* isNumber */])(lit) || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isArray */])(lit) && lit[0] !== "ql") {
       return ["ql", lit];
     }
 
@@ -6662,7 +6667,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     //console.log("DO WE HAVE SUCH ALIAS?" , JSON.stringify(_context["_aliases"]))
 
     if (_context["_aliases"][key]) {
-      if (!__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(_context["_result"]["columns"])) {
+      if (!__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isArray */])(_context["_result"]["columns"])) {
         _context["_result"]["columns"] = [];
       } // remeber reference to alias as column name!
 
@@ -6725,9 +6730,9 @@ function init_koob_context(_vars, default_ds, default_cube) {
     } // We may have references to yet unresolved aliases....
 
 
-    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(_context["_result"])) {
+    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isHash */])(_context["_result"])) {
       if (key.match(/^[A-Za-z_]+\w*$/)) {
-        if (!__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(_context["_result"]["unresolved_aliases"])) {
+        if (!__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isArray */])(_context["_result"]["unresolved_aliases"])) {
           _context["_result"]["unresolved_aliases"] = [];
         }
 
@@ -6865,7 +6870,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
       // in this case we provide placeholder...
       var init = _context["_aliases"][colname];
 
-      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(init) && init["alias"]) {
+      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isHash */])(init) && init["alias"]) {
         _context["_result"]["outer_expr"] = "finalizeAggregation(".concat(init["alias"], ")");
       } else {
         _context["_result"]["outer_expr"] = "finalizeAggregation(resolve_alias())";
@@ -6886,7 +6891,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     var a = Array.prototype.slice.call(arguments); //console.log("-> !" , JSON.stringify(a))
 
     return a.map(function (el) {
-      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(el) ? __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(el, _ctx) : el;
+      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isArray */])(el) ? __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(el, _ctx) : el;
     }).join('.');
   };
 
@@ -6899,7 +6904,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     // если нам придёт вот такое "count(v_rel_pp):'АХТУНГ'",
     var al = n;
 
-    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(n) && n[0] == "'" || n[0] == '"') {
+    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isArray */])(n) && n[0] == "'" || n[0] == '"') {
       al = n[1];
     } //console.log("AS   " + JSON.stringify(_ctx));
 
@@ -6935,7 +6940,37 @@ function init_koob_context(_vars, default_ds, default_cube) {
     var col = ast[0];
     var c = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context);
     return "toString(".concat(c, ")");
-  });
+  }); // Clickhouse way.... will create extra dataset
+  // range(end), range([start, ] end [, step])
+  // Returns an array of UInt numbers from start to end - 1 by step.
+  // either 1 or 3 args !!!
+
+  _context['range'] = function (from, to, step) {
+    if (_context._target_database === 'clickhouse') {
+      if (to === undefined) {
+        return "ArrayJoin(range(".concat(from, "))");
+      } else {
+        if (step === undefined) {
+          return "ArrayJoin(range(".concat(from, ",").concat(to, "))");
+        } else {
+          return "ArrayJoin(range(".concat(from, ",").concat(to, ", ").concat(step, "))");
+        }
+      }
+    } else if (_context._target_database === 'postgresql') {
+      if (to === undefined) {
+        return "generate_series(0, ".concat(from, "-1)");
+      } else {
+        if (step === undefined) {
+          return "generate_series(".concat(from, ", ").concat(to, "-1)");
+        } else {
+          return "generate_series(".concat(from, ", ").concat(to, "-1, ").concat(step, ")");
+        }
+      }
+    } else {
+      throw Error("pointInPolygon is not supported in ".concat(_context._target_database));
+    }
+  };
+
   _context['pointInPolygon'] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["f" /* makeSF */])(function (ast, ctx) {
     //console.log(JSON.stringify(ast))
     // [["tuple","lat","lng"],["[",["tuple",0,0],["tuple",0,1],["tuple",1,0],["tuple",1,1]]]
@@ -7152,7 +7187,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     if (_context["_result"]) {
       var seq = ++_context["_sequence"];
 
-      if (!__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(_context["_result"]["lpe_subtotals"])) {
+      if (!__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isHash */])(_context["_result"]["lpe_subtotals"])) {
         _context["_result"]["lpe_subtotals"] = {};
       } //console.log("AST: ", ast)
       // FIXME: pleaqse check that we have agg func in the AST, overwise we will get SQL errors from the DB
@@ -7318,9 +7353,9 @@ function inject_all_member_filters(_cfg, columns) {
   /* _cfg.filters может быть {} а может быть [{},{}] и тут у нас дикий код */
   var processed = {};
 
-  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(_cfg["filters"])) {
+  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isHash */])(_cfg["filters"])) {
     _cfg["filters"] = get_all_member_filters(_cfg, columns, _cfg["filters"]);
-  } else if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(_cfg["filters"])) {
+  } else if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isArray */])(_cfg["filters"])) {
     _cfg["filters"] = _cfg["filters"].map(function (obj) {
       return get_all_member_filters(_cfg, columns, obj);
     });
@@ -7328,6 +7363,45 @@ function inject_all_member_filters(_cfg, columns) {
 
   return _cfg;
 }
+
+function inject_parallel_hierarchy_filters(_cfg, columns) {
+  /* _cfg.filters может быть {} а может быть [{},{}] и тут у нас дикий код */
+  var processed = {};
+
+  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isHash */])(_cfg["filters"])) {
+    _cfg["filters"] = get_parallel_hierarchy_filters(_cfg, columns, _cfg["filters"]);
+  } else if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isArray */])(_cfg["filters"])) {
+    _cfg["filters"] = _cfg["filters"].map(function (obj) {
+      return get_parallel_hierarchy_filters(_cfg, columns, obj);
+    });
+  }
+
+  return _cfg;
+}
+
+function get_parallel_hierarchy_filters(_cfg, columns, _filters) {
+  //console.log("FILTERS", JSON.stringify(_filters))
+  //console.log("columns", JSON.stringify(columns))
+  // Ищем dimensions, у которых тип parallel и они ещё не указаны в фильтрах
+  // ПО ВСЕМ СТОЛБАМ!!!
+  Object.values(columns).map(function (el) {
+    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isHash */])(el.config)) {
+      // если это параллельный дименшн и нет явно фильтра по нему
+      if (el.config.hierarchyType === 'parallel' && !__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isArray */])(_filters[el.id])) {
+        _filters[el.id] = ["=", el.config.defaultValue];
+      }
+    }
+  });
+  return _filters;
+}
+/*
+Если у нас есть group by, то используем memeberALL,
+
+Потом, к тем фильтрам, которые получились, добавляем фильтры по столбцам, где есть ключ "hierarchy_type":"parallel"
+и делаем фильтр "default_value", НО ТОЛЬКО ЕСЛИ В ЗАПРОСЕ НЕТУ КЛЮЧА "distinct": "force"
+
+*/
+
 
 function get_all_member_filters(_cfg, columns, _filters) {
   var processed = {}; // лучше его использовать как аккумулятор для накопления ответа, это вам не Clojure!
@@ -7349,9 +7423,9 @@ function get_all_member_filters(_cfg, columns, _filters) {
       return; // столбец уже есть в списке group by!
     }
 
-    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(el.config)) {
+    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isHash */])(el.config)) {
       // Если для столбца прописано в конфиге follow=[], и нашего столбца ещё нет в списке фильтров, то надо добавить фильтр
-      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(el.config.follow) && !__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(_filters[el.id])) {
+      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isArray */])(el.config.follow) && !__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isArray */])(_filters[el.id])) {
         var _iteratorNormalCompletion = true;
         var _didIteratorError = false;
         var _iteratorError = undefined;
@@ -7363,7 +7437,7 @@ function get_all_member_filters(_cfg, columns, _filters) {
             var altId = "".concat(_cfg.ds, ".").concat(alt); //console.log(`###checking ${el.config.follow} ${altId}`, JSON.stringify(_filters[el.id]) )
             // По столбцу за которым мы следуем есть условие
 
-            if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(_filters[altId])) {
+            if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isArray */])(_filters[altId])) {
               if (_filters[altId].length == 2) {
                 // у столбца описан memberAll
                 if (columns[altId].config.memberALL === null || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isString */])(columns[altId].config.memberALL) || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["e" /* isNumber */])(columns[altId].config.memberALL)) {
@@ -7402,9 +7476,9 @@ function get_all_member_filters(_cfg, columns, _filters) {
         // есть значение для члена ALL, и оно в виде строки или IS NULL
         // добавляем фильтр, но только если по этому столбцу нет другого фильтра (который задали в конфиге)!!!
         // NOTE: по ключу filters ещё не было нормализации !!! 
-        if (!__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(_filters[el.id])) {
+        if (!__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isArray */])(_filters[el.id])) {
           // Также нужно проверить нет ли уже фильтра по столбцу, который является altId
-          if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(el.config.altDimensions)) {
+          if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isArray */])(el.config.altDimensions)) {
             var _iteratorNormalCompletion2 = true;
             var _didIteratorError2 = false;
             var _iteratorError2 = undefined;
@@ -7422,7 +7496,7 @@ function get_all_member_filters(_cfg, columns, _filters) {
                 } //console.log("ALT", JSON.stringify(altId))
 
 
-                if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(_filters[_altId]) || h[_altId] === true) {
+                if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isArray */])(_filters[_altId]) || h[_altId] === true) {
                   // уже есть условие по столбцу из altId, не добавляем новое условие
                   // но только в том случае, если у нас явно просят этот столбец в выдачу
                   // if ( h[])
@@ -7447,7 +7521,7 @@ function get_all_member_filters(_cfg, columns, _filters) {
           // Если есть дочерние столбцы, то надо проверить нет ли их в GROUP BY или В Фильтрах
 
 
-          if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(el.config.children)) {
+          if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isArray */])(el.config.children)) {
             var _iteratorNormalCompletion3 = true;
             var _didIteratorError3 = false;
             var _iteratorError3 = undefined;
@@ -7463,7 +7537,7 @@ function get_all_member_filters(_cfg, columns, _filters) {
                   _altId2 = "".concat(_cfg.ds, ".").concat(_cfg.cube, ".").concat(_alt2);
                 }
 
-                if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(_filters[_altId2]) || h[_altId2] === true) {
+                if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isArray */])(_filters[_altId2]) || h[_altId2] === true) {
                   // children уже специфицированы, не надо добавлять меня!
                   return;
                 }
@@ -7506,7 +7580,7 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
 
   var second_time = false;
 
-  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(required_columns) && required_columns.length > 0) {
+  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isArray */])(required_columns) && required_columns.length > 0) {
     second_time = true; // for templates, which will process _cfg second time!!!
 
     required_columns = required_columns.map(function (el) {
@@ -7538,8 +7612,8 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
     // а если это filter(col1,col2) то не надо
 
     if (required_columns === undefined || negate === true) {
-      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(_filters[""])) {
-        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(pw)) {
+      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isArray */])(_filters[""])) {
+        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isArray */])(pw)) {
           pw.push(_filters[""]);
         } else {
           pw = _filters[""];
@@ -7620,7 +7694,7 @@ function generate_koob_sql(_cfg, _vars) {
   }
   */
 
-  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(_vars["_data_source"]) && __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isString */])(_vars["_data_source"]["url"])) {
+  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isHash */])(_vars["_data_source"]) && __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isString */])(_vars["_data_source"]["url"])) {
     var url = _vars["_data_source"]["url"];
     var matched = url.match(/^jdbc\:([^:]+)\:/); //console.log(`JSON DATA SOURCE URL MATCHED ${JSON.stringify(matched)}`)
 
@@ -7720,7 +7794,7 @@ function generate_koob_sql(_cfg, _vars) {
   for (var i = 0; i < columns_s.length; i++) {
     // Also, try to resolve unresolved aliases
     //console.log("ITER0 " + JSON.stringify(columns_s[i]))
-    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(columns_s[i]["unresolved_aliases"])) {
+    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isArray */])(columns_s[i]["unresolved_aliases"])) {
       var _iteratorNormalCompletion4 = true;
       var _didIteratorError4 = false;
       var _iteratorError4 = undefined;
@@ -7816,11 +7890,16 @@ function generate_koob_sql(_cfg, _vars) {
     Для указанных явно дименшенов доп. условий не требуется, клиент сам будет разбираться с результатом
   */
 
+
+  var cube_query_template = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_20__utils_utils__["c" /* reports_get_table_sql */])(target_db_type, "".concat(_cfg["ds"], ".").concat(_cfg["cube"]));
   /* Если есть хотя бы один явный столбец group_by, а иначе, если просто считаем агрегаты по всей таблице без группировки по столбцам */
 
-
-  if (_cfg["_group_by"].length > 0 || _cfg["_measures"].length > 0) {
+  if (_cfg["options"].includes('!MemberALL') === false && (_cfg["_group_by"].length > 0 || _cfg["_measures"].length > 0)) {
     _cfg = inject_all_member_filters(_cfg, _context[0]["_columns"]);
+  }
+
+  if (_cfg["options"].includes('!ParallelHierarchyFilters') === false) {
+    _cfg = inject_parallel_hierarchy_filters(_cfg, _context[0]["_columns"]);
   } // at this point we will have something like this:
 
   /*
@@ -7887,7 +7966,7 @@ function generate_koob_sql(_cfg, _vars) {
   var part_where = '1=1';
   var filters_array = _cfg["filters"];
 
-  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(filters_array)) {
+  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isHash */])(filters_array)) {
     filters_array = [filters_array];
   } //_context[0]["column"] - это функция для резолва столбца в его текстовое представление
 
@@ -7900,7 +7979,7 @@ function generate_koob_sql(_cfg, _vars) {
   if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isString */])(filters) && filters.length > 0) {
     var ast = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lpep__["a" /* parse */])("expr(".concat(filters, ")"));
     ast.splice(0, 1, '()'); // replace expr with ()
-  } else if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(filters) && filters.length > 0) {
+  } else if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isArray */])(filters) && filters.length > 0) {
     if (filters[0] === 'expr') {
       filters[0] = '()';
       ast = filters;
@@ -7951,9 +8030,8 @@ function generate_koob_sql(_cfg, _vars) {
 
   var order_by = _cfg["sort"].map(function (el) {
     return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(el, order_by_context);
-  });
+  }); //console.log("SQL:", JSON.stringify(cube_query_template))
 
-  var cube_query_template = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_20__utils_utils__["c" /* reports_get_table_sql */])(target_db_type, "".concat(_cfg["ds"], ".").concat(_cfg["cube"])); //console.log("SQL:", JSON.stringify(cube_query_template))
 
   var from = cube_query_template.query; // FIXME: USE FLAVORS FOR Oracle & MS SQL
 
@@ -8126,7 +8204,7 @@ function generate_koob_sql(_cfg, _vars) {
     var having = where.replace("WHERE", "HAVING");
     var inner_group_by = group_by.length ? "\nGROUP BY ".concat(group_by.join(', ')) : '';
     var inner = "".concat(innerSelect, "\nFROM ").concat(from).concat(inner_group_by).concat(having).concat(inner_order_by);
-    var select = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(_cfg["distinct"]) ? "SELECT DISTINCT " : "SELECT ";
+    var select = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isArray */])(_cfg["distinct"]) ? "SELECT DISTINCT " : "SELECT ";
     select = select.concat(_cfg["_columns"].map(function (el) {
       //console.log('outer1: ' + JSON.stringify(el) + " alias:" + el.alias)
       if (el.outer_alias) {
@@ -8152,7 +8230,7 @@ function generate_koob_sql(_cfg, _vars) {
     order_by = order_by.length ? "\nORDER BY ".concat(order_by.join(', ')) : '';
     return "".concat(select, "\nFROM (\n").concat(inner, "\n)").concat(order_by).concat(limit).concat(offset).concat(ending);
   } else {
-    var select = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isArray */])(_cfg["distinct"]) ? "SELECT DISTINCT " : "SELECT "; // могут быть ньюансы квотации столбцов, обозначения AS и т.д. поэтому каждый участок приводим к LPE и вызываем SQLPE функции с адаптацией под конкретные базы
+    var select = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isArray */])(_cfg["distinct"]) ? "SELECT DISTINCT " : "SELECT "; // могут быть ньюансы квотации столбцов, обозначения AS и т.д. поэтому каждый участок приводим к LPE и вызываем SQLPE функции с адаптацией под конкретные базы
 
     select = select.concat(_cfg["_columns"].map(function (el) {
       // It is only to support dictionaries for Clickhouse!!!
@@ -8195,12 +8273,12 @@ function generate_koob_sql(_cfg, _vars) {
       }
     }
 
-    if (cube_query_template.is_template) {
+    if (cube_query_template.config.is_template) {
       var except_replacer = function except_replacer(match, columns_text, offset, string) {
         var columns = columns_text.split(',');
         var filters_array = _cfg["filters"];
 
-        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(filters_array)) {
+        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isHash */])(filters_array)) {
           filters_array = [filters_array];
         } else {
           throw new Error("Can not split OR SQL WHERE into template parts filters(except(...))). Sorry.");
@@ -8220,7 +8298,7 @@ function generate_koob_sql(_cfg, _vars) {
         var columns = columns_text.split(',');
         var filters_array = _cfg["filters"];
 
-        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(filters_array)) {
+        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isHash */])(filters_array)) {
           filters_array = [filters_array];
         } else {
           throw new Error("Can not split OR SQL WHERE into template parts filters(...). Sorry.");

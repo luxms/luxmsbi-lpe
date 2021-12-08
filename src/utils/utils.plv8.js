@@ -10,7 +10,7 @@ export function db_quote_ident(intxt) {
 
 
 export function reports_get_columns(cubeId) {
-    var r = plv8.execute( 'SELECT id, sql_query, "type", config FROM koob.dimensions WHERE id LIKE $1', [`${cubeId}%`] );
+    var r = plv8.execute( 'SELECT id, sql_query, "type", config FROM koob.dimensions WHERE id LIKE $1', [`${cubeId}.%`] );
     if (r.length > 0) {
         var parts = cubeId.split('.')
 
@@ -50,15 +50,15 @@ export function reports_get_column_info(srcId, col) {
 export function reports_get_table_sql(target_db_type, tbl) {
     // on Error plv8 will generate Exception!
     var id = tbl
-    var rows = plv8.execute( "SELECT sql_query, config->'is_template' as is_template FROM koob.cubes WHERE id = $1", [id] );
+    var rows = plv8.execute( "SELECT sql_query, config FROM koob.cubes WHERE id = $1", [id] );
     if (rows.length > 0) {
         var parts = tbl.split('.')
         var sql = rows[0].sql_query
         if (sql.match(/ /) !== null) sql = `(${sql})` // it's select ... FROM or something like this
         if (target_db_type === 'oracle') {
-            return {"query": `${sql} ${parts[1]}`, "is_template": rows[0].is_template }
+            return {"query": `${sql} ${parts[1]}`, "config": rows[0].config  }
         }
-        return {"query": `${sql} AS ${parts[1]}`, "is_template": rows[0].is_template }
+        return {"query": `${sql} AS ${parts[1]}`, "config": rows[0].config }
     }
     throw new Error("Can not find table description in the koob.cubes for table " + id);
 }
