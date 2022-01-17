@@ -1000,7 +1000,10 @@ function get_parallel_hierarchy_filters(_cfg, columns, _filters) {
   Object.values(columns).map(el => {
     if (isHash(el.config)) {
       // если это параллельный дименшн и нет явно фильтра по нему
-      if (el.config.hierarchyType === 'parallel' && !isArray(_filters[el.id])){
+      //if (el.config.hierarchyType === 'parallel' && !isArray(_filters[el.id])){
+      // если есть значение по умолчанию, и не было явно указано фильтров, то ставим значение по умолчанию
+
+      if (el.config.defaultValue !== undefined && !isArray(_filters[el.id])){
         _filters[el.id] = ["=",el.config.defaultValue]
       }
     }

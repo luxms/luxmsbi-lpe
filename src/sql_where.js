@@ -23,7 +23,7 @@
 import console from './console/console';
 import {parse} from './lpep';
 import {db_quote_literal, db_quote_ident, get_source_database} from './utils/utils';
-import {eval_lisp, isString} from './lisp';
+import {eval_lisp, isString, isArray} from './lisp';
 
 
 /*
@@ -32,6 +32,10 @@ filter - на пустом входе вернёт пустую строку
 */
 
 export function sql_where_context(_vars) {
+
+  // для отслеживания переменных, значения которых отсутствуют для cond
+  // cond('col in $(row.var)', [])
+  var track_undefined_values_for_cond = [];
 
   // try to get datasource Ident
   // table lookup queries should be sending us key named sourceId = historical name!
@@ -68,8 +72,8 @@ export function sql_where_context(_vars) {
         if (o === undefined) {
           o = h['name'];
         }
-        console.log("-: try_to_quote_order_by_column " + JSON.stringify(o));
-        console.log("-: try_to_quote_order_by_column " + (typeof o));
+        //console.log("-: try_to_quote_order_by_column " + JSON.stringify(o));
+        //console.log("-: try_to_quote_order_by_column " + (typeof o));
         if (o !== undefined && o.length > 0) {
           o = o.toString();
           var regExp = new RegExp(/^\w[\w\d]*$/, "i");
@@ -89,7 +93,7 @@ export function sql_where_context(_vars) {
   };
 
   var resolve_literal = function(lit) {
-    console.log('LITERAL ', lit, '  CONTEXT:', _vars[lit]);
+    //console.log('LITERAL ', lit, '  CONTEXT:', _vars[lit]);
     if (_vars[lit] == undefined ) {
       return try_to_quote_column(lit);
     } else {
@@ -99,7 +103,7 @@ export function sql_where_context(_vars) {
   };
 
   var resolve_order_by_literal = function(lit) {
-    console.log('OB LITERAL ', lit, ' CONTEXT:', _vars[lit]);
+    //console.log('OB LITERAL ', lit, ' CONTEXT:', _vars[lit]);
 
     if (_vars[lit] === undefined ) {
       return try_to_quote_order_by_column(lit);
@@ -165,7 +169,7 @@ export function sql_where_context(_vars) {
     if (/'/.test(timestamp)) {
       throw('Wrong timestamp: ' + JSON.stringify(timestamp));
     }
-    console.log("lpe_pg_tstz_at_time_zone" + timestamp);
+    //console.log("lpe_pg_tstz_at_time_zone" + timestamp);
     return "'" + timestamp + "'" + "::timestamptz at time zone '" + zone + "'";
   }
 
@@ -261,7 +265,9 @@ export function sql_where_context(_vars) {
                 ar[0] === "ql" ||
                 ar[0] === "pg_interval" ||
                 ar[0] === "lpe_pg_tstz_at_time_zone" ||
-                ar[0] === "column") {
+                ar[0] === "column" ||
+                ar[0] === "cond"
+                ) {
             return eval_lisp(ar, ctx);
           } else {
               if (ar.length == 2) {
@@ -308,7 +314,7 @@ export function sql_where_context(_vars) {
                   }
                 } else if ( ar[0] == "like" || ar[0] == "in" || ar[0] == "is" || ar[0].match(/^[^\w]+$/)) {
                    // имя функции не начинается с буквы
-                   console.log("PRNT FUNC x F z " + JSON.stringify(ar))
+                   //console.log("PRNT FUNC x F z " + JSON.stringify(ar))
                    // ["~",["column","vNetwork.folder"],"XXX"]
 
                    if (Array.isArray(ar[1]) && ar[1][0] === 'column' && 
@@ -338,6 +344,51 @@ export function sql_where_context(_vars) {
             return ar;
         }
       };
+
+      ctx['cond'] = function(expr, ifnull) {
+        //console.log('COND MACRO expr: ' + JSON.stringify(expr));
+        //console.log('COND MACRO ifnull: ' + JSON.stringify(ifnull));
+        //COND MACRO expr: ["\"","myfunc($(period.title1)) = 234"]
+        //COND MACRO ifnull: ["["]
+        var parsed = parse(expr[1])
+        //console.log('COND PARSED:' + JSON.stringify(parsed));
+        //Мы будем использовать спец флаг, были ли внутри этого cond доступы к переменным,
+        // которые дали undefined. через глобальную переменную !!!
+        if ( isArray(ifnull) && ifnull.length === 2 && (ifnull[0] === '"' || ifnull[0] === "'")) {
+          var val = prnt(ifnull)
+          track_undefined_values_for_cond.unshift(val)
+        } else {
+          track_undefined_values_for_cond.unshift(false)
+        }
+        var evaluated = prnt(parsed);
+        var unresolved = track_undefined_values_for_cond.shift()
+        //console.log('UNRESOLVED:' + unresolved);
+        if (unresolved === true) {
+          // не удалось найти значение, результат зависит от второго аргумента!
+          /*
+          если значение var == null
+          cond('col in $(row.var)', []) = значит убрать cond вообще (с учётом or/and)
+          cond('col = $(row.var)', ['col is null']) = полная замена col is null
+          */
+          if (isArray(ifnull) && ifnull[0] === '[') {
+            if (ifnull.length === 1) {
+              return '1=1'
+            } else {
+              // надо вычислить значение по умолчанию!!!
+              // ["\"","myfunc(1)"]
+              var ast = ifnull[1]
+              var p = prnt(ast)
+              if (isArray(ast) && (ast[0] === '"' || ast[0] === "'")) {
+                p = p.slice(1,-1)
+              }
+              return p
+            }
+          }
+        }
+        //console.log('COND1:' + evaluated);
+        return evaluated;
+      }
+      ctx['cond'].ast = [[],{},[],1]; // mark as macro
 
       ctx['"'] = function (el) {
         return '"' + el.toString() + '"';
@@ -425,11 +476,35 @@ export function sql_where_context(_vars) {
 
         if (expr instanceof Array) {
           // try to print using quotes, use plv8 !!!
-          return expr.map(function(el){
-              return quote_scalar(el);
+          if (_vars["_quoting"] === 'explicit') {
+            return expr.map(function(el){
+              return el;
             }).join(',');
+          } else {
+            return expr.map(function(el){
+                return quote_scalar(el);
+              }).join(',');
+          }
         }
-        return db_quote_literal(expr);
+        if (expr === undefined) {
+          // значит по этому ключу нет элемента в _vars например !!!
+          var defVal = track_undefined_values_for_cond[0]
+          //console.log("$ CHECK " + defVal)
+          if (isString(defVal)) {
+            return defVal;
+          } else {
+            // ставим метку, что был резолвинг неопределённого значения
+            track_undefined_values_for_cond[0] = true;
+          }
+          return '';
+        }
+        // May break compatibility WITH THE OLD templates !!!!!
+        if (_vars["_quoting"] === 'explicit') {
+          return expr;
+        } else {
+          // Old style templates, try to auto quote...
+          return db_quote_literal(expr);
+        }
       }
       ctx['$'].ast = [[],{},[],1]; // mark as macro
 
@@ -470,6 +545,7 @@ export function sql_where_context(_vars) {
 
 
       // we should parse all logic: & | ! () but we are cheating at the moment....
+      // NOTE: it is unrelated to cond func!!!
       ctx['parse_cond'] = function(expr) {
         if (expr instanceof Array) {
           if (expr[0] === '->') {
@@ -597,8 +673,7 @@ export function eval_sql_where(_expr, _vars) {
 
   var sexpr = parse(_expr);
 
-
-  console.log('sql_where parse: ', JSON.stringify(sexpr));
+  //console.log('sql_where parse: ', JSON.stringify(sexpr));
 
   if ((sexpr instanceof Array) && (
       (sexpr[0]==='filter' && (sexpr.length <=2))
@@ -608,6 +683,7 @@ export function eval_sql_where(_expr, _vars) {
      || (sexpr[0]==='pluck')
      || (sexpr[0]==='str')
      || (sexpr[0]==='prnt')
+     || (sexpr[0]==='cond')
      || (sexpr[0]==='->') // it is dot operator, FIXME: add correct function call check !
      
   )) {
@@ -620,9 +696,13 @@ export function eval_sql_where(_expr, _vars) {
       //console.log('sql_where ORDER BY MIXED1: ', JSON.stringify(_vars));
       sexpr = sexpr.concat( extra_srt_expr.slice(1))
       //console.log('sql_where ORDER BY MIXED: ', JSON.stringify(sexpr));
+    } else {
+      if (sexpr[0] === 'cond') {
+        sexpr = ["filter",["cond", sexpr[1], sexpr[2]]];
+      }
     }
   } else {
-    throw("only single where() or order_by() could be evaluated. Found: " + sexpr[0])
+    throw("Found unexpected top-level func: " + sexpr[0])
   }
 
 

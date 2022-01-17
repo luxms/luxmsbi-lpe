@@ -1536,8 +1536,8 @@ if (__webpack_require__(3)(function () { return $toString.call({ source: 'a', fl
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* unused harmony export isArray */
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return isString; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return isArray; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "c", function() { return isString; });
 /* unused harmony export isNumber */
 /* unused harmony export isBoolean */
 /* unused harmony export isHash */
@@ -3539,8 +3539,11 @@ filter - на пустом входе вернёт пустую строку
 */
 
 function sql_where_context(_vars) {
-  // try to get datasource Ident
+  // для отслеживания переменных, значения которых отсутствуют для cond
+  // cond('col in $(row.var)', [])
+  var track_undefined_values_for_cond = []; // try to get datasource Ident
   // table lookup queries should be sending us key named sourceId = historical name!
+
   var srcIdent = _vars["sourceId"];
 
   if (srcIdent !== undefined) {
@@ -3579,10 +3582,9 @@ function sql_where_context(_vars) {
 
         if (o === undefined) {
           o = h['name'];
-        }
+        } //console.log("-: try_to_quote_order_by_column " + JSON.stringify(o));
+        //console.log("-: try_to_quote_order_by_column " + (typeof o));
 
-        __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("-: try_to_quote_order_by_column " + JSON.stringify(o));
-        __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("-: try_to_quote_order_by_column " + _typeof(o));
 
         if (o !== undefined && o.length > 0) {
           o = o.toString();
@@ -3605,8 +3607,7 @@ function sql_where_context(_vars) {
   };
 
   var resolve_literal = function resolve_literal(lit) {
-    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log('LITERAL ', lit, '  CONTEXT:', _vars[lit]);
-
+    //console.log('LITERAL ', lit, '  CONTEXT:', _vars[lit]);
     if (_vars[lit] == undefined) {
       return try_to_quote_column(lit);
     } else {
@@ -3616,8 +3617,7 @@ function sql_where_context(_vars) {
   };
 
   var resolve_order_by_literal = function resolve_order_by_literal(lit) {
-    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log('OB LITERAL ', lit, ' CONTEXT:', _vars[lit]);
-
+    //console.log('OB LITERAL ', lit, ' CONTEXT:', _vars[lit]);
     if (_vars[lit] === undefined) {
       return try_to_quote_order_by_column(lit);
     } else {
@@ -3690,9 +3690,9 @@ function sql_where_context(_vars) {
     // FIXME: check quotes !!!
     if (/'/.test(timestamp)) {
       throw 'Wrong timestamp: ' + JSON.stringify(timestamp);
-    }
+    } //console.log("lpe_pg_tstz_at_time_zone" + timestamp);
 
-    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("lpe_pg_tstz_at_time_zone" + timestamp);
+
     return "'" + timestamp + "'" + "::timestamptz at time zone '" + zone + "'";
   };
 
@@ -3806,7 +3806,7 @@ function sql_where_context(_vars) {
     var prnt = function prnt(ar) {
       //console.log("PRNT:" + JSON.stringify(ar))
       if (ar instanceof Array) {
-        if (ar[0] === '$' || ar[0] === '"' || ar[0] === "'" || ar[0] === "str" || ar[0] === "[" || ar[0] === 'parse_kv' || ar[0] === 'parse_cond' || ar[0] === "=" || ar[0] === "ql" || ar[0] === "pg_interval" || ar[0] === "lpe_pg_tstz_at_time_zone" || ar[0] === "column") {
+        if (ar[0] === '$' || ar[0] === '"' || ar[0] === "'" || ar[0] === "str" || ar[0] === "[" || ar[0] === 'parse_kv' || ar[0] === 'parse_cond' || ar[0] === "=" || ar[0] === "ql" || ar[0] === "pg_interval" || ar[0] === "lpe_pg_tstz_at_time_zone" || ar[0] === "column" || ar[0] === "cond") {
           return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lisp__["a" /* eval_lisp */])(ar, ctx);
         } else {
           if (ar.length == 2) {
@@ -3851,8 +3851,8 @@ function sql_where_context(_vars) {
               }
             } else if (ar[0] == "like" || ar[0] == "in" || ar[0] == "is" || ar[0].match(/^[^\w]+$/)) {
               // имя функции не начинается с буквы
-              __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("PRNT FUNC x F z " + JSON.stringify(ar)); // ["~",["column","vNetwork.folder"],"XXX"]
-
+              //console.log("PRNT FUNC x F z " + JSON.stringify(ar))
+              // ["~",["column","vNetwork.folder"],"XXX"]
               if (Array.isArray(ar[1]) && ar[1][0] === 'column' && Array.isArray(ar[2]) && ar[2][0] !== 'column' || !Array.isArray(ar[2])) {// справа значение, которое нужно квотировать!
               }
 
@@ -3876,6 +3876,57 @@ function sql_where_context(_vars) {
         return ar;
       }
     };
+
+    ctx['cond'] = function (expr, ifnull) {
+      //console.log('COND MACRO expr: ' + JSON.stringify(expr));
+      //console.log('COND MACRO ifnull: ' + JSON.stringify(ifnull));
+      //COND MACRO expr: ["\"","myfunc($(period.title1)) = 234"]
+      //COND MACRO ifnull: ["["]
+      var parsed = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lpep__["a" /* parse */])(expr[1]); //console.log('COND PARSED:' + JSON.stringify(parsed));
+      //Мы будем использовать спец флаг, были ли внутри этого cond доступы к переменным,
+      // которые дали undefined. через глобальную переменную !!!
+
+      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lisp__["b" /* isArray */])(ifnull) && ifnull.length === 2 && (ifnull[0] === '"' || ifnull[0] === "'")) {
+        var val = prnt(ifnull);
+        track_undefined_values_for_cond.unshift(val);
+      } else {
+        track_undefined_values_for_cond.unshift(false);
+      }
+
+      var evaluated = prnt(parsed);
+      var unresolved = track_undefined_values_for_cond.shift(); //console.log('UNRESOLVED:' + unresolved);
+
+      if (unresolved === true) {
+        // не удалось найти значение, результат зависит от второго аргумента!
+
+        /*
+        если значение var == null
+        cond('col in $(row.var)', []) = значит убрать cond вообще (с учётом or/and)
+        cond('col = $(row.var)', ['col is null']) = полная замена col is null
+        */
+        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lisp__["b" /* isArray */])(ifnull) && ifnull[0] === '[') {
+          if (ifnull.length === 1) {
+            return '1=1';
+          } else {
+            // надо вычислить значение по умолчанию!!!
+            // ["\"","myfunc(1)"]
+            var ast = ifnull[1];
+            var p = prnt(ast);
+
+            if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lisp__["b" /* isArray */])(ast) && (ast[0] === '"' || ast[0] === "'")) {
+              p = p.slice(1, -1);
+            }
+
+            return p;
+          }
+        }
+      } //console.log('COND1:' + evaluated);
+
+
+      return evaluated;
+    };
+
+    ctx['cond'].ast = [[], {}, [], 1]; // mark as macro
 
     ctx['"'] = function (el) {
       return '"' + el.toString() + '"';
@@ -3971,12 +4022,38 @@ function sql_where_context(_vars) {
 
       if (expr instanceof Array) {
         // try to print using quotes, use plv8 !!!
-        return expr.map(function (el) {
-          return quote_scalar(el);
-        }).join(',');
+        if (_vars["_quoting"] === 'explicit') {
+          return expr.map(function (el) {
+            return el;
+          }).join(',');
+        } else {
+          return expr.map(function (el) {
+            return quote_scalar(el);
+          }).join(',');
+        }
       }
 
-      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__utils_utils__["c" /* db_quote_literal */])(expr);
+      if (expr === undefined) {
+        // значит по этому ключу нет элемента в _vars например !!!
+        var defVal = track_undefined_values_for_cond[0]; //console.log("$ CHECK " + defVal)
+
+        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lisp__["c" /* isString */])(defVal)) {
+          return defVal;
+        } else {
+          // ставим метку, что был резолвинг неопределённого значения
+          track_undefined_values_for_cond[0] = true;
+        }
+
+        return '';
+      } // May break compatibility WITH THE OLD templates !!!!!
+
+
+      if (_vars["_quoting"] === 'explicit') {
+        return expr;
+      } else {
+        // Old style templates, try to auto quote...
+        return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__utils_utils__["c" /* db_quote_literal */])(expr);
+      }
     };
 
     ctx['$'].ast = [[], {}, [], 1]; // mark as macro
@@ -4015,6 +4092,7 @@ function sql_where_context(_vars) {
 
     ctx['parse_kv'].ast = [[], {}, [], 1]; // mark as macro
     // we should parse all logic: & | ! () but we are cheating at the moment....
+    // NOTE: it is unrelated to cond func!!!
 
     ctx['parse_cond'] = function (expr) {
       if (expr instanceof Array) {
@@ -4134,22 +4212,25 @@ function sql_where_context(_vars) {
 }
 function eval_sql_where(_expr, _vars) {
   if (typeof _vars === 'string') _vars = JSON.parse(_vars);
-  var sexpr = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lpep__["a" /* parse */])(_expr);
-  __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log('sql_where parse: ', JSON.stringify(sexpr));
+  var sexpr = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lpep__["a" /* parse */])(_expr); //console.log('sql_where parse: ', JSON.stringify(sexpr));
 
-  if (sexpr instanceof Array && (sexpr[0] === 'filter' && sexpr.length <= 2 || sexpr[0] === 'order_by' || sexpr[0] === 'if' || sexpr[0] === 'where' || sexpr[0] === 'pluck' || sexpr[0] === 'str' || sexpr[0] === 'prnt' || sexpr[0] === '->' // it is dot operator, FIXME: add correct function call check !
+  if (sexpr instanceof Array && (sexpr[0] === 'filter' && sexpr.length <= 2 || sexpr[0] === 'order_by' || sexpr[0] === 'if' || sexpr[0] === 'where' || sexpr[0] === 'pluck' || sexpr[0] === 'str' || sexpr[0] === 'prnt' || sexpr[0] === 'cond' || sexpr[0] === '->' // it is dot operator, FIXME: add correct function call check !
   )) {
     // ok
-    if (sexpr[0] === 'order_by' && __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lisp__["b" /* isString */])(_vars['sort']) && _vars['sort'].length > 0) {
+    if (sexpr[0] === 'order_by' && __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lisp__["c" /* isString */])(_vars['sort']) && _vars['sort'].length > 0) {
       // we should inject content of the sort key, which is coming from the GUI.
       // do it in a safe way
       var extra_srt_expr = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lpep__["a" /* parse */])("order_by(".concat(_vars['sort'], ")")); //console.log('sql_where ORDER BY MIXED0: ', JSON.stringify(extra_srt_expr));
       //console.log('sql_where ORDER BY MIXED1: ', JSON.stringify(_vars));
 
       sexpr = sexpr.concat(extra_srt_expr.slice(1)); //console.log('sql_where ORDER BY MIXED: ', JSON.stringify(sexpr));
+    } else {
+      if (sexpr[0] === 'cond') {
+        sexpr = ["filter", ["cond", sexpr[1], sexpr[2]]];
+      }
     }
   } else {
-    throw "only single where() or order_by() could be evaluated. Found: " + sexpr[0];
+    throw "Found unexpected top-level func: " + sexpr[0];
   }
 
   var _context = sql_where_context(_vars);
