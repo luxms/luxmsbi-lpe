@@ -336,9 +336,17 @@ var make_parse = function () {
   
   symbol("and").nud = function () { 
     console.log("AND!", JSON.stringify(this))
+    return this;
   };
   
   infixr("or", 30);
+  symbol("or").nud = function () {
+    console.log("OR!", JSON.stringify(this))
+    return this;
+  };
+
+
+
   // required for SQL logical scope where a in (1,2,3)
   infixr("in", 30);
   infixr("is", 30);

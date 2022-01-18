@@ -930,8 +930,9 @@ var make_parse = function make_parse() {
         a = "literal";
       } else if (m_expr_scope.tp == "logical") {
         if (v === "or" || v === "and" || v === "not" || v === "in" || v === "is") {
-          a = "operator";
+          //a = "operator";
           o = m_symbol_table[v];
+          __WEBPACK_IMPORTED_MODULE_1__console_console__["a" /* default */].log("OPERATOR>", v, " ", JSON.stringify(o));
 
           if (!o) {
             __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__lpel__["a" /* makeError */])(t, "Unknown logical operator.");
@@ -1197,12 +1198,23 @@ var make_parse = function make_parse() {
   infixr('⍴', 30);
   /* will be used in logical scope */
 
-  infixr("and", 30);
-  infixr("or", 30); // required for SQL logical scope where a in (1,2,3)
+  infix("and", 30);
+
+  symbol("and").nud = function () {
+    __WEBPACK_IMPORTED_MODULE_1__console_console__["a" /* default */].log("AND!", JSON.stringify(this));
+    return this;
+  };
+
+  infixr("or", 30);
+
+  symbol("or").nud = function () {
+    __WEBPACK_IMPORTED_MODULE_1__console_console__["a" /* default */].log("OR!", JSON.stringify(this));
+    return this;
+  }; // required for SQL logical scope where a in (1,2,3)
+
 
   infixr("in", 30);
-  infixr("is", 30);
-  prefix("not"); // for SQL types: '10'::BIGINT
+  infixr("is", 30); // for SQL types: '10'::BIGINT
 
   infixr("::", 90); // for SQL as
 
@@ -1252,13 +1264,18 @@ var make_parse = function make_parse() {
 
 
     if (m_token.id !== ")") {
+      __WEBPACK_IMPORTED_MODULE_1__console_console__["a" /* default */].log("FUNC>", left.value);
+
       if (false) {
         // специальный парсер для where - logical expression.
         // тут у нас выражение с использованием скобок, and, or, not и никаких запятых...
-        // DIMA 2021: expr function will be generic name for logical things
-        // where should be deprecated and replcaed to where(expr(....)) by all projects
+        // DIMA 2021: logexpr function will be generic name for logical things
+        // where && filter is used for SQL generation and should not be changed....
+        // expr is deprecated name for logexpr
+        // FIXME: make transition to the logexpr!
         new_expression_scope("logical");
         var e = expression(0);
+        console.log("LOGICAL" + left.value + " " + JSON.stringify(e));
         m_expr_scope.pop();
         a.push(e);
       } else {
@@ -1281,6 +1298,7 @@ var make_parse = function make_parse() {
           } else {
             new_expression_scope("logical");
             var e = expression(0);
+            __WEBPACK_IMPORTED_MODULE_1__console_console__["a" /* default */].log("LOGICAL????? " + JSON.stringify(e));
             m_expr_scope.pop(); // var e = statements();
 
             a.push(e);

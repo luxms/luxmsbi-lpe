@@ -42,27 +42,27 @@ module.exports = [
       }]
     },
     plugins: [
-      new WebpackAutoInject({
-        SHORT: 'LPE',
-        SILENT: false,
-        PACKAGE_JSON_PATH: './package.json',
-        PACKAGE_JSON_INDENT: 2,
-        components: {
-          AutoIncreaseVersion: true,
-          InjectAsComment: true,
-          InjectByTag: false,
-        },
-        componentsOptions: {
-          AutoIncreaseVersion: {
-            runInWatchMode: false,
-          },
-          InjectAsComment: {
-            tag: 'Version: {version} - {date}',
-            dateFormat: 'yyyy/mm/dd HH:MM:ss',
-            multiLineCommentType: true,
-          },
-        },
-      }),
+      // new WebpackAutoInject({
+      //   SHORT: 'LPE',
+      //   SILENT: false,
+      //   PACKAGE_JSON_PATH: './package.json',
+      //   PACKAGE_JSON_INDENT: 2,
+      //   components: {
+      //     AutoIncreaseVersion: true,
+      //     InjectAsComment: true,
+      //     InjectByTag: false,
+      //   },
+      //   componentsOptions: {
+      //     AutoIncreaseVersion: {
+      //       runInWatchMode: false,
+      //     },
+      //     InjectAsComment: {
+      //       tag: 'Version: {version} - {date}',
+      //       dateFormat: 'yyyy/mm/dd HH:MM:ss',
+      //       multiLineCommentType: true,
+      //     },
+      //   },
+      // }),
     ],
     devtool: isDev ? 'eval-inline-source-map' : 'sourcemap',
   }, 
