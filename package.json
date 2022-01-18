@@ -23,6 +23,7 @@
     "test": "mocha --reporter spec",
     "test-sql": "mocha --reporter spec test/test-sql.js",
     "test-koob": "mocha --reporter spec test/test-koob.js",
+    "test-lisp": "mocha --reporter spec test/test-lisp.js",
     "test-join": "mocha --reporter spec test/test-join.js",
     "test-1": "mocha --reporter spec test/test-1.js",
     "test-2": "mocha --reporter spec test/test-2.js",

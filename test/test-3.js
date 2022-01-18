@@ -74,9 +74,9 @@ describe('LPE tests', function() {
          );
 
       assert.equal( lpe.eval_sql_where(
-         'filter( cond("table.col = ql($(period.title))") or cond("table.col2 = ql($(period.title))") )',
+         'filter( cond("table.col or $(period.title) or 23") or cond("table.col2 = ql($(period.title))") )',
          {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":2001}}),
-         "table.col = '2001' or table.col2 = '2001'"
+         "table.col or 2001 or 23 or table.col2 = '2001'"
          );
    });
 })
