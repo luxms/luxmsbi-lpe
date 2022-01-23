@@ -14,67 +14,73 @@ describe('LPE tests', function() {
    */
    it('should eval SQL cond expressions', function() {
       assert.equal( lpe.eval_sql_where(
-          'where( cond("myfunc($(period.title1)) = 234", [])  )',
+          'where( cond(myfunc($(period.title)) = 234, [] ) )',
           {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
-          "WHERE 1=1"
+          "WHERE myfunc(Noyabr) = 234"
       );
 
       assert.equal( lpe.eval_sql_where(
-         'where( cond("myfunc($(period.title1)) = 234", "defaultVal")  )',
+         'where( cond(myfunc($(period.title1)) = 234, "defaultVal")  )',
          {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
          'WHERE myfunc("defaultVal") = 234'
      );
 
      assert.equal( lpe.eval_sql_where(
-      'where( cond("myfunc($(period.title1)) = 234", ["myfunc(1)"])  )',
+      "where( cond(myfunc($(period.title1)) = 234,'defaultVal')  )",
+      {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
+      "WHERE myfunc('defaultVal') = 234"
+      );
+
+     assert.equal( lpe.eval_sql_where(
+      'where( cond(myfunc($(period.title1)) = 234, ["myfunc(1)"])  )',
       {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
       'WHERE myfunc(1)'
       );
 
       assert.equal( lpe.eval_sql_where(
-         'where( cond("myfunc($(period.title1)) = \'234\'")  )',
+         "where( cond(myfunc($(period.title1)) = '234')  )",
          {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
          "WHERE myfunc() = '234'"
          );
 
       assert.equal( lpe.eval_sql_where(
-         'where( cond("myfunc($(period.title)) = \'234\'")  )',
+         "where( cond(myfunc($(period.title)) = '234')  )",
          {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
          "WHERE myfunc(Noyabr) = '234'"
          );
 
       assert.equal( lpe.eval_sql_where(
-         'where( cond("myfunc(ql($(period.title))) = \'234\'")  )',
+         "where( cond(myfunc(ql($(period.title))) = '234')  )",
          {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
          "WHERE myfunc('Noyabr') = '234'"
          );
 
       assert.equal( lpe.eval_sql_where(
-         'where( cond("myfunc($(period.title)) = \'234\'")  )',
+         "where( cond(myfunc($(period.title)) = '234')  )",
          {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":2001}}),
          "WHERE myfunc(2001) = '234'"
          );
 
       assert.equal( lpe.eval_sql_where(
-         'where( cond("table.column = $(period.title)")  )',
+         'where( cond(table.column = $(period.title))  )',
          {"_quoting":"explicit", "a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":2001}}),
          "WHERE table.column = 2001"
          );
 
       assert.equal( lpe.eval_sql_where(
-         'where( cond("table.column = ql($(period.title))")  )',
+         'where( cond(table.column = ql($(period.title)))  )',
          {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":2001}}),
          "WHERE table.column = '2001'"
          );
 
       assert.equal( lpe.eval_sql_where(
-         'cond("table.column = ql($(period.title))")  ',
+         'cond(table.column = ql($(period.title)))  ',
          {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":2001}}),
          "table.column = '2001'"
          );
 
       assert.equal( lpe.eval_sql_where(
-         'filter( cond("table.col or $(period.title) or 23") or cond("table.col2 = ql($(period.title))") )',
+         'filter( cond(table.col or $(period.title) or 23) or cond(table.col2 = ql($(period.title))) )',
          {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":2001}}),
          "table.col or 2001 or 23 or table.col2 = '2001'"
          );

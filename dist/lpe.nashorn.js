@@ -145,7 +145,7 @@ if (typeof __g == 'number') __g = global; // eslint-disable-line no-undef
 
 var anObject = __webpack_require__(1);
 var IE8_DOM_DEFINE = __webpack_require__(46);
-var toPrimitive = __webpack_require__(39);
+var toPrimitive = __webpack_require__(40);
 var dP = Object.defineProperty;
 
 exports.f = __webpack_require__(2) ? Object.defineProperty : function defineProperty(O, P, Attributes) {
@@ -318,7 +318,7 @@ if (typeof __e == 'number') __e = core; // eslint-disable-line no-undef
 
 // 19.1.2.14 / 15.2.3.14 Object.keys(O)
 var $keys = __webpack_require__(53);
-var enumBugKeys = __webpack_require__(33);
+var enumBugKeys = __webpack_require__(34);
 
 module.exports = Object.keys || function keys(O) {
   return $keys(O, enumBugKeys);
@@ -442,7 +442,7 @@ module.exports = function (it) {
 /***/ (function(module, exports, __webpack_require__) {
 
 // optional / simple context binding
-var aFunction = __webpack_require__(31);
+var aFunction = __webpack_require__(32);
 module.exports = function (fn, that, length) {
   aFunction(fn);
   if (that === undefined) return fn;
@@ -475,7 +475,7 @@ var hide = __webpack_require__(8);
 var fails = __webpack_require__(3);
 var defined = __webpack_require__(17);
 var wks = __webpack_require__(0);
-var regexpExec = __webpack_require__(36);
+var regexpExec = __webpack_require__(37);
 
 var SPECIES = wks('species');
 
@@ -663,879 +663,6 @@ module.exports = function (it) {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony export (immutable) */ __webpack_exports__["a"] = parse;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_array_find__ = __webpack_require__(99);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_array_find___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_array_find__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__console_console__ = __webpack_require__(16);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__lpel__ = __webpack_require__(68);
-/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return __WEBPACK_IMPORTED_MODULE_2__lpel__["c"]; });
-
-
-/**
- * LuxPath expressions parser
- *
- * VERSION: 1.0.1
- * 
- * DVD: added sexpr property to the token as array to keep s-expressions.
- *      arity and first, second etc will be removed
- * 
- */
-// Parser for Simplified JavaScript written in Simplified JavaScript
-// From Top Down Operator Precedence
-// http://javascript.crockford.com/tdop/index.html
-// Douglas Crockford
-// 2010-06-26
-//////////////////////////////////////////////////
-// Later hacked to parse LPE instead of JavaScript
-// Dmitry Dorofeev
-// 2017-01-20
-
-
-
-var make_parse = function make_parse() {
-  var m_symbol_table = {};
-  var m_token;
-  var m_tokens;
-  var m_token_nr; // стэк для типов выражений
-
-  var m_expr_scope = {
-    pop: function pop() {}
-  }; // для разбора логических выражений типа (A and B or C)
-  // для хранения алиасов для операций
-
-  var m_operator_aliases = {};
-
-  var operator_alias = function operator_alias(from, to) {
-    m_operator_aliases[from] = to;
-  };
-
-  var itself = function itself() {
-    return this;
-  };
-
-  var scope = {
-    find: function find(n) {
-      var e = this,
-          o;
-      var s = Object.create(original_symbol);
-      s.nud = itself;
-      s.led = null;
-      s.lbp = 0;
-      return s;
-    }
-  };
-  var expr_logical_scope = {
-    pop: function pop() {
-      m_expr_scope = this.parent;
-    },
-    parent: null,
-    tp: "logical"
-  };
-  var expr_lpe_scope = {
-    pop: function pop() {
-      m_expr_scope = this.parent;
-    },
-    parent: null,
-    tp: "lpe"
-  };
-
-  var new_expression_scope = function new_expression_scope(tp) {
-    var s = m_expr_scope;
-    m_expr_scope = Object.create(tp === "logical" ? expr_logical_scope : expr_lpe_scope);
-    m_expr_scope.parent = s;
-    return m_expr_scope;
-  };
-
-  var advance = function advance(id) {
-    var a, o, t, v;
-
-    if (id && m_token.id !== id) {
-      __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__lpel__["a" /* makeError */])(m_token, "Got " + m_token.value + " but expected '" + id + "'.");
-    }
-
-    if (m_token_nr >= m_tokens.length) {
-      m_token = m_symbol_table["(end)"];
-      return;
-    }
-
-    t = m_tokens[m_token_nr];
-    m_token_nr += 1;
-    v = t.value;
-    a = t.type;
-
-    if (a === "name") {
-      if (v === 'true' || v === 'false' || v === 'null') {
-        o = m_symbol_table[v];
-        a = "literal";
-      } else if (m_expr_scope.tp == "logical") {
-        if (v === "or" || v === "and" || v === "not" || v === "in" || v === "is") {
-          a = "operator";
-          o = m_symbol_table[v];
-
-          if (!o) {
-            __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__lpel__["a" /* makeError */])(t, "Unknown logical operator.");
-          }
-        } else {
-          o = scope.find(v);
-        }
-      } else {
-        o = scope.find(v);
-      }
-    } else if (a === "operator") {
-      o = m_symbol_table[v];
-
-      if (!o) {
-        __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__lpel__["a" /* makeError */])(t, "Unknown operator.");
-      }
-    } else if (a === "string_double") {
-      o = m_symbol_table["(string_literal_double)"];
-      a = "literal";
-    } else if (a === "string_single") {
-      o = m_symbol_table["(string_literal_single)"];
-      a = "literal";
-    } else if (a === "number") {
-      o = m_symbol_table["(number_literal)"];
-      a = "literal";
-    } else {
-      __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__lpel__["a" /* makeError */])(t, "Unexpected token.");
-    }
-
-    m_token = Object.create(o);
-    m_token.from = t.from;
-    m_token.to = t.to;
-    m_token.value = v;
-    m_token.arity = a;
-
-    if (a == "operator") {
-      m_token.sexpr = m_operator_aliases[v];
-    } else {
-      m_token.sexpr = v; // by dima
-    }
-
-    return m_token;
-  };
-
-  var statement = function statement() {
-    var n = m_token,
-        v;
-
-    if (n.std) {
-      advance(); //scope.reserve(n);
-
-      return n.std();
-    }
-
-    v = expression(0); //if (!v.assignment && v.id !== "(") {
-
-    /*  if (v.id !== "(" && v.id !== "name" && v.id !== "number") {
-        console.log(v);
-        v.error("Bad expression statement.");
-    }*/
-    //advance(";");
-
-    return v;
-  };
-
-  var statements = function statements() {
-    var a = [],
-        s;
-
-    while (true) {
-      //console.log(token);
-      if (m_token.id === "(end)") {
-        break;
-      } else if (m_token.value === ';') {
-        // skip optional ;
-        advance();
-      }
-
-      s = statement(); //console.log("STATEMENT ", s);
-
-      if (s) {
-        a.push(s);
-      }
-    }
-
-    return a.length === 0 ? null : a.length === 1 ? a[0] : {
-      "sexpr": ["begin"].concat(a.map(function (el) {
-        return el["sexpr"];
-      }))
-    };
-  };
-
-  var expression = function expression(rbp) {
-    var left;
-    var t = m_token;
-    advance();
-    left = t.nud();
-
-    while (rbp < m_token.lbp) {
-      t = m_token;
-      advance();
-      left = t.led(left);
-    }
-
-    return left;
-  };
-
-  var original_symbol = {
-    nud: function nud() {
-      __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__lpel__["a" /* makeError */])(this, "Undefined.");
-    },
-    led: function led(left) {
-      __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__lpel__["a" /* makeError */])(this, "Missing operator.");
-    }
-  };
-
-  var symbol = function symbol(id, bp) {
-    var s = m_symbol_table[id];
-    bp = bp || 0;
-
-    if (s) {
-      if (bp >= s.lbp) {
-        s.lbp = bp;
-      }
-    } else {
-      s = Object.create(original_symbol);
-      s.id = s.value = id;
-      s.lbp = bp;
-      m_symbol_table[id] = s;
-    }
-
-    operator_alias(id, id);
-    return s;
-  };
-
-  var infix = function infix(id, bp, led) {
-    var s = symbol(id, bp);
-
-    s.led = led || function (left) {
-      this.first = left;
-      var right = expression(bp);
-      this.second = right;
-      this.arity = "binary";
-      this.sexpr = [this.sexpr, left.sexpr, right.sexpr];
-      return this;
-    };
-
-    return s;
-  };
-
-  var infixr = function infixr(id, bp, led) {
-    var s = symbol(id, bp);
-
-    s.led = led || function (left) {
-      this.first = left;
-      var right = expression(bp - 1);
-      this.second = right;
-      this.arity = "binary";
-      this.sexpr = [this.sexpr, left.sexpr, right.sexpr];
-      return this;
-    };
-
-    return s;
-  };
-
-  var prefix = function prefix(id, nud) {
-    var s = symbol(id);
-
-    s.nud = nud || function () {
-      // scope.reserve(this);
-      var expr = expression(70);
-      this.first = expr;
-      this.arity = "unary";
-      this.sexpr = [this.sexpr, expr.sexpr];
-      return this;
-    };
-
-    return s;
-  };
-
-  symbol("(end)");
-  symbol("(name)");
-  symbol("(null)");
-  symbol(":");
-  symbol(";");
-  symbol(")");
-  symbol("]");
-  symbol("}");
-
-  symbol("true").nud = function () {
-    this.sexpr = true;
-    return this;
-  };
-
-  symbol("false").nud = function () {
-    this.sexpr = false;
-    return this;
-  };
-
-  symbol("null").nud = function () {
-    this.sexpr = null;
-    return this;
-  }; // allow to skip values in function calls....
-
-
-  var comma = symbol(",");
-
-  symbol("(string_literal_double)").nud = function () {
-    this.first = '"';
-    this.arity = "unary";
-    this.sexpr = ['"', this.sexpr];
-    return this;
-  };
-
-  symbol("(string_literal_single)").nud = function () {
-    this.first = "'";
-    this.arity = "unary";
-    this.sexpr = ["'", this.sexpr];
-    return this;
-  };
-
-  symbol("(number_literal)").nud = itself; // [esix]: commented as in conflict with SQL operator ':'
-  // infix("?", 20, function (left) {
-  //   this.first = left;
-  //   this.second = expression(0);
-  //   advance(":");
-  //   this.third = expression(0);
-  //   this.arity = "ternary";
-  //   this.sexpr = ["if", this.first.sexpr, this.second.sexpr, this.third.sexpr];
-  //   return this;
-  // });
-  // [esix]: ternary operator with no conflict on ':' operator
-
-  infix('?', 20, function (left) {
-    this.first = left;
-    this.second = expression(0);
-    this.arity = 'binary';
-
-    if (this.second.arity === 'binary' && this.second.value === ':') {
-      this.sexpr = ["if", this.first.sexpr, this.second.sexpr[1], this.second.sexpr[2]];
-    } else {
-      __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__lpel__["a" /* makeError */])(this.second, "Invalid ternary operator.");
-    }
-
-    return this;
-  });
-  infixr("&&", 30);
-  infixr("∧", 30);
-  operator_alias("&&", "and");
-  operator_alias("∧", "and");
-  infixr("||", 30);
-  infixr("∨", 30);
-  operator_alias("||", "or");
-  operator_alias("∨", "or");
-  infixr('⍱', 30);
-  operator_alias('⍱', 'nor');
-  infixr('⍲', 30);
-  operator_alias('⍲', 'nand');
-  infixr('⊣', 30);
-  operator_alias('⊣', 'car');
-  infixr('⊢', 30);
-  operator_alias('⊢', 'cdr');
-  infixr('⍴', 30);
-  /* will be used in logical scope */
-
-  infixr("and", 30);
-  infixr("or", 30); // required for SQL logical scope where a in (1,2,3)
-
-  infixr("in", 30);
-  infixr("is", 30);
-  prefix("not"); // for SQL types: '10'::BIGINT
-
-  infixr("::", 90); // for SQL as
-
-  infixr(":", 80);
-  infixr('~', 40);
-  infixr('!~', 40);
-  infixr('=', 40);
-  infixr('≠', 40);
-  operator_alias('≠', '!='); // from to canonical form;
-
-  infixr('==', 40);
-  infixr('!==', 40);
-  infixr('!=', 40);
-  infixr('<', 40);
-  infixr('<=', 40);
-  infixr('≤', 40);
-  operator_alias('≤', '<=');
-  infixr(">", 40);
-  infixr(">=", 40);
-  infixr("≥", 40);
-  operator_alias("≥", ">=");
-  infixr("<>", 40);
-  infix("+", 50);
-  infix("-", 50);
-  infix("*", 60);
-  infix("/", 60);
-  infix("(", 80, function (left) {
-    var a = [];
-
-    if (left.id === "[") {
-      // FIXME TODO
-      this.arity = "ternary";
-      this.first = left.first;
-      this.second = left.second;
-      this.third = a;
-    } else {
-      this.arity = "binary";
-      this.first = left;
-      this.value = "("; // it was '(' by dima
-
-      this.second = a;
-
-      if ((left.arity !== "unary" || left.id !== "function") && left.arity !== "name" && left.id !== "(" && left.id !== "&&" && left.id !== "||" && left.id !== "?") {
-        __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__lpel__["a" /* makeError */])(left, "Expected a variable name.");
-      }
-    } // dima support for missed function arguments...
-
-
-    if (m_token.id !== ")") {
-      if (false) {
-        // специальный парсер для where - logical expression.
-        // тут у нас выражение с использованием скобок, and, or, not и никаких запятых...
-        // DIMA 2021: expr function will be generic name for logical things
-        // where should be deprecated and replcaed to where(expr(....)) by all projects
-        new_expression_scope("logical");
-        var e = expression(0);
-        m_expr_scope.pop();
-        a.push(e);
-      } else {
-        new_expression_scope("lpe");
-
-        while (true) {
-          // console.log(">" + token.arity + " NAME:" + left.value);
-          if (m_token.id === ',') {
-            a.push({
-              value: null,
-              arity: "literal"
-            });
-            advance();
-          } else if (m_token.id === ')') {
-            a.push({
-              value: null,
-              arity: "literal"
-            });
-            break;
-          } else {
-            new_expression_scope("logical");
-            var e = expression(0);
-            m_expr_scope.pop(); // var e = statements();
-
-            a.push(e);
-
-            if (m_token.id !== ",") {
-              break;
-            }
-
-            advance(",");
-          }
-        }
-
-        m_expr_scope.pop();
-      }
-    }
-
-    this.sexpr = [this.first.value].concat(a.map(function (el) {
-      return el.sexpr;
-    }));
-    advance(")");
-    return this;
-  });
-
-  function lift_funseq(node) {
-    if (node.value === "->") {
-      return lift_funseq(node.first).concat(lift_funseq(node.second));
-    } else if (node.value === "()") {
-      if (node.first.value === "->") {
-        // если у нас в скобки взято выражение "->", то скобки можно удалить
-        // if (true).(frst().second()) === if(true) => [->> [first] [second]] скобки не нужны, 
-        // так как seq уже группирует вызовы в цепочку
-        return [["->"].concat(lift_funseq(node.first.first)).concat(lift_funseq(node.first.second))];
-      } else {
-        return lift_funseq(node.first);
-      }
-    } else {
-      return [node.sexpr];
-    }
-  }
-
-  function lift_funseq_2(node) {
-    if (node.value === "->>") {
-      return lift_funseq(node.first).concat(lift_funseq(node.second));
-    } else if (node.value === "()") {
-      if (node.first.value === "->>") {
-        // если у нас в скобки взято выражение "->", то скобки можно удалить
-        // if (true).(frst().second()) === if(true) => [->> [first] [second]] скобки не нужны, 
-        // так как seq уже группирует вызовы в цепочку
-        return [["->>"].concat(lift_funseq(node.first.first)).concat(lift_funseq(node.first.second))];
-      } else {
-        return lift_funseq(node.first);
-      }
-    } else {
-      return [node.sexpr];
-    }
-  }
-
-  infix(".", 70, function (left) {
-    this.first = left; // this.second = expression(0);
-
-    this.second = expression(70);
-    this.arity = "binary";
-    this.value = "->";
-    this.sexpr = ["->"].concat(lift_funseq(this));
-    return this;
-  });
-  infix("..", 70, function (left) {
-    this.first = left; // this.second = expression(0);
-
-    this.second = expression(70);
-    this.arity = "binary";
-    this.value = "->>";
-    this.sexpr = ["->>"].concat(lift_funseq_2(this));
-    return this;
-  }); // WARNING HACK FIXME DIMA - добавил чтобы писать order_by(+a)
-  // А также замена /table на +table в htSQL
-
-  prefix("+");
-  prefix("!");
-  prefix("not"); // will be used in logical scope
-
-  prefix("¬");
-  operator_alias("!", "not");
-  operator_alias("¬", "not"); // trying to optimize, when we have negated -number
-
-  prefix("-");
-  prefix(".", function () {
-    var v = expression(70);
-
-    if (v.value !== "(") {
-      __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__lpel__["a" /* makeError */])(v, "Only functions may have dot (.) unary operator.");
-    } // this.first = v;
-    // this.arity = "unary";
-    // return this;
-    // skip unary dot !!!
-
-
-    return v;
-  });
-  prefix("(", function () {
-    var e = expression(0);
-
-    if (m_expr_scope.tp == "logical") {
-      // we should remember all brackets to restore original user expression
-      e.sexpr = ["()", e.sexpr];
-    } else {
-      if (e.value === "->") {
-        // в скобки взято выражение из цепочки LPE вызовов, нужно запомнить скобки, делаем push "()" в текущий AST 
-        e = {
-          first: e,
-          value: "()",
-          arity: "unary",
-          sexpr: ["()", e.sexpr]
-        };
-      }
-    }
-
-    advance(")");
-    return e;
-  });
-  prefix("[", function () {
-    var a = [];
-
-    if (m_token.id !== "]") {
-      while (true) {
-        a.push(expression(0)); // a.push(statements());
-
-        if (m_token.id !== ",") {
-          break;
-        }
-
-        advance(",");
-      }
-    }
-
-    advance("]");
-    this.first = a;
-    this.arity = "unary";
-    this.sexpr = ["["].concat(a.map(function (el) {
-      return el.sexpr;
-    }));
-    return this;
-  });
-  return function (source) {
-    m_tokens = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__lpel__["b" /* tokenize */])(source, '=<>!+-*&|/%^:.', '=<>&|:.');
-    m_token_nr = 0;
-    advance();
-    var s = statements(); // var s = expression(0);
-
-    advance("(end)");
-    return s;
-  };
-};
-
-var parser = make_parse(); // console.log('LPE Parser initialized')
-
-function parse(str) {
-  try {
-    var parseResult = parser(str); // from, to, value, arity, sexpr
-
-    return parseResult.sexpr;
-  } catch (err) {
-    __WEBPACK_IMPORTED_MODULE_1__console_console__["a" /* default */].error("Error", err.message);
-    __WEBPACK_IMPORTED_MODULE_1__console_console__["a" /* default */].error("Error", err.stack);
-    throw err;
-  }
-}
-
-
-/***/ }),
-/* 31 */
-/***/ (function(module, exports) {
-
-module.exports = function (it) {
-  if (typeof it != 'function') throw TypeError(it + ' is not a function!');
-  return it;
-};
-
-
-/***/ }),
-/* 32 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-var at = __webpack_require__(54)(true);
-
- // `AdvanceStringIndex` abstract operation
-// https://tc39.github.io/ecma262/#sec-advancestringindex
-module.exports = function (S, index, unicode) {
-  return index + (unicode ? at(S, index).length : 1);
-};
-
-
-/***/ }),
-/* 33 */
-/***/ (function(module, exports) {
-
-// IE 8- don't enum bug keys
-module.exports = (
-  'constructor,hasOwnProperty,isPrototypeOf,propertyIsEnumerable,toLocaleString,toString,valueOf'
-).split(',');
-
-
-/***/ }),
-/* 34 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// 7.2.8 IsRegExp(argument)
-var isObject = __webpack_require__(7);
-var cof = __webpack_require__(21);
-var MATCH = __webpack_require__(0)('match');
-module.exports = function (it) {
-  var isRegExp;
-  return isObject(it) && ((isRegExp = it[MATCH]) !== undefined ? !!isRegExp : cof(it) == 'RegExp');
-};
-
-
-/***/ }),
-/* 35 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// 19.1.2.7 / 15.2.3.4 Object.getOwnPropertyNames(O)
-var $keys = __webpack_require__(53);
-var hiddenKeys = __webpack_require__(33).concat('length', 'prototype');
-
-exports.f = Object.getOwnPropertyNames || function getOwnPropertyNames(O) {
-  return $keys(O, hiddenKeys);
-};
-
-
-/***/ }),
-/* 36 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var regexpFlags = __webpack_require__(24);
-
-var nativeExec = RegExp.prototype.exec;
-// This always refers to the native implementation, because the
-// String#replace polyfill uses ./fix-regexp-well-known-symbol-logic.js,
-// which loads this file before patching the method.
-var nativeReplace = String.prototype.replace;
-
-var patchedExec = nativeExec;
-
-var LAST_INDEX = 'lastIndex';
-
-var UPDATES_LAST_INDEX_WRONG = (function () {
-  var re1 = /a/,
-      re2 = /b*/g;
-  nativeExec.call(re1, 'a');
-  nativeExec.call(re2, 'a');
-  return re1[LAST_INDEX] !== 0 || re2[LAST_INDEX] !== 0;
-})();
-
-// nonparticipating capturing group, copied from es5-shim's String#split patch.
-var NPCG_INCLUDED = /()??/.exec('')[1] !== undefined;
-
-var PATCH = UPDATES_LAST_INDEX_WRONG || NPCG_INCLUDED;
-
-if (PATCH) {
-  patchedExec = function exec(str) {
-    var re = this;
-    var lastIndex, reCopy, match, i;
-
-    if (NPCG_INCLUDED) {
-      reCopy = new RegExp('^' + re.source + '$(?!\\s)', regexpFlags.call(re));
-    }
-    if (UPDATES_LAST_INDEX_WRONG) lastIndex = re[LAST_INDEX];
-
-    match = nativeExec.call(re, str);
-
-    if (UPDATES_LAST_INDEX_WRONG && match) {
-      re[LAST_INDEX] = re.global ? match.index + match[0].length : lastIndex;
-    }
-    if (NPCG_INCLUDED && match && match.length > 1) {
-      // Fix browsers whose `exec` methods don't consistently return `undefined`
-      // for NPCG, like IE8. NOTE: This doesn' work for /(.?)?/
-      // eslint-disable-next-line no-loop-func
-      nativeReplace.call(match[0], reCopy, function () {
-        for (i = 1; i < arguments.length - 2; i++) {
-          if (arguments[i] === undefined) match[i] = undefined;
-        }
-      });
-    }
-
-    return match;
-  };
-}
-
-module.exports = patchedExec;
-
-
-/***/ }),
-/* 37 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var def = __webpack_require__(5).f;
-var has = __webpack_require__(9);
-var TAG = __webpack_require__(0)('toStringTag');
-
-module.exports = function (it, tag, stat) {
-  if (it && !has(it = stat ? it : it.prototype, TAG)) def(it, TAG, { configurable: true, value: tag });
-};
-
-
-/***/ }),
-/* 38 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var shared = __webpack_require__(28)('keys');
-var uid = __webpack_require__(20);
-module.exports = function (key) {
-  return shared[key] || (shared[key] = uid(key));
-};
-
-
-/***/ }),
-/* 39 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// 7.1.1 ToPrimitive(input [, PreferredType])
-var isObject = __webpack_require__(7);
-// instead of the ES6 spec version, we didn't implement @@toPrimitive case
-// and the second argument - flag - preferred type is a string
-module.exports = function (it, S) {
-  if (!isObject(it)) return it;
-  var fn, val;
-  if (S && typeof (fn = it.toString) == 'function' && !isObject(val = fn.call(it))) return val;
-  if (typeof (fn = it.valueOf) == 'function' && !isObject(val = fn.call(it))) return val;
-  if (!S && typeof (fn = it.toString) == 'function' && !isObject(val = fn.call(it))) return val;
-  throw TypeError("Can't convert object to primitive value");
-};
-
-
-/***/ }),
-/* 40 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-var addToUnscopables = __webpack_require__(43);
-var step = __webpack_require__(84);
-var Iterators = __webpack_require__(18);
-var toIObject = __webpack_require__(11);
-
-// 22.1.3.4 Array.prototype.entries()
-// 22.1.3.13 Array.prototype.keys()
-// 22.1.3.29 Array.prototype.values()
-// 22.1.3.30 Array.prototype[@@iterator]()
-module.exports = __webpack_require__(49)(Array, 'Array', function (iterated, kind) {
-  this._t = toIObject(iterated); // target
-  this._i = 0;                   // next index
-  this._k = kind;                // kind
-// 22.1.5.2.1 %ArrayIteratorPrototype%.next()
-}, function () {
-  var O = this._t;
-  var kind = this._k;
-  var index = this._i++;
-  if (!O || index >= O.length) {
-    this._t = undefined;
-    return step(1);
-  }
-  if (kind == 'keys') return step(0, index);
-  if (kind == 'values') return step(0, O[index]);
-  return step(0, [index, O[index]]);
-}, 'values');
-
-// argumentsList[@@iterator] is %ArrayProto_values% (9.4.4.6, 9.4.4.7)
-Iterators.Arguments = Iterators.Array;
-
-addToUnscopables('keys');
-addToUnscopables('values');
-addToUnscopables('entries');
-
-
-/***/ }),
-/* 41 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-__webpack_require__(103);
-var anObject = __webpack_require__(1);
-var $flags = __webpack_require__(24);
-var DESCRIPTORS = __webpack_require__(2);
-var TO_STRING = 'toString';
-var $toString = /./[TO_STRING];
-
-var define = function (fn) {
-  __webpack_require__(10)(RegExp.prototype, TO_STRING, fn, true);
-};
-
-// 21.2.5.14 RegExp.prototype.toString()
-if (__webpack_require__(3)(function () { return $toString.call({ source: 'a', flags: 'b' }) != '/a/b'; })) {
-  define(function toString() {
-    var R = anObject(this);
-    return '/'.concat(R.source, '/',
-      'flags' in R ? R.flags : !DESCRIPTORS && R instanceof RegExp ? $flags.call(R) : undefined);
-  });
-// FF44- RegExp#toString has a wrong name
-} else if ($toString.name != TO_STRING) {
-  define(function toString() {
-    return $toString.call(this);
-  });
-}
-
-
-/***/ }),
-/* 42 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return isArray; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "c", function() { return isString; });
 /* unused harmony export isNumber */
@@ -1555,7 +682,7 @@ if (__webpack_require__(3)(function () { return $toString.call({ source: 'a', fl
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_array_sort___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_array_sort__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_es7_object_values__ = __webpack_require__(63);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_es7_object_values___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_core_js_modules_es7_object_values__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_array_iterator__ = __webpack_require__(40);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_array_iterator__ = __webpack_require__(41);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_array_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_array_iterator__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es6_object_keys__ = __webpack_require__(101);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es6_object_keys___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_core_js_modules_es6_object_keys__);
@@ -1567,10 +694,10 @@ if (__webpack_require__(3)(function () { return $toString.call({ source: 'a', fl
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_symbol___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_symbol__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_core_js_modules_web_dom_iterable__ = __webpack_require__(65);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_core_js_modules_web_dom_iterable___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_9_core_js_modules_web_dom_iterable__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10_core_js_modules_es6_regexp_to_string__ = __webpack_require__(41);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10_core_js_modules_es6_regexp_to_string__ = __webpack_require__(42);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_10_core_js_modules_es6_regexp_to_string___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_10_core_js_modules_es6_regexp_to_string__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__console_console__ = __webpack_require__(16);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__lpep__ = __webpack_require__(30);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__lpep__ = __webpack_require__(31);
 
 
 
@@ -2232,16 +1359,13 @@ var STDLIB = _objectSpread({
   '"': makeMacro(function (a) {
     return a.toString();
   }),
-  '()': makeMacro(function () {
-    for (var _len24 = arguments.length, args = new Array(_len24), _key24 = 0; _key24 < _len24; _key24++) {
-      args[_key24] = arguments[_key24];
-    }
-
-    return ['begin'].concat(args);
+  // '()': makeMacro((...args) => ['begin', ...args]), from 2022 It is just grouping of expressions
+  '()': makeMacro(function (args) {
+    return args;
   }),
   '->': makeMacro(function (acc) {
-    for (var _len25 = arguments.length, ast = new Array(_len25 > 1 ? _len25 - 1 : 0), _key25 = 1; _key25 < _len25; _key25++) {
-      ast[_key25 - 1] = arguments[_key25];
+    for (var _len24 = arguments.length, ast = new Array(_len24 > 1 ? _len24 - 1 : 0), _key24 = 1; _key24 < _len24; _key24++) {
+      ast[_key24 - 1] = arguments[_key24];
     }
 
     // thread first macro
@@ -2271,8 +1395,8 @@ var STDLIB = _objectSpread({
     return acc;
   }),
   '->>': makeMacro(function (acc) {
-    for (var _len26 = arguments.length, ast = new Array(_len26 > 1 ? _len26 - 1 : 0), _key26 = 1; _key26 < _len26; _key26++) {
-      ast[_key26 - 1] = arguments[_key26];
+    for (var _len25 = arguments.length, ast = new Array(_len25 > 1 ? _len25 - 1 : 0), _key25 = 1; _key25 < _len25; _key25++) {
+      ast[_key25 - 1] = arguments[_key25];
     }
 
     // thread last macro
@@ -2287,8 +1411,8 @@ var STDLIB = _objectSpread({
     return acc;
   }),
   'invoke': makeMacro(function () {
-    for (var _len27 = arguments.length, ast = new Array(_len27), _key27 = 0; _key27 < _len27; _key27++) {
-      ast[_key27] = arguments[_key27];
+    for (var _len26 = arguments.length, ast = new Array(_len26), _key26 = 0; _key26 < _len26; _key26++) {
+      ast[_key26] = arguments[_key26];
     }
 
     /// мы не можем использовать точку в LPE для вызова метода объекта, так как она уже замаплена на ->
@@ -2298,8 +1422,8 @@ var STDLIB = _objectSpread({
     return ast;
   }),
   'and': makeMacro(function () {
-    for (var _len28 = arguments.length, ast = new Array(_len28), _key28 = 0; _key28 < _len28; _key28++) {
-      ast[_key28] = arguments[_key28];
+    for (var _len27 = arguments.length, ast = new Array(_len27), _key27 = 0; _key27 < _len27; _key27++) {
+      ast[_key27] = arguments[_key27];
     }
 
     if (ast.length === 0) return true;
@@ -2307,8 +1431,8 @@ var STDLIB = _objectSpread({
     return ["let", ["__and", ast[0]], ["if", "__and", ["and"].concat(ast.slice(1)), "__and"]];
   }),
   'or': makeMacro(function () {
-    for (var _len29 = arguments.length, ast = new Array(_len29), _key29 = 0; _key29 < _len29; _key29++) {
-      ast[_key29] = arguments[_key29];
+    for (var _len28 = arguments.length, ast = new Array(_len28), _key28 = 0; _key28 < _len28; _key28++) {
+      ast[_key28] = arguments[_key28];
     }
 
     if (ast.length === 0) return false;
@@ -2455,6 +1579,1030 @@ function evaluate(ast, ctx) {
 }
 
 /***/ }),
+/* 31 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (immutable) */ __webpack_exports__["a"] = parse;
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_array_find__ = __webpack_require__(99);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_array_find___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_array_find__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__console_console__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__lisp__ = __webpack_require__(30);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__lpel__ = __webpack_require__(68);
+/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return __WEBPACK_IMPORTED_MODULE_3__lpel__["c"]; });
+
+
+/**
+ * LuxPath expressions parser
+ *
+ * VERSION: 1.0.1
+ * 
+ * DVD: added sexpr property to the token as array to keep s-expressions.
+ *      arity and first, second etc will be removed
+ * 
+ */
+// Parser for Simplified JavaScript written in Simplified JavaScript
+// From Top Down Operator Precedence
+// http://javascript.crockford.com/tdop/index.html
+// http://crockford.com/javascript/tdop/tdop.html
+// Douglas Crockford
+// 2010-06-26
+//////////////////////////////////////////////////
+// Later hacked to parse LPE instead of JavaScript
+// Dmitry Dorofeev
+// 2017-01-20
+
+/*
+
+lbp = left binding power
+rbp = right binding power
+nud = null denotation
+led = left denotation
+std = statement denotation
+*/
+
+
+
+
+var make_parse = function make_parse() {
+  var m_symbol_table = {};
+  var m_token;
+  var m_tokens;
+  var m_token_nr; // стэк для типов выражений
+
+  var m_expr_scope = {
+    pop: function pop() {}
+  }; // для разбора логических выражений типа (A and B or C)
+  // для хранения алиасов для операций
+
+  var m_operator_aliases = {};
+
+  var operator_alias = function operator_alias(from, to) {
+    m_operator_aliases[from] = to;
+  };
+
+  var itself = function itself() {
+    return this;
+  };
+
+  var scope = {
+    find: function find(n) {
+      var e = this,
+          o;
+      var s = Object.create(original_symbol);
+      s.nud = itself;
+      s.led = null;
+      s.lbp = 0;
+      return s;
+    }
+  };
+  var expr_logical_scope = {
+    pop: function pop() {
+      m_expr_scope = this.parent;
+    },
+    parent: null,
+    tp: "logical"
+  };
+  var expr_lpe_scope = {
+    pop: function pop() {
+      m_expr_scope = this.parent;
+    },
+    parent: null,
+    tp: "lpe"
+  };
+
+  var new_expression_scope = function new_expression_scope(tp) {
+    var s = m_expr_scope;
+    m_expr_scope = Object.create(tp === "logical" ? expr_logical_scope : expr_lpe_scope);
+    m_expr_scope.parent = s;
+    return m_expr_scope;
+  };
+
+  var advance = function advance(id) {
+    var a, o, t, v;
+
+    if (id && m_token.id !== id) {
+      __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_3__lpel__["a" /* makeError */])(m_token, "Got " + m_token.value + " but expected '" + id + "'.");
+    }
+
+    if (m_token_nr >= m_tokens.length) {
+      m_token = m_symbol_table["(end)"];
+      return;
+    }
+
+    t = m_tokens[m_token_nr];
+    m_token_nr += 1;
+    v = t.value;
+    a = t.type;
+
+    if (a === "name") {
+      if (v === 'true' || v === 'false' || v === 'null') {
+        o = m_symbol_table[v];
+        a = "literal";
+      } else if (m_expr_scope.tp == "logical") {
+        if (v === "or" || v === "and" || v === "not" || v === "in" || v === "is") {
+          //a = "operator";
+          o = m_symbol_table[v]; //console.log("OPERATOR>", v , " ", JSON.stringify(o))
+
+          if (!o) {
+            __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_3__lpel__["a" /* makeError */])(t, "Unknown logical operator.");
+          }
+        } else {
+          o = scope.find(v);
+        }
+      } else {
+        o = scope.find(v);
+      }
+    } else if (a === "operator") {
+      o = m_symbol_table[v];
+
+      if (!o) {
+        __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_3__lpel__["a" /* makeError */])(t, "Unknown operator.");
+      }
+    } else if (a === "string_double") {
+      o = m_symbol_table["(string_literal_double)"];
+      a = "literal";
+    } else if (a === "string_single") {
+      o = m_symbol_table["(string_literal_single)"];
+      a = "literal";
+    } else if (a === "number") {
+      o = m_symbol_table["(number_literal)"];
+      a = "literal";
+    } else {
+      __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_3__lpel__["a" /* makeError */])(t, "Unexpected token.");
+    }
+
+    m_token = Object.create(o);
+    m_token.from = t.from;
+    m_token.to = t.to;
+    m_token.value = v;
+    m_token.arity = a;
+
+    if (a == "operator") {
+      m_token.sexpr = m_operator_aliases[v];
+    } else {
+      m_token.sexpr = v; // by dima
+    }
+
+    return m_token;
+  };
+
+  var statement = function statement() {
+    var n = m_token,
+        v;
+
+    if (n.std) {
+      advance(); //scope.reserve(n);
+
+      return n.std();
+    }
+
+    v = expression(0); //if (!v.assignment && v.id !== "(") {
+
+    /*  if (v.id !== "(" && v.id !== "name" && v.id !== "number") {
+        console.log(v);
+        v.error("Bad expression statement.");
+    }*/
+    //advance(";");
+
+    return v;
+  };
+
+  var statements = function statements() {
+    var a = [],
+        s;
+
+    while (true) {
+      //console.log(token);
+      if (m_token.id === "(end)") {
+        break;
+      } else if (m_token.value === ';') {
+        // skip optional ;
+        advance();
+      }
+
+      s = statement(); //console.log("STATEMENT ", s);
+
+      if (s) {
+        a.push(s);
+      }
+    }
+
+    return a.length === 0 ? null : a.length === 1 ? a[0] : {
+      "sexpr": ["begin"].concat(a.map(function (el) {
+        return el["sexpr"];
+      }))
+    };
+  };
+
+  var expression = function expression(rbp) {
+    var left;
+    var t = m_token;
+    advance();
+    left = t.nud();
+
+    while (rbp < m_token.lbp) {
+      t = m_token;
+      advance();
+      left = t.led(left);
+    }
+
+    return left;
+  };
+
+  var original_symbol = {
+    nud: function nud() {
+      __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_3__lpel__["a" /* makeError */])(this, "Undefined.");
+    },
+    led: function led(left) {
+      __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_3__lpel__["a" /* makeError */])(this, "Missing operator.");
+    }
+  };
+
+  var symbol = function symbol(id, bp) {
+    var s = m_symbol_table[id];
+    bp = bp || 0;
+
+    if (s) {
+      if (bp >= s.lbp) {
+        s.lbp = bp;
+      }
+    } else {
+      s = Object.create(original_symbol);
+      s.id = s.value = id;
+      s.lbp = bp;
+      m_symbol_table[id] = s;
+    }
+
+    operator_alias(id, id);
+    return s;
+  };
+
+  var infix = function infix(id, bp, led) {
+    var s = symbol(id, bp);
+
+    s.led = led || function (left) {
+      this.first = left;
+      var right = expression(bp);
+      this.second = right;
+      this.arity = "binary";
+      this.sexpr = [this.sexpr, left.sexpr, right.sexpr];
+      return this;
+    };
+
+    return s;
+  }; // infix operators are left associative. 
+  // We can also make right associative operators, such as short-circuiting logical operators, 
+  // by reducing the right binding power.
+
+
+  var infixr = function infixr(id, bp, led) {
+    var s = symbol(id, bp);
+
+    s.led = led || function (left) {
+      this.first = left;
+      var right = expression(bp - 1);
+      this.second = right;
+      this.arity = "binary";
+      this.sexpr = [this.sexpr, left.sexpr, right.sexpr];
+      return this;
+    };
+
+    return s;
+  };
+
+  var prefix = function prefix(id, nud) {
+    var s = symbol(id);
+
+    s.nud = nud || function () {
+      // scope.reserve(this);
+      var expr = expression(70);
+      this.first = expr;
+      this.arity = "unary";
+      this.sexpr = [this.sexpr, expr.sexpr];
+      return this;
+    };
+
+    return s;
+  };
+
+  var stmt = function stmt(s, f) {
+    var x = symbol(s);
+    x.std = f;
+    return x;
+  };
+
+  symbol("(end)");
+  symbol("(name)");
+  symbol("(null)");
+  symbol(":");
+  symbol(";");
+  symbol(")");
+  symbol("]");
+  symbol("}");
+
+  symbol("true").nud = function () {
+    this.sexpr = true;
+    return this;
+  };
+
+  symbol("false").nud = function () {
+    this.sexpr = false;
+    return this;
+  };
+
+  symbol("null").nud = function () {
+    this.sexpr = null;
+    return this;
+  }; // allow to skip values in function calls....
+
+
+  var comma = symbol(",");
+
+  symbol("(string_literal_double)").nud = function () {
+    this.first = '"';
+    this.arity = "unary";
+    this.sexpr = ['"', this.sexpr];
+    return this;
+  };
+
+  symbol("(string_literal_single)").nud = function () {
+    this.first = "'";
+    this.arity = "unary";
+    this.sexpr = ["'", this.sexpr];
+    return this;
+  };
+
+  symbol("(number_literal)").nud = itself; // [esix]: commented as in conflict with SQL operator ':'
+  // infix("?", 20, function (left) {
+  //   this.first = left;
+  //   this.second = expression(0);
+  //   advance(":");
+  //   this.third = expression(0);
+  //   this.arity = "ternary";
+  //   this.sexpr = ["if", this.first.sexpr, this.second.sexpr, this.third.sexpr];
+  //   return this;
+  // });
+  // [esix]: ternary operator with no conflict on ':' operator
+
+  infix('?', 20, function (left) {
+    this.first = left;
+    this.second = expression(0);
+    this.arity = 'binary';
+
+    if (this.second.arity === 'binary' && this.second.value === ':') {
+      this.sexpr = ["if", this.first.sexpr, this.second.sexpr[1], this.second.sexpr[2]];
+    } else {
+      __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_3__lpel__["a" /* makeError */])(this.second, "Invalid ternary operator.");
+    }
+
+    return this;
+  });
+  infixr("&&", 30);
+  infixr("∧", 30);
+  operator_alias("&&", "and");
+  operator_alias("∧", "and");
+  infixr("||", 30);
+  infixr("∨", 30);
+  operator_alias("||", "or");
+  operator_alias("∨", "or");
+  infixr('⍱', 30);
+  operator_alias('⍱', 'nor');
+  infixr('⍲', 30);
+  operator_alias('⍲', 'nand');
+  infixr('⊣', 30);
+  operator_alias('⊣', 'car');
+  infixr('⊢', 30);
+  operator_alias('⊢', 'cdr');
+  infixr('⍴', 30);
+  /* will be used in logical scope, allow (a or and(b,c,ss)) */
+
+  infixr("and", 30).nud = function () {
+    return this;
+  };
+  /* allow (a and or(b,c,ss)) */
+
+
+  infixr("or", 30).nud = function () {
+    return this;
+  }; // required for SQL logical scope where a in (1,2,3)
+
+
+  infixr("in", 30);
+  infixr("is", 30); // for SQL types: '10'::BIGINT
+
+  infixr("::", 90); // for SQL as
+
+  infixr(":", 80);
+  infixr('~', 40);
+  infixr('!~', 40);
+  infixr('=', 40);
+  infixr('≠', 40);
+  operator_alias('≠', '!='); // from to canonical form;
+
+  infixr('==', 40);
+  infixr('!==', 40);
+  infixr('!=', 40);
+  infixr('<', 40);
+  infixr('<=', 40);
+  infixr('≤', 40);
+  operator_alias('≤', '<=');
+  infixr(">", 40);
+  infixr(">=", 40);
+  infixr("≥", 40);
+  operator_alias("≥", ">=");
+  infixr("<>", 40);
+  infix("+", 50);
+  infix("-", 50);
+  infix("*", 60);
+  infix("/", 60);
+  infix("(", 80, function (left) {
+    var a = []; //console.log("FUNC>", left.value)
+
+    if (left.id === "[") {
+      // FIXME TODO
+      this.arity = "ternary";
+      this.first = left.first;
+      this.second = left.second;
+      this.third = a;
+    } else {
+      this.arity = "binary";
+      this.first = left;
+      this.value = "("; // it was '(' by dima
+
+      this.second = a;
+
+      if ((left.arity !== "unary" || left.id !== "function") && left.arity !== "name" && left.id !== "(" && left.id !== "&&" && left.id !== "||" && left.id !== "?") {
+        __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_3__lpel__["a" /* makeError */])(left, "Expected a variable name.");
+      }
+    } // dima support for missed function arguments...
+
+
+    if (m_token.id !== ")") {
+      if (false) {
+        // специальный парсер для where - logical expression.
+        // тут у нас выражение с использованием скобок, and, or, not и никаких запятых...
+        // DIMA 2021: logexpr function will be generic name for logical things
+        // where && filter is used for SQL generation and should not be changed....
+        // expr is deprecated name for logexpr
+        // FIXME: make transition to the logexpr!
+        new_expression_scope("logical");
+        var e = expression(0); //console.log("LOGICAL" +  left.value + " " + JSON.stringify(e));
+
+        m_expr_scope.pop();
+        a.push(e);
+      } else {
+        new_expression_scope("lpe");
+
+        while (true) {
+          // console.log(">" + token.arity + " NAME:" + left.value);
+          if (m_token.id === ',') {
+            a.push({
+              value: null,
+              arity: "literal"
+            });
+            advance();
+          } else if (m_token.id === ')') {
+            a.push({
+              value: null,
+              arity: "literal"
+            });
+            break;
+          } else {
+            new_expression_scope("logical");
+            var e = expression(0); //console.log("LOGICAL????? " + JSON.stringify(e));
+
+            m_expr_scope.pop(); // var e = statements();
+
+            a.push(e);
+
+            if (m_token.id !== ",") {
+              break;
+            }
+
+            advance(",");
+          }
+        }
+
+        m_expr_scope.pop();
+      }
+    }
+
+    this.sexpr = [this.first.value].concat(a.map(function (el) {
+      return el.sexpr;
+    }));
+    advance(")");
+    return this;
+  });
+
+  function lift_funseq(node) {
+    if (node.value === "->") {
+      return lift_funseq(node.first).concat(lift_funseq(node.second));
+    } else
+      /*if (node.value === "(") {
+      console.log("() DETECTED" + JSON.stringify(node))
+      //if (node.first.value === "->"){
+      // если у нас в скобки взято выражение "->", то скобки можно удалить
+      // if (true).(frst().second()) === if(true) => [->> [first] [second]] скобки не нужны, 
+      // так как seq уже группирует вызовы в цепочку
+      // DIMA 2022 на самом деле нет для
+      // if(a=b).(yes().yes()).(no().no3())
+      // получаем
+      // ["->",["if",["=","a","b"]],["yes"],["yes"],["no"],["no3"]]
+      // что выглядит странно со вснх сторон
+      //  return [["->"].concat(lift_funseq(node.first.first)).concat(lift_funseq(node.first.second))];
+      //} else {
+      return lift_funseq(node.first);
+      //}
+      } else */
+      {
+        //console.log("?? DETECTED" + JSON.stringify(node))
+        return [node.sexpr];
+      }
+  }
+
+  function lift_funseq_2(node) {
+    if (node.value === "->>") {
+      return lift_funseq(node.first).concat(lift_funseq(node.second));
+    } else
+      /*if (node.value === "()") {
+      //if (node.first.value === "->>"){
+      // если у нас в скобки взято выражение "->", то скобки можно удалить
+      // if (true).(frst().second()) === if(true) => [->> [first] [second]] скобки не нужны, 
+      // так как seq уже группирует вызовы в цепочку
+      //  return [["->>"].concat(lift_funseq(node.first.first)).concat(lift_funseq(node.first.second))];
+      //} else {
+      return lift_funseq(node.first);
+      //}
+      } else */
+      {
+        return [node.sexpr];
+      }
+  }
+
+  infix(".", 70, function (left) {
+    this.first = left; // this.second = expression(0);
+
+    this.second = expression(70);
+    this.arity = "binary";
+    this.value = "->";
+    this.sexpr = ["->"].concat(lift_funseq(this));
+    return this;
+  });
+  infix("..", 70, function (left) {
+    this.first = left; // this.second = expression(0);
+
+    this.second = expression(70);
+    this.arity = "binary";
+    this.value = "->>";
+    this.sexpr = ["->>"].concat(lift_funseq_2(this));
+    return this;
+  }); // WARNING HACK FIXME DIMA - добавил чтобы писать order_by(+a)
+  // А также замена /table на +table в htSQL
+
+  prefix("+");
+  prefix("!"); // allow func().not(a)   а также f(a is not null)
+
+  var n = prefix("not", function () {
+    // it is nud function
+    var expr = expression(70); //console.log("AHTUNG expr is " + JSON.stringify(expr))
+
+    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__lisp__["b" /* isArray */])(expr.sexpr) && expr.sexpr[0] === '()') {
+      /* выражение not() выдаёт вот такое:
+        {
+          from: 0,
+          to: 3,
+          value: 'not',
+          arity: 'unary',
+          sexpr: [ 'not', [ '()' ] ],
+          first: {from: 3,to: 4,value: '(',arity: 'binary',sexpr: [ '()' ],
+                  first: { from: 3, to: 4, value: '()', arity: 'name', sexpr: ['()'] }
+          }
+        }
+        not(1) даёт такое, a not(1,2) нельзя написать = ошибка !!!
+          {
+            from: 0,
+            to: 3,
+            value: 'not',
+            arity: 'unary',
+            sexpr: [ 'not', [ '()', 1 ] ],
+            first: { from: 4, to: 5, value: 1, arity: 'literal', sexpr: [ '()', 1 ] }
+          }
+        надо его преобразовать в
+          {
+            from: 1,
+            to: 2,
+            value: '(',
+            arity: 'binary',
+            sexpr: [ 'f' ],
+            first: { from: 0, to: 1, value: 'f', arity: 'name', sexpr: 'f' },
+            second: []
+          }
+        или с параметром (одним!)
+          {
+            from: 1,
+            to: 2,
+            value: '(',
+            arity: 'binary',
+            sexpr: [ 'f', 1 ],
+            first: { from: 0, to: 1, value: 'f', arity: 'name', sexpr: 'f' },
+            second: [ { from: 2, to: 3, value: 1, arity: 'literal', sexpr: 1 } ]
+          }
+      */
+      this.arity = 'name';
+      this.value = 'not';
+      this.sexpr = 'not';
+      var e = {
+        from: 0,
+        to: 2,
+        value: '(',
+        arity: 'binary',
+        sexpr: ['not'],
+        first: this
+      };
+
+      if (expr.sexpr.length > 1) {
+        e.second = [{
+          from: 4,
+          to: 5,
+          value: expr.sexpr[1],
+          arity: 'literal',
+          sexpr: expr.sexpr[1]
+        }];
+        e.sexpr.push(expr.sexpr); // keep () in the parsed AST
+        //e.sexpr = e.sexpr.concat(expr.sexpr) // keep () in the parsed AST
+      }
+
+      return e;
+    } // simple operator `not expr`
+
+
+    this.first = expr;
+    this.arity = "unary";
+    this.sexpr = [this.sexpr, expr.sexpr]; //console.log("2NOT nud:" + JSON.stringify(this))
+
+    return this;
+  });
+
+  n.led = function (left) {
+    //console.log("NOT led left:" + JSON.stringify(left))
+    return this;
+  }; // will be used in logical scope
+
+
+  prefix("¬");
+  operator_alias("!", "not");
+  operator_alias("¬", "not"); // trying to optimize, when we have negated -number
+
+  prefix("-");
+  prefix(".", function () {
+    var v = expression(70);
+
+    if (v.value !== "(") {
+      __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_3__lpel__["a" /* makeError */])(v, "Only functions may have dot (.) unary operator.");
+    } // this.first = v;
+    // this.arity = "unary";
+    // return this;
+    // skip unary dot !!!
+
+
+    return v;
+  });
+  prefix("(", function () {
+    var e;
+
+    if (m_token.value === ')') {
+      // если это просто () две скобки, то возвращаем сразу кусок AST,генерим функцию с именем "()"
+      // {"from":3,"to":4,"value":"(","arity":"operator","sexpr":"("}
+      this.arity = "binary";
+      this.sexpr = ["()"];
+      this.first = {
+        from: this.from,
+        to: this.to + 1,
+        value: '()',
+        arity: 'name',
+        sexpr: ['()']
+      };
+      advance(")");
+      return this;
+    }
+
+    e = expression(0); //console.log('(), got e' + JSON.stringify(e))
+
+    if (m_expr_scope.tp == "logical") {
+      // we should remember all brackets to restore original user expression
+      e.value = "("; // FIXME: why not make it '()' ?? and looks like function `()` call ?
+
+      e.sexpr = ["()", e.sexpr];
+    } else {
+      if (e.value === "->") {
+        // в скобки взято выражение из цепочки LPE вызовов, нужно запомнить скобки, делаем push "()" в текущий AST 
+        e = {
+          first: e,
+          value: "(",
+          arity: "binary",
+          sexpr: ["()", e.sexpr]
+        };
+      }
+    }
+
+    advance(")"); //console.log('(), return e' + JSON.stringify(e))
+
+    return e;
+  });
+  prefix("[", function () {
+    var a = [];
+
+    if (m_token.id !== "]") {
+      while (true) {
+        a.push(expression(0)); // a.push(statements());
+
+        if (m_token.id !== ",") {
+          break;
+        }
+
+        advance(",");
+      }
+    }
+
+    advance("]");
+    this.first = a;
+    this.arity = "unary";
+    this.sexpr = ["["].concat(a.map(function (el) {
+      return el.sexpr;
+    }));
+    return this;
+  });
+  return function (source) {
+    m_tokens = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_3__lpel__["b" /* tokenize */])(source, '=<>!+-*&|/%^:.', '=<>&|:.');
+    m_token_nr = 0;
+    new_expression_scope("logical");
+    advance();
+    var s = statements(); // var s = expression(0);
+
+    advance("(end)");
+    return s;
+  };
+};
+
+var parser = make_parse(); // console.log('LPE Parser initialized')
+
+function parse(str) {
+  try {
+    var parseResult = parser(str); // from, to, value, arity, sexpr
+
+    return parseResult.sexpr;
+  } catch (err) {
+    __WEBPACK_IMPORTED_MODULE_1__console_console__["a" /* default */].error("Error", err.message);
+    __WEBPACK_IMPORTED_MODULE_1__console_console__["a" /* default */].error("Error", err.stack);
+    throw err;
+  }
+}
+
+
+/***/ }),
+/* 32 */
+/***/ (function(module, exports) {
+
+module.exports = function (it) {
+  if (typeof it != 'function') throw TypeError(it + ' is not a function!');
+  return it;
+};
+
+
+/***/ }),
+/* 33 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var at = __webpack_require__(54)(true);
+
+ // `AdvanceStringIndex` abstract operation
+// https://tc39.github.io/ecma262/#sec-advancestringindex
+module.exports = function (S, index, unicode) {
+  return index + (unicode ? at(S, index).length : 1);
+};
+
+
+/***/ }),
+/* 34 */
+/***/ (function(module, exports) {
+
+// IE 8- don't enum bug keys
+module.exports = (
+  'constructor,hasOwnProperty,isPrototypeOf,propertyIsEnumerable,toLocaleString,toString,valueOf'
+).split(',');
+
+
+/***/ }),
+/* 35 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// 7.2.8 IsRegExp(argument)
+var isObject = __webpack_require__(7);
+var cof = __webpack_require__(21);
+var MATCH = __webpack_require__(0)('match');
+module.exports = function (it) {
+  var isRegExp;
+  return isObject(it) && ((isRegExp = it[MATCH]) !== undefined ? !!isRegExp : cof(it) == 'RegExp');
+};
+
+
+/***/ }),
+/* 36 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// 19.1.2.7 / 15.2.3.4 Object.getOwnPropertyNames(O)
+var $keys = __webpack_require__(53);
+var hiddenKeys = __webpack_require__(34).concat('length', 'prototype');
+
+exports.f = Object.getOwnPropertyNames || function getOwnPropertyNames(O) {
+  return $keys(O, hiddenKeys);
+};
+
+
+/***/ }),
+/* 37 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var regexpFlags = __webpack_require__(24);
+
+var nativeExec = RegExp.prototype.exec;
+// This always refers to the native implementation, because the
+// String#replace polyfill uses ./fix-regexp-well-known-symbol-logic.js,
+// which loads this file before patching the method.
+var nativeReplace = String.prototype.replace;
+
+var patchedExec = nativeExec;
+
+var LAST_INDEX = 'lastIndex';
+
+var UPDATES_LAST_INDEX_WRONG = (function () {
+  var re1 = /a/,
+      re2 = /b*/g;
+  nativeExec.call(re1, 'a');
+  nativeExec.call(re2, 'a');
+  return re1[LAST_INDEX] !== 0 || re2[LAST_INDEX] !== 0;
+})();
+
+// nonparticipating capturing group, copied from es5-shim's String#split patch.
+var NPCG_INCLUDED = /()??/.exec('')[1] !== undefined;
+
+var PATCH = UPDATES_LAST_INDEX_WRONG || NPCG_INCLUDED;
+
+if (PATCH) {
+  patchedExec = function exec(str) {
+    var re = this;
+    var lastIndex, reCopy, match, i;
+
+    if (NPCG_INCLUDED) {
+      reCopy = new RegExp('^' + re.source + '$(?!\\s)', regexpFlags.call(re));
+    }
+    if (UPDATES_LAST_INDEX_WRONG) lastIndex = re[LAST_INDEX];
+
+    match = nativeExec.call(re, str);
+
+    if (UPDATES_LAST_INDEX_WRONG && match) {
+      re[LAST_INDEX] = re.global ? match.index + match[0].length : lastIndex;
+    }
+    if (NPCG_INCLUDED && match && match.length > 1) {
+      // Fix browsers whose `exec` methods don't consistently return `undefined`
+      // for NPCG, like IE8. NOTE: This doesn' work for /(.?)?/
+      // eslint-disable-next-line no-loop-func
+      nativeReplace.call(match[0], reCopy, function () {
+        for (i = 1; i < arguments.length - 2; i++) {
+          if (arguments[i] === undefined) match[i] = undefined;
+        }
+      });
+    }
+
+    return match;
+  };
+}
+
+module.exports = patchedExec;
+
+
+/***/ }),
+/* 38 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var def = __webpack_require__(5).f;
+var has = __webpack_require__(9);
+var TAG = __webpack_require__(0)('toStringTag');
+
+module.exports = function (it, tag, stat) {
+  if (it && !has(it = stat ? it : it.prototype, TAG)) def(it, TAG, { configurable: true, value: tag });
+};
+
+
+/***/ }),
+/* 39 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var shared = __webpack_require__(28)('keys');
+var uid = __webpack_require__(20);
+module.exports = function (key) {
+  return shared[key] || (shared[key] = uid(key));
+};
+
+
+/***/ }),
+/* 40 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// 7.1.1 ToPrimitive(input [, PreferredType])
+var isObject = __webpack_require__(7);
+// instead of the ES6 spec version, we didn't implement @@toPrimitive case
+// and the second argument - flag - preferred type is a string
+module.exports = function (it, S) {
+  if (!isObject(it)) return it;
+  var fn, val;
+  if (S && typeof (fn = it.toString) == 'function' && !isObject(val = fn.call(it))) return val;
+  if (typeof (fn = it.valueOf) == 'function' && !isObject(val = fn.call(it))) return val;
+  if (!S && typeof (fn = it.toString) == 'function' && !isObject(val = fn.call(it))) return val;
+  throw TypeError("Can't convert object to primitive value");
+};
+
+
+/***/ }),
+/* 41 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var addToUnscopables = __webpack_require__(43);
+var step = __webpack_require__(84);
+var Iterators = __webpack_require__(18);
+var toIObject = __webpack_require__(11);
+
+// 22.1.3.4 Array.prototype.entries()
+// 22.1.3.13 Array.prototype.keys()
+// 22.1.3.29 Array.prototype.values()
+// 22.1.3.30 Array.prototype[@@iterator]()
+module.exports = __webpack_require__(49)(Array, 'Array', function (iterated, kind) {
+  this._t = toIObject(iterated); // target
+  this._i = 0;                   // next index
+  this._k = kind;                // kind
+// 22.1.5.2.1 %ArrayIteratorPrototype%.next()
+}, function () {
+  var O = this._t;
+  var kind = this._k;
+  var index = this._i++;
+  if (!O || index >= O.length) {
+    this._t = undefined;
+    return step(1);
+  }
+  if (kind == 'keys') return step(0, index);
+  if (kind == 'values') return step(0, O[index]);
+  return step(0, [index, O[index]]);
+}, 'values');
+
+// argumentsList[@@iterator] is %ArrayProto_values% (9.4.4.6, 9.4.4.7)
+Iterators.Arguments = Iterators.Array;
+
+addToUnscopables('keys');
+addToUnscopables('values');
+addToUnscopables('entries');
+
+
+/***/ }),
+/* 42 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+__webpack_require__(103);
+var anObject = __webpack_require__(1);
+var $flags = __webpack_require__(24);
+var DESCRIPTORS = __webpack_require__(2);
+var TO_STRING = 'toString';
+var $toString = /./[TO_STRING];
+
+var define = function (fn) {
+  __webpack_require__(10)(RegExp.prototype, TO_STRING, fn, true);
+};
+
+// 21.2.5.14 RegExp.prototype.toString()
+if (__webpack_require__(3)(function () { return $toString.call({ source: 'a', flags: 'b' }) != '/a/b'; })) {
+  define(function toString() {
+    var R = anObject(this);
+    return '/'.concat(R.source, '/',
+      'flags' in R ? R.flags : !DESCRIPTORS && R instanceof RegExp ? $flags.call(R) : undefined);
+  });
+// FF44- RegExp#toString has a wrong name
+} else if ($toString.name != TO_STRING) {
+  define(function toString() {
+    return $toString.call(this);
+  });
+}
+
+
+/***/ }),
 /* 43 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -2553,7 +2701,7 @@ var redefine = __webpack_require__(10);
 var hide = __webpack_require__(8);
 var Iterators = __webpack_require__(18);
 var $iterCreate = __webpack_require__(82);
-var setToStringTag = __webpack_require__(37);
+var setToStringTag = __webpack_require__(38);
 var getPrototypeOf = __webpack_require__(88);
 var ITERATOR = __webpack_require__(0)('iterator');
 var BUGGY = !([].keys && 'next' in [].keys()); // Safari has buggy iterators w/o `next`
@@ -2624,8 +2772,8 @@ module.exports = function (Base, NAME, Constructor, next, DEFAULT, IS_SET, FORCE
 // 19.1.2.2 / 15.2.3.5 Object.create(O [, Properties])
 var anObject = __webpack_require__(1);
 var dPs = __webpack_require__(86);
-var enumBugKeys = __webpack_require__(33);
-var IE_PROTO = __webpack_require__(38)('IE_PROTO');
+var enumBugKeys = __webpack_require__(34);
+var IE_PROTO = __webpack_require__(39)('IE_PROTO');
 var Empty = function () { /* empty */ };
 var PROTOTYPE = 'prototype';
 
@@ -2671,7 +2819,7 @@ module.exports = Object.create || function create(O, Properties) {
 var pIE = __webpack_require__(26);
 var createDesc = __webpack_require__(19);
 var toIObject = __webpack_require__(11);
-var toPrimitive = __webpack_require__(39);
+var toPrimitive = __webpack_require__(40);
 var has = __webpack_require__(9);
 var IE8_DOM_DEFINE = __webpack_require__(46);
 var gOPD = Object.getOwnPropertyDescriptor;
@@ -2700,7 +2848,7 @@ exports.f = Object.getOwnPropertySymbols;
 var has = __webpack_require__(9);
 var toIObject = __webpack_require__(11);
 var arrayIndexOf = __webpack_require__(70)(false);
-var IE_PROTO = __webpack_require__(38)('IE_PROTO');
+var IE_PROTO = __webpack_require__(39)('IE_PROTO');
 
 module.exports = function (object, names) {
   var O = toIObject(object);
@@ -2768,7 +2916,7 @@ exports.f = __webpack_require__(0);
 "use strict";
 
 var $export = __webpack_require__(6);
-var aFunction = __webpack_require__(31);
+var aFunction = __webpack_require__(32);
 var toObject = __webpack_require__(15);
 var fails = __webpack_require__(3);
 var $sort = [].sort;
@@ -2820,8 +2968,8 @@ NAME in FProto || __webpack_require__(2) && dP(FProto, NAME, {
 var global = __webpack_require__(4);
 var inheritIfRequired = __webpack_require__(79);
 var dP = __webpack_require__(5).f;
-var gOPN = __webpack_require__(35).f;
-var isRegExp = __webpack_require__(34);
+var gOPN = __webpack_require__(36).f;
+var isRegExp = __webpack_require__(35);
 var $flags = __webpack_require__(24);
 var $RegExp = global.RegExp;
 var Base = $RegExp;
@@ -2873,7 +3021,7 @@ var anObject = __webpack_require__(1);
 var toObject = __webpack_require__(15);
 var toLength = __webpack_require__(12);
 var toInteger = __webpack_require__(29);
-var advanceStringIndex = __webpack_require__(32);
+var advanceStringIndex = __webpack_require__(33);
 var regExpExec = __webpack_require__(27);
 var max = Math.max;
 var min = Math.min;
@@ -2994,13 +3142,13 @@ __webpack_require__(23)('replace', 2, function (defined, REPLACE, $replace, mayb
 "use strict";
 
 
-var isRegExp = __webpack_require__(34);
+var isRegExp = __webpack_require__(35);
 var anObject = __webpack_require__(1);
 var speciesConstructor = __webpack_require__(94);
-var advanceStringIndex = __webpack_require__(32);
+var advanceStringIndex = __webpack_require__(33);
 var toLength = __webpack_require__(12);
 var callRegExpExec = __webpack_require__(27);
-var regexpExec = __webpack_require__(36);
+var regexpExec = __webpack_require__(37);
 var fails = __webpack_require__(3);
 var $min = Math.min;
 var $push = [].push;
@@ -3143,7 +3291,7 @@ var redefine = __webpack_require__(10);
 var META = __webpack_require__(85).KEY;
 var $fails = __webpack_require__(3);
 var shared = __webpack_require__(28);
-var setToStringTag = __webpack_require__(37);
+var setToStringTag = __webpack_require__(38);
 var uid = __webpack_require__(20);
 var wks = __webpack_require__(0);
 var wksExt = __webpack_require__(56);
@@ -3153,7 +3301,7 @@ var isArray = __webpack_require__(48);
 var anObject = __webpack_require__(1);
 var isObject = __webpack_require__(7);
 var toIObject = __webpack_require__(11);
-var toPrimitive = __webpack_require__(39);
+var toPrimitive = __webpack_require__(40);
 var createDesc = __webpack_require__(19);
 var _create = __webpack_require__(50);
 var gOPNExt = __webpack_require__(87);
@@ -3282,7 +3430,7 @@ if (!USE_NATIVE) {
 
   $GOPD.f = $getOwnPropertyDescriptor;
   $DP.f = $defineProperty;
-  __webpack_require__(35).f = gOPNExt.f = $getOwnPropertyNames;
+  __webpack_require__(36).f = gOPNExt.f = $getOwnPropertyNames;
   __webpack_require__(26).f = $propertyIsEnumerable;
   __webpack_require__(52).f = $getOwnPropertySymbols;
 
@@ -3395,7 +3543,7 @@ __webpack_require__(55)('asyncIterator');
 /* 65 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var $iterators = __webpack_require__(40);
+var $iterators = __webpack_require__(41);
 var getKeys = __webpack_require__(14);
 var redefine = __webpack_require__(10);
 var global = __webpack_require__(4);
@@ -3472,7 +3620,7 @@ for (var collections = getKeys(DOMIterables), i = 0; i < collections.length; i++
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_regexp_search___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_regexp_search__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_web_dom_iterable__ = __webpack_require__(65);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_web_dom_iterable___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_core_js_modules_web_dom_iterable__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es6_array_iterator__ = __webpack_require__(40);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es6_array_iterator__ = __webpack_require__(41);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es6_array_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_core_js_modules_es6_array_iterator__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_es7_object_values__ = __webpack_require__(63);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_es7_object_values___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_core_js_modules_es7_object_values__);
@@ -3486,12 +3634,12 @@ for (var collections = getKeys(DOMIterables), i = 0; i < collections.length; i++
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_10_core_js_modules_es6_regexp_constructor___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_10_core_js_modules_es6_regexp_constructor__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_11_core_js_modules_es6_function_name__ = __webpack_require__(58);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_11_core_js_modules_es6_function_name___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_11_core_js_modules_es6_function_name__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12_core_js_modules_es6_regexp_to_string__ = __webpack_require__(41);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12_core_js_modules_es6_regexp_to_string__ = __webpack_require__(42);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_12_core_js_modules_es6_regexp_to_string___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_12_core_js_modules_es6_regexp_to_string__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__console_console__ = __webpack_require__(16);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__lpep__ = __webpack_require__(30);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__lpep__ = __webpack_require__(31);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__utils_utils__ = __webpack_require__(69);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_16__lisp__ = __webpack_require__(42);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_16__lisp__ = __webpack_require__(30);
 
 
 
@@ -3882,7 +4030,7 @@ function sql_where_context(_vars) {
       //console.log('COND MACRO ifnull: ' + JSON.stringify(ifnull));
       //COND MACRO expr: ["\"","myfunc($(period.title1)) = 234"]
       //COND MACRO ifnull: ["["]
-      var parsed = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lpep__["a" /* parse */])(expr[1]); //console.log('COND PARSED:' + JSON.stringify(parsed));
+      var parsed = expr; //console.log('COND PARSED:' + JSON.stringify(parsed));
       //Мы будем использовать спец флаг, были ли внутри этого cond доступы к переменным,
       // которые дали undefined. через глобальную переменную !!!
 
@@ -4248,8 +4396,8 @@ function eval_sql_where(_expr, _vars) {
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "eval_lpe", function() { return eval_lpe; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__console_console__ = __webpack_require__(16);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__lpep__ = __webpack_require__(30);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__lisp__ = __webpack_require__(42);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__lpep__ = __webpack_require__(31);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__lisp__ = __webpack_require__(30);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__sql_where__ = __webpack_require__(66);
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "parse", function() { return __WEBPACK_IMPORTED_MODULE_1__lpep__["a"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "LPESyntaxError", function() { return __WEBPACK_IMPORTED_MODULE_1__lpep__["b"]; });
@@ -4589,7 +4737,7 @@ function tokenize(s) {
 /* harmony export (immutable) */ __webpack_exports__["a"] = get_source_database;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_regexp_split__ = __webpack_require__(61);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_regexp_split___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_regexp_split__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_regexp_to_string__ = __webpack_require__(41);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_regexp_to_string__ = __webpack_require__(42);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_regexp_to_string___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_regexp_to_string__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_regexp_replace__ = __webpack_require__(60);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_regexp_replace___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_regexp_replace__);
@@ -5232,7 +5380,7 @@ module.exports = function (iterator, fn, value, entries) {
 
 var create = __webpack_require__(50);
 var descriptor = __webpack_require__(19);
-var setToStringTag = __webpack_require__(37);
+var setToStringTag = __webpack_require__(38);
 var IteratorPrototype = {};
 
 // 25.1.2.1.1 %IteratorPrototype%[@@iterator]()
@@ -5365,7 +5513,7 @@ module.exports = __webpack_require__(2) ? Object.defineProperties : function def
 
 // fallback for IE11 buggy Object.getOwnPropertyNames with iframe and window
 var toIObject = __webpack_require__(11);
-var gOPN = __webpack_require__(35).f;
+var gOPN = __webpack_require__(36).f;
 var toString = {}.toString;
 
 var windowNames = typeof window == 'object' && window && Object.getOwnPropertyNames
@@ -5391,7 +5539,7 @@ module.exports.f = function getOwnPropertyNames(it) {
 // 19.1.2.9 / 15.2.3.2 Object.getPrototypeOf(O)
 var has = __webpack_require__(9);
 var toObject = __webpack_require__(15);
-var IE_PROTO = __webpack_require__(38)('IE_PROTO');
+var IE_PROTO = __webpack_require__(39)('IE_PROTO');
 var ObjectProto = Object.prototype;
 
 module.exports = Object.getPrototypeOf || function (O) {
@@ -5509,7 +5657,7 @@ module.exports = function (KEY) {
 
 // 7.3.20 SpeciesConstructor(O, defaultConstructor)
 var anObject = __webpack_require__(1);
-var aFunction = __webpack_require__(31);
+var aFunction = __webpack_require__(32);
 var SPECIES = __webpack_require__(0)('species');
 module.exports = function (O, D) {
   var C = anObject(O).constructor;
@@ -5539,7 +5687,7 @@ module.exports = function (method, arg) {
 /***/ (function(module, exports, __webpack_require__) {
 
 // helper for String#{startsWith, endsWith, includes}
-var isRegExp = __webpack_require__(34);
+var isRegExp = __webpack_require__(35);
 var defined = __webpack_require__(17);
 
 module.exports = function (that, searchString, NAME) {
@@ -5661,7 +5809,7 @@ __webpack_require__(89)('keys', function () {
 
 "use strict";
 
-var regexpExec = __webpack_require__(36);
+var regexpExec = __webpack_require__(37);
 __webpack_require__(6)({
   target: 'RegExp',
   proto: true,
@@ -5691,7 +5839,7 @@ if (__webpack_require__(2) && /./g.flags != 'g') __webpack_require__(5).f(RegExp
 
 var anObject = __webpack_require__(1);
 var toLength = __webpack_require__(12);
-var advanceStringIndex = __webpack_require__(32);
+var advanceStringIndex = __webpack_require__(33);
 var regExpExec = __webpack_require__(27);
 
 // @@match logic

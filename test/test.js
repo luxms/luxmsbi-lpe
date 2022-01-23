@@ -45,10 +45,11 @@ describe('LPE tests', function() {
     it('should parse arithmetics priority', function() {
       assert.deepEqual(lpe.parse('1*2+3'), ['+', ['*', 1, 2], 3]);
       assert.deepEqual(lpe.parse('1+2*3'), ['+', 1, ['*', 2, 3]]);
-      assert.deepEqual(lpe.parse('1+(2+3)'), ['+', 1, ['+', 2, 3]]);
-      assert.deepEqual(lpe.parse('1*(2+3)'), ['*', 1, ['+', 2, 3]]);
-      assert.deepEqual(lpe.parse('(1+2)+3'), ['+', ['+', 1, 2], 3]);
+      assert.deepEqual(lpe.parse('1+(2+3)'), ["+",1,["()",["+",2,3]]]);
+      assert.deepEqual(lpe.parse('1*(2+3)'), ["*",1,["()",["+",2,3]]]);
+      assert.deepEqual(lpe.parse('(1+2)+3'), ["+",["()",["+",1,2]],3]);
       assert.deepEqual(lpe.parse('1/2/3'), ['/', ['/', 1, 2], 3]);
+      assert.equal(lpe.eval_lpe('(1+2)*3', {}), 9);
     });
 
     it('should parse function calls', function() {
@@ -111,10 +112,10 @@ describe('LPE tests', function() {
     it('should parse if expressions with grouping', function() {
         // if evaluation works as in LISP !!! Here is just tests for parser
         assert.deepEqual(lpe.parse('if(a=b).yes().no()'), ["->",["if",["=","a","b"]],["yes"],["no"]]);
-        assert.deepEqual(lpe.parse('if(a=b).(yes()).(no())'), ["->",["if",["=","a","b"]],["yes"],["no"]]);
-        assert.deepEqual(lpe.parse('if(a=b).(yes().yes()).(no().no3())'), ["->",["if",["=","a","b"]],["->",["yes"],["yes"]],["->",["no"],["no3"]]]);
+        assert.deepEqual(lpe.parse('if(a=b).(yes()).(no())'), ["->",["if",["=","a","b"]],["()",["yes"]],["()",["no"]]]);
+        assert.deepEqual(lpe.parse('if(a=b).(yes().yes()).(no().no3())'), ["->",["if",["=","a","b"]],["()",["->",["yes"],["yes"]]],["()",["->",["no"],["no3"]]]]);
         assert.deepEqual(lpe.parse('if(a=b).if(x>4).yexx().nox().noab()'), ["->",["if",["=","a","b"]],["if",[">","x","4"]],["yexx"],["nox"],["noab"]]);
-        assert.deepEqual(lpe.parse('if(a=b).if(x>4).(yexx().ye2()).(nox().no2()).(noab().noab)'), ["->",["if",["=","a","b"]],["if",[">","x","4"]],["->",["yexx"],["ye2"]],["->",["nox"],["no2"]],["->",["noab"],"noab"]]);
+        assert.deepEqual(lpe.parse('if(a=b).if(x>4).(yexx().ye2()).(nox().no2()).(noab().noab)'), ["->",["if",["=","a","b"]],["if",[">","x",4]],["()",["->",["yexx"],["ye2"]]],["()",["->",["nox"],["no2"]]],["()",["->",["noab"],"noab"]]]);
     });
 
     it('should eval if expressions', function() {
@@ -565,72 +566,78 @@ describe('LPE tests', function() {
     cond('col = $(var)', ['col is null']) = полная замена col is null
     */
     it('should eval SQL cond expressions', function() {
-                assert.equal( lpe.eval_sql_where(
-                    'where( cond("myfunc($(period.title1)) = 234", [])  )',
-                    {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
-                    "WHERE 1=1"
-                );
-
-                assert.equal( lpe.eval_sql_where(
-                'where( cond("myfunc($(period.title1)) = 234", "defaultVal")  )',
-                {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
-                'WHERE myfunc("defaultVal") = 234'
-            );
-
-            assert.equal( lpe.eval_sql_where(
-                'where( cond("myfunc($(period.title1)) = 234", ["myfunc(1)"])  )',
-                {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
-                'WHERE myfunc(1)'
-                );
-
-                assert.equal( lpe.eval_sql_where(
-                'where( cond("myfunc($(period.title1)) = \'234\'")  )',
-                {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
-                "WHERE myfunc() = '234'"
-                );
-
-                assert.equal( lpe.eval_sql_where(
-                'where( cond("myfunc($(period.title)) = \'234\'")  )',
-                {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
-                "WHERE myfunc(Noyabr) = '234'"
-                );
-
-                assert.equal( lpe.eval_sql_where(
-                'where( cond("myfunc(ql($(period.title))) = \'234\'")  )',
-                {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
-                "WHERE myfunc('Noyabr') = '234'"
-                );
-
-                assert.equal( lpe.eval_sql_where(
-                'where( cond("myfunc($(period.title)) = \'234\'")  )',
-                {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":2001}}),
-                "WHERE myfunc(2001) = '234'"
-                );
-
-                assert.equal( lpe.eval_sql_where(
-                'where( cond("table.column = $(period.title)")  )',
-                {"_quoting":"explicit", "a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":2001}}),
-                "WHERE table.column = 2001"
-                );
-
-                assert.equal( lpe.eval_sql_where(
-                'where( cond("table.column = ql($(period.title))")  )',
-                {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":2001}}),
-                "WHERE table.column = '2001'"
-                );
-
-                assert.equal( lpe.eval_sql_where(
-                'cond("table.column = ql($(period.title))")  ',
-                {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":2001}}),
-                "table.column = '2001'"
-                );
-
-                assert.equal( lpe.eval_sql_where(
-                'filter( cond("table.col = ql($(period.title))") or cond("table.col2 = ql($(period.title))") )',
-                {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":2001}}),
-                "table.col = '2001' or table.col2 = '2001'"
-                );
-    });
+        assert.equal( lpe.eval_sql_where(
+            'where( cond(myfunc($(period.title)) = 234, [] ) )',
+            {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
+            "WHERE myfunc(Noyabr) = 234"
+        );
+  
+        assert.equal( lpe.eval_sql_where(
+           'where( cond(myfunc($(period.title1)) = 234, "defaultVal")  )',
+           {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
+           'WHERE myfunc("defaultVal") = 234'
+       );
+  
+       assert.equal( lpe.eval_sql_where(
+        "where( cond(myfunc($(period.title1)) = 234,'defaultVal')  )",
+        {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
+        "WHERE myfunc('defaultVal') = 234"
+        );
+  
+       assert.equal( lpe.eval_sql_where(
+        'where( cond(myfunc($(period.title1)) = 234, ["myfunc(1)"])  )',
+        {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
+        'WHERE myfunc(1)'
+        );
+  
+        assert.equal( lpe.eval_sql_where(
+           "where( cond(myfunc($(period.title1)) = '234')  )",
+           {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
+           "WHERE myfunc() = '234'"
+           );
+  
+        assert.equal( lpe.eval_sql_where(
+           "where( cond(myfunc($(period.title)) = '234')  )",
+           {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
+           "WHERE myfunc(Noyabr) = '234'"
+           );
+  
+        assert.equal( lpe.eval_sql_where(
+           "where( cond(myfunc(ql($(period.title))) = '234')  )",
+           {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
+           "WHERE myfunc('Noyabr') = '234'"
+           );
+  
+        assert.equal( lpe.eval_sql_where(
+           "where( cond(myfunc($(period.title)) = '234')  )",
+           {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":2001}}),
+           "WHERE myfunc(2001) = '234'"
+           );
+  
+        assert.equal( lpe.eval_sql_where(
+           'where( cond(table.column = $(period.title))  )',
+           {"_quoting":"explicit", "a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":2001}}),
+           "WHERE table.column = 2001"
+           );
+  
+        assert.equal( lpe.eval_sql_where(
+           'where( cond(table.column = ql($(period.title)))  )',
+           {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":2001}}),
+           "WHERE table.column = '2001'"
+           );
+  
+        assert.equal( lpe.eval_sql_where(
+           'cond(table.column = ql($(period.title)))  ',
+           {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":2001}}),
+           "table.column = '2001'"
+           );
+  
+        assert.equal( lpe.eval_sql_where(
+           'filter( cond(table.col or $(period.title) or 23) or cond(table.col2 = ql($(period.title))) )',
+           {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":2001}}),
+           "table.col or 2001 or 23 or table.col2 = '2001'"
+           );
+     });
 
 
 

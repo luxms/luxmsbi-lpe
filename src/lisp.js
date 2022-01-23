@@ -266,7 +266,8 @@ const STDLIB = {
   // macros
   '\'': makeMacro(a => a.toString()),
   '"': makeMacro(a => a.toString()),
-  '()': makeMacro((...args) => ['begin', ...args]),
+ // '()': makeMacro((...args) => ['begin', ...args]), from 2022 It is just grouping of expressions
+  '()': makeMacro(args => args),
   '->': makeMacro((acc, ...ast) => {                                            // thread first macro
     // императивная лапша для макроса ->
     // надо вот так: https://clojuredocs.org/clojure.core/-%3E%3E

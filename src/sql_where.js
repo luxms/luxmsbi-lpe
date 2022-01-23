@@ -350,7 +350,7 @@ export function sql_where_context(_vars) {
         //console.log('COND MACRO ifnull: ' + JSON.stringify(ifnull));
         //COND MACRO expr: ["\"","myfunc($(period.title1)) = 234"]
         //COND MACRO ifnull: ["["]
-        var parsed = parse(expr[1])
+        var parsed = expr
         //console.log('COND PARSED:' + JSON.stringify(parsed));
         //Мы будем использовать спец флаг, были ли внутри этого cond доступы к переменным,
         // которые дали undefined. через глобальную переменную !!!

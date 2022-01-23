@@ -11,6 +11,7 @@
 // Parser for Simplified JavaScript written in Simplified JavaScript
 // From Top Down Operator Precedence
 // http://javascript.crockford.com/tdop/index.html
+// http://crockford.com/javascript/tdop/tdop.html
 // Douglas Crockford
 // 2010-06-26
 //////////////////////////////////////////////////
@@ -19,7 +20,18 @@
 // 2017-01-20
 
 
+/*
+
+lbp = left binding power
+rbp = right binding power
+nud = null denotation
+led = left denotation
+std = statement denotation
+*/
+
+
 import console from './console/console';
+import { isHash, isArray } from './lisp';
 import {tokenize, makeError, LPESyntaxError} from './lpel';
 
 
@@ -101,7 +113,7 @@ var make_parse = function () {
         if (v === "or" || v === "and" || v === "not" || v === "in" || v === "is") {
           //a = "operator";
           o = m_symbol_table[v];
-          console.log("OPERATOR>", v , " ", JSON.stringify(o))
+          //console.log("OPERATOR>", v , " ", JSON.stringify(o))
           if (!o) {
             makeError(t, "Unknown logical operator.");
           }
@@ -230,6 +242,9 @@ var make_parse = function () {
     return s;
   };
 
+  // infix operators are left associative. 
+  // We can also make right associative operators, such as short-circuiting logical operators, 
+  // by reducing the right binding power.
   var infixr = function (id, bp, led) {
     var s = symbol(id, bp);
     s.led = led || function (left) {
@@ -254,6 +269,12 @@ var make_parse = function () {
       return this;
     };
     return s;
+  };
+
+  var stmt = function (s, f) {
+    var x = symbol(s);
+    x.std = f;
+    return x;
   };
 
   symbol("(end)");
@@ -331,14 +352,15 @@ var make_parse = function () {
 
   infixr('⍴', 30);
 
-  /* will be used in logical scope */
-  infix("and", 30);
-  
-  symbol("and").nud = function () { 
-    console.log("AND!", JSON.stringify(this))
+  /* will be used in logical scope, allow (a or and(b,c,ss)) */
+  infixr("and", 30).nud = function () { 
+    return this
   };
-  
-  infixr("or", 30);
+  /* allow (a and or(b,c,ss)) */
+  infixr("or", 30).nud = function () { 
+    return this
+  };
+
   // required for SQL logical scope where a in (1,2,3)
   infixr("in", 30);
   infixr("is", 30);
@@ -378,6 +400,7 @@ var make_parse = function () {
 
   infix("(", 80, function (left) {
     var a = [];
+    //console.log("FUNC>", left.value)
     if (left.id === "[") {
           // FIXME TODO
           this.arity = "ternary";
@@ -397,7 +420,6 @@ var make_parse = function () {
     }
     // dima support for missed function arguments...
     if (m_token.id !== ")") {
-      console.log("FUNC>", left.value)
       if (false && (left.value == "where" || left.value == "filter" || left.value == "expr" || left.value == "logexpr")) {
         // специальный парсер для where - logical expression.
         // тут у нас выражение с использованием скобок, and, or, not и никаких запятых...
@@ -407,7 +429,7 @@ var make_parse = function () {
         // FIXME: make transition to the logexpr!
         new_expression_scope("logical");
         var e = expression(0);
-        console.log("LOGICAL" +  left.value + " " + JSON.stringify(e));
+        //console.log("LOGICAL" +  left.value + " " + JSON.stringify(e));
         m_expr_scope.pop();
         a.push(e);
       } else {
@@ -427,10 +449,9 @@ var make_parse = function () {
             });
             break;
           } else {
-           
             new_expression_scope("logical");
             var e = expression(0);
-            console.log("LOGICAL????? " + JSON.stringify(e));
+            //console.log("LOGICAL????? " + JSON.stringify(e));
             m_expr_scope.pop();
             // var e = statements();
             a.push(e);
@@ -453,16 +474,23 @@ var make_parse = function () {
   function lift_funseq(node) {
     if (node.value === "->") {
       return lift_funseq(node.first).concat(lift_funseq(node.second));
-    } else if (node.value === "()") {
-      if (node.first.value === "->"){
+    } else /*if (node.value === "(") {
+      console.log("() DETECTED" + JSON.stringify(node))
+      //if (node.first.value === "->"){
         // если у нас в скобки взято выражение "->", то скобки можно удалить
         // if (true).(frst().second()) === if(true) => [->> [first] [second]] скобки не нужны, 
         // так как seq уже группирует вызовы в цепочку
-          return [["->"].concat(lift_funseq(node.first.first)).concat(lift_funseq(node.first.second))];
-      } else {
+        // DIMA 2022 на самом деле нет для
+        // if(a=b).(yes().yes()).(no().no3())
+        // получаем
+        // ["->",["if",["=","a","b"]],["yes"],["yes"],["no"],["no3"]]
+        // что выглядит странно со вснх сторон
+        //  return [["->"].concat(lift_funseq(node.first.first)).concat(lift_funseq(node.first.second))];
+      //} else {
           return lift_funseq(node.first);
-      }
-    } else {
+      //}
+    } else */{
+      //console.log("?? DETECTED" + JSON.stringify(node))
       return [node.sexpr];
     }
   }
@@ -470,16 +498,16 @@ var make_parse = function () {
   function lift_funseq_2(node) {
     if (node.value === "->>") {
       return lift_funseq(node.first).concat(lift_funseq(node.second));
-    } else if (node.value === "()") {
-      if (node.first.value === "->>"){
+    } else /*if (node.value === "()") {
+      //if (node.first.value === "->>"){
         // если у нас в скобки взято выражение "->", то скобки можно удалить
         // if (true).(frst().second()) === if(true) => [->> [first] [second]] скобки не нужны, 
         // так как seq уже группирует вызовы в цепочку
-          return [["->>"].concat(lift_funseq(node.first.first)).concat(lift_funseq(node.first.second))];
-      } else {
+        //  return [["->>"].concat(lift_funseq(node.first.first)).concat(lift_funseq(node.first.second))];
+      //} else {
           return lift_funseq(node.first);
-      }
-    } else {
+      //}
+    } else */{
       return [node.sexpr];
     }
   }
@@ -509,7 +537,90 @@ var make_parse = function () {
   prefix("+");
 
   prefix("!");
-  prefix("not"); // will be used in logical scope
+
+  // allow func().not(a)   а также f(a is not null)
+  var n = prefix("not", function () {
+    // it is nud function
+    var expr = expression(70);
+    //console.log("AHTUNG expr is " + JSON.stringify(expr))
+    if (isArray(expr.sexpr) && expr.sexpr[0] === '()') {
+      /* выражение not() выдаёт вот такое:
+        {
+          from: 0,
+          to: 3,
+          value: 'not',
+          arity: 'unary',
+          sexpr: [ 'not', [ '()' ] ],
+          first: {from: 3,to: 4,value: '(',arity: 'binary',sexpr: [ '()' ],
+                  first: { from: 3, to: 4, value: '()', arity: 'name', sexpr: ['()'] }
+          }
+        }
+        not(1) даёт такое, a not(1,2) нельзя написать = ошибка !!!
+          {
+            from: 0,
+            to: 3,
+            value: 'not',
+            arity: 'unary',
+            sexpr: [ 'not', [ '()', 1 ] ],
+            first: { from: 4, to: 5, value: 1, arity: 'literal', sexpr: [ '()', 1 ] }
+          }
+        надо его преобразовать в
+          {
+            from: 1,
+            to: 2,
+            value: '(',
+            arity: 'binary',
+            sexpr: [ 'f' ],
+            first: { from: 0, to: 1, value: 'f', arity: 'name', sexpr: 'f' },
+            second: []
+          }
+        или с параметром (одним!)
+          {
+            from: 1,
+            to: 2,
+            value: '(',
+            arity: 'binary',
+            sexpr: [ 'f', 1 ],
+            first: { from: 0, to: 1, value: 'f', arity: 'name', sexpr: 'f' },
+            second: [ { from: 2, to: 3, value: 1, arity: 'literal', sexpr: 1 } ]
+          }
+      */
+          this.arity = 'name';
+          this.value = 'not'
+          this.sexpr = 'not'
+          var e = {
+            from: 0,
+            to: 2,
+            value: '(',
+            arity: 'binary',
+            sexpr: [ 'not' ],
+            first: this
+          }
+          if (expr.sexpr.length > 1) {
+            e.second = [ { from: 4, to: 5, value: expr.sexpr[1], arity: 'literal', sexpr: expr.sexpr[1] } ]
+            e.sexpr.push(expr.sexpr)  // keep () in the parsed AST
+            //e.sexpr = e.sexpr.concat(expr.sexpr) // keep () in the parsed AST
+          }
+          return e;
+    }
+
+    // simple operator `not expr`
+    this.first = expr;
+    this.arity = "unary";
+    this.sexpr = [this.sexpr, expr.sexpr];
+    //console.log("2NOT nud:" + JSON.stringify(this))
+    return this;
+  })
+  
+  n.led = function (left) { 
+    //console.log("NOT led left:" + JSON.stringify(left))
+    return this
+  }; // will be used in logical scope
+
+
+
+
+
   prefix("¬");
   operator_alias("!", "not");
   operator_alias("¬", "not");
@@ -530,22 +641,35 @@ var make_parse = function () {
   });
 
   prefix("(", function () {
-    var e = expression(0);
+    var e;
+    if (m_token.value === ')'){
+      // если это просто () две скобки, то возвращаем сразу кусок AST,генерим функцию с именем "()"
+      // {"from":3,"to":4,"value":"(","arity":"operator","sexpr":"("}
+      this.arity = "binary"
+      this.sexpr = ["()"]
+      this.first = { from: this.from, to: this.to+1, value: '()', arity: 'name', sexpr: ['()'] }
+      advance(")");
+      return this;
+    } 
+    e = expression(0);
+    //console.log('(), got e' + JSON.stringify(e))
     if (m_expr_scope.tp == "logical") {
       // we should remember all brackets to restore original user expression
+      e.value = "(" // FIXME: why not make it '()' ?? and looks like function `()` call ?
       e.sexpr = ["()", e.sexpr];
     } else {
       if (e.value === "->") {
         // в скобки взято выражение из цепочки LPE вызовов, нужно запомнить скобки, делаем push "()" в текущий AST 
         e = {
           first: e,
-          value: "()",
-          arity: "unary",
+          value: "(",
+          arity: "binary",
           sexpr: ["()", e.sexpr]
         };
       }
     }
     advance(")");
+    //console.log('(), return e' + JSON.stringify(e))
     return e;
   });
 
@@ -571,6 +695,7 @@ var make_parse = function () {
   return function (source) {
     m_tokens = tokenize(source, '=<>!+-*&|/%^:.', '=<>&|:.');
     m_token_nr = 0;
+    new_expression_scope("logical");
     advance();
     var s = statements();
     // var s = expression(0);
