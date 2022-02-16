@@ -1,4 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2022/01/23 22:39:16 */ 
+/** [LPE]  Version: 1.0.0 - 2022/02/16 15:04:55 */ 
  (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -7177,12 +7177,12 @@ function init_koob_context(_vars, default_ds, default_cube) {
   _context['range'] = function (from, to, step) {
     if (_context._target_database === 'clickhouse') {
       if (to === undefined) {
-        return "ArrayJoin(range(".concat(from, "))");
+        return "arrayJoin(range(".concat(from, "))");
       } else {
         if (step === undefined) {
-          return "ArrayJoin(range(".concat(from, ",").concat(to, "))");
+          return "arrayJoin(range(".concat(from, ",").concat(to, "))");
         } else {
-          return "ArrayJoin(range(".concat(from, ",").concat(to, ", ").concat(step, "))");
+          return "arrayJoin(range(".concat(from, ",").concat(to, ", ").concat(step, "))");
         }
       }
     } else if (_context._target_database === 'postgresql') {

@@ -6962,12 +6962,12 @@ function init_koob_context(_vars, default_ds, default_cube) {
   _context['range'] = function (from, to, step) {
     if (_context._target_database === 'clickhouse') {
       if (to === undefined) {
-        return "ArrayJoin(range(".concat(from, "))");
+        return "arrayJoin(range(".concat(from, "))");
       } else {
         if (step === undefined) {
-          return "ArrayJoin(range(".concat(from, ",").concat(to, "))");
+          return "arrayJoin(range(".concat(from, ",").concat(to, "))");
         } else {
-          return "ArrayJoin(range(".concat(from, ",").concat(to, ", ").concat(step, "))");
+          return "arrayJoin(range(".concat(from, ",").concat(to, ", ").concat(step, "))");
         }
       }
     } else if (_context._target_database === 'postgresql') {
