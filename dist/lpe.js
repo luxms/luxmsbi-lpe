@@ -1,5 +1,4 @@
-/** [LPE]  Version: 1.0.0 - 2022/02/16 15:04:55 */ 
- (function webpackUniversalModuleDefinition(root, factory) {
+(function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
 	else if(typeof define === 'function' && define.amd)
@@ -10068,4 +10067,4 @@ __webpack_require__(2) && $export($export.P + __webpack_require__(42), 'Object',
 /***/ })
 /******/ ]);
 });
-//# sourceMappingURL=lpe.js.map 
+//# sourceMappingURL=lpe.js.map
