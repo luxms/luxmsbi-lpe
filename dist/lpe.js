@@ -6648,6 +6648,7 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
             "having": {
               "dt": [">","2020-08"],
             },
+            "return": "count", // возможно такое!!!
             "columns": ["dor3", "czt.fot.dor4", "fot.dor5", 'sum((val3+val1)/100):summa', {"new":"old"}, ["sum", ["column","val2"]],  {"new":  ["avg", ["+",["column","val2"],["column","val3"]]]} ],
             "sort": ["-dor1","val1",["-","val2"],"-czt.fot.dor2", "summa"]
           }
@@ -6704,7 +6705,8 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
     "limit": _cfg["limit"],
     "offset": _cfg["offset"],
     "subtotals": _cfg["subtotals"],
-    "options": __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isArray */])(_cfg["options"]) ? _cfg["options"] : []
+    "options": __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isArray */])(_cfg["options"]) ? _cfg["options"] : [],
+    "return": _cfg["return"]
   };
   var aliases = {};
   if (_cfg["distinct"]) ret["distinct"] = [];
@@ -8503,6 +8505,8 @@ function generate_koob_sql(_cfg, _vars) {
       }
     }
 
+    var final_sql = '';
+
     if (cube_query_template.config.is_template) {
       var except_replacer = function except_replacer(match, columns_text, offset, string) {
         var columns = columns_text.split(',');
@@ -8561,10 +8565,20 @@ function generate_koob_sql(_cfg, _vars) {
 
       re = /\$\{filters\(([^\)]+)\)\}/gi;
       processed_from = processed_from.replace(re, inclusive_replacer);
-      return "".concat(select, "\nFROM ").concat(processed_from).concat(group_by).concat(order_by).concat(limit).concat(offset).concat(ending);
+      final_sql = "".concat(select, "\nFROM ").concat(processed_from).concat(group_by).concat(order_by).concat(limit).concat(offset).concat(ending);
     } else {
-      return "".concat(select, "\nFROM ").concat(from).concat(where).concat(group_by).concat(order_by).concat(limit).concat(offset).concat(ending);
+      final_sql = "".concat(select, "\nFROM ").concat(from).concat(where).concat(group_by).concat(order_by).concat(limit).concat(offset).concat(ending);
     }
+
+    if (_cfg["return"] === "count") {
+      if (_context[0]["_target_database"] === 'clickhouse') {
+        final_sql = "select toUInt32(count(300)) as count from (".concat(final_sql, ")");
+      } else {
+        final_sql = "select count(300) as count from (".concat(final_sql, ")");
+      }
+    }
+
+    return final_sql;
   }
 }
 

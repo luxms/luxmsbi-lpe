@@ -51,6 +51,7 @@ import { has } from 'core-js/fn/dict';
             "having": {
               "dt": [">","2020-08"],
             },
+            "return": "count", // возможно такое!!!
             "columns": ["dor3", "czt.fot.dor4", "fot.dor5", 'sum((val3+val1)/100):summa', {"new":"old"}, ["sum", ["column","val2"]],  {"new":  ["avg", ["+",["column","val2"],["column","val3"]]]} ],
             "sort": ["-dor1","val1",["-","val2"],"-czt.fot.dor2", "summa"]
           }
@@ -100,7 +101,8 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
   var ret = {
     "ds":ds, "cube":cube, "filters":{}, "having":{}, "columns":[], "sort": [], 
     "limit": _cfg["limit"], "offset": _cfg["offset"], "subtotals": _cfg["subtotals"],
-    "options": isArray(_cfg["options"]) ? _cfg["options"] : []
+    "options": isArray(_cfg["options"]) ? _cfg["options"] : [],
+    "return": _cfg["return"]
   }
   var aliases = {}
 
@@ -1734,7 +1736,7 @@ export function generate_koob_sql(_cfg, _vars) {
       }
     }
 
-
+    var final_sql = ''
     if (cube_query_template.config.is_template) {
       // надо подставить WHERE аккуратно, это уже посчитано, заменяем ${filters} и ${filters()}
       var re = /\$\{filters(?:\(\))?\}/gi;
@@ -1789,10 +1791,19 @@ export function generate_koob_sql(_cfg, _vars) {
       }
       processed_from = processed_from.replace(re, inclusive_replacer);
        
-      return `${select}\nFROM ${processed_from}${group_by}${order_by}${limit}${offset}${ending}`
+      final_sql = `${select}\nFROM ${processed_from}${group_by}${order_by}${limit}${offset}${ending}`
     } else {
-      return `${select}\nFROM ${from}${where}${group_by}${order_by}${limit}${offset}${ending}`
+      final_sql = `${select}\nFROM ${from}${where}${group_by}${order_by}${limit}${offset}${ending}`
     }
+
+    if (_cfg["return"] === "count") {
+      if (_context[0]["_target_database"] === 'clickhouse'){
+        final_sql = `select toUInt32(count(300)) as count from (${final_sql})`
+      } else {
+        final_sql = `select count(300) as count from (${final_sql})`
+      }
+    }
+    return final_sql
   }
 
 }
