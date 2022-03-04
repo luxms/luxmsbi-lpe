@@ -44,6 +44,7 @@ import { has } from 'core-js/fn/dict';
               "dor2": ["=", "ПОДГОРЬК"],
               "dor4": ["=", null],
               "dor5": ["=", null],
+              "Пол":  ["or", ["!="], ["ilike", "Муж"]],
               "dt": ["BETWEEN", "2020-01", "2020-12"],
               "sex_name": ["=", "Мужской"],
               "": [">", ["+",["col1", "col2"]], 100]
@@ -70,7 +71,7 @@ import { has } from 'core-js/fn/dict';
    }
    можно также в процессе вычисления определить тип столбца из базы, и автоматом навесить agg, например sum
 4) на основе columns_struct вычислить group_by, проверить, требуется ли JOIN.
-5) при вычислении фильтров, учесть group_by и сделать дополнение для столбцов, у которых в конфиге указано как селектить ALL
+5) при вычислении фильтров, учесть group_by и сделать дополнение для столбцов, у которых в конфиге указано как селектить ALL (memberALL)
 6) создать какое-то чудо, которое будет печатать SQL из этих структур.
 7) при генерации SQL в ПРОСТОМ случае, когда у нас один единственный куб, генрим КОРОТКИЕ имена столбцов
 */
@@ -309,9 +310,11 @@ function init_koob_context(_vars, default_ds, default_cube) {
       if (resolveOptions && resolveOptions.wantCallable){
         if (key.match(/^\w+$/) ) {
           if (_context["_result"]){
+            //console.log("HUY!! " + JSON.stringify(key))
             if (['sum','avg','min','max','count'].find(el => el === key) ){
               _context["_result"]["agg"] = true
             }
+            
           }
 
           return function() {
@@ -327,10 +330,18 @@ function init_koob_context(_vars, default_ds, default_cube) {
               if (_context._target_database == 'clickhouse') {
                 // console.log('COUNT:' + JSON.stringify(a))
                 // у нас всегда должен быть один аргумент и он уже прошёл eval !!!
-                // Это БАГ в тыкдоме = отдаёт текстом значения, если count делать Ж-()
+                // Это БАГ в тыкдоме = отдаёт текстом значения, если count делать :-()
                 return `toUInt32(count(${a[0]}))`
               }
             }
+
+            if (key === 'only1' || key === 'on1y') {
+              // особый режим выполнения SQL.
+              // ставим флаг, потом будем оптимизировать запрос!
+              _context["_result"]["only1"] = true
+              return a[0]
+            }
+
             return `${key}(${a.join(',')})`
           }
         } else {
@@ -360,8 +371,6 @@ function init_koob_context(_vars, default_ds, default_cube) {
           _context["_result"]["unresolved_aliases"].push(key)
         }
       }
-
-      //console.log(`DID NOT resolved ${key}`);
 
       return key
     }
@@ -546,7 +555,6 @@ function init_koob_context(_vars, default_ds, default_cube) {
     var col = ast[0]
     var c = eval_lisp(col,_context)
     return `toString(${c})`
-
   })
 
   // Clickhouse way.... will create extra dataset
@@ -631,6 +639,10 @@ function init_koob_context(_vars, default_ds, default_cube) {
     return `(${a})`
   }
 
+  _context['if'] = function(cond, truthy, falsy) {
+    return `CASE WHEN ${cond} THEN ${truthy} ELSE ${falsy} END`
+  }
+
   _context['tuple'] = function(first, second) {
     if (_context._target_database === 'clickhouse'){
       return `tuple(${first},${second})`
@@ -650,6 +662,19 @@ function init_koob_context(_vars, default_ds, default_cube) {
   }
 
   _context['or'] = function() {
+    // "pay_code": ["or", ["!="], ["ilike", "Муж"]]
+    // ---->
+    //  ["or", "pay_code", ["!="], ["ilike", "Муж"]]
+    // Таким образом, or должен взять первый аргумент, и просунуть его как первый аргумент дальше, во все
+    // аргументы, начиная со второго !!!
+    // ["or", ["->", "pay_code", ["!="], ["ilike", "Муж"]]] ???????
+    // ==============================
+    // "pay_code": ["ilike", "Муж"]
+    // ---->
+    // "pay_code": ["->", "pay_code", ["ilike", "Муж"]]
+    // ФИГНЯ !!! Лучше, сделать ячейку памяти в контексте, туда положить столбец ("pay_code")
+    // Потом, функции комбинаторы (or and not) берут из контекста имя столбца и фигачат его первым аргументом 
+    // во все свои аргументы и пытаются выполнить! То есть or/and становятся макросами.
     var a = Array.prototype.slice.call(arguments)
     return `(${a.join(') OR (')})`
   }
@@ -818,14 +843,20 @@ function init_koob_context(_vars, default_ds, default_cube) {
     // var a = Array.prototype.slice.call(arguments)
     //console.log(JSON.stringify(ast))
     var col = ast[0]
-    var c = eval_lisp(col,_context)
+
+    /* FIXME !!! AGHTUNG !!!!
+    было var c = eval_lisp(col, _context) и сложные выражения типа if ( sum(v_rel_pp)=0, 0, sum(pay_code)/sum(v_rel_pp)):d
+    не резолвились, так как функции sum,avg,min и т.д. сделаны в общем виде!!!
+    Видимо, надо везде переходить на _ctx !!!!
+    */
+    var c = eval_lisp(col, _ctx)
     var resolveValue = function(v) {
 
       if (shouldQuote(col, v)) v = quoteLiteral(v)
       return eval_lisp(v,_context)
     }
     if (ast.length === 1) {
-      return '1=1'
+      return '1=0'
     } else if (ast.length === 2) {
       var v = resolveValue(ast[1])
       return v === null 
@@ -893,6 +924,29 @@ function extend_context_for_order_by(_context, _cfg) {
         /* col[0] содержит ровно то, что было в изначальном конфиге на входе!
         */
           //console.log("NEW COLREF!!!:", JSON.stringify(col))
+            /*
+              Postgresql: order by random()
+              Greenplum:  order by random()
+              Oracle:     order by dbms_random.value()
+              MS SQL:     order by newid()
+              Mysql:      order by rand()
+              Clickhouse: order by rand()
+              DB2:        order by rand()
+              */
+          if (col[0] === 'rand()') {
+            var tdb = _context[0]._target_database
+            if (tdb === 'postgresql'){
+              return 'random()'
+            } else if (tdb === 'oracle'){
+              return 'dbms_random.value()'
+            } else if (tdb === 'mssql'){
+              return 'newid()'
+            } else {
+              return 'rand()'
+            }
+          }
+
+
           if (col[0] in _cfg["_aliases"]) {
             return col[0]
           }
@@ -943,6 +997,7 @@ function extend_context_for_order_by(_context, _cfg) {
       return col*/
     })
     },
+
     ... _context
   ]
 
@@ -1171,7 +1226,9 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
 
       if (pw.length > 0) {
         var wh = ["and"].concat(pw)
-        //console.log("WHERE", wh)        
+        //console.log("WHERE", wh)
+        // возможно, тут нужен спец. контекст с правильной обработкой or/and  функций.
+        // ибо первым аргументом мы тут всегда ставим столбец!!!    
         part_where = eval_lisp(wh, context)
       }
       return part_where
@@ -1299,12 +1356,16 @@ export function generate_koob_sql(_cfg, _vars) {
   */
 
   var columns_s = [];
+  var global_only1 = false;
   var columns = _cfg["columns"].map(el => {
                                       // eval should fill in _context[0]["_result"] object
                                       // hackers way to get results!!!!
                                       _context[0]["_result"] = {"columns":[]}
                                       var r = eval_lisp(el, _context)
                                       var col = _context[0]["_result"]
+                                      if (col["only1"] === true){
+                                        global_only1 = true;
+                                      }
                                       columns_s.push(col)
                                       if (col["alias"]) {
                                         _context[0]["_aliases"][col["alias"]] = col
@@ -1790,17 +1851,23 @@ export function generate_koob_sql(_cfg, _vars) {
         return subst;
       }
       processed_from = processed_from.replace(re, inclusive_replacer);
-       
-      final_sql = `${select}\nFROM ${processed_from}${group_by}${order_by}${limit}${offset}${ending}`
-    } else {
-      final_sql = `${select}\nFROM ${from}${where}${group_by}${order_by}${limit}${offset}${ending}`
+      from = processed_from
+      //final_sql = `${select}\nFROM ${processed_from}${group_by}${order_by}${limit}${offset}${ending}`
     }
+
+    if (global_only1 === true) {
+      group_by = ''
+      select = `/*ON1Y*/${select}`
+    }
+    
+    final_sql = `${select}\nFROM ${from}${where}${group_by}${order_by}${limit}${offset}${ending}`
 
     if (_cfg["return"] === "count") {
       if (_context[0]["_target_database"] === 'clickhouse'){
         final_sql = `select toUInt32(count(300)) as count from (${final_sql})`
       } else {
-        final_sql = `select count(300) as count from (${final_sql})`
+        // avoid error in postgresql
+        final_sql = `select count(300) as count from (${final_sql}) as cnt_src`
       }
     }
     return final_sql
