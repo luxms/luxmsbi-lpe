@@ -271,7 +271,6 @@ const STDLIB = {
   '->': makeMacro((acc, ...ast) => {                                            // thread first macro
     // императивная лапша для макроса ->
     // надо вот так: https://clojuredocs.org/clojure.core/-%3E%3E
-    //console.log("AST" + JSON.stringify(ast))
     // AST[["filterit",[">",1,0]]]
     for (let arr of ast) {
       if (!isArray(arr)) {

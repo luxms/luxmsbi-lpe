@@ -23,7 +23,7 @@
 import console from './console/console';
 import {parse} from './lpep';
 import {db_quote_literal, db_quote_ident, get_source_database} from './utils/utils';
-import {eval_lisp, isString, isArray} from './lisp';
+import {eval_lisp, isString, isArray, isHash} from './lisp';
 
 
 /*
@@ -236,6 +236,34 @@ export function sql_where_context(_vars) {
     return `to_date(${el})`
   }
 
+  /* собственный резолвер имён! */
+  _context['.-!!!!'] = function(...args) {
+    console.log('ARGS IN ' + JSON.stringify(args))
+    var result;
+    if (args.length === 2 && args[0] === 'row') {
+      if (isString(args[1])) {
+        result = _vars["context"]["row"][args[1]]
+        console.log("GOT WITH JUMP" + JSON.stringify(result))
+      }
+    } else {
+      if (isHash(args[0])) {
+        var obj = args[0]
+        result = obj[args[1]]
+      }
+    }
+
+    return result
+  }
+
+  _context["'"] = function (expr) {
+    // we should eval things in the cond ( a = '$(abs.ext)')
+    console.log('FOUND EXPR: ' + expr)
+    if (expr.match(/^\s*\$\(.*\)\s*$/)){
+      return `'{eval_lisp(expr, _context)}'`
+    }
+  }
+
+
   // filter
   _context['filter'] = function () {
       var ctx = {};
@@ -351,6 +379,7 @@ export function sql_where_context(_vars) {
         //COND MACRO expr: ["\"","myfunc($(period.title1)) = 234"]
         //COND MACRO ifnull: ["["]
         var parsed = expr
+        
         //console.log('COND PARSED:' + JSON.stringify(parsed));
         //Мы будем использовать спец флаг, были ли внутри этого cond доступы к переменным,
         // которые дали undefined. через глобальную переменную !!!
@@ -394,8 +423,15 @@ export function sql_where_context(_vars) {
         return '"' + el.toString() + '"';
       }
 
-      ctx["'"] = function (el) {
-        return "'" + el.toString() + "'";
+      ctx["'"] = function (expr) {
+        // we should eval things in the cond ( a = '$(abs.ext)')
+        
+        if (expr.match(/^\s*\$\(.*\)\s*$/)){
+          var parsed = parse(expr)
+          return `'${eval_lisp(parsed, ctx)}'`
+        } else {
+          return "'" + expr.toString() + "'";
+        }
       }
 
       ctx["["] = function (el) {
@@ -408,7 +444,7 @@ export function sql_where_context(_vars) {
         // a = [null, 1,2] как a in (1,2) or a is null
 
         // ["=",["column","vNetwork.cluster"],["[","SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]]
-        // console.log('========'+ JSON.stringify(l) + ' ' + JSON.stringify(r))
+        //console.log('========'+ JSON.stringify(l) + ' ' + JSON.stringify(r))
         if (r instanceof Array) {
           if (r.length === 0) {
             return 'TRUE';
@@ -436,7 +472,7 @@ export function sql_where_context(_vars) {
               }
             }
           } else {
-            //console.log("RESOLVING VAR " + JSON.stringify(r));
+            //console.log(r[0] + " RESOLVING VAR " + JSON.stringify(r[1]));
             //console.log("RESOLVING VAR " + JSON.stringify(_context));
             var var_expr
             if (r[0] === '$') {
@@ -447,19 +483,39 @@ export function sql_where_context(_vars) {
               */
               //var_expr = eval_lisp(r[1], _context);
               var_expr = eval_lisp(r[1], _context); // actually, we might do eval_lisp(r, ctx) but that will quote everything, including numbers!
+                      // здесь мы получаем в том числе и массив, хорошо бы понимать, мы находимся в cond или нет
+              // ["=","ГКБ"]
+              if (isArray(var_expr)) {
+                if (var_expr[0] === '=') {
+                  if (var_expr.length === 2){
+                    // всё хорошо !!! Это похоже на koob lookup
+                    var_expr = var_expr[1]
+                  }
+                }
+                //throw new Error(`Resolved value is array, which is not yet supported. ${JSON.stringify(expr)}`)
+              }
             } else {
               var_expr = prnt(r, ctx);
             }
-            //console.log("EVAL" + JSON.stringify(var_expr));
+            //console.log("EVAL " + JSON.stringify(var_expr));
             if (var_expr instanceof Array) {
               return ctx['='](l,['['].concat(var_expr));
             } else {
+              //console.log("EVAL = " + JSON.stringify(l) + ' ' + JSON.stringify(var_expr));
               return ctx['='](l,var_expr);
             }
           }
         }
 
         if (r == null) {
+          var defVal = track_undefined_values_for_cond[0]
+          //console.log("$ CHECK " + defVal)
+          if (isString(defVal)) {
+            return defVal;
+          } else {
+            // ставим метку, что был резолвинг неопределённого значения
+            track_undefined_values_for_cond[0] = true;
+          }
           return prnt(l) + " IS NULL ";
         } else if (r === '') {
           return prnt(l) + " = ''";
@@ -472,8 +528,24 @@ export function sql_where_context(_vars) {
       // $(name) will quote text elements !!! suitable for generating things like WHERE title in ('a','b','c')
       // also, we should evaluate expression, if any.
       ctx['$'] = function(inexpr) {
+        
         var expr = eval_lisp(inexpr, _context); // evaluate in a normal LISP context without vars, not in WHERE context
+        // здесь мы получаем в том числе и массив, хорошо бы понимать, мы находимся в cond или нет
+        // ["=","ГКБ"]
+        if (isArray(expr)) {
+          if (expr[0] === '=') {
+            if (expr.length === 2){
+              // всё хорошо !!! Это похоже на koob lookup
+              return expr[1]
+            }
+          }
+          //throw new Error(`Resolved value is array, which is not yet supported. ${JSON.stringify(expr)}`)
+        }
 
+/* есть возможность определить, что мы внутри cond()
+if (track_undefined_values_for_cond.length > 0) {
+  console.log('$$$ inside cond!')
+}*/
         if (expr instanceof Array) {
           // try to print using quotes, use plv8 !!!
           if (_vars["_quoting"] === 'explicit') {

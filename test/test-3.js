@@ -25,4 +25,13 @@ ORDER BY perda, lead DESC LIMIT 100 OFFSET 10
 SETTINGS max_threads = 1`
             );
    });
+   it('should eval KOOB cond (koob lookup)', function() {
+      assert.equal( lpe.eval_sql_where(
+         "filter( cond(year_start <= $(row.y), []) and  cond(short_tp = ql($(row.short_tp)) or col != '$(row.short_tp)' && version = ql($(version)), []) )",
+         {"_quoting":"explicit" ,"version":"2.0","row":{"short_tp":["=","ГКБ"],"y":["=",2021]},"limit":100,"offset":0,"context":{"attachment_id":5,"row":{"short_tp":["=","ГКБ"],"y":["=",2021]}}}),
+         "year_start <= 2021 and short_tp = 'ГКБ' or col != 'ГКБ' and version = '2.0'"
+         )
+   });
+
+
 })
