@@ -209,6 +209,7 @@ export function sql_where_context(_vars) {
 
   _context["ql"] = function(el) {
     // NULL values should not be quoted
+    // console.log('QL: ' + JSON.stringify(el))
     return el === null ? null : db_quote_literal(el)
   }
 
@@ -236,28 +237,9 @@ export function sql_where_context(_vars) {
     return `to_date(${el})`
   }
 
-  /* собственный резолвер имён! */
-  _context['.-!!!!'] = function(...args) {
-    console.log('ARGS IN ' + JSON.stringify(args))
-    var result;
-    if (args.length === 2 && args[0] === 'row') {
-      if (isString(args[1])) {
-        result = _vars["context"]["row"][args[1]]
-        console.log("GOT WITH JUMP" + JSON.stringify(result))
-      }
-    } else {
-      if (isHash(args[0])) {
-        var obj = args[0]
-        result = obj[args[1]]
-      }
-    }
-
-    return result
-  }
-
   _context["'"] = function (expr) {
     // we should eval things in the cond ( a = '$(abs.ext)')
-    console.log('FOUND EXPR: ' + expr)
+    //console.log('FOUND EXPR: ' + expr)
     if (expr.match(/^\s*\$\(.*\)\s*$/)){
       return `'{eval_lisp(expr, _context)}'`
     }
@@ -444,7 +426,7 @@ export function sql_where_context(_vars) {
         // a = [null, 1,2] как a in (1,2) or a is null
 
         // ["=",["column","vNetwork.cluster"],["[","SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]]
-        //console.log('========'+ JSON.stringify(l) + ' ' + JSON.stringify(r))
+        // console.log('========'+ JSON.stringify(l) + ' <> ' + JSON.stringify(r))
         if (r instanceof Array) {
           if (r.length === 0) {
             return 'TRUE';
@@ -485,6 +467,7 @@ export function sql_where_context(_vars) {
               var_expr = eval_lisp(r[1], _context); // actually, we might do eval_lisp(r, ctx) but that will quote everything, including numbers!
                       // здесь мы получаем в том числе и массив, хорошо бы понимать, мы находимся в cond или нет
               // ["=","ГКБ"]
+              // console.log("RESOLVED $" + JSON.stringify(var_expr) )
               if (isArray(var_expr)) {
                 if (var_expr[0] === '=') {
                   if (var_expr.length === 2){
@@ -492,7 +475,7 @@ export function sql_where_context(_vars) {
                     var_expr = var_expr[1]
                   }
                 }
-                //throw new Error(`Resolved value is array, which is not yet supported. ${JSON.stringify(expr)}`)
+                throw new Error(`Resolved value is array, which is not yet supported. ${JSON.stringify(var_expr)}`)
               }
             } else {
               var_expr = prnt(r, ctx);

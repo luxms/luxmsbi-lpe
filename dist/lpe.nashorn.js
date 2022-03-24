@@ -663,11 +663,11 @@ module.exports = function (it) {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "d", function() { return isArray; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return isString; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return isArray; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "c", function() { return isString; });
 /* unused harmony export isNumber */
 /* unused harmony export isBoolean */
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "c", function() { return isHash; });
+/* unused harmony export isHash */
 /* unused harmony export isFunction */
 /* unused harmony export makeMacro */
 /* unused harmony export makeSF */
@@ -1354,7 +1354,7 @@ var STDLIB = _objectSpread({
   // 'hash-table->alist'
   // macros
   '\'': makeMacro(function (a) {
-    return 'HIUY' + a.toString();
+    return a.toString();
   }),
   '"': makeMacro(function (a) {
     return a.toString();
@@ -2166,7 +2166,7 @@ var make_parse = function make_parse() {
     // it is nud function
     var expr = expression(70); //console.log("AHTUNG expr is " + JSON.stringify(expr))
 
-    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__lisp__["d" /* isArray */])(expr.sexpr) && expr.sexpr[0] === '()') {
+    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__lisp__["b" /* isArray */])(expr.sexpr) && expr.sexpr[0] === '()') {
       /* выражение not() выдаёт вот такое:
         {
           from: 0,
@@ -3906,6 +3906,7 @@ function sql_where_context(_vars) {
 
   _context["ql"] = function (el) {
     // NULL values should not be quoted
+    // console.log('QL: ' + JSON.stringify(el))
     return el === null ? null : __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__utils_utils__["c" /* db_quote_literal */])(el);
   }; // required for Oracle Reports
 
@@ -3931,36 +3932,10 @@ function sql_where_context(_vars) {
 
     return "to_date(".concat(el, ")");
   };
-  /* собственный резолвер имён! */
-
-
-  _context['.-!!!!'] = function () {
-    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-      args[_key] = arguments[_key];
-    }
-
-    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log('ARGS IN ' + JSON.stringify(args));
-    var result;
-
-    if (args.length === 2 && args[0] === 'row') {
-      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lisp__["b" /* isString */])(args[1])) {
-        result = _vars["context"]["row"][args[1]];
-        __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("GOT WITH JUMP" + JSON.stringify(result));
-      }
-    } else {
-      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lisp__["c" /* isHash */])(args[0])) {
-        var obj = args[0];
-        result = obj[args[1]];
-      }
-    }
-
-    return result;
-  };
 
   _context["'"] = function (expr) {
     // we should eval things in the cond ( a = '$(abs.ext)')
-    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log('FOUND EXPR: ' + expr);
-
+    //console.log('FOUND EXPR: ' + expr)
     if (expr.match(/^\s*\$\(.*\)\s*$/)) {
       return "'{eval_lisp(expr, _context)}'";
     }
@@ -4067,7 +4042,7 @@ function sql_where_context(_vars) {
       //Мы будем использовать спец флаг, были ли внутри этого cond доступы к переменным,
       // которые дали undefined. через глобальную переменную !!!
 
-      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lisp__["d" /* isArray */])(ifnull) && ifnull.length === 2 && (ifnull[0] === '"' || ifnull[0] === "'")) {
+      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lisp__["b" /* isArray */])(ifnull) && ifnull.length === 2 && (ifnull[0] === '"' || ifnull[0] === "'")) {
         var val = prnt(ifnull);
         track_undefined_values_for_cond.unshift(val);
       } else {
@@ -4085,7 +4060,7 @@ function sql_where_context(_vars) {
         cond('col in $(row.var)', []) = значит убрать cond вообще (с учётом or/and)
         cond('col = $(row.var)', ['col is null']) = полная замена col is null
         */
-        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lisp__["d" /* isArray */])(ifnull) && ifnull[0] === '[') {
+        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lisp__["b" /* isArray */])(ifnull) && ifnull[0] === '[') {
           if (ifnull.length === 1) {
             return '1=1';
           } else {
@@ -4094,7 +4069,7 @@ function sql_where_context(_vars) {
             var ast = ifnull[1];
             var p = prnt(ast);
 
-            if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lisp__["d" /* isArray */])(ast) && (ast[0] === '"' || ast[0] === "'")) {
+            if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lisp__["b" /* isArray */])(ast) && (ast[0] === '"' || ast[0] === "'")) {
               p = p.slice(1, -1);
             }
 
@@ -4132,7 +4107,7 @@ function sql_where_context(_vars) {
       // a = [] просто пропускаем, А кстати почему собственно???
       // a = [null, 1,2] как a in (1,2) or a is null
       // ["=",["column","vNetwork.cluster"],["[","SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]]
-      //console.log('========'+ JSON.stringify(l) + ' ' + JSON.stringify(r))
+      // console.log('========'+ JSON.stringify(l) + ' <> ' + JSON.stringify(r))
       if (r instanceof Array) {
         if (r.length === 0) {
           return 'TRUE';
@@ -4180,15 +4155,17 @@ function sql_where_context(_vars) {
             var_expr = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lisp__["a" /* eval_lisp */])(r[1], _context); // actually, we might do eval_lisp(r, ctx) but that will quote everything, including numbers!
             // здесь мы получаем в том числе и массив, хорошо бы понимать, мы находимся в cond или нет
             // ["=","ГКБ"]
+            // console.log("RESOLVED $" + JSON.stringify(var_expr) )
 
-            if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lisp__["d" /* isArray */])(var_expr)) {
+            if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lisp__["b" /* isArray */])(var_expr)) {
               if (var_expr[0] === '=') {
                 if (var_expr.length === 2) {
                   // всё хорошо !!! Это похоже на koob lookup
                   var_expr = var_expr[1];
                 }
-              } //throw new Error(`Resolved value is array, which is not yet supported. ${JSON.stringify(expr)}`)
+              }
 
+              throw new Error("Resolved value is array, which is not yet supported. ".concat(JSON.stringify(var_expr)));
             }
           } else {
             var_expr = prnt(r, ctx);
@@ -4207,7 +4184,7 @@ function sql_where_context(_vars) {
       if (r == null) {
         var defVal = track_undefined_values_for_cond[0]; //console.log("$ CHECK " + defVal)
 
-        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lisp__["b" /* isString */])(defVal)) {
+        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lisp__["c" /* isString */])(defVal)) {
           return defVal;
         } else {
           // ставим метку, что был резолвинг неопределённого значения
@@ -4231,7 +4208,7 @@ function sql_where_context(_vars) {
       // здесь мы получаем в том числе и массив, хорошо бы понимать, мы находимся в cond или нет
       // ["=","ГКБ"]
 
-      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lisp__["d" /* isArray */])(expr)) {
+      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lisp__["b" /* isArray */])(expr)) {
         if (expr[0] === '=') {
           if (expr.length === 2) {
             // всё хорошо !!! Это похоже на koob lookup
@@ -4263,7 +4240,7 @@ function sql_where_context(_vars) {
         // значит по этому ключу нет элемента в _vars например !!!
         var defVal = track_undefined_values_for_cond[0]; //console.log("$ CHECK " + defVal)
 
-        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lisp__["b" /* isString */])(defVal)) {
+        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lisp__["c" /* isString */])(defVal)) {
           return defVal;
         } else {
           // ставим метку, что был резолвинг неопределённого значения
@@ -4443,7 +4420,7 @@ function eval_sql_where(_expr, _vars) {
   if (sexpr instanceof Array && (sexpr[0] === 'filter' && sexpr.length <= 2 || sexpr[0] === 'order_by' || sexpr[0] === 'if' || sexpr[0] === 'where' || sexpr[0] === 'pluck' || sexpr[0] === 'str' || sexpr[0] === 'prnt' || sexpr[0] === 'cond' || sexpr[0] === '->' // it is dot operator, FIXME: add correct function call check !
   )) {
     // ok
-    if (sexpr[0] === 'order_by' && __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lisp__["b" /* isString */])(_vars['sort']) && _vars['sort'].length > 0) {
+    if (sexpr[0] === 'order_by' && __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lisp__["c" /* isString */])(_vars['sort']) && _vars['sort'].length > 0) {
       // we should inject content of the sort key, which is coming from the GUI.
       // do it in a safe way
       var extra_srt_expr = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lpep__["a" /* parse */])("order_by(".concat(_vars['sort'], ")")); //console.log('sql_where ORDER BY MIXED0: ', JSON.stringify(extra_srt_expr));

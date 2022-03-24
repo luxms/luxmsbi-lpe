@@ -35,6 +35,7 @@ import {
 } from './utils/utils';
 import { isObject } from 'core-js/fn/object';
 import { has } from 'core-js/fn/dict';
+import { part } from 'core-js/core/function';
 
 /* Постановка
 На входе имеем структуру данных из браузера:
@@ -656,28 +657,41 @@ function init_koob_context(_vars, default_ds, default_cube) {
     return a
   }
 
-  _context['and'] = function() {
-    var a = Array.prototype.slice.call(arguments)
-    return `(${a.join(') AND (')})`
+  var partial_filter = function(a) {
+    if (isArray(a[0]) && a[0][0] === "ignore(me)") {
+      var ignoreme = a.shift()
+      a = a.map(el => {if (isArray(el)) {el.splice(1,0, ignoreme); return el} else {return el}})
+    }
+    //console.log("OR->OR->OR", JSON.stringify(a))
+    a = a.map(el => eval_lisp(el,_context))
+    return a;
   }
 
   _context['or'] = function() {
-    // "pay_code": ["or", ["!="], ["ilike", "Муж"]]
-    // ---->
-    //  ["or", "pay_code", ["!="], ["ilike", "Муж"]]
-    // Таким образом, or должен взять первый аргумент, и просунуть его как первый аргумент дальше, во все
-    // аргументы, начиная со второго !!!
-    // ["or", ["->", "pay_code", ["!="], ["ilike", "Муж"]]] ???????
-    // ==============================
-    // "pay_code": ["ilike", "Муж"]
-    // ---->
-    // "pay_code": ["->", "pay_code", ["ilike", "Муж"]]
-    // ФИГНЯ !!! Лучше, сделать ячейку памяти в контексте, туда положить столбец ("pay_code")
-    // Потом, функции комбинаторы (or and not) берут из контекста имя столбца и фигачат его первым аргументом 
-    // во все свои аргументы и пытаются выполнить! То есть or/and становятся макросами.
+    // Первый аргумент может быть ["ignore(me)",[]] = и надо его передать дальше!!!!
+    // #244
     var a = Array.prototype.slice.call(arguments)
+    //console.log("OR OR OR", JSON.stringify(a))
+    // [["ignore(me)",["column","ch.fot_out.pay_code"]],["!="],["ilike","Муж"]]
+    a = partial_filter(a)
     return `(${a.join(') OR (')})`
   }
+  _context['or'].ast = [[],{},[],1]; // mark as macro
+
+
+  _context['and'] = function() {
+    var a = Array.prototype.slice.call(arguments)
+    a = partial_filter(a)
+    return `(${a.join(') AND (')})`
+  }
+  _context['and'].ast = [[],{},[],1]; // mark as macro
+
+  _context['not'] = function() {
+    var a = Array.prototype.slice.call(arguments)
+    a = partial_filter(a)
+    return `NOT ${a[0]}`
+  }
+  _context['not'].ast = [[],{},[],1]; // mark as macro
 
   _context["'"] = function(a) {
     return any_db_quote_literal(a)
@@ -802,7 +816,9 @@ function init_koob_context(_vars, default_ds, default_cube) {
   }
   _context['ilike'].ast = [[],{},[],1]; // mark as macro
 
-  
+  _context['ignore(me)'] = function(arg){
+    return arg;
+  }
 
 
   /*
@@ -1058,6 +1074,7 @@ function get_parallel_hierarchy_filters(_cfg, columns, _filters) {
     if (isHash(el.config)) {
       // если это параллельный дименшн и нет явно фильтра по нему
       //if (el.config.hierarchyType === 'parallel' && !isArray(_filters[el.id])){
+      // НА САМОМ ДЕЛЕ ЭТО sharedDimension ???? conflicting
       // если есть значение по умолчанию, и не было явно указано фильтров, то ставим значение по умолчанию
 
       if (el.config.defaultValue !== undefined && !isArray(_filters[el.id])){
@@ -1208,7 +1225,9 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
       var pw = Object.keys(_filters).filter(k => comparator(k)).map( 
         key => {
                   if (!second_time) {
-                    var a = _filters[key].splice(1,0,["column",key])
+                    // специальная функция `ignore(me)` = которая ничего не делает, но является меткой для
+                    // and or not
+                    var a = _filters[key].splice(1,0,["ignore(me)",["column",key]])
                   }
                   return _filters[key]
                 });
@@ -1226,7 +1245,7 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
 
       if (pw.length > 0) {
         var wh = ["and"].concat(pw)
-        //console.log("WHERE", wh)
+        //console.log("WHERE", JSON.stringify(wh))
         // возможно, тут нужен спец. контекст с правильной обработкой or/and  функций.
         // ибо первым аргументом мы тут всегда ставим столбец!!!    
         part_where = eval_lisp(wh, context)
