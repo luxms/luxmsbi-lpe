@@ -23,8 +23,7 @@
 import console from './console/console';
 import {parse} from './lpep';
 import {db_quote_literal, db_quote_ident, get_source_database} from './utils/utils';
-import {eval_lisp, isString, isArray, isHash} from './lisp';
-
+import {eval_lisp, isString, isArray, isHash, makeSF} from './lisp';
 
 /*
 where - всегда возвращает слово WHERE, а потом условия. На пустом входе вернёт WHERE TRUE
@@ -245,6 +244,34 @@ export function sql_where_context(_vars) {
     }
   }
 
+  // table lookup filters with auto-filling
+  _context['filters'] = function() {
+    // for(var i = 0; i < arguments.length; i++) {
+    var a = Array.prototype.slice.call(arguments)
+
+    if (a.length===0) {
+      // нужно включить ВСЕ элементы из _vars.context.row, 
+      // "row":{"short_tp":["=","ГКБ"],"y":["=",2021]}
+      var row = _vars.context.row;
+      var expr = ["and"].concat(Object.keys(row).map(col => 
+        {
+          var ar = row[col]
+          if ((ar[0]==='=' || ar[0]==='!=') && ar.length > 2 ) {
+            return [ar[0], col, ['['].concat(ar.slice(1).map(el=>["ql", el]))]
+          }
+          
+          return [ar[0], col].concat(ar.slice(1).map(el=>["ql", el]))
+        }
+      ));
+      expr = ["filter", expr];
+      //console.log("FILTERS:" + JSON.stringify(expr))
+      return eval_lisp(expr, _context)
+    }
+
+    //console.log("FILTERS:" + JSON.stringify(a))
+    return 'FILTERS(NOT YET READY, SORRY)'
+  }
+  _context['filters'].ast = [[],{},[],1]; // mark as macro
 
   // filter
   _context['filter'] = function () {
@@ -473,9 +500,12 @@ export function sql_where_context(_vars) {
                   if (var_expr.length === 2){
                     // всё хорошо !!! Это похоже на koob lookup
                     var_expr = var_expr[1]
+                  } else {
+                    throw new Error(`Resolved value is array with length of not 2, which is not yet supported. ${JSON.stringify(var_expr)}`)
                   }
+                } else {
+                  throw new Error(`Resolved value is array, with operation different from = which is not yet supported. ${JSON.stringify(var_expr)}`)
                 }
-                throw new Error(`Resolved value is array, which is not yet supported. ${JSON.stringify(var_expr)}`)
               }
             } else {
               var_expr = prnt(r, ctx);
@@ -739,6 +769,7 @@ export function eval_sql_where(_expr, _vars) {
      || (sexpr[0]==='str')
      || (sexpr[0]==='prnt')
      || (sexpr[0]==='cond')
+     || (sexpr[0]==='filters')
      || (sexpr[0]==='->') // it is dot operator, FIXME: add correct function call check !
      
   )) {
