@@ -37,10 +37,18 @@ SETTINGS max_threads = 1`
    it('should eval KOOB filters (koob lookup)', function() {
       assert.equal( lpe.eval_sql_where(
          "filters( )",
-         {"_quoting":"explicit" ,"version":"2.0","row":{"short_tp":["=","ГКБ","КГБ"],"y":["=",2021]},"limit":100,"offset":0,"context":{"attachment_id":5,"row":{"short_tp":["=","ГКБ!","КГБ"],"y":[">",2021]}}}),
+         {"_quoting":"explicit" ,"version":"2.0","row":{"short_tp":["=","ГКБ","КГБ"],"y":["=",2021]},"limit":100,"offset":0,"context":{"attachment_id":5,"row":{"$measures":["=","m1"],"short_tp":["=","ГКБ!","КГБ"],"y":[">",2021]}}}),
          "short_tp IN ('ГКБ!','КГБ') and y > '2021'"
          )
    });
 
+
+   it('should eval KOOB filters with except (koob lookup)', function() {
+      assert.equal( lpe.eval_sql_where(
+         "filters( except(y), short_tp:tp, y:year )",
+         {"_quoting":"explicit" ,"version":"2.0","row":{"short_tp":["=","ГКБ","КГБ"],"y":["=",2021]},"limit":100,"offset":0,"context":{"attachment_id":5,"row":{"$measures":["=","m1"],"short_tp":["=","ГКБ!","КГБ"],"y":[">",2021]}}}),
+         "tp IN ('ГКБ!','КГБ')"
+         )
+   });
 
 })

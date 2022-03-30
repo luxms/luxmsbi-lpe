@@ -3962,32 +3962,83 @@ function sql_where_context(_vars) {
 
   _context['filters'] = function () {
     // for(var i = 0; i < arguments.length; i++) {
-    var a = Array.prototype.slice.call(arguments);
+    var a = Array.prototype.slice.call(arguments); // нужно включить ВСЕ элементы из _vars.context.row, 
+    // "row":{"short_tp":["=","ГКБ"],"y":["=",2021]}
 
-    if (a.length === 0) {
-      // нужно включить ВСЕ элементы из _vars.context.row, 
-      // "row":{"short_tp":["=","ГКБ"],"y":["=",2021]}
-      var row = _vars.context.row;
-      var expr = ["and"].concat(Object.keys(row).map(function (col) {
-        var ar = row[col];
+    var row = _vars.context.row;
 
-        if ((ar[0] === '=' || ar[0] === '!=') && ar.length > 2) {
-          return [ar[0], col, ['['].concat(ar.slice(1).map(function (el) {
-            return ["ql", el];
-          }))];
+    if (a.length > 0) {
+      // возможно есть except???
+      var except;
+      var args = [];
+
+      for (var i = 0; i < a.length; i++) {
+        var el = a[i];
+
+        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["b" /* isArray */])(el) && el[0] === 'except') {
+          except = el;
+        } else {
+          args.push(el);
         }
+      }
 
-        return [ar[0], col].concat(ar.slice(1).map(function (el) {
+      if (except) {
+        // console.log('EXCEPT !!!' + JSON.stringify(except))
+        // нужно почистить _vars.context.row от лишних ключей
+        // считаем, что в except идут исключительно имена столбцов
+        except.slice(1).map(function (key) {
+          return delete row[key];
+        });
+      }
+
+      if (args.length > 0) {
+        // есть элементы, которые явно указаны, генерим условия только для них
+        // нужно почистить _vars.context.row от лишних ключей
+        // args.map( el => console.log("ITER:" + JSON.stringify(el)) )
+        var r = {};
+        args.map(function (el) {
+          if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["b" /* isArray */])(el)) {
+            if (el[0] === ':') {
+              //ITER:[":","short_tp","tp"]
+              if (el[1] in row) {
+                r[el[2]] = row[el[1]];
+              }
+            }
+          } else {
+            if (el in row) {
+              r[el] = row[el];
+            }
+          }
+        });
+        row = r;
+      }
+    } // FIXME: REMOVE el!=='measures' in Sept. 2022
+
+
+    var expr = Object.keys(row).filter(function (el) {
+      return el !== 'measures' && el !== '$measures';
+    }).map(function (col) {
+      var ar = row[col]; //console.log("ITERITER:" + col + " " + JSON.stringify(ar))
+
+      if ((ar[0] === '=' || ar[0] === '!=') && ar.length > 2) {
+        return [ar[0], col, ['['].concat(ar.slice(1).map(function (el) {
           return ["ql", el];
-        }));
+        }))];
+      }
+
+      return [ar[0], col].concat(ar.slice(1).map(function (el) {
+        return ["ql", el];
       }));
-      expr = ["filter", expr]; //console.log("FILTERS:" + JSON.stringify(expr))
+    });
 
-      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(expr, _context);
-    } //console.log("FILTERS:" + JSON.stringify(a))
+    if (expr.length > 1) {
+      expr = ["filter", ["and"].concat(expr)];
+    } else {
+      expr = ["filter", expr[0]];
+    } //console.log("FILTERS:" + JSON.stringify(expr))
 
 
-    return 'FILTERS(NOT YET READY, SORRY)';
+    return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(expr, _context);
   };
 
   _context['filters'].ast = [[], {}, [], 1]; // mark as macro

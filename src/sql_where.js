@@ -249,27 +249,73 @@ export function sql_where_context(_vars) {
     // for(var i = 0; i < arguments.length; i++) {
     var a = Array.prototype.slice.call(arguments)
 
-    if (a.length===0) {
-      // нужно включить ВСЕ элементы из _vars.context.row, 
-      // "row":{"short_tp":["=","ГКБ"],"y":["=",2021]}
-      var row = _vars.context.row;
-      var expr = ["and"].concat(Object.keys(row).map(col => 
-        {
-          var ar = row[col]
-          if ((ar[0]==='=' || ar[0]==='!=') && ar.length > 2 ) {
-            return [ar[0], col, ['['].concat(ar.slice(1).map(el=>["ql", el]))]
-          }
-          
-          return [ar[0], col].concat(ar.slice(1).map(el=>["ql", el]))
+    // нужно включить ВСЕ элементы из _vars.context.row, 
+    // "row":{"short_tp":["=","ГКБ"],"y":["=",2021]}
+    var row = _vars.context.row;
+
+    if (a.length>0) {
+      // возможно есть except???
+      var except;
+      var args =[];
+      for (var i=0; i<a.length; i++){
+        var el = a[i]
+        if (isArray(el) && el[0]==='except') {
+          except = el
+        } else {
+          args.push(el)
         }
-      ));
-      expr = ["filter", expr];
-      //console.log("FILTERS:" + JSON.stringify(expr))
-      return eval_lisp(expr, _context)
+      }
+      if (except) {
+        // console.log('EXCEPT !!!' + JSON.stringify(except))
+        // нужно почистить _vars.context.row от лишних ключей
+        // считаем, что в except идут исключительно имена столбцов
+        except.slice(1).map(key => delete row[key])
+      }
+
+      if (args.length > 0) {
+        // есть элементы, которые явно указаны, генерим условия только для них
+        // нужно почистить _vars.context.row от лишних ключей
+        // args.map( el => console.log("ITER:" + JSON.stringify(el)) )
+        var r = {}
+        args.map( el => {
+          if (isArray(el)) {
+            if (el[0] === ':'){
+              //ITER:[":","short_tp","tp"]
+              if (el[1] in row){
+                r[el[2]] = row[el[1]]
+              }
+            }
+          } else {
+            if (el in row){
+              r[el] = row[el]
+            }
+          }
+        })
+        row = r;
+      }
     }
 
-    //console.log("FILTERS:" + JSON.stringify(a))
-    return 'FILTERS(NOT YET READY, SORRY)'
+
+    // FIXME: REMOVE el!=='measures' in Sept. 2022
+    var expr = Object.keys(row).filter(el=>el!=='measures' && el!=='$measures').map(col => 
+      {
+        var ar = row[col]
+        //console.log("ITERITER:" + col + " " + JSON.stringify(ar))
+        if ((ar[0]==='=' || ar[0]==='!=') && ar.length > 2 ) {
+          return [ar[0], col, ['['].concat(ar.slice(1).map(el=>["ql", el]))]
+        }
+        
+        return [ar[0], col].concat(ar.slice(1).map(el=>["ql", el]))
+      }
+    );
+    if (expr.length>1) {
+      expr = ["filter",["and"].concat(expr)]
+    } else {
+      expr = ["filter", expr[0]];
+    }
+    
+    //console.log("FILTERS:" + JSON.stringify(expr))
+    return eval_lisp(expr, _context)
   }
   _context['filters'].ast = [[],{},[],1]; // mark as macro
 

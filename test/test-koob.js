@@ -372,6 +372,34 @@ ORDER BY perda, lead DESC, random() DESC, random() LIMIT 100 OFFSET 10`
    
       });
 
+
+
+
+      
+         it('should eval KOOB cond (koob lookup)', function() {
+            assert.equal( lpe.eval_sql_where(
+               "filter( cond(year_start <= $(row.y), []) and cond(short_tp = $(row.short_tp), []) and cond(short_tp = ql($(row.short_tp)) or col != '$(row.short_tp)' && version = ql($(version)), []) )",
+               {"_quoting":"explicit" ,"version":"2.0","row":{"short_tp":["=","ГКБ"],"y":["=",2021]},"limit":100,"offset":0,"context":{"attachment_id":5,"row":{"short_tp":["=","ГКБ"],"y":["=",2021]}}}),
+               "year_start <= 2021 and short_tp = ГКБ and short_tp = 'ГКБ' or col != 'ГКБ' and version = '2.0'"
+               )
+         });
+      
+         it('should eval KOOB filters (koob lookup)', function() {
+            assert.equal( lpe.eval_sql_where(
+               "filters( )",
+               {"_quoting":"explicit" ,"version":"2.0","row":{"short_tp":["=","ГКБ","КГБ"],"y":["=",2021]},"limit":100,"offset":0,"context":{"attachment_id":5,"row":{"$measures":["=","m1"],"short_tp":["=","ГКБ!","КГБ"],"y":[">",2021]}}}),
+               "short_tp IN ('ГКБ!','КГБ') and y > '2021'"
+               )
+         });
+      
+      
+         it('should eval KOOB filters with except (koob lookup)', function() {
+            assert.equal( lpe.eval_sql_where(
+               "filters( except(y), short_tp:tp, y:year )",
+               {"_quoting":"explicit" ,"version":"2.0","row":{"short_tp":["=","ГКБ","КГБ"],"y":["=",2021]},"limit":100,"offset":0,"context":{"attachment_id":5,"row":{"$measures":["=","m1"],"short_tp":["=","ГКБ!","КГБ"],"y":[">",2021]}}}),
+               "tp IN ('ГКБ!','КГБ')"
+               )
+         });
     
 });
 
