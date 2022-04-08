@@ -312,10 +312,13 @@ function init_koob_context(_vars, default_ds, default_cube) {
         if (key.match(/^\w+$/) ) {
           if (_context["_result"]){
             //console.log("HUY!! " + JSON.stringify(key))
-            if (['sum','avg','min','max','count'].find(el => el === key) ){
-              _context["_result"]["agg"] = true
-            }
-            
+            // в этом списке только стандартные вещи, которые во всех базах одинаково пишутся
+            if (['sum','avg','min','max','count',
+                 'var_pop', 'var_samp', 
+                 'stddev_pop', 'stddev_samp'].find(el => el === key) 
+               ){
+                  _context["_result"]["agg"] = true
+               }
           }
 
           return function() {
@@ -331,7 +334,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
               if (_context._target_database == 'clickhouse') {
                 // console.log('COUNT:' + JSON.stringify(a))
                 // у нас всегда должен быть один аргумент и он уже прошёл eval !!!
-                // Это БАГ в тыкдоме = отдаёт текстом значения, если count делать :-()
+                // Это БАГ в тыкдоме v21 = отдаёт текстом значения, если count делать :-()
                 return `toUInt32(count(${a[0]}))`
               }
             }
@@ -376,6 +379,72 @@ function init_koob_context(_vars, default_ds, default_cube) {
       return key
     }
   )
+
+  _context["median"] = function(col) {
+    _context["_result"]["agg"] = true
+    if (_context._target_database === 'clickhouse') {
+      return `quantile(0.5)(${col})`
+    } else if (_context._target_database === 'postgresql') {
+      return `percentile_cont(0.5) WITHIN GROUP (ORDER BY ${col})`
+    } else {
+      throw Error(`median() is not implemented for ${_context._target_database} yet`)
+    }
+  }
+
+  _context["mode"] = function(col) {
+    _context["_result"]["agg"] = true
+    if (_context._target_database === 'clickhouse') {
+      return `arrayElement(topK(1)(${col}),1)`
+    } else if (_context._target_database === 'postgresql') {
+      return `mode() WITHIN GROUP (ORDER BY ${col})`
+    } else {
+      throw Error(`mode() is not implemented for ${_context._target_database} yet`)
+    }
+  }
+
+  _context["var_pop"] = function(col) {
+    _context["_result"]["agg"] = true
+    if (_context._target_database === 'clickhouse') {
+      return `varPop(${col})`
+    } else if (_context._target_database === 'postgresql') {
+      return `var_pop(${col})`
+    } else {
+      throw Error(`var_pop() is not implemented for ${_context._target_database} yet`)
+    }
+  }
+
+  _context["var_samp"] = function(col) {
+    _context["_result"]["agg"] = true
+    if (_context._target_database === 'clickhouse') {
+      return `varSamp(${col})`
+    } else if (_context._target_database === 'postgresql') {
+      return `var_samp(${col})`
+    } else {
+      throw Error(`var_samp() is not implemented for ${_context._target_database} yet`)
+    }
+  }
+
+  _context["stddev_samp"] = function(col) {
+    _context["_result"]["agg"] = true
+    if (_context._target_database === 'clickhouse') {
+      return `stddevSamp(${col})`
+    } else if (_context._target_database === 'postgresql') {
+      return `stddev_samp(${col})`
+    } else {
+      throw Error(`var_samp() is not implemented for ${_context._target_database} yet`)
+    }
+  }
+ 
+  _context["stddev_pop"] = function(col) {
+    _context["_result"]["agg"] = true
+    if (_context._target_database === 'clickhouse') {
+      return `stddevPop(${col})`
+    } else if (_context._target_database === 'postgresql') {
+      return `stddev_pop(${col})`
+    } else {
+      throw Error(`var_samp() is not implemented for ${_context._target_database} yet`)
+    }
+  }
 
   _context["_sequence"] = 0;
   
