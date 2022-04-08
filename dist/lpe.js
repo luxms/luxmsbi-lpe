@@ -7073,7 +7073,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
         if (_context["_result"]) {
           //console.log("HUY!! " + JSON.stringify(key))
           // в этом списке только стандартные вещи, которые во всех базах одинаково пишутся
-          if (['sum', 'avg', 'min', 'max', 'count', 'var_pop', 'var_samp', 'stddev_pop', 'stddev_samp'].find(function (el) {
+          if (['sum', 'avg', 'min', 'max', 'count'].find(function (el) {
             return el === key;
           })) {
             _context["_result"]["agg"] = true;
@@ -7525,7 +7525,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
 
     a = a.map(function (el) {
-      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(el, _context);
+      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(el, _ctx);
     });
     return a;
   };
@@ -8168,7 +8168,7 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
     }
 
     if (pw.length > 0) {
-      var wh = ["and"].concat(pw); //console.log("WHERE", JSON.stringify(wh))
+      var wh = ["and"].concat(pw); // console.log("WHERE", JSON.stringify(wh))
       // возможно, тут нужен спец. контекст с правильной обработкой or/and  функций.
       // ибо первым аргументом мы тут всегда ставим столбец!!!    
 
