@@ -7115,6 +7115,12 @@ function init_koob_context(_vars, default_ds, default_cube) {
           var k = key;
           var col = ast[0];
           var c = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, ctx);
+
+          if (ast.length === 1) {
+            // например `-1 * sum(col)`
+            return "".concat(k).concat(c);
+          }
+
           var v = ast[1];
           if (shouldQuote(col, v)) v = quoteLiteral(v);
           v = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(v, ctx);

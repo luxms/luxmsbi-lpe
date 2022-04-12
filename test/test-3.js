@@ -61,6 +61,7 @@ SETTINGS max_threads = 1`
                      "stddev_samp(group_pay_name)",
                      "stddev_pop(group_pay_name)",
                      "only1(v_rel_pp111)",
+                     "-1*sum(group_pay_name)",
                      'hcode_name'
                   ],
          "filters":{"hcode_name": ["between", "2019-01-01", "2020-03-01"], "perda": [">",2]},
@@ -69,7 +70,7 @@ SETTINGS max_threads = 1`
          "offset": 10,
          "with":"ch.fot_out"},
                {"_target_database": "clickhouse"}),
-   `/*ON1Y*/SELECT toString(v_rel_pp) as "v_rel_pp", quantile(0.5)(group_pay_name) as "group_pay_name", varPop(group_pay_name) as "group_pay_name", varSamp(group_pay_name) as "group_pay_name", stddevSamp(group_pay_name) as "group_pay_name", stddevPop(group_pay_name) as "group_pay_name", v_rel_pp111, hcode_name as "hcode_name"
+   `/*ON1Y*/SELECT toString(v_rel_pp) as "v_rel_pp", quantile(0.5)(group_pay_name) as "group_pay_name", varPop(group_pay_name) as "group_pay_name", varSamp(group_pay_name) as "group_pay_name", stddevSamp(group_pay_name) as "group_pay_name", stddevPop(group_pay_name) as "group_pay_name", v_rel_pp111, -1 * sum(group_pay_name) as "group_pay_name", hcode_name as "hcode_name"
 FROM fot_out AS fot_out
 WHERE (hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND (perda > 2) AND (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
 ORDER BY perda, lead DESC LIMIT 100 OFFSET 10
