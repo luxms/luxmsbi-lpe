@@ -68,8 +68,8 @@ ORDER BY perda, lead DESC`
    it('should eval KOOB filters with except (koob lookup)', function() {
       assert.equal( lpe.eval_sql_where(
          "filters( except(y), short_tp:tp, y:year )",
-         {"_quoting":"explicit" ,"version":"2.0","row":{"short_tp":["=","ГКБ","КГБ"],"y":["=",2021]},"limit":100,"offset":0,"context":{"attachment_id":5,"row":{"$measures":["=","m1"],"short_tp":["=","ГКБ!","КГБ"],"y":[">",2021]}}}),
-         "tp IN ('ГКБ!','КГБ')"
+         {"_quoting":"explicit" ,"version":"2.0","row":{"short_tp":["!=","ГКБ","КГБ"],"y":["=",2021]},"limit":100,"offset":0,"context":{"attachment_id":5,"row":{"$measures":["=","m1"],"short_tp":["!=","ГКБ!","КГБ"],"y":[">",2021]}}}),
+         "tp NOT IN ('ГКБ!','КГБ')"
          )
    });
 

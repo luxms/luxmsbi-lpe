@@ -4068,7 +4068,7 @@ function sql_where_context(_vars) {
     var prnt = function prnt(ar) {
       //console.log("PRNT:" + JSON.stringify(ar))
       if (ar instanceof Array) {
-        if (ar[0] === '$' || ar[0] === '"' || ar[0] === "'" || ar[0] === "str" || ar[0] === "[" || ar[0] === 'parse_kv' || ar[0] === 'parse_cond' || ar[0] === "=" || ar[0] === "ql" || ar[0] === "pg_interval" || ar[0] === "lpe_pg_tstz_at_time_zone" || ar[0] === "column" || ar[0] === "cond") {
+        if (ar[0] === '$' || ar[0] === '"' || ar[0] === "'" || ar[0] === "str" || ar[0] === "[" || ar[0] === 'parse_kv' || ar[0] === 'parse_cond' || ar[0] === "=" || ar[0] === "!=" || ar[0] === "ql" || ar[0] === "pg_interval" || ar[0] === "lpe_pg_tstz_at_time_zone" || ar[0] === "column" || ar[0] === "cond") {
           return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(ar, ctx);
         } else {
           if (ar.length == 2) {
@@ -4208,7 +4208,7 @@ function sql_where_context(_vars) {
       return "[" + Array.prototype.slice.call(arguments).join(',') + "]";
     };
 
-    ctx['='] = function (l, r) {
+    function eq_not_eq(l, r, op) {
       // понимаем a = [null] как a is null
       // a = [] просто пропускаем, А кстати почему собственно???
       // a = [null, 1,2] как a in (1,2) or a is null
@@ -4216,7 +4216,7 @@ function sql_where_context(_vars) {
       // console.log('========'+ JSON.stringify(l) + ' <> ' + JSON.stringify(r))
       if (r instanceof Array) {
         if (r.length === 0) {
-          return 'TRUE';
+          return op === 'eq' ? 'TRUE' : 'FALSE';
         }
 
         if (r[0] === '[') {
@@ -4229,9 +4229,9 @@ function sql_where_context(_vars) {
 
           if (nonnull.length === r.length) {
             if (nonnull.length === 1) {
-              return "TRUE";
+              return op === '=' ? 'TRUE' : 'FALSE';
             } else {
-              return prnt(l) + " IN (" + r.slice(1).map(function (el) {
+              return prnt(l) + (op === '=' ? " IN (" : " NOT IN (") + r.slice(1).map(function (el) {
                 return prnt(el);
               }).join(',') + ")";
             }
@@ -4239,11 +4239,17 @@ function sql_where_context(_vars) {
             var col = prnt(l);
 
             if (nonnull.length === 1) {
-              return col + " IS NULL";
+              return col + (op === '=' ? " IS NULL" : " IS NOT NULL");
             } else {
-              return "(" + col + " IS NULL OR " + col + " IN (" + nonnull.slice(1).map(function (el) {
-                return prnt(el);
-              }).join(',') + "))";
+              if (op === '=') {
+                return "(" + col + " IS NULL OR " + col + " IN (" + nonnull.slice(1).map(function (el) {
+                  return prnt(el);
+                }).join(',') + "))";
+              } else {
+                return "(" + col + " IS NOT NULL OR " + col + " NOT IN (" + nonnull.slice(1).map(function (el) {
+                  return prnt(el);
+                }).join(',') + "))";
+              }
             }
           }
         } else {
@@ -4277,20 +4283,20 @@ function sql_where_context(_vars) {
             }
           } else {
             var_expr = prnt(r, ctx);
-          } //console.log("EVAL " + JSON.stringify(var_expr));
-
+          }
 
           if (var_expr instanceof Array) {
-            return ctx['='](l, ['['].concat(var_expr));
+            return ctx[op](l, ['['].concat(var_expr));
           } else {
             //console.log("EVAL = " + JSON.stringify(l) + ' ' + JSON.stringify(var_expr));
-            return ctx['='](l, var_expr);
+            return ctx[op](l, var_expr);
           }
         }
       }
 
       if (r == null) {
-        var defVal = track_undefined_values_for_cond[0]; //console.log("$ CHECK " + defVal)
+        var defVal = track_undefined_values_for_cond[0];
+        __WEBPACK_IMPORTED_MODULE_14__console_console__["a" /* default */].log("$ CHECK " + defVal);
 
         if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["c" /* isString */])(defVal)) {
           return defVal;
@@ -4299,15 +4305,25 @@ function sql_where_context(_vars) {
           track_undefined_values_for_cond[0] = true;
         }
 
-        return prnt(l) + " IS NULL ";
+        return prnt(l) + (op === '=' ? " IS NULL " : " IS NOT NULL ");
       } else if (r === '') {
-        return prnt(l) + " = ''";
+        return prnt(l) + " ".concat(op, " ''");
       } else {
-        return prnt(l) + " = " + prnt(r);
+        return prnt(l) + " ".concat(op, " ") + prnt(r);
       }
+    }
+
+    ctx['='] = function (l, r) {
+      return eq_not_eq(l, r, '=');
     };
 
     ctx['='].ast = [[], {}, [], 1]; // mark as macro
+
+    ctx['!='] = function (l, r) {
+      return eq_not_eq(l, r, '!=');
+    };
+
+    ctx['!='].ast = [[], {}, [], 1]; // mark as macro
     // $(name) will quote text elements !!! suitable for generating things like WHERE title in ('a','b','c')
     // also, we should evaluate expression, if any.
 
