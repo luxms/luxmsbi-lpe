@@ -308,6 +308,11 @@ export function sql_where_context(_vars) {
         return [ar[0], col].concat(ar.slice(1).map(el=>["ql", el]))
       }
     );
+
+    if (expr.length === 0){
+      return "1=1"
+    }
+    
     if (expr.length>1) {
       expr = ["filter",["and"].concat(expr)]
     } else {

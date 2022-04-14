@@ -73,6 +73,14 @@ ORDER BY perda, lead DESC`
          )
    });
 
+   it('should do correct WHERE with empty conditions', function() {
+      assert.equal( lpe.eval_sql_where(
+         "filters( notexists )",
+         {"_quoting":"explicit" ,"version":"2.0","row":{"short_tp":["=","ГКБ","КГБ"],"y":["=",2021]},"limit":100,"offset":0,"context":{"attachment_id":5,"row":{"$measures":["=","m1"],"short_tp":["=","ГКБ!","КГБ"],"y":[">",2021]}}}),
+         "1=1"
+         )
+   });
+
    it('should eval KOOB var_pop', function() {
       assert.equal( lpe.generate_koob_sql(
          {"columns":[

@@ -4526,6 +4526,10 @@ function sql_where_context(_vars) {
       }));
     });
 
+    if (expr.length === 0) {
+      return "1=1";
+    }
+
     if (expr.length > 1) {
       expr = ["filter", ["and"].concat(expr)];
     } else {
