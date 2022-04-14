@@ -207,11 +207,11 @@ GROUP BY v_rel_pp_i / (100 * (fot_out.v_main + 1))`
                      "offset": 10,
                      "with":"ch.fot_out"},
                            {"_target_database": "clickhouse"}),
-               `SELECT concat(toString(v_rel_pp),'*',fot_out.v_rel_pp,fot_out.hcode_name) as "v_rel_pp", toString(group_pay_name), fot_out.hcode_name as "hcode_name"
-               FROM fot_out AS fot_out
-               WHERE (fot_out.hcode_name BETWEEN '2019-01-01' AND '2020-03-01')
-               ORDER BY perda, lead DESC LIMIT 100 OFFSET 10
-               SETTINGS max_threads = 12`
+`SELECT concat(toString(v_rel_pp),'*',v_rel_pp,hcode_name) as "v_rel_pp", toString(group_pay_name), hcode_name as "hcode_name"
+FROM fot_out AS fot_out
+WHERE (hcode_name BETWEEN '2019-01-01' AND '2020-03-01')
+ORDER BY perda, lead DESC LIMIT 100 OFFSET 10
+SETTINGS max_threads = 1`
                         );
    });
 
@@ -226,10 +226,10 @@ GROUP BY v_rel_pp_i / (100 * (fot_out.v_main + 1))`
          "filters":{"hcode_name": ["between", "2019-01-01", "2020-03-01"]},
          "with":"ch.fot_out"},
                {"_target_database": "mysql"}),
-   `SELECT sum((round(v_main,2))) as \`fact\`, fot_out.group_pay_name as \`group_pay_name\`, fot_out.hcode_name as \`hcode_name\`
+   `SELECT sum((round(v_main,2))) as \`fact\`, (round(v_main,2)) as \`fackt\`, group_pay_name as \`group_pay_name\`, hcode_name as \`hcode_name\`
 FROM fot_out AS fot_out
-WHERE (fot_out.hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND (fot_out.pay_code = 'Не задано') AND (fot_out.pay_name = 'Не задано') AND (fot_out.sex_code IS NULL)
-GROUP BY fot_out.group_pay_name, fot_out.hcode_name`
+WHERE (hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
+GROUP BY (round(v_main,2)), group_pay_name, hcode_name`
             );
    
      });

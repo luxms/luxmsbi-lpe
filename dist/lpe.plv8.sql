@@ -6934,8 +6934,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
     if (_context._target_database === 'clickhouse') {
       return "quantile(0.5)(".concat(col, ")");
-    } else if (_context._target_database === 'postgresql') {
-      return "percentile_cont(0.5) WITHIN GROUP (ORDER BY ".concat(col, ")");
+    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle') {
+      return "percentile_cont(0.5) WITHIN GROUP (ORDER BY ".concat(col, " DESC)");
     } else {
       throw Error("median() is not implemented for ".concat(_context._target_database, " yet"));
     }
@@ -6948,6 +6948,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
       return "arrayElement(topK(1)(".concat(col, "),1)");
     } else if (_context._target_database === 'postgresql') {
       return "mode() WITHIN GROUP (ORDER BY ".concat(col, ")");
+    } else if (_context._target_database === 'oracle') {
+      return "STATS_MODE(".concat(col, ")");
     } else {
       throw Error("mode() is not implemented for ".concat(_context._target_database, " yet"));
     }
@@ -6958,7 +6960,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
     if (_context._target_database === 'clickhouse') {
       return "varPop(".concat(col, ")");
-    } else if (_context._target_database === 'postgresql') {
+    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle') {
       return "var_pop(".concat(col, ")");
     } else {
       throw Error("var_pop() is not implemented for ".concat(_context._target_database, " yet"));
@@ -6970,7 +6972,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
     if (_context._target_database === 'clickhouse') {
       return "varSamp(".concat(col, ")");
-    } else if (_context._target_database === 'postgresql') {
+    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle') {
       return "var_samp(".concat(col, ")");
     } else {
       throw Error("var_samp() is not implemented for ".concat(_context._target_database, " yet"));
@@ -6982,7 +6984,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
     if (_context._target_database === 'clickhouse') {
       return "stddevSamp(".concat(col, ")");
-    } else if (_context._target_database === 'postgresql') {
+    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle') {
       return "stddev_samp(".concat(col, ")");
     } else {
       throw Error("var_samp() is not implemented for ".concat(_context._target_database, " yet"));
@@ -6994,7 +6996,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
     if (_context._target_database === 'clickhouse') {
       return "stddevPop(".concat(col, ")");
-    } else if (_context._target_database === 'postgresql') {
+    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle') {
       return "stddev_pop(".concat(col, ")");
     } else {
       throw Error("var_samp() is not implemented for ".concat(_context._target_database, " yet"));
@@ -8379,11 +8381,58 @@ function generate_koob_sql(_cfg, _vars) {
   }); //console.log("SQL:", JSON.stringify(cube_query_template))
 
 
-  var from = cube_query_template.query; // FIXME: USE FLAVORS FOR Oracle & MS SQL
-
+  var from = cube_query_template.query;
   var limit = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["e" /* isNumber */])(_cfg["limit"]) ? " LIMIT ".concat(_cfg["limit"]) : '';
   var offset = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["e" /* isNumber */])(_cfg["offset"]) ? " OFFSET ".concat(_cfg["offset"]) : '';
-  var ending = '';
+  var limit_offset = '';
+
+  if (_context[0]["_target_database"] === 'oracle') {
+    //AHTUNG!! это же условие для WHERE FILTERS !!!
+    var w;
+
+    if (limit) {
+      if (offset) {
+        w = "ROWNUM > ".concat(parseInt(_cfg["limit"]), " AND ROWNUM <= ").concat(parseInt(_cfg["offset"]), " + ").concat(parseInt(_cfg["limit"]));
+      } else {
+        w = "ROWNUM <= ".concat(parseInt(_cfg["limit"]));
+      }
+    } else if (offset) {
+      w = "ROWNUM > ".concat(parseInt(_cfg["limit"]));
+    }
+
+    if (w) {
+      if (where.length > 3) {
+        where = "".concat(where, " AND ").concat(w);
+      } else {
+        where = "\nWHERE ".concat(w);
+      }
+    }
+  } else if (_context[0]["_target_database"] === 'sqlserver') {
+    if (limit) {
+      if (offset) {
+        limit_offset = " OFFSET ".concat(parseInt(_cfg["offset"]), " ROWS FETCH NEXT ").concat(parseInt(_cfg["limit"]), " ROWS ONLY");
+      } else {
+        limit_offset = " FETCH NEXT ".concat(parseInt(_cfg["limit"]), " ROWS ONLY");
+      }
+    } else if (offset) {
+      limit_offset = " OFFSET ".concat(parseInt(_cfg["offset"]), " ROWS");
+    }
+  } else {
+    if (limit) {
+      if (offset) {
+        limit_offset = " LIMIT ".concat(parseInt(_cfg["limit"]), " OFFSET ").concat(parseInt(_cfg["offset"]));
+      } else {
+        limit_offset = " LIMIT ".concat(parseInt(_cfg["limit"]));
+      }
+    } else if (offset) {
+      limit_offset = " OFFSET ".concat(parseInt(_cfg["offset"]));
+    }
+  }
+
+  var ending = ''; // FIXME! Требуется использовать настройки куба, поле config.query_settings.max_threads
+  //        Если в кубе нет настроек, то проверяем _data_source.query_settings
+  //        Он передаётся на вход!!!
+  // if (isHash(_vars["_data_source"]) && isString(_vars["_data_source"]["url"]) ) {
 
   if (_context[0]["_target_database"] === 'clickhouse') {
     ending = "\nSETTINGS max_threads = 1";
@@ -8574,7 +8623,7 @@ function generate_koob_sql(_cfg, _vars) {
       return el !== null;
     }).join(', '));
     order_by = order_by.length ? "\nORDER BY ".concat(order_by.join(', ')) : '';
-    return "".concat(select, "\nFROM (\n").concat(inner, "\n)").concat(order_by).concat(limit).concat(offset).concat(ending);
+    return "".concat(select, "\nFROM (\n").concat(inner, "\n)").concat(order_by).concat(limit_offset).concat(ending);
   } else {
     var select = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isArray */])(_cfg["distinct"]) ? "SELECT DISTINCT " : "SELECT "; // могут быть ньюансы квотации столбцов, обозначения AS и т.д. поэтому каждый участок приводим к LPE и вызываем SQLPE функции с адаптацией под конкретные базы
 
@@ -8679,15 +8728,16 @@ function generate_koob_sql(_cfg, _vars) {
 
       re = /\$\{filters\(([^\)]+)\)\}/gi;
       processed_from = processed_from.replace(re, inclusive_replacer);
-      from = processed_from; //final_sql = `${select}\nFROM ${processed_from}${group_by}${order_by}${limit}${offset}${ending}`
+      from = processed_from; //final_sql = `${select}\nFROM ${processed_from}${group_by}${order_by}${limit_offset}${ending}`
     }
 
     if (global_only1 === true) {
-      group_by = '';
+      group_by = ''; // plSQL will parse this comment! Sic! 
+
       select = "/*ON1Y*/".concat(select);
     }
 
-    final_sql = "".concat(select, "\nFROM ").concat(from).concat(where).concat(group_by).concat(order_by).concat(limit).concat(offset).concat(ending);
+    final_sql = "".concat(select, "\nFROM ").concat(from).concat(where).concat(group_by).concat(order_by).concat(limit_offset).concat(ending);
 
     if (_cfg["return"] === "count") {
       if (_context[0]["_target_database"] === 'clickhouse') {

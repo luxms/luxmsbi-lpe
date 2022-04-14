@@ -385,8 +385,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
     _context["_result"]["agg"] = true
     if (_context._target_database === 'clickhouse') {
       return `quantile(0.5)(${col})`
-    } else if (_context._target_database === 'postgresql') {
-      return `percentile_cont(0.5) WITHIN GROUP (ORDER BY ${col})`
+    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle') {
+      return `percentile_cont(0.5) WITHIN GROUP (ORDER BY ${col} DESC)`
     } else {
       throw Error(`median() is not implemented for ${_context._target_database} yet`)
     }
@@ -398,6 +398,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
       return `arrayElement(topK(1)(${col}),1)`
     } else if (_context._target_database === 'postgresql') {
       return `mode() WITHIN GROUP (ORDER BY ${col})`
+    } else if (_context._target_database === 'oracle') {
+      return `STATS_MODE(${col})`
     } else {
       throw Error(`mode() is not implemented for ${_context._target_database} yet`)
     }
@@ -407,7 +409,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     _context["_result"]["agg"] = true
     if (_context._target_database === 'clickhouse') {
       return `varPop(${col})`
-    } else if (_context._target_database === 'postgresql') {
+    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle') {
       return `var_pop(${col})`
     } else {
       throw Error(`var_pop() is not implemented for ${_context._target_database} yet`)
@@ -418,7 +420,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     _context["_result"]["agg"] = true
     if (_context._target_database === 'clickhouse') {
       return `varSamp(${col})`
-    } else if (_context._target_database === 'postgresql') {
+    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle') {
       return `var_samp(${col})`
     } else {
       throw Error(`var_samp() is not implemented for ${_context._target_database} yet`)
@@ -429,7 +431,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     _context["_result"]["agg"] = true
     if (_context._target_database === 'clickhouse') {
       return `stddevSamp(${col})`
-    } else if (_context._target_database === 'postgresql') {
+    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle') {
       return `stddev_samp(${col})`
     } else {
       throw Error(`var_samp() is not implemented for ${_context._target_database} yet`)
@@ -440,7 +442,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     _context["_result"]["agg"] = true
     if (_context._target_database === 'clickhouse') {
       return `stddevPop(${col})`
-    } else if (_context._target_database === 'postgresql') {
+    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle') {
       return `stddev_pop(${col})`
     } else {
       throw Error(`var_samp() is not implemented for ${_context._target_database} yet`)
@@ -1680,11 +1682,56 @@ export function generate_koob_sql(_cfg, _vars) {
   //console.log("SQL:", JSON.stringify(cube_query_template))
   var from = cube_query_template.query
 
-  // FIXME: USE FLAVORS FOR Oracle & MS SQL
   var limit = isNumber(_cfg["limit"]) ? ` LIMIT ${_cfg["limit"]}` : ''
   var offset = isNumber(_cfg["offset"]) ? ` OFFSET ${_cfg["offset"]}` : ''
+  var limit_offset = ''
+
+  if (_context[0]["_target_database"] === 'oracle') {
+    //AHTUNG!! это же условие для WHERE FILTERS !!!
+    var w
+    if (limit) {
+      if (offset) {
+        w = `ROWNUM > ${parseInt(_cfg["limit"])} AND ROWNUM <= ${parseInt(_cfg["offset"])} + ${parseInt(_cfg["limit"])}`
+      } else {
+        w = `ROWNUM <= ${parseInt(_cfg["limit"])}`
+      }
+    } else if (offset) {
+      w = `ROWNUM > ${parseInt(_cfg["limit"])}`
+    }
+    if (w) {
+      if (where.length > 3) {
+        where = `${where} AND ${w}`
+      } else {
+        where = `\nWHERE ${w}`
+      }
+    }
+  } else if (_context[0]["_target_database"] === 'sqlserver') {
+    if (limit) {
+      if (offset) {
+        limit_offset = ` OFFSET ${parseInt(_cfg["offset"])} ROWS FETCH NEXT ${parseInt(_cfg["limit"])} ROWS ONLY`
+      } else {
+        limit_offset = ` FETCH NEXT ${parseInt(_cfg["limit"])} ROWS ONLY`
+      }
+    } else if (offset) {
+      limit_offset = ` OFFSET ${parseInt(_cfg["offset"])} ROWS`
+    }
+  } else {
+    if (limit) {
+      if (offset) {
+        limit_offset = ` LIMIT ${parseInt(_cfg["limit"])} OFFSET ${parseInt(_cfg["offset"])}`
+      } else {
+        limit_offset = ` LIMIT ${parseInt(_cfg["limit"])}`
+      }
+    } else if (offset) {
+      limit_offset = ` OFFSET ${parseInt(_cfg["offset"])}`
+    }
+  }
 
   var ending = ''
+  // FIXME! Требуется использовать настройки куба, поле config.query_settings.max_threads
+  //        Если в кубе нет настроек, то проверяем _data_source.query_settings
+  //        Он передаётся на вход!!!
+  // if (isHash(_vars["_data_source"]) && isString(_vars["_data_source"]["url"]) ) {
   if (_context[0]["_target_database"] === 'clickhouse'){
     ending = "\nSETTINGS max_threads = 1"
   }
@@ -1840,7 +1887,7 @@ export function generate_koob_sql(_cfg, _vars) {
     }).filter(el=> el !== null).join(', '))
 
     order_by = order_by.length ? "\nORDER BY ".concat(order_by.join(', ')) : ''
-    return `${select}\nFROM (\n${inner}\n)${order_by}${limit}${offset}${ending}`
+    return `${select}\nFROM (\n${inner}\n)${order_by}${limit_offset}${ending}`
   } else {
     var select = isArray(_cfg["distinct"]) ? "SELECT DISTINCT " : "SELECT "
     // могут быть ньюансы квотации столбцов, обозначения AS и т.д. поэтому каждый участок приводим к LPE и вызываем SQLPE функции с адаптацией под конкретные базы
@@ -1941,15 +1988,16 @@ export function generate_koob_sql(_cfg, _vars) {
       }
       processed_from = processed_from.replace(re, inclusive_replacer);
       from = processed_from
-      //final_sql = `${select}\nFROM ${processed_from}${group_by}${order_by}${limit}${offset}${ending}`
+      //final_sql = `${select}\nFROM ${processed_from}${group_by}${order_by}${limit_offset}${ending}`
     }
 
     if (global_only1 === true) {
       group_by = ''
+      // plSQL will parse this comment! Sic! 
       select = `/*ON1Y*/${select}`
     }
     
-    final_sql = `${select}\nFROM ${from}${where}${group_by}${order_by}${limit}${offset}${ending}`
+    final_sql = `${select}\nFROM ${from}${where}${group_by}${order_by}${limit_offset}${ending}`
 
     if (_cfg["return"] === "count") {
       if (_context[0]["_target_database"] === 'clickhouse'){
