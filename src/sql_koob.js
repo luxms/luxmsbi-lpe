@@ -656,7 +656,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
         }
       }
     } else {
-      throw Error(`pointInPolygon is not supported in ${_context._target_database}`)
+      throw Error(`range is not supported in ${_context._target_database}`)
     }
   }
 
@@ -1359,6 +1359,33 @@ function cache_alias_keys(_cfg) {
 
 }
 
+function genereate_subtotals_group_by_postgresql(cfg, group_by_list){
+  var subtotals = cfg["subtotals"]
+
+  if (group_by_list.length === 0) {
+    return ''
+  }
+  
+  //cfg["_group_by"].map(el => console.log(JSON.stringify(el)))
+  //subtotals.map(el => console.log(JSON.stringify(el)))
+  var group_by_sql = group_by_list.join(', ')
+
+  var subtotals_combinations = subtotals.map(col => {
+    var i = group_by_list.indexOf(col)
+    if(i===-1){
+      throw Error(`looking for column ${col} listed in subtotals, but can not find in group_by`)
+    }
+    //console.log(JSON.stringify(group_by_list.filter(c => c !== col).join(', ')))
+    return group_by_list.filter(c => c !== col).join(', ')
+  })
+
+  return "\nGROUP BY GROUPING SETS ((".concat(group_by_sql, '),',
+         "\n                        (".concat(subtotals_combinations.join(
+       "),\n                        ("),')'),
+         "\n                       )")
+
+}
+
 
 /* в _vars могут быть доп. настройки для контекста. Например объявленные переменные.
 Вообще говоря это должен быть настоящий контекст! с помощью init_koob_context() мы дописываем в этот 
@@ -1665,9 +1692,17 @@ export function generate_koob_sql(_cfg, _vars) {
     }
   }
 
-  if (fw.length > 0) {
-    where = `\nWHERE ${fw}`
-    part_where = fw
+  if ( cube_query_template.config.is_template && cube_query_template.config.skip_where ) {
+    // не печатаем часть WHERE, даже если она и должна быть, так как в конфиге куба нас просят
+    // этого не делать. 
+    if (fw.length > 0) {
+      part_where = fw
+    }
+  } else {
+    if (fw.length > 0) {
+      where = `\nWHERE ${fw}`
+      part_where = fw
+    }
   }
   
   
@@ -1688,7 +1723,8 @@ export function generate_koob_sql(_cfg, _vars) {
 
   if (_context[0]["_target_database"] === 'oracle') {
     //AHTUNG!! это же условие для WHERE FILTERS !!!
-    var w
+
+    let w
     if (limit) {
       if (offset) {
         w = `ROWNUM > ${parseInt(_cfg["limit"])} AND ROWNUM <= ${parseInt(_cfg["offset"])} + ${parseInt(_cfg["limit"])}`
@@ -1698,6 +1734,7 @@ export function generate_koob_sql(_cfg, _vars) {
     } else if (offset) {
       w = `ROWNUM > ${parseInt(_cfg["limit"])}`
     }
+
     if (w) {
       if (where.length > 3) {
         where = `${where} AND ${w}`
@@ -1705,6 +1742,7 @@ export function generate_koob_sql(_cfg, _vars) {
         where = `\nWHERE ${w}`
       }
     }
+
   } else if (_context[0]["_target_database"] === 'sqlserver') {
     if (limit) {
       if (offset) {
@@ -1928,6 +1966,12 @@ export function generate_koob_sql(_cfg, _vars) {
           group_by =`\nGROUP BY CUBE (${group_by.join(', ')})`
         }
 
+      } else if (isArray(_cfg["subtotals"])){
+        if (_context[0]["_target_database"]==='postgresql') {
+          group_by = genereate_subtotals_group_by_postgresql(_cfg, group_by)
+        } else {
+          throw new Error(`named subtotals are not yet supported for ${_context[0]["_target_database"]}`)
+        }
       } else {
         group_by ="\nGROUP BY ".concat(group_by.join(', '))
       }

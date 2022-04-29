@@ -1131,6 +1131,7 @@ var STDLIB = _objectSpread({
       return v == args[0];
     });
   },
+  //  "'": a => `'${a}'`,
   '[': function _() {
     for (var _len12 = arguments.length, args = new Array(_len12), _key12 = 0; _key12 < _len12; _key12++) {
       args[_key12] = arguments[_key12];
@@ -1372,6 +1373,7 @@ var STDLIB = _objectSpread({
     // императивная лапша для макроса ->
     // надо вот так: https://clojuredocs.org/clojure.core/-%3E%3E
     // AST[["filterit",[">",1,0]]]
+    //console.log("---------> " +JSON.stringify(acc) + " " + JSON.stringify(ast));
     for (var _i2 = 0; _i2 < ast.length; _i2++) {
       var arr = ast[_i2];
 
@@ -1389,7 +1391,8 @@ var STDLIB = _objectSpread({
       }
 
       acc = arr;
-    }
+    } //console.log("AST !!!!" + JSON.stringify(acc))  
+
 
     return acc;
   }),
@@ -1448,8 +1451,8 @@ var STDLIB = _objectSpread({
 function macroexpand(ast, ctx) {
   var resolveString = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
 
+  //console.log("MACROEXPAND: " + JSON.stringify(ast))
   while (true) {
-    //console.log("MACROEXPAND: " + JSON.stringify(ast))
     if (!isArray(ast)) break;
     if (!isString(ast[0])) break;
     var v = $var$(ctx, ast[0]);
@@ -3634,14 +3637,14 @@ for (var collections = getKeys(DOMIterables), i = 0; i < collections.length; i++
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_regexp_search___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_regexp_search__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es7_object_values__ = __webpack_require__(64);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es7_object_values___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_core_js_modules_es7_object_values__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_web_dom_iterable__ = __webpack_require__(66);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_web_dom_iterable___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_core_js_modules_web_dom_iterable__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_array_iterator__ = __webpack_require__(41);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_array_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_array_iterator__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_object_keys__ = __webpack_require__(59);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_object_keys___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_object_keys__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_regexp_match__ = __webpack_require__(104);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_regexp_match___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_regexp_match__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es6_regexp_match__ = __webpack_require__(104);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es6_regexp_match___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_core_js_modules_es6_regexp_match__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_web_dom_iterable__ = __webpack_require__(66);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_web_dom_iterable___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_core_js_modules_web_dom_iterable__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_array_iterator__ = __webpack_require__(41);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_array_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_array_iterator__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_object_keys__ = __webpack_require__(59);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_object_keys___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_object_keys__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_regexp_replace__ = __webpack_require__(61);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_regexp_replace___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_regexp_replace__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_10_core_js_modules_es6_regexp_split__ = __webpack_require__(62);
@@ -3950,14 +3953,15 @@ function sql_where_context(_vars) {
 
     return "to_date(".concat(el, ")");
   };
-
+  /*
   _context["'"] = function (expr) {
     // we should eval things in the cond ( a = '$(abs.ext)')
     //console.log('FOUND EXPR: ' + expr)
-    if (expr.match(/^\s*\$\(.*\)\s*$/)) {
-      return "'{eval_lisp(expr, _context)}'";
+    if (expr.match(/^\s*\$\(.*\)\s*$/)){
+      return `'{eval_lisp(expr, _context)}'`
     }
-  }; // table lookup filters with auto-filling
+  }*/
+  // table lookup filters with auto-filling
 
 
   _context['filters'] = function () {
@@ -4277,9 +4281,11 @@ function sql_where_context(_vars) {
                 } else {
                   throw new Error("Resolved value is array with length of not 2, which is not yet supported. ".concat(JSON.stringify(var_expr)));
                 }
-              } else {
-                throw new Error("Resolved value is array, with operation different from = which is not yet supported. ".concat(JSON.stringify(var_expr)));
               }
+              /*else { // array here: pass it to the next logic
+              throw new Error(`Resolved value is array, with operation different from = which is not yet supported. ${JSON.stringify(var_expr)}`)
+              }*/
+
             }
           } else {
             var_expr = prnt(r, ctx);
@@ -4295,8 +4301,7 @@ function sql_where_context(_vars) {
       }
 
       if (r == null) {
-        var defVal = track_undefined_values_for_cond[0];
-        __WEBPACK_IMPORTED_MODULE_14__console_console__["a" /* default */].log("$ CHECK " + defVal);
+        var defVal = track_undefined_values_for_cond[0]; //console.log("$ CHECK " + defVal)
 
         if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["c" /* isString */])(defVal)) {
           return defVal;
@@ -4328,8 +4333,10 @@ function sql_where_context(_vars) {
     // also, we should evaluate expression, if any.
 
     ctx['$'] = function (inexpr) {
+      //console.log("$$$$$$$$$" + JSON.stringify(inexpr))
       var expr = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(inexpr, _context); // evaluate in a normal LISP context without vars, not in WHERE context
       // здесь мы получаем в том числе и массив, хорошо бы понимать, мы находимся в cond или нет
+      //console.log("$$$$$$$$$ = " + JSON.stringify(expr))
       // ["=","ГКБ"]
 
       if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["b" /* isArray */])(expr)) {

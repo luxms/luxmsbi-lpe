@@ -1292,6 +1292,7 @@ var STDLIB = _objectSpread({
       return v == args[0];
     });
   },
+  //  "'": a => `'${a}'`,
   '[': function _() {
     for (var _len12 = arguments.length, args = new Array(_len12), _key12 = 0; _key12 < _len12; _key12++) {
       args[_key12] = arguments[_key12];
@@ -1533,6 +1534,7 @@ var STDLIB = _objectSpread({
     // императивная лапша для макроса ->
     // надо вот так: https://clojuredocs.org/clojure.core/-%3E%3E
     // AST[["filterit",[">",1,0]]]
+    //console.log("---------> " +JSON.stringify(acc) + " " + JSON.stringify(ast));
     for (var _i2 = 0; _i2 < ast.length; _i2++) {
       var arr = ast[_i2];
 
@@ -1550,7 +1552,8 @@ var STDLIB = _objectSpread({
       }
 
       acc = arr;
-    }
+    } //console.log("AST !!!!" + JSON.stringify(acc))  
+
 
     return acc;
   }),
@@ -1609,8 +1612,8 @@ var STDLIB = _objectSpread({
 function macroexpand(ast, ctx) {
   var resolveString = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
 
+  //console.log("MACROEXPAND: " + JSON.stringify(ast))
   while (true) {
-    //console.log("MACROEXPAND: " + JSON.stringify(ast))
     if (!isArray(ast)) break;
     if (!isString(ast[0])) break;
     var v = $var$(ctx, ast[0]);
@@ -4002,14 +4005,14 @@ __webpack_require__(41)('replace', 2, function (defined, REPLACE, $replace, mayb
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_regexp_search___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_regexp_search__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es7_object_values__ = __webpack_require__(56);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es7_object_values___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_core_js_modules_es7_object_values__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_web_dom_iterable__ = __webpack_require__(38);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_web_dom_iterable___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_core_js_modules_web_dom_iterable__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_array_iterator__ = __webpack_require__(35);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_array_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_array_iterator__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_object_keys__ = __webpack_require__(52);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_object_keys___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_object_keys__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_regexp_match__ = __webpack_require__(53);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_regexp_match___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_regexp_match__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es6_regexp_match__ = __webpack_require__(53);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es6_regexp_match___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_core_js_modules_es6_regexp_match__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_web_dom_iterable__ = __webpack_require__(38);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_web_dom_iterable___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_core_js_modules_web_dom_iterable__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_array_iterator__ = __webpack_require__(35);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_array_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_array_iterator__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_object_keys__ = __webpack_require__(52);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_object_keys___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_object_keys__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_regexp_replace__ = __webpack_require__(68);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_regexp_replace___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_regexp_replace__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_10_core_js_modules_es6_regexp_split__ = __webpack_require__(54);
@@ -4318,14 +4321,15 @@ function sql_where_context(_vars) {
 
     return "to_date(".concat(el, ")");
   };
-
+  /*
   _context["'"] = function (expr) {
     // we should eval things in the cond ( a = '$(abs.ext)')
     //console.log('FOUND EXPR: ' + expr)
-    if (expr.match(/^\s*\$\(.*\)\s*$/)) {
-      return "'{eval_lisp(expr, _context)}'";
+    if (expr.match(/^\s*\$\(.*\)\s*$/)){
+      return `'{eval_lisp(expr, _context)}'`
     }
-  }; // table lookup filters with auto-filling
+  }*/
+  // table lookup filters with auto-filling
 
 
   _context['filters'] = function () {
@@ -4645,9 +4649,11 @@ function sql_where_context(_vars) {
                 } else {
                   throw new Error("Resolved value is array with length of not 2, which is not yet supported. ".concat(JSON.stringify(var_expr)));
                 }
-              } else {
-                throw new Error("Resolved value is array, with operation different from = which is not yet supported. ".concat(JSON.stringify(var_expr)));
               }
+              /*else { // array here: pass it to the next logic
+              throw new Error(`Resolved value is array, with operation different from = which is not yet supported. ${JSON.stringify(var_expr)}`)
+              }*/
+
             }
           } else {
             var_expr = prnt(r, ctx);
@@ -4663,8 +4669,7 @@ function sql_where_context(_vars) {
       }
 
       if (r == null) {
-        var defVal = track_undefined_values_for_cond[0];
-        __WEBPACK_IMPORTED_MODULE_14__console_console__["a" /* default */].log("$ CHECK " + defVal);
+        var defVal = track_undefined_values_for_cond[0]; //console.log("$ CHECK " + defVal)
 
         if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["d" /* isString */])(defVal)) {
           return defVal;
@@ -4696,8 +4701,10 @@ function sql_where_context(_vars) {
     // also, we should evaluate expression, if any.
 
     ctx['$'] = function (inexpr) {
+      //console.log("$$$$$$$$$" + JSON.stringify(inexpr))
       var expr = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(inexpr, _context); // evaluate in a normal LISP context without vars, not in WHERE context
       // здесь мы получаем в том числе и массив, хорошо бы понимать, мы находимся в cond или нет
+      //console.log("$$$$$$$$$ = " + JSON.stringify(expr))
       // ["=","ГКБ"]
 
       if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["b" /* isArray */])(expr)) {
@@ -7246,7 +7253,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
         }
       }
     } else {
-      throw Error("pointInPolygon is not supported in ".concat(_context._target_database));
+      throw Error("range is not supported in ".concat(_context._target_database));
     }
   };
 
@@ -8027,6 +8034,31 @@ function cache_alias_keys(_cfg) {
 
   return _cfg;
 }
+
+function genereate_subtotals_group_by_postgresql(cfg, group_by_list) {
+  var subtotals = cfg["subtotals"];
+
+  if (group_by_list.length === 0) {
+    return '';
+  } //cfg["_group_by"].map(el => console.log(JSON.stringify(el)))
+  //subtotals.map(el => console.log(JSON.stringify(el)))
+
+
+  var group_by_sql = group_by_list.join(', ');
+  var subtotals_combinations = subtotals.map(function (col) {
+    var i = group_by_list.indexOf(col);
+
+    if (i === -1) {
+      throw Error("looking for column ".concat(col, " listed in subtotals, but can not find in group_by"));
+    } //console.log(JSON.stringify(group_by_list.filter(c => c !== col).join(', ')))
+
+
+    return group_by_list.filter(function (c) {
+      return c !== col;
+    }).join(', ');
+  });
+  return "\nGROUP BY GROUPING SETS ((".concat(group_by_sql, '),', "\n                        (".concat(subtotals_combinations.join("),\n                        ("), ')'), "\n                       )");
+}
 /* в _vars могут быть доп. настройки для контекста. Например объявленные переменные.
 Вообще говоря это должен быть настоящий контекст! с помощью init_koob_context() мы дописываем в этот 
 контекст новые ключи, типа _columns, _aliases и т.д. Снаружи мы можем получить доп. фильтры. в ключе
@@ -8384,9 +8416,17 @@ function generate_koob_sql(_cfg, _vars) {
     }
   }
 
-  if (fw.length > 0) {
-    where = "\nWHERE ".concat(fw);
-    part_where = fw;
+  if (cube_query_template.config.is_template && cube_query_template.config.skip_where) {
+    // не печатаем часть WHERE, даже если она и должна быть, так как в конфиге куба нас просят
+    // этого не делать. 
+    if (fw.length > 0) {
+      part_where = fw;
+    }
+  } else {
+    if (fw.length > 0) {
+      where = "\nWHERE ".concat(fw);
+      part_where = fw;
+    }
   }
 
   var group_by = _cfg["_group_by"].map(function (el) {
@@ -8408,23 +8448,23 @@ function generate_koob_sql(_cfg, _vars) {
 
   if (_context[0]["_target_database"] === 'oracle') {
     //AHTUNG!! это же условие для WHERE FILTERS !!!
-    var w;
+    var _w;
 
     if (limit) {
       if (offset) {
-        w = "ROWNUM > ".concat(parseInt(_cfg["limit"]), " AND ROWNUM <= ").concat(parseInt(_cfg["offset"]), " + ").concat(parseInt(_cfg["limit"]));
+        _w = "ROWNUM > ".concat(parseInt(_cfg["limit"]), " AND ROWNUM <= ").concat(parseInt(_cfg["offset"]), " + ").concat(parseInt(_cfg["limit"]));
       } else {
-        w = "ROWNUM <= ".concat(parseInt(_cfg["limit"]));
+        _w = "ROWNUM <= ".concat(parseInt(_cfg["limit"]));
       }
     } else if (offset) {
-      w = "ROWNUM > ".concat(parseInt(_cfg["limit"]));
+      _w = "ROWNUM > ".concat(parseInt(_cfg["limit"]));
     }
 
-    if (w) {
+    if (_w) {
       if (where.length > 3) {
-        where = "".concat(where, " AND ").concat(w);
+        where = "".concat(where, " AND ").concat(_w);
       } else {
-        where = "\nWHERE ".concat(w);
+        where = "\nWHERE ".concat(_w);
       }
     }
   } else if (_context[0]["_target_database"] === 'sqlserver') {
@@ -8682,6 +8722,12 @@ function generate_koob_sql(_cfg, _vars) {
         } else {
           // postgresql
           group_by = "\nGROUP BY CUBE (".concat(group_by.join(', '), ")");
+        }
+      } else if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isArray */])(_cfg["subtotals"])) {
+        if (_context[0]["_target_database"] === 'postgresql') {
+          group_by = genereate_subtotals_group_by_postgresql(_cfg, group_by);
+        } else {
+          throw new Error("named subtotals are not yet supported for ".concat(_context[0]["_target_database"]));
         }
       } else {
         group_by = "\nGROUP BY ".concat(group_by.join(', '));

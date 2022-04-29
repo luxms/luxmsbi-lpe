@@ -4,6 +4,8 @@ var lpe = require('../dist/lpe');
 
 describe('LPE KOOB tests', function() {
 
+
+
    it('should eval KOOB only1', function() {
       assert.equal( lpe.generate_koob_sql(
          {"columns":[
@@ -108,4 +110,34 @@ SETTINGS max_threads = 1`
             )
    });
 
+
+   it('should eval KOOB SUBTOTALS', function() {
+
+      assert.equal( lpe.generate_koob_sql(
+         {"columns":["group_pay_name", "type_oe_bi", "region_name", "pay_name", "avg(v_rel_fzp)","sum(v_rel_pp_i)"],
+         "subtotals": ["group_pay_name", "type_oe_bi", "region_name"],
+         "filters":{"dt":["!=","2020-03","2020-04"],
+         "pay_name":["!=","Не задано"]},
+         "sort":["group_pay_name","v_main"],
+         "with":"ch.fot_out"},
+               {"_target_database": "postgresql"}),
+`SELECT group_pay_name as "group_pay_name", type_oe_bi as "type_oe_bi", region_name as "region_name", pay_name as "pay_name", avg(v_rel_fzp) as "v_rel_fzp", sum(v_rel_pp_i)
+FROM fot_out AS fot_out
+WHERE ((NOW() - INERVAL '1 DAY') NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано') AND (pay_code != 'Не задано') AND (sex_code IS NULL)
+GROUP BY GROUPING SETS ((group_pay_name, type_oe_bi, region_name, pay_name),
+                        (type_oe_bi, region_name, pay_name),
+                        (group_pay_name, region_name, pay_name),
+                        (group_pay_name, type_oe_bi, pay_name)
+                       )
+ORDER BY group_pay_name, v_main`
+            );
+      });
+
+      it('should eval array join', function() {
+         assert.equal( lpe.eval_sql_where(
+            "where(l.id ~ $(locations.join('|')))",
+            {"_target_database": "oracle", "context": null, "locations": [1234,3456]}),
+            "WHERE REGEXP_LIKE( l.id , '1234|3456' )"
+        )
+      });
 })

@@ -25,10 +25,10 @@ describe('LPE tests', function() {
                "sort":["group_pay_name","v_main"],
                "with":"ch.fot_out"},
                      {"key":null}),
-`SELECT DISTINCT sum(fot_out.v_main) AS v_main, sum(fot_out.v_rel_pp) AS v_rel_pp, sum(fot_out.v_rel_fzp) AS v_rel_fzp, sum(v_rel_pp_i), fot_out.group_pay_name AS group_pay_name
+`SELECT DISTINCT sum(v_main) as "v_main", sum(v_rel_pp) as "v_rel_pp", sum(v_rel_fzp) as "v_rel_fzp", sum(v_rel_pp_i), group_pay_name as "group_pay_name"
 FROM fot_out AS fot_out
-WHERE ((NOW() - INERVAL '1 DAY') NOT IN ('2020-03', '2020-04')) AND (fot_out.pay_name != 'Не задано') AND (fot_out.area_name = 'Не задано') AND (fot_out.hcode_name = 'ФЗП') AND (fot_out.type_oe_bi = 'РЖД') AND (fot_out.region_name = 'Не задано') AND (fot_out.category_name = 'Не задано') AND (fot_out.group_pay_name != 'Не задано') AND (fot_out.municipal_name = 'Не задано') AND (fot_out.prod_group_name = 'Не задано') AND (fot_out.profession_name = 'Не задано') AND (fot_out.pay_code != 'Не задано') AND (fot_out.sex_code IS NULL)
-GROUP BY fot_out.group_pay_name
+WHERE ((NOW() - INERVAL '1 DAY') NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано') AND (area_name = 'Не задано') AND (hcode_name = 'ФЗП') AND (type_oe_bi = 'РЖД') AND (region_name = 'Не задано') AND (category_name = 'Не задано') AND (group_pay_name != 'Не задано') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (pay_code != 'Не задано') AND (sex_code IS NULL)
+GROUP BY group_pay_name
 ORDER BY group_pay_name, v_main`
                   );
 
@@ -49,10 +49,10 @@ ORDER BY group_pay_name, v_main`
                         "profession_name":["=","Не задано"]},
                         "with":"ch.fot_out"},
                            {"key":null}),
-`SELECT DISTINCT sum(fot_out.v_main) AS v_main, sum(fot_out.v_rel_pp) AS v_rel_pp, sum(v_rel_pp_i), fot_out.pay_code AS pay_code, fot_out.pay_name AS pay_name
+`SELECT DISTINCT sum(v_main) as "v_main", sum(v_rel_pp) as "v_rel_pp", sum(v_rel_pp_i), pay_code as "pay_code", pay_name as "pay_name"
 FROM fot_out AS fot_out
-WHERE ((NOW() - INERVAL '1 DAY') = '2020-03') AND (fot_out.pay_code != 'Не задано') AND (fot_out.area_name = 'Не задано') AND (fot_out.hcode_name = 'ФЗП') AND (fot_out.type_oe_bi = 'РЖД') AND (fot_out.region_name = 'Не задано') AND (fot_out.category_name = 'Не задано') AND (fot_out.municipal_name = 'Не задано') AND (fot_out.prod_group_name = 'Не задано') AND (fot_out.profession_name = 'Не задано') AND (fot_out.sex_code IS NULL)
-GROUP BY fot_out.pay_code, fot_out.pay_name`
+WHERE ((NOW() - INERVAL '1 DAY') = '2020-03') AND (pay_code != 'Не задано') AND (area_name = 'Не задано') AND (hcode_name = 'ФЗП') AND (type_oe_bi = 'РЖД') AND (region_name = 'Не задано') AND (category_name = 'Не задано') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (sex_code IS NULL)
+GROUP BY pay_code, pay_name`
                         );
 
                assert.equal( lpe.generate_koob_sql(
@@ -82,11 +82,11 @@ GROUP BY fot_out.pay_code, fot_out.pay_name`
                            ],
                            "with":"ch.fot_out"},
                                  {"key":null}),
-      `SELECT sum(fot_out.v_main) AS v_main, sum(fot_out.v_rel_pp) AS v_rel_pp, sum(v_rel_pp_i), fot_out.pay_code AS pay_code, fot_out.pay_name AS pay_name
+      `SELECT sum(v_main) as "v_main", sum(v_rel_pp) as "v_rel_pp", sum(v_rel_pp_i), pay_code as "pay_code", pay_name as "pay_name"
 FROM fot_out AS fot_out
-WHERE (((NOW() - INERVAL '1 DAY') = '2020-03') AND (fot_out.pay_code != 'Не задано') AND (fot_out.area_name = 'Не задано') AND (fot_out.hcode_name = 'ФЗП') AND (fot_out.type_oe_bi = 'РЖД') AND (fot_out.region_name = 'Не задано') AND (fot_out.category_name = 'Не задано') AND (fot_out.municipal_name = 'Не задано') AND (fot_out.prod_group_name = 'Не задано') AND (fot_out.profession_name = 'Не задано') AND (fot_out.sex_code IS NULL))
-   OR (((NOW() - INERVAL '1 DAY') = '2020-04') AND (fot_out.pay_code = 'Не задано') AND (fot_out.area_name = 'Не задано') AND (fot_out.hcode_name = 'ФЗП') AND (fot_out.type_oe_bi = 'РЖД') AND (fot_out.region_name = 'Не задано') AND (fot_out.category_name = 'Не задано') AND (fot_out.municipal_name = 'Не задано') AND (fot_out.prod_group_name = 'Не задано') AND (fot_out.profession_name = 'Не задано') AND (fot_out.sex_code IS NULL))
-GROUP BY fot_out.pay_code, fot_out.pay_name`
+WHERE (((NOW() - INERVAL '1 DAY') = '2020-03') AND (pay_code != 'Не задано') AND (area_name = 'Не задано') AND (hcode_name = 'ФЗП') AND (type_oe_bi = 'РЖД') AND (region_name = 'Не задано') AND (category_name = 'Не задано') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (sex_code IS NULL))
+   OR (((NOW() - INERVAL '1 DAY') = '2020-04') AND (pay_code = 'Не задано') AND (area_name = 'Не задано') AND (hcode_name = 'ФЗП') AND (type_oe_bi = 'РЖД') AND (region_name = 'Не задано') AND (category_name = 'Не задано') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (sex_code IS NULL))
+GROUP BY pay_code, pay_name`
                               );
 
 
@@ -99,11 +99,11 @@ GROUP BY fot_out.pay_code, fot_out.pay_name`
             {"dt":["=","2020-03"],"hcode_name":["=","CCЧ"],"type_oe_bi":["=","Дороги"]}],
             "with":"ch.fot_out"},
                  {"key":null}),
-            `SELECT DISTINCT sum(fot_out.v_main) AS v_main, sum(fot_out.v_rel_pp) AS v_rel_pp, sum(fot_out.v_rel_fzp) AS v_rel_fzp, id, sum(v_rel_pp_i), sum(v_main_i), fot_out.tlg AS tlg, fot_out.hcode_name AS hcode_name
+            `SELECT DISTINCT sum(v_main) as "v_main", sum(v_rel_pp) as "v_rel_pp", sum(v_rel_fzp) as "v_rel_fzp", id, sum(v_rel_pp_i), sum(v_main_i), tlg as "tlg", hcode_name as "hcode_name"
 FROM fot_out AS fot_out
-WHERE (((NOW() - INERVAL '1 DAY') = '2020-03') AND (fot_out.area_name = 'Не задано') AND (fot_out.type_oe_bi = 'Дороги') AND (fot_out.region_name = 'Не задано') AND (group_pay_id != 'Не задано') AND (fot_out.group_pay_name = 'Поощрения') AND (fot_out.municipal_name = 'Не задано') AND (fot_out.prod_group_name = 'Не задано') AND (fot_out.profession_name = 'Не задано') AND (fot_out.pay_code = 'Не задано') AND (fot_out.pay_name = 'Не задано') AND (fot_out.sex_code IS NULL))
-   OR (((NOW() - INERVAL '1 DAY') = '2020-03') AND (fot_out.hcode_name = 'CCЧ') AND (fot_out.type_oe_bi = 'Дороги') AND (fot_out.group_pay_name = 'Не задано') AND (fot_out.pay_code = 'Не задано') AND (fot_out.pay_name = 'Не задано') AND (fot_out.sex_code IS NULL))
-GROUP BY id, fot_out.tlg, fot_out.hcode_name`
+WHERE (((NOW() - INERVAL '1 DAY') = '2020-03') AND (area_name = 'Не задано') AND (type_oe_bi = 'Дороги') AND (region_name = 'Не задано') AND (group_pay_id != 'Не задано') AND (group_pay_name = 'Поощрения') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL))
+   OR (((NOW() - INERVAL '1 DAY') = '2020-03') AND (hcode_name = 'CCЧ') AND (type_oe_bi = 'Дороги') AND (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL))
+GROUP BY id, tlg, hcode_name`
         );
 
   });
@@ -127,10 +127,10 @@ GROUP BY id, fot_out.tlg, fot_out.hcode_name`
       "sort":["group_pay_name","v_main","v_agg"],
       "with":"ch.fot_out"},
             {"key":null}),
-`SELECT DISTINCT sum(fot_out.v_main) AS v_main, sum(fot_out.v_rel_pp) AS v_rel_pp, sum(fot_out.v_rel_fzp) AS v_rel_fzp, sum(v_rel_pp_i), fot_out.group_pay_name AS group_pay_name, (max(sum(v_main))) AS v_agg
+`SELECT DISTINCT sum(v_main) as "v_main", sum(v_rel_pp) as "v_rel_pp", sum(v_rel_fzp) as "v_rel_fzp", sum(v_rel_pp_i), group_pay_name as "group_pay_name", (max(sum(v_main))) as "v_agg"
 FROM fot_out AS fot_out
-WHERE ((NOW() - INERVAL '1 DAY') BETWEEN '2020-12-07' AND '2021-01-13') AND (fot_out.pay_name != 'Не задано') AND (fot_out.area_name = 'Не задано') AND (fot_out.hcode_name = 'ФЗП') AND (fot_out.type_oe_bi = 'РЖД') AND (fot_out.region_name = 'Не задано') AND (fot_out.category_name = 'Не задано') AND (fot_out.group_pay_name != 'Не задано') AND (fot_out.municipal_name = 'Не задано') AND (fot_out.prod_group_name = 'Не задано') AND (fot_out.profession_name = 'Не задано') AND (fot_out.pay_code != 'Не задано') AND (fot_out.sex_code IS NULL)
-GROUP BY fot_out.group_pay_name
+WHERE ((NOW() - INERVAL '1 DAY') BETWEEN '2020-12-07' AND '2021-01-13') AND (pay_name != 'Не задано') AND (area_name = 'Не задано') AND (hcode_name = 'ФЗП') AND (type_oe_bi = 'РЖД') AND (region_name = 'Не задано') AND (category_name = 'Не задано') AND (group_pay_name != 'Не задано') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (pay_code != 'Не задано') AND (sex_code IS NULL)
+GROUP BY group_pay_name
 ORDER BY group_pay_name, v_main, v_agg`
          );
   });
@@ -141,12 +141,12 @@ ORDER BY group_pay_name, v_main, v_agg`
       {"columns":["v_rel_pp_i / (100 * (v_main + 1))", "sum((v_main+v_rel_pp_i)/100)"],
       "with":"ch.fot_out"},
             {"_access_filters":"v_main > 1 and (v_rel_pp_i < 0 or v_rel_pp_i = 0)"}),
-`SELECT v_rel_pp_i / (100 * (fot_out.v_main + 1)) as "v_main", sum((fot_out.v_main + v_rel_pp_i) / 100) as "v_main"
+`SELECT v_rel_pp_i / (100 * (v_main + 1)) as "v_main", sum((v_main + v_rel_pp_i) / 100) as "v_main"
 FROM fot_out AS fot_out
-WHERE ((fot_out.group_pay_name = 'Не задано') AND (fot_out.pay_code = 'Не задано') AND (fot_out.pay_name = 'Не задано') AND (fot_out.sex_code IS NULL))
+WHERE ((group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL))
    AND
-   ((fot_out.v_main > 1) AND (((v_rel_pp_i < 0) OR (v_rel_pp_i = 0))))
-GROUP BY v_rel_pp_i / (100 * (fot_out.v_main + 1))`
+   ((v_main > 1) AND (((v_rel_pp_i < 0) OR (v_rel_pp_i = 0))))
+GROUP BY v_rel_pp_i / (100 * (v_main + 1))`
          );
    })
 
@@ -155,12 +155,12 @@ it('KOOB access filters LPE', function() {
           {"columns":["v_rel_pp_i / (100 * (v_main + 1))", "sum((v_main+v_rel_pp_i)/100)"],
           "with":"ch.fot_out"},
                 {"_access_filters":["and",[">","v_main",1],["()",["or",["<","v_rel_pp_i",0],["=","v_rel_pp_i",0]]]]}),
-    `SELECT v_rel_pp_i / (100 * (fot_out.v_main + 1)) as "v_main", sum((fot_out.v_main + v_rel_pp_i) / 100) as "v_main"
+    `SELECT v_rel_pp_i / (100 * (v_main + 1)) as "v_main", sum((v_main + v_rel_pp_i) / 100) as "v_main"
 FROM fot_out AS fot_out
-WHERE ((fot_out.group_pay_name = 'Не задано') AND (fot_out.pay_code = 'Не задано') AND (fot_out.pay_name = 'Не задано') AND (fot_out.sex_code IS NULL))
+WHERE ((group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL))
    AND
-   ((fot_out.v_main > 1) AND (((v_rel_pp_i < 0) OR (v_rel_pp_i = 0))))
-GROUP BY v_rel_pp_i / (100 * (fot_out.v_main + 1))`
+   ((v_main > 1) AND (((v_rel_pp_i < 0) OR (v_rel_pp_i = 0))))
+GROUP BY v_rel_pp_i / (100 * (v_main + 1))`
              );
        })
 
@@ -169,12 +169,12 @@ it('KOOB access filters LPE with expr', function() {
            {"columns":["v_rel_pp_i / (100 * (v_main + 1))", "sum((v_main+v_rel_pp_i)/100)"],
            "with":"ch.fot_out"},
                    {"_access_filters":["expr", ["and",[">","v_main",1],["()",["or",["<","v_rel_pp_i",0],["=","v_rel_pp_i",0]]]]]}),
-       `SELECT v_rel_pp_i / (100 * (fot_out.v_main + 1)) as "v_main", sum((fot_out.v_main + v_rel_pp_i) / 100) as "v_main"
+       `SELECT v_rel_pp_i / (100 * (v_main + 1)) as "v_main", sum((v_main + v_rel_pp_i) / 100) as "v_main"
 FROM fot_out AS fot_out
-WHERE ((fot_out.group_pay_name = 'Не задано') AND (fot_out.pay_code = 'Не задано') AND (fot_out.pay_name = 'Не задано') AND (fot_out.sex_code IS NULL))
+WHERE ((group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL))
    AND
-   ((fot_out.v_main > 1) AND (((v_rel_pp_i < 0) OR (v_rel_pp_i = 0))))
-GROUP BY v_rel_pp_i / (100 * (fot_out.v_main + 1))`
+   ((v_main > 1) AND (((v_rel_pp_i < 0) OR (v_rel_pp_i = 0))))
+GROUP BY v_rel_pp_i / (100 * (v_main + 1))`
                );
            })
 
@@ -184,12 +184,12 @@ it('KOOB access filters LPE with quoted string expr', function() {
                 {"columns":["v_rel_pp_i / (100 * (v_main + 1))", "sum((v_main+v_rel_pp_i)/100)"],
                 "with":"ch.fot_out"},
                         {"_access_filters":["expr", [">","v_main",["'","quoted string"]]]}),
-            `SELECT v_rel_pp_i / (100 * (fot_out.v_main + 1)) as "v_main", sum((fot_out.v_main + v_rel_pp_i) / 100) as "v_main"
+            `SELECT v_rel_pp_i / (100 * (v_main + 1)) as "v_main", sum((v_main + v_rel_pp_i) / 100) as "v_main"
 FROM fot_out AS fot_out
-WHERE ((fot_out.group_pay_name = 'Не задано') AND (fot_out.pay_code = 'Не задано') AND (fot_out.pay_name = 'Не задано') AND (fot_out.sex_code IS NULL))
+WHERE ((group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL))
    AND
-   (fot_out.v_main > 'quoted string')
-GROUP BY v_rel_pp_i / (100 * (fot_out.v_main + 1))`
+   (v_main > 'quoted string')
+GROUP BY v_rel_pp_i / (100 * (v_main + 1))`
                     );
                 })
 

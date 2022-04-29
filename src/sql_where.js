@@ -236,13 +236,14 @@ export function sql_where_context(_vars) {
     return `to_date(${el})`
   }
 
+  /*
   _context["'"] = function (expr) {
     // we should eval things in the cond ( a = '$(abs.ext)')
     //console.log('FOUND EXPR: ' + expr)
     if (expr.match(/^\s*\$\(.*\)\s*$/)){
       return `'{eval_lisp(expr, _context)}'`
     }
-  }
+  }*/
 
   // table lookup filters with auto-filling
   _context['filters'] = function() {
@@ -561,9 +562,9 @@ export function sql_where_context(_vars) {
                   } else {
                     throw new Error(`Resolved value is array with length of not 2, which is not yet supported. ${JSON.stringify(var_expr)}`)
                   }
-                } else {
+                } /*else { // array here: pass it to the next logic
                   throw new Error(`Resolved value is array, with operation different from = which is not yet supported. ${JSON.stringify(var_expr)}`)
-                }
+                }*/
               }
             } else {
               var_expr = prnt(r, ctx);
@@ -611,9 +612,10 @@ export function sql_where_context(_vars) {
       // $(name) will quote text elements !!! suitable for generating things like WHERE title in ('a','b','c')
       // also, we should evaluate expression, if any.
       ctx['$'] = function(inexpr) {
-        
+        //console.log("$$$$$$$$$" + JSON.stringify(inexpr))
         var expr = eval_lisp(inexpr, _context); // evaluate in a normal LISP context without vars, not in WHERE context
         // здесь мы получаем в том числе и массив, хорошо бы понимать, мы находимся в cond или нет
+        //console.log("$$$$$$$$$ = " + JSON.stringify(expr))
         // ["=","ГКБ"]
         if (isArray(expr)) {
           if (expr[0] === '=') {

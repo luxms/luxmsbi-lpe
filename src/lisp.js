@@ -209,6 +209,7 @@ const STDLIB = {
   '<=': (...args) => args.every((v, i) => i === 0 ? true : args[i-1] <= args[i]),
   '>=': (...args) => args.every((v, i) => i === 0 ? true : args[i-1] >= args[i]),
   '!=': (...args) => !args.every(v => v == args[0]),
+//  "'": a => `'${a}'`,
   '[': (...args) => args,
   'RegExp': (...args) => RegExp.apply(RegExp, args),
   'count': (a) => a.length,
@@ -272,6 +273,7 @@ const STDLIB = {
     // императивная лапша для макроса ->
     // надо вот так: https://clojuredocs.org/clojure.core/-%3E%3E
     // AST[["filterit",[">",1,0]]]
+    //console.log("---------> " +JSON.stringify(acc) + " " + JSON.stringify(ast));
     for (let arr of ast) {
       if (!isArray(arr)) {
         arr = [".-", acc, arr];                                                 // это может быть обращение к хэшу или массиву через индекс или ключ....
@@ -287,6 +289,7 @@ const STDLIB = {
       }
       acc = arr;
     }
+    //console.log("AST !!!!" + JSON.stringify(acc))  
     return acc;
   }),
   '->>': makeMacro((acc, ...ast) => {                                           // thread last macro
@@ -330,8 +333,8 @@ const STDLIB = {
 
 
 function macroexpand(ast, ctx, resolveString = true) {
+  //console.log("MACROEXPAND: " + JSON.stringify(ast))
   while (true) {
-    //console.log("MACROEXPAND: " + JSON.stringify(ast))
     if (!isArray(ast)) break;
     if (!isString(ast[0])) break;
 
