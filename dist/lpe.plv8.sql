@@ -6563,6 +6563,10 @@ function generate_report_sql(_cfg, _vars) {
 
 
 
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
 
 function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
@@ -6954,7 +6958,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
     }
 
     return key;
-  });
+  }); // end of _ctx.push()
+
 
   _context["median"] = function (col) {
     _context["_result"]["agg"] = true;
@@ -7030,7 +7035,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     }
   };
 
-  _context["_sequence"] = 0;
+  _context["_sequence"] = 0; // magic sequence number for uniq names generation
 
   _context["column"] = function (col) {
     // считаем, что сюда приходят только полностью резолвенные имена с двумя точками...
@@ -7244,7 +7249,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
       }
     } else if (_context._target_database === 'postgresql') {
       if (to === undefined) {
-        return "generate_series(0, ".concat(from, "-1)");
+        return "generate_series(1, ".concat(from, ")");
       } else {
         if (step === undefined) {
           return "generate_series(".concat(from, ", ").concat(to, "-1)");
@@ -7252,8 +7257,65 @@ function init_koob_context(_vars, default_ds, default_cube) {
           return "generate_series(".concat(from, ", ").concat(to, "-1, ").concat(step, ")");
         }
       }
+    } else if (_context._target_database === 'teradata') {
+      // возвращаем здесь просто имя столбца, но потом нужно будет сгенерить
+      // JOIN и WHERE!!!
+      // select  _koob__range__table__.day_of_calendar, procurement_subject 
+      // FROM bi.fortests, sys_calendar.CALENDAR as __koob__range__table__
+      // where purch_id = 8585 and day_of_calendar BETWEEN 1 AND 10;
+      // max count is limited to 73414
+      if (step !== undefined) {
+        throw Error("range(with step argument) is not supported for ".concat(_context._target_database));
+      }
+
+      var f;
+
+      if (to === undefined) {
+        f = ['<=', from];
+      } else {
+        f = ['between', from, to];
+      }
+
+      _context["_result"]["is_range_column"] = true;
+      _context["_result"]["expr"] = '__koob__range__table__.day_of_calendar';
+      _context["_result"]["columns"] = ["day_of_calendar"];
+      _context["_result"]["alias"] = '__koob__range__';
+      _context["_result"]["join"] = {
+        "type": "inner",
+        "table": "sys_calendar.CALENDAR",
+        "alias": "__koob__range__table__",
+        "filters": {
+          "__koob__range__table__.day_of_calendar": f
+        }
+      };
+      return '__koob__range__table__.day_of_calendar'; // FIXME: это попадает в GROUP BY !!!
+    } else if (_context._target_database === 'oracle') {
+      // возвращаем здесь просто имя столбца, но потом нужно будет сгенерить
+      // JOIN и WHERE!!!
+      // ONLY FOR Oracle 10g and above!
+      if (step === undefined) {
+        step = '';
+      } else {
+        step = " and MOD(LEVEL, ".concat(step, ") = 0");
+      }
+
+      var _f;
+
+      if (to === undefined) {
+        to = from;
+        from = 1;
+      }
+
+      _context["_result"]["is_range_column"] = true;
+      _context["_result"]["expr"] = '__koob__range__';
+      _context["_result"]["columns"] = ["__koob__range__"];
+      _context["_result"]["join"] = {
+        "type": "inner",
+        "expr": "(\n      select LEVEL AS __koob__range__ from dual\n      where LEVEL between ".concat(from, " and ").concat(to).concat(step, "\n      connect by LEVEL <= ").concat(to, "\n      )")
+      };
+      return '__koob__range__'; // FIXME: это попадает в GROUP BY !!!
     } else {
-      throw Error("range is not supported in ".concat(_context._target_database));
+      throw Error("range() is not supported in ".concat(_context._target_database));
     }
   };
 
@@ -8147,6 +8209,7 @@ function generate_koob_sql(_cfg, _vars) {
 
   var columns_s = [];
   var global_only1 = false;
+  var global_joins = [];
 
   var columns = _cfg["columns"].map(function (el) {
     // eval should fill in _context[0]["_result"] object
@@ -8165,6 +8228,27 @@ function generate_koob_sql(_cfg, _vars) {
 
     if (col["alias"]) {
       _context[0]["_aliases"][col["alias"]] = col;
+    }
+
+    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* isHash */])(col["join"])) {
+      // Нужно запомнить условия для JOIN
+      var join = col["join"];
+
+      if (join["type"] !== 'inner') {
+        throw new Error("Only inner join is supported.");
+      }
+      /* может быть понадобится
+      if (col["is_range_column"] === true) {
+        // try to fix where expr using real alias
+        join.filters[col.alias] = join.filters["__koob__range__"]
+        delete join.filters["__koob__range__"]
+      }*/
+
+
+      global_joins.push(join); //console.log(`HOY! ${JSON.stringify(col)}`)
+      // FIXME: keys might collide!!! do not override!
+
+      _cfg["filters"] = _objectSpread({}, _cfg["filters"], join["filters"]);
     } //FIXME: we should have nested settings for inner/outer 
     // Hope aliases will not collide!
 
@@ -8452,12 +8536,12 @@ function generate_koob_sql(_cfg, _vars) {
 
     if (limit) {
       if (offset) {
-        _w = "ROWNUM > ".concat(parseInt(_cfg["limit"]), " AND ROWNUM <= ").concat(parseInt(_cfg["offset"]), " + ").concat(parseInt(_cfg["limit"]));
+        _w = "ROWNUM > ".concat(parseInt(_cfg["offset"]), " AND ROWNUM <= (").concat(parseInt(_cfg["offset"]), " + ").concat(parseInt(_cfg["limit"]), ")");
       } else {
         _w = "ROWNUM <= ".concat(parseInt(_cfg["limit"]));
       }
     } else if (offset) {
-      _w = "ROWNUM > ".concat(parseInt(_cfg["limit"]));
+      _w = "ROWNUM > ".concat(parseInt(_cfg["offset"]));
     }
 
     if (_w) {
@@ -8476,6 +8560,37 @@ function generate_koob_sql(_cfg, _vars) {
       }
     } else if (offset) {
       limit_offset = " OFFSET ".concat(parseInt(_cfg["offset"]), " ROWS");
+    }
+  } else if (_context[0]["_target_database"] === 'teradata' && (limit || offset)) {
+    // Здесь нужно иметь под рукой сотрировку! если её нет, то надо свою выбрать
+    var window_order_by;
+
+    if (order_by.length === 0) {
+      // надо использовать все столбцы, которые являются dimensions и лежать в group by ??? 
+      throw Error("Teradata limit/offset without specified sorting order is not YET supported :-(");
+    } else {
+      window_order_by = order_by.join(', ');
+    } //`ROW_NUMBER() OVER (order by ${window_order_by}) as __koob__row__num__`
+
+
+    var column = {
+      "columns": [],
+      "alias": "__koob__row__num__",
+      "expr": "ROW_NUMBER() OVER (order by ".concat(window_order_by, ")")
+    };
+
+    _cfg["_columns"].unshift(column);
+
+    if (limit) {
+      //QUALIFY __row_num  BETWEEN 1 and 4;
+      if (offset) {
+        var left = parseInt(_cfg["offset"]) + 1;
+        limit_offset = "\nQUALIFY __koob__row__num__ BETWEEN ".concat(left, " AND ").concat(parseInt(_cfg["offset"]) + parseInt(_cfg["limit"]));
+      } else {
+        limit_offset = "\nQUALIFY __koob__row__num__ <= ".concat(parseInt(_cfg["limit"]));
+      }
+    } else if (offset) {
+      limit_offset = "\nQUALIFY __koob__row__num__ > ".concat(parseInt(_cfg["offset"]));
     }
   } else {
     if (limit) {
@@ -8801,6 +8916,17 @@ function generate_koob_sql(_cfg, _vars) {
       group_by = ''; // plSQL will parse this comment! Sic! 
 
       select = "/*ON1Y*/".concat(select);
+    }
+
+    if (global_joins.length > 0) {
+      // нужно ещё сделать JOINS
+      from = from + ',' + global_joins.map(function (el) {
+        if (el["expr"]) {
+          return el["expr"];
+        } else {
+          return el["alias"] ? "".concat(el["table"], " as ").concat(el["alias"]) : el["table"];
+        }
+      });
     }
 
     final_sql = "".concat(select, "\nFROM ").concat(from).concat(where).concat(group_by).concat(order_by).concat(limit_offset).concat(ending);

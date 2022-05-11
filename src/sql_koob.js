@@ -379,7 +379,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
       return key
     }
-  )
+  ) // end of _ctx.push()
 
   _context["median"] = function(col) {
     _context["_result"]["agg"] = true
@@ -449,7 +449,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     }
   }
 
-  _context["_sequence"] = 0;
+  _context["_sequence"] = 0; // magic sequence number for uniq names generation
   
   _context["column"] = function(col) {
     // считаем, что сюда приходят только полностью резолвенные имена с двумя точками...
@@ -647,7 +647,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
       }
     } else if (_context._target_database === 'postgresql'){
       if (to === undefined) {
-        return `generate_series(0, ${from}-1)`
+        return `generate_series(1, ${from})`
       } else {
         if (step === undefined){
           return `generate_series(${from}, ${to}-1)`
@@ -655,8 +655,61 @@ function init_koob_context(_vars, default_ds, default_cube) {
           return `generate_series(${from}, ${to}-1, ${step})`
         }
       }
+    } else if (_context._target_database === 'teradata'){
+      // возвращаем здесь просто имя столбца, но потом нужно будет сгенерить
+      // JOIN и WHERE!!!
+      // select  _koob__range__table__.day_of_calendar, procurement_subject 
+      // FROM bi.fortests, sys_calendar.CALENDAR as __koob__range__table__
+      // where purch_id = 8585 and day_of_calendar BETWEEN 1 AND 10;
+      // max count is limited to 73414
+      if (step !== undefined) {
+        throw Error(`range(with step argument) is not supported for ${_context._target_database}`)
+      }
+      let f;
+      if (to === undefined) {
+        f = ['<=', from]
+      } else {
+        f = ['between', from, to]
+      }
+      _context["_result"]["is_range_column"] = true
+      _context["_result"]["expr"] = '__koob__range__table__.day_of_calendar'
+      _context["_result"]["columns"] = ["day_of_calendar"]
+      _context["_result"]["alias"] = '__koob__range__'
+      _context["_result"]["join"] = { "type":"inner",
+                                      "table": "sys_calendar.CALENDAR",
+                                      "alias":"__koob__range__table__",
+                                      "filters": {"__koob__range__table__.day_of_calendar": f}
+                                    }
+      return '__koob__range__table__.day_of_calendar'
+      // FIXME: это попадает в GROUP BY !!!
+    } else if (_context._target_database === 'oracle'){
+      // возвращаем здесь просто имя столбца, но потом нужно будет сгенерить
+      // JOIN и WHERE!!!
+      // ONLY FOR Oracle 10g and above!
+      if (step === undefined) {
+        step = ''
+      } else {
+        step = ` and MOD(LEVEL, ${step}) = 0`
+      }
+      let f;
+      if (to === undefined) {
+        to = from
+        from = 1
+      } 
+      _context["_result"]["is_range_column"] = true
+      _context["_result"]["expr"] = '__koob__range__'
+      _context["_result"]["columns"] = ["__koob__range__"]
+      _context["_result"]["join"] = { "type":"inner",
+                                      "expr":`(
+      select LEVEL AS __koob__range__ from dual
+      where LEVEL between ${from} and ${to}${step}
+      connect by LEVEL <= ${to}
+      )`
+                                    }
+      return '__koob__range__'
+      // FIXME: это попадает в GROUP BY !!!
     } else {
-      throw Error(`range is not supported in ${_context._target_database}`)
+      throw Error(`range() is not supported in ${_context._target_database}`)
     }
   }
 
@@ -1473,9 +1526,10 @@ export function generate_koob_sql(_cfg, _vars) {
   } 
   */
 
-  var columns_s = [];
-  var global_only1 = false;
-  var columns = _cfg["columns"].map(el => {
+  let columns_s = [];
+  let global_only1 = false;
+  let global_joins = [];
+  let columns = _cfg["columns"].map(el => {
                                       // eval should fill in _context[0]["_result"] object
                                       // hackers way to get results!!!!
                                       _context[0]["_result"] = {"columns":[]}
@@ -1488,6 +1542,28 @@ export function generate_koob_sql(_cfg, _vars) {
                                       if (col["alias"]) {
                                         _context[0]["_aliases"][col["alias"]] = col
                                       }
+
+                                      if (isHash(col["join"])) {
+                                        // Нужно запомнить условия для JOIN
+                                        let join = col["join"]
+                                        if (join["type"] !== 'inner') {
+                                          throw new Error(`Only inner join is supported.`)
+                                        }
+
+                                        /* может быть понадобится
+                                        if (col["is_range_column"] === true) {
+                                          // try to fix where expr using real alias
+                                          join.filters[col.alias] = join.filters["__koob__range__"]
+                                          delete join.filters["__koob__range__"]
+                                        }*/
+
+                                        global_joins.push(join)
+                                        //console.log(`HOY! ${JSON.stringify(col)}`)
+
+                                        // FIXME: keys might collide!!! do not override!
+                                        _cfg["filters"] =  {..._cfg["filters"], ...join["filters"]}
+                                      }
+
                                       //FIXME: we should have nested settings for inner/outer 
                                       // Hope aliases will not collide!
                                       if (col["outer_alias"]) {
@@ -1723,16 +1799,15 @@ export function generate_koob_sql(_cfg, _vars) {
 
   if (_context[0]["_target_database"] === 'oracle') {
     //AHTUNG!! это же условие для WHERE FILTERS !!!
-
     let w
     if (limit) {
       if (offset) {
-        w = `ROWNUM > ${parseInt(_cfg["limit"])} AND ROWNUM <= ${parseInt(_cfg["offset"])} + ${parseInt(_cfg["limit"])}`
+        w = `ROWNUM > ${parseInt(_cfg["offset"])} AND ROWNUM <= (${parseInt(_cfg["offset"])} + ${parseInt(_cfg["limit"])})`
       } else {
         w = `ROWNUM <= ${parseInt(_cfg["limit"])}`
       }
     } else if (offset) {
-      w = `ROWNUM > ${parseInt(_cfg["limit"])}`
+      w = `ROWNUM > ${parseInt(_cfg["offset"])}`
     }
 
     if (w) {
@@ -1752,6 +1827,30 @@ export function generate_koob_sql(_cfg, _vars) {
       }
     } else if (offset) {
       limit_offset = ` OFFSET ${parseInt(_cfg["offset"])} ROWS`
+    }
+  } else if (_context[0]["_target_database"] === 'teradata' && (limit || offset)) {
+    // Здесь нужно иметь под рукой сотрировку! если её нет, то надо свою выбрать
+
+    let window_order_by
+    if (order_by.length === 0) {
+      // надо использовать все столбцы, которые являются dimensions и лежать в group by ??? 
+      throw Error(`Teradata limit/offset without specified sorting order is not YET supported :-(`)
+    } else {
+       window_order_by = order_by.join(', ')
+    }
+    //`ROW_NUMBER() OVER (order by ${window_order_by}) as __koob__row__num__`
+    let column = {"columns":[],"alias":"__koob__row__num__","expr":`ROW_NUMBER() OVER (order by ${window_order_by})`}
+    _cfg["_columns"].unshift(column)
+    if (limit) {
+      //QUALIFY __row_num  BETWEEN 1 and 4;
+      if (offset) {
+        let left = parseInt(_cfg["offset"]) + 1
+        limit_offset = `\nQUALIFY __koob__row__num__ BETWEEN ${left} AND ${parseInt(_cfg["offset"]) + parseInt(_cfg["limit"])}`
+      } else {
+        limit_offset = `\nQUALIFY __koob__row__num__ <= ${parseInt(_cfg["limit"])}`
+      }
+    } else if (offset) {
+      limit_offset = `\nQUALIFY __koob__row__num__ > ${parseInt(_cfg["offset"])}`
     }
   } else {
     if (limit) {
@@ -2039,6 +2138,17 @@ export function generate_koob_sql(_cfg, _vars) {
       group_by = ''
       // plSQL will parse this comment! Sic! 
       select = `/*ON1Y*/${select}`
+    }
+
+    if (global_joins.length > 0) {
+      // нужно ещё сделать JOINS
+      from = from + ',' + global_joins.map(el=>{
+          if (el["expr"]) {
+            return el["expr"]
+          } else {
+            return el["alias"] ? `${el["table"]} as ${el["alias"]}`: el["table"]
+          } 
+      })
     }
     
     final_sql = `${select}\nFROM ${from}${where}${group_by}${order_by}${limit_offset}${ending}`
