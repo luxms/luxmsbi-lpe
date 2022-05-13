@@ -6741,14 +6741,14 @@ function generate_report_sql(_cfg, _vars) {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_11_core_js_modules_es6_array_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_11_core_js_modules_es6_array_iterator__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_12_core_js_modules_es6_object_keys__ = __webpack_require__(50);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_12_core_js_modules_es6_object_keys___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_12_core_js_modules_es6_object_keys__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13_core_js_modules_es6_regexp_match__ = __webpack_require__(67);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13_core_js_modules_es6_regexp_match___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_13_core_js_modules_es6_regexp_match__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14_core_js_modules_es6_regexp_split__ = __webpack_require__(37);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14_core_js_modules_es6_regexp_split___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_14_core_js_modules_es6_regexp_split__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15_core_js_modules_es6_regexp_to_string__ = __webpack_require__(25);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15_core_js_modules_es6_regexp_to_string___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_15_core_js_modules_es6_regexp_to_string__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_16_core_js_modules_es6_regexp_replace__ = __webpack_require__(51);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_16_core_js_modules_es6_regexp_replace___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_16_core_js_modules_es6_regexp_replace__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13_core_js_modules_es6_regexp_split__ = __webpack_require__(37);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13_core_js_modules_es6_regexp_split___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_13_core_js_modules_es6_regexp_split__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14_core_js_modules_es6_regexp_to_string__ = __webpack_require__(25);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14_core_js_modules_es6_regexp_to_string___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_14_core_js_modules_es6_regexp_to_string__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15_core_js_modules_es6_regexp_replace__ = __webpack_require__(51);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15_core_js_modules_es6_regexp_replace___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_15_core_js_modules_es6_regexp_replace__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_16_core_js_modules_es6_regexp_match__ = __webpack_require__(67);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_16_core_js_modules_es6_regexp_match___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_16_core_js_modules_es6_regexp_match__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_17__console_console__ = __webpack_require__(17);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_18__lisp__ = __webpack_require__(27);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_19__lpep__ = __webpack_require__(28);
@@ -6859,6 +6859,28 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 */
 
 function quot_as_expression(db, src, alias) {
+  // 1 определяем, нужно ли квотировать 
+  var should_quote = false;
+
+  if (db === 'oracle') {
+    should_quote = true; // `select col from dual` вернёт в JDBC `COL` заглавными буквами !!!
+    // это ломает клиент, который ждёт lowercase названия объектов
+    // Поэтому, для оракла будем брать в кавычки все абсолютно столбцы и делать из них алиасы!
+    // потом в условиях order by надо будет добавить кавычки тоже!
+
+    /*if (alias.match(/^[a-zA-Z]\w*$/) === null) {
+      should_quote = true
+    }*/
+  } else {
+    if (alias.match(/^[_a-zA-Z]\w*$/) === null) {
+      should_quote = true;
+    }
+  }
+
+  if (!should_quote) {
+    return "".concat(src, " as ").concat(alias);
+  }
+
   if (db === 'mysql') {
     return "".concat(src, " as ") + "`" + "".concat(alias) + "`";
   } else {
@@ -7182,6 +7204,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
       return "quantile(0.5)(".concat(col, ")");
     } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle') {
       return "percentile_cont(0.5) WITHIN GROUP (ORDER BY ".concat(col, " DESC)");
+    } else if (_context._target_database === 'teradata') {
+      return "median(".concat(col, ")");
     } else {
       throw Error("median() is not implemented for ".concat(_context._target_database, " yet"));
     }
@@ -7206,7 +7230,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
     if (_context._target_database === 'clickhouse') {
       return "varPop(".concat(col, ")");
-    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle') {
+    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle' || _context._target_database === 'teradata') {
       return "var_pop(".concat(col, ")");
     } else {
       throw Error("var_pop() is not implemented for ".concat(_context._target_database, " yet"));
@@ -7218,7 +7242,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
     if (_context._target_database === 'clickhouse') {
       return "varSamp(".concat(col, ")");
-    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle') {
+    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle' || _context._target_database === 'teradata') {
       return "var_samp(".concat(col, ")");
     } else {
       throw Error("var_samp() is not implemented for ".concat(_context._target_database, " yet"));
@@ -7230,7 +7254,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
     if (_context._target_database === 'clickhouse') {
       return "stddevSamp(".concat(col, ")");
-    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle') {
+    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle' || _context._target_database === 'teradata') {
       return "stddev_samp(".concat(col, ")");
     } else {
       throw Error("var_samp() is not implemented for ".concat(_context._target_database, " yet"));
@@ -7242,7 +7266,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
     if (_context._target_database === 'clickhouse') {
       return "stddevPop(".concat(col, ")");
-    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle') {
+    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle' || _context._target_database === 'teradata') {
       return "stddev_pop(".concat(col, ")");
     } else {
       throw Error("var_samp() is not implemented for ".concat(_context._target_database, " yet"));
@@ -7463,7 +7487,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
       }
     } else if (_context._target_database === 'postgresql') {
       if (to === undefined) {
-        return "generate_series(1, ".concat(from, ")");
+        return "generate_series(0, ".concat(from, "-1)");
       } else {
         if (step === undefined) {
           return "generate_series(".concat(from, ", ").concat(to, "-1)");
@@ -7475,7 +7499,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
       // возвращаем здесь просто имя столбца, но потом нужно будет сгенерить
       // JOIN и WHERE!!!
       // select  _koob__range__table__.day_of_calendar, procurement_subject 
-      // FROM bi.fortests, sys_calendar.CALENDAR as __koob__range__table__
+      // FROM bi.fortests, sys_calendar.CALENDAR as koob__range__table__
       // where purch_id = 8585 and day_of_calendar BETWEEN 1 AND 10;
       // max count is limited to 73414
       if (step !== undefined) {
@@ -7487,22 +7511,22 @@ function init_koob_context(_vars, default_ds, default_cube) {
       if (to === undefined) {
         f = ['<=', from];
       } else {
-        f = ['between', from, to];
+        f = ['between', from + 1, to];
       }
 
       _context["_result"]["is_range_column"] = true;
-      _context["_result"]["expr"] = '__koob__range__table__.day_of_calendar';
+      _context["_result"]["expr"] = 'koob__range__table__.day_of_calendar - 1';
       _context["_result"]["columns"] = ["day_of_calendar"];
-      _context["_result"]["alias"] = '__koob__range__';
+      _context["_result"]["alias"] = 'koob__range__';
       _context["_result"]["join"] = {
         "type": "inner",
         "table": "sys_calendar.CALENDAR",
-        "alias": "__koob__range__table__",
+        "alias": "koob__range__table__",
         "filters": {
-          "__koob__range__table__.day_of_calendar": f
+          "koob__range__table__.day_of_calendar": f
         }
       };
-      return '__koob__range__table__.day_of_calendar'; // FIXME: это попадает в GROUP BY !!!
+      return 'koob__range__table__.day_of_calendar - 1'; // FIXME: это попадает в GROUP BY !!!
     } else if (_context._target_database === 'oracle') {
       // возвращаем здесь просто имя столбца, но потом нужно будет сгенерить
       // JOIN и WHERE!!!
@@ -7517,17 +7541,17 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
       if (to === undefined) {
         to = from;
-        from = 1;
+        from = 0;
       }
 
       _context["_result"]["is_range_column"] = true;
-      _context["_result"]["expr"] = '__koob__range__';
-      _context["_result"]["columns"] = ["__koob__range__"];
+      _context["_result"]["expr"] = 'koob__range__';
+      _context["_result"]["columns"] = ["koob__range__"];
       _context["_result"]["join"] = {
         "type": "inner",
-        "expr": "(\n      select LEVEL AS __koob__range__ from dual\n      where LEVEL between ".concat(from, " and ").concat(to).concat(step, "\n      connect by LEVEL <= ").concat(to, "\n      )")
+        "expr": "(\n      select LEVEL-1 AS koob__range__ from dual\n      where LEVEL between ".concat(from, "+1 and ").concat(to).concat(step, "\n      connect by LEVEL <= ").concat(to, "\n      )")
       };
-      return '__koob__range__'; // FIXME: это попадает в GROUP BY !!!
+      return 'koob__range__'; // FIXME: это попадает в GROUP BY !!!
     } else {
       throw Error("range() is not supported in ".concat(_context._target_database));
     }
@@ -7926,7 +7950,11 @@ function extend_context_for_order_by(_context, _cfg) {
       }
 
       if (col[0] in _cfg["_aliases"]) {
-        return col[0];
+        if (_context[0]._target_database === 'oracle') {
+          return "\"".concat(col[0], "\"");
+        } else {
+          return col[0];
+        }
       }
 
       var parts = col[0].split('.');
@@ -7934,14 +7962,20 @@ function extend_context_for_order_by(_context, _cfg) {
       if (parts.length === 3) {
         return "".concat(parts[1], ".").concat(parts[2]); //return parts[2]
       } else {
-        return col[0];
+        if (_context[0]._target_database === 'oracle') {
+          // пытаемся полечить проблему Oracle UPPER CASE имён
+          //console.log(`HOPP ${JSON.stringify(_cfg["_aliases"])}`)
+          // в алиасах у нас нет такого столбца
+          return "\"".concat(col[0], "\"");
+        }
       }
+
+      return col[0];
       /*
       if (_context[0]["_columns"][key]) return _context["column"](key)
       if (_context[0]["_columns"][default_ds][default_cube][key]) return _context["column"](`${default_ds}.${default_cube}.${key}`)
       
       return col*/
-
     }),
     "column": __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["f" /* makeSF */])(function (col) {
       /* примерно на 222 строке есть обработчик-резолвер литералов, там хардкодный вызов функции 
@@ -8454,8 +8488,8 @@ function generate_koob_sql(_cfg, _vars) {
       /* может быть понадобится
       if (col["is_range_column"] === true) {
         // try to fix where expr using real alias
-        join.filters[col.alias] = join.filters["__koob__range__"]
-        delete join.filters["__koob__range__"]
+        join.filters[col.alias] = join.filters["koob__range__"]
+        delete join.filters["koob__range__"]
       }*/
 
 
@@ -8784,12 +8818,12 @@ function generate_koob_sql(_cfg, _vars) {
       throw Error("Teradata limit/offset without specified sorting order is not YET supported :-(");
     } else {
       window_order_by = order_by.join(', ');
-    } //`ROW_NUMBER() OVER (order by ${window_order_by}) as __koob__row__num__`
+    } //`ROW_NUMBER() OVER (order by ${window_order_by}) as koob__row__num__`
 
 
     var column = {
       "columns": [],
-      "alias": "__koob__row__num__",
+      "alias": "koob__row__num__",
       "expr": "ROW_NUMBER() OVER (order by ".concat(window_order_by, ")")
     };
 
@@ -8799,12 +8833,12 @@ function generate_koob_sql(_cfg, _vars) {
       //QUALIFY __row_num  BETWEEN 1 and 4;
       if (offset) {
         var left = parseInt(_cfg["offset"]) + 1;
-        limit_offset = "\nQUALIFY __koob__row__num__ BETWEEN ".concat(left, " AND ").concat(parseInt(_cfg["offset"]) + parseInt(_cfg["limit"]));
+        limit_offset = "\nQUALIFY koob__row__num__ BETWEEN ".concat(left, " AND ").concat(parseInt(_cfg["offset"]) + parseInt(_cfg["limit"]));
       } else {
-        limit_offset = "\nQUALIFY __koob__row__num__ <= ".concat(parseInt(_cfg["limit"]));
+        limit_offset = "\nQUALIFY koob__row__num__ <= ".concat(parseInt(_cfg["limit"]));
       }
     } else if (offset) {
-      limit_offset = "\nQUALIFY __koob__row__num__ > ".concat(parseInt(_cfg["offset"]));
+      limit_offset = "\nQUALIFY koob__row__num__ > ".concat(parseInt(_cfg["offset"]));
     }
   } else {
     if (limit) {

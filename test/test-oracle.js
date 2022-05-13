@@ -20,7 +20,7 @@ describe('Oracle KOOB tests', function() {
 FROM fot_out AS fot_out
 WHERE (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL) AND ROWNUM <= 10
 GROUP BY hcode_name
-ORDER BY hcode_name`
+ORDER BY "hcode_name"`
             );
    });
 
@@ -39,7 +39,7 @@ ORDER BY hcode_name`
 FROM fot_out AS fot_out
 WHERE (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL) AND ROWNUM > 10
 GROUP BY hcode_name
-ORDER BY hcode_name`
+ORDER BY "hcode_name"`
             );
    });
 
@@ -60,7 +60,7 @@ ORDER BY hcode_name`
 FROM fot_out AS fot_out
 WHERE (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL) AND ROWNUM > 10 AND ROWNUM <= (10 + 5)
 GROUP BY hcode_name
-ORDER BY hcode_name`
+ORDER BY "hcode_name"`
             );
    });
 
@@ -77,15 +77,15 @@ ORDER BY hcode_name`
          "offset": 10,
          "with":"ch.fot_out"},
                {"_target_database": "oracle"}),
-   `SELECT sum(v_rel_pp) as "АХТУНГ", hcode_name as "hcode_name", __koob__range__ as "rng"
+   `SELECT sum(v_rel_pp) as "АХТУНГ", hcode_name as "hcode_name", koob__range__ as "rng"
 FROM fot_out AS fot_out,(
-      select LEVEL AS __koob__range__ from dual
-      where LEVEL between 1 and 2
+      select LEVEL-1 AS koob__range__ from dual
+      where LEVEL between 0+1 and 2
       connect by LEVEL <= 2
       )
 WHERE (hcode_name IS NOT NULL) AND (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL) AND ROWNUM > 10 AND ROWNUM <= (10 + 5)
-GROUP BY hcode_name, __koob__range__
-ORDER BY hcode_name`
+GROUP BY hcode_name, koob__range__
+ORDER BY "hcode_name"`
             );
    });
 
@@ -98,20 +98,20 @@ ORDER BY hcode_name`
                      'range(1,10,2):rng'
                   ],
          "filters":{"hcode_name":["!=", null]},
-         "sort": ["hcode_name"],
+         "sort": ["hcode_name","rng"],
          "limit": 5,
          "offset": 10,
          "with":"ch.fot_out"},
                {"_target_database": "oracle"}),
-   `SELECT sum(v_rel_pp) as "АХТУНГ", hcode_name as "hcode_name", __koob__range__ as "rng"
+   `SELECT sum(v_rel_pp) as "АХТУНГ", hcode_name as "hcode_name", koob__range__ as "rng"
 FROM fot_out AS fot_out,(
-      select LEVEL AS __koob__range__ from dual
-      where LEVEL between 1 and 10 and MOD(LEVEL, 2) = 0
+      select LEVEL-1 AS koob__range__ from dual
+      where LEVEL between 1+1 and 10 and MOD(LEVEL, 2) = 0
       connect by LEVEL <= 10
       )
 WHERE (hcode_name IS NOT NULL) AND (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL) AND ROWNUM > 10 AND ROWNUM <= (10 + 5)
-GROUP BY hcode_name, __koob__range__
-ORDER BY hcode_name`
+GROUP BY hcode_name, koob__range__
+ORDER BY "hcode_name", "rng"`
             );
    });
 
