@@ -31,6 +31,7 @@
     "test-geo": "mocha --reporter spec test/test-geo.js",
     "test-oracle": "mocha --reporter spec test/test-oracle.js",
     "test-teradata": "mocha --reporter spec test/test-teradata.js",
+    "test-macros": "mocha --reporter spec test/test-macros.js",
     "cli": "node -e \"console.log(JSON.stringify(require('./dist/lpe').parse(require('fs').readFileSync('/dev/stdin').toString())))\"",
     "eval": "node -e \"var lpe=require('./dist/lpe');console.log(JSON.stringify(lpe.eval_lisp(lpe.parse(require('fs').readFileSync('/dev/stdin').toString()))))\"",
     "build": "webpack",

@@ -4,6 +4,7 @@ import {eval_lisp} from './lisp';
 import {sql_where_context, eval_sql_where} from './sql_where';
 import {sql_context, eval_sql_expr, parse_sql_expr, generate_report_sql} from './sql_context';
 import {generate_koob_sql} from './sql_koob';
+import {eval_sql_macros} from './sql_macros';
 
 // test:
 // var ast = parse('2+2*2');
@@ -56,7 +57,9 @@ export {
   eval_sql_expr,
   parse_sql_expr,
   generate_report_sql,
-  generate_koob_sql
+  generate_koob_sql,
+  // support cast from sql macro
+  eval_sql_macros
 };
 
 

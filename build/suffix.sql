@@ -152,3 +152,15 @@ COMMENT ON FUNCTION lpe.generate_report_sql(JSONB,JSONB) IS
 $$Интерпретирует входящую структуру данных и выдаёт SQL запрос в виде текста.$$;
 
 
+CREATE OR REPLACE FUNCTION
+lpe.eval_sql_macros(_struct JSONB, _vars JSONB DEFAULT '{}')
+RETURNS TEXT
+LANGUAGE 'plv8' STABLE
+AS $body$
+
+  return plv8.lpe.eval_sql_macros(_struct, _vars);
+
+$body$;
+
+COMMENT ON FUNCTION lpe.eval_sql_macros(JSONB,JSONB) IS
+$$Интерпретирует входящую структуру данных и выдаёт SQL запрос в виде текста.$$;

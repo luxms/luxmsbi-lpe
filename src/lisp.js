@@ -36,10 +36,10 @@ function $var$(ctx, varName, value, resolveOptions) {
       const result = $var$(theCtx, varName, value, resolveOptions);
       if (result === undefined) continue;                                       // no such var in context
       if (value === undefined) return result;                                   // get => we've got a result
-      return $var$(theCtx, varName, value, resolveOptions);                                     // set => redirect 'set' to context with variable.
+      return $var$(theCtx, varName, value, resolveOptions);                     // set => redirect 'set' to context with variable.
     }
     if (value === undefined) return undefined;                                  // get => variable not found in all contexts
-    if (ctx.length) $var$(ctx[0], varName, value, resolveOptions);                              // set => set variable to HEAD context
+    if (ctx.length) $var$(ctx[0], varName, value, resolveOptions);              // set => set variable to HEAD context
     return undefined;                                                           // ??? ctx.length = 0
   }
   

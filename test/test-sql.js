@@ -225,10 +225,10 @@ describe('LPE tests', function() {
             "sort": ["-dor1","dt",["-","val2"],"-ch.fot_out.dor2", "summa"]
             },
           {"key":null}),
-         `SELECT (NOW() - INERVAL '1 DAY') AS dt, fot_out.branch4 AS branch4, fot_out.ss1, sum((fot_out.v_main + utils.func(fot_out.v_rel_fzp)) / 100) AS summa, fot_out.obj_name AS new1, sum(fot_out.v_rel_pp) AS v_rel_pp, avg(sum(fot_out.v_rel_pp)) AS v_rel_pp, avg(fot_out.indicator_v + fot_out.v_main) AS new
+         `SELECT (NOW() - INERVAL '1 DAY') as dt, branch4 as branch4, fot_out.ss1, sum((v_main + utils.func(v_rel_fzp)) / 100) as summa, obj_name as new1, sum(v_rel_pp) as v_rel_pp, avg(sum(v_rel_pp)) as v_rel_pp, avg(indicator_v + v_main) as new
 FROM fot_out AS fot_out
-WHERE (fot_out.dor1 = 'ГОРЬК') AND (fot_out.dor2 IN ('ПОДГОРЬК', 'ХИМ', 'ПРОМ') OR fot_out.dor2 IS NULL) AND (fot_out.dor4 = '') AND (fot_out.dor5 IS NULL) AND (fot_out.dor3 = 'null') AND (fot_out.ss1 > '5') AND (fot_out.ss2 > '0') AND ((NOW() - INERVAL '1 DAY') BETWEEN '2020-01' AND '2020-12') AND (fot_out.sex_name = 'Мужской') AND (fot_out.group_pay_name = 'Не задано') AND (fot_out.pay_code = 'Не задано') AND (fot_out.pay_name = 'Не задано')
-GROUP BY (NOW() - INERVAL '1 DAY'), fot_out.branch4, fot_out.ss1, fot_out.obj_name
+WHERE (dor1 = 'ГОРЬК') AND (dor2 IN ('ПОДГОРЬК', 'ХИМ', 'ПРОМ') OR dor2 IS NULL) AND (dor4 = '') AND (dor5 IS NULL) AND (dor3 = 'null') AND (ss1 > 5) AND (ss2 > '0') AND ((NOW() - INERVAL '1 DAY') BETWEEN '2020-01' AND '2020-12') AND (sex_name = 'Мужской') AND (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (col1 + col2 > 100)
+GROUP BY (NOW() - INERVAL '1 DAY'), branch4, fot_out.ss1, obj_name
 ORDER BY dor1 DESC, dt, val2 DESC, fot_out.dor2 DESC, summa`
       );
 
@@ -241,7 +241,7 @@ ORDER BY dor1 DESC, dt, val2 DESC, fot_out.dor2 DESC, summa`
             "columns": ["ss2:title","dor3"]
             },
           {"key":null}),
-         `SELECT DISTINCT fot_out.ss2 AS title, fot_out.dor3 AS dor3
+         `SELECT DISTINCT ss2 as title, dor3 as dor3
 FROM fot_out AS fot_out`
       );
 
@@ -257,10 +257,10 @@ FROM fot_out AS fot_out`
          "sort": ["dt"]
          },
          {"key":null}),
-         `SELECT (NOW() - INERVAL '1 DAY') AS dt, fot_out.sex_name AS sex_name, fot_out.dor2 AS dor2, fot_out.branch3 AS branch3, sum(fot_out.v_rel_fzp) AS v_rel_fzp
+         `SELECT (NOW() - INERVAL '1 DAY') as dt, sex_name as sex_name, dor2 as dor2, branch3 as branch3, sum(v_rel_fzp) as v_rel_fzp
 FROM fot_out AS fot_out
-WHERE ((NOW() - INERVAL '1 DAY') BETWEEN '2019-01' AND '2020-12') AND (fot_out.group_pay_name = 'Не задано') AND (fot_out.pay_code = 'Не задано') AND (fot_out.pay_name = 'Не задано')
-GROUP BY (NOW() - INERVAL '1 DAY'), fot_out.sex_name, fot_out.dor2, fot_out.branch3
+WHERE ((NOW() - INERVAL '1 DAY') BETWEEN '2019-01' AND '2020-12') AND (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано')
+GROUP BY (NOW() - INERVAL '1 DAY'), sex_name, dor2, branch3
 ORDER BY dt`
       );
 
@@ -276,10 +276,10 @@ ORDER BY dt`
                   "sort": ["dt"]
                   },
                   {"key":null}),
-`SELECT (NOW() - INERVAL '1 DAY') AS dt, fot_out.sex_code AS sex_code, sum(fot_out.v_rel_fzp) AS v_rel_fzp
+`SELECT (NOW() - INERVAL '1 DAY') as dt, sex_code as sex_code, sum(v_rel_fzp) as v_rel_fzp
 FROM fot_out AS fot_out
-WHERE ((NOW() - INERVAL '1 DAY') BETWEEN '2019-01' AND '2020-12') AND (fot_out.group_pay_name = 'Не задано') AND (fot_out.pay_code = 'Не задано') AND (fot_out.pay_name = 'Не задано')
-GROUP BY (NOW() - INERVAL '1 DAY'), fot_out.sex_code
+WHERE ((NOW() - INERVAL '1 DAY') BETWEEN '2019-01' AND '2020-12') AND (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано')
+GROUP BY (NOW() - INERVAL '1 DAY'), sex_code
 ORDER BY dt`
                );
 
@@ -295,10 +295,10 @@ ORDER BY dt`
                           "pay_group_name2":[">","  "],
                         },"with":"ch.fot_out"},
                   {"key":null}),
-`SELECT DISTINCT sum(fot_out.v_main) AS v_main, sum(fot_out.v_rel_pp) AS v_rel_pp, fot_out.hcode_name AS hcode_name
+`SELECT DISTINCT sum(v_main) as v_main, sum(v_rel_pp) as v_rel_pp, hcode_name as hcode_name
 FROM fot_out AS fot_out
-WHERE ((NOW() - INERVAL '1 DAY') = '2020-03') AND (fot_out.type_oe_bi = '> 1 Дороги') AND (pay_group_name = '6 Поощрения') AND (pay_group_name1 > 655) AND (pay_group_name2 > '  ') AND (fot_out.group_pay_name = 'Не задано') AND (fot_out.pay_code = 'Не задано') AND (fot_out.pay_name = 'Не задано') AND (fot_out.sex_code IS NULL)
-GROUP BY fot_out.hcode_name`
+WHERE ((NOW() - INERVAL '1 DAY') = '2020-03') AND (type_oe_bi = '> 1 Дороги') AND (pay_group_name = '6 Поощрения') AND (pay_group_name1 > 655) AND (pay_group_name2 > '  ') AND (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
+GROUP BY hcode_name`
                );
 
 
@@ -312,10 +312,10 @@ GROUP BY fot_out.hcode_name`
                "filters":{"dt":["=","2020-03"]},
                "with":"ch.fot_out"},
                   {"key":null}),
-`SELECT DISTINCT sum(fot_out.v_main) AS v_main, sum(fot_out.v_rel_pp) AS v_rel_pp, sum(v_rel_pp_i), fot_out.pay_code AS pay_code, fot_out.pay_name AS pay_name
+`SELECT DISTINCT sum(v_main) as v_main, sum(v_rel_pp) as v_rel_pp, sum(v_rel_pp_i), pay_code as pay_code, pay_name as pay_name
 FROM fot_out AS fot_out
-WHERE ((NOW() - INERVAL '1 DAY') = '2020-03') AND (fot_out.sex_code IS NULL)
-GROUP BY fot_out.pay_code, fot_out.pay_name`
+WHERE ((NOW() - INERVAL '1 DAY') = '2020-03') AND (sex_code IS NULL)
+GROUP BY pay_code, pay_name`
                );
 
 

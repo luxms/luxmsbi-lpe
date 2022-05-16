@@ -25,7 +25,7 @@ describe('LPE tests', function() {
                "sort":["group_pay_name","v_main"],
                "with":"ch.fot_out"},
                      {"key":null}),
-`SELECT DISTINCT sum(v_main) as "v_main", sum(v_rel_pp) as "v_rel_pp", sum(v_rel_fzp) as "v_rel_fzp", sum(v_rel_pp_i), group_pay_name as "group_pay_name"
+`SELECT DISTINCT sum(v_main) as v_main, sum(v_rel_pp) as v_rel_pp, sum(v_rel_fzp) as v_rel_fzp, sum(v_rel_pp_i), group_pay_name as group_pay_name
 FROM fot_out AS fot_out
 WHERE ((NOW() - INERVAL '1 DAY') NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано') AND (area_name = 'Не задано') AND (hcode_name = 'ФЗП') AND (type_oe_bi = 'РЖД') AND (region_name = 'Не задано') AND (category_name = 'Не задано') AND (group_pay_name != 'Не задано') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (pay_code != 'Не задано') AND (sex_code IS NULL)
 GROUP BY group_pay_name
@@ -49,7 +49,7 @@ ORDER BY group_pay_name, v_main`
                         "profession_name":["=","Не задано"]},
                         "with":"ch.fot_out"},
                            {"key":null}),
-`SELECT DISTINCT sum(v_main) as "v_main", sum(v_rel_pp) as "v_rel_pp", sum(v_rel_pp_i), pay_code as "pay_code", pay_name as "pay_name"
+`SELECT DISTINCT sum(v_main) as v_main, sum(v_rel_pp) as v_rel_pp, sum(v_rel_pp_i), pay_code as pay_code, pay_name as pay_name
 FROM fot_out AS fot_out
 WHERE ((NOW() - INERVAL '1 DAY') = '2020-03') AND (pay_code != 'Не задано') AND (area_name = 'Не задано') AND (hcode_name = 'ФЗП') AND (type_oe_bi = 'РЖД') AND (region_name = 'Не задано') AND (category_name = 'Не задано') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (sex_code IS NULL)
 GROUP BY pay_code, pay_name`
@@ -82,7 +82,7 @@ GROUP BY pay_code, pay_name`
                            ],
                            "with":"ch.fot_out"},
                                  {"key":null}),
-      `SELECT sum(v_main) as "v_main", sum(v_rel_pp) as "v_rel_pp", sum(v_rel_pp_i), pay_code as "pay_code", pay_name as "pay_name"
+      `SELECT sum(v_main) as v_main, sum(v_rel_pp) as v_rel_pp, sum(v_rel_pp_i), pay_code as pay_code, pay_name as pay_name
 FROM fot_out AS fot_out
 WHERE (((NOW() - INERVAL '1 DAY') = '2020-03') AND (pay_code != 'Не задано') AND (area_name = 'Не задано') AND (hcode_name = 'ФЗП') AND (type_oe_bi = 'РЖД') AND (region_name = 'Не задано') AND (category_name = 'Не задано') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (sex_code IS NULL))
    OR (((NOW() - INERVAL '1 DAY') = '2020-04') AND (pay_code = 'Не задано') AND (area_name = 'Не задано') AND (hcode_name = 'ФЗП') AND (type_oe_bi = 'РЖД') AND (region_name = 'Не задано') AND (category_name = 'Не задано') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (sex_code IS NULL))
@@ -99,7 +99,7 @@ GROUP BY pay_code, pay_name`
             {"dt":["=","2020-03"],"hcode_name":["=","CCЧ"],"type_oe_bi":["=","Дороги"]}],
             "with":"ch.fot_out"},
                  {"key":null}),
-            `SELECT DISTINCT sum(v_main) as "v_main", sum(v_rel_pp) as "v_rel_pp", sum(v_rel_fzp) as "v_rel_fzp", id, sum(v_rel_pp_i), sum(v_main_i), tlg as "tlg", hcode_name as "hcode_name"
+            `SELECT DISTINCT sum(v_main) as v_main, sum(v_rel_pp) as v_rel_pp, sum(v_rel_fzp) as v_rel_fzp, id, sum(v_rel_pp_i), sum(v_main_i), tlg as tlg, hcode_name as hcode_name
 FROM fot_out AS fot_out
 WHERE (((NOW() - INERVAL '1 DAY') = '2020-03') AND (area_name = 'Не задано') AND (type_oe_bi = 'Дороги') AND (region_name = 'Не задано') AND (group_pay_id != 'Не задано') AND (group_pay_name = 'Поощрения') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL))
    OR (((NOW() - INERVAL '1 DAY') = '2020-03') AND (hcode_name = 'CCЧ') AND (type_oe_bi = 'Дороги') AND (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL))
@@ -127,7 +127,7 @@ GROUP BY id, tlg, hcode_name`
       "sort":["group_pay_name","v_main","v_agg"],
       "with":"ch.fot_out"},
             {"key":null}),
-`SELECT DISTINCT sum(v_main) as "v_main", sum(v_rel_pp) as "v_rel_pp", sum(v_rel_fzp) as "v_rel_fzp", sum(v_rel_pp_i), group_pay_name as "group_pay_name", (max(sum(v_main))) as "v_agg"
+`SELECT DISTINCT sum(v_main) as v_main, sum(v_rel_pp) as v_rel_pp, sum(v_rel_fzp) as v_rel_fzp, sum(v_rel_pp_i), group_pay_name as group_pay_name, (max(sum(v_main))) as v_agg
 FROM fot_out AS fot_out
 WHERE ((NOW() - INERVAL '1 DAY') BETWEEN '2020-12-07' AND '2021-01-13') AND (pay_name != 'Не задано') AND (area_name = 'Не задано') AND (hcode_name = 'ФЗП') AND (type_oe_bi = 'РЖД') AND (region_name = 'Не задано') AND (category_name = 'Не задано') AND (group_pay_name != 'Не задано') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (pay_code != 'Не задано') AND (sex_code IS NULL)
 GROUP BY group_pay_name
@@ -141,7 +141,7 @@ ORDER BY group_pay_name, v_main, v_agg`
       {"columns":["v_rel_pp_i / (100 * (v_main + 1))", "sum((v_main+v_rel_pp_i)/100)"],
       "with":"ch.fot_out"},
             {"_access_filters":"v_main > 1 and (v_rel_pp_i < 0 or v_rel_pp_i = 0)"}),
-`SELECT v_rel_pp_i / (100 * (v_main + 1)) as "v_main", sum((v_main + v_rel_pp_i) / 100) as "v_main"
+`SELECT v_rel_pp_i / (100 * (v_main + 1)) as v_main, sum((v_main + v_rel_pp_i) / 100) as v_main
 FROM fot_out AS fot_out
 WHERE ((group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL))
    AND
@@ -155,7 +155,7 @@ it('KOOB access filters LPE', function() {
           {"columns":["v_rel_pp_i / (100 * (v_main + 1))", "sum((v_main+v_rel_pp_i)/100)"],
           "with":"ch.fot_out"},
                 {"_access_filters":["and",[">","v_main",1],["()",["or",["<","v_rel_pp_i",0],["=","v_rel_pp_i",0]]]]}),
-    `SELECT v_rel_pp_i / (100 * (v_main + 1)) as "v_main", sum((v_main + v_rel_pp_i) / 100) as "v_main"
+    `SELECT v_rel_pp_i / (100 * (v_main + 1)) as v_main, sum((v_main + v_rel_pp_i) / 100) as v_main
 FROM fot_out AS fot_out
 WHERE ((group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL))
    AND
@@ -169,7 +169,7 @@ it('KOOB access filters LPE with expr', function() {
            {"columns":["v_rel_pp_i / (100 * (v_main + 1))", "sum((v_main+v_rel_pp_i)/100)"],
            "with":"ch.fot_out"},
                    {"_access_filters":["expr", ["and",[">","v_main",1],["()",["or",["<","v_rel_pp_i",0],["=","v_rel_pp_i",0]]]]]}),
-       `SELECT v_rel_pp_i / (100 * (v_main + 1)) as "v_main", sum((v_main + v_rel_pp_i) / 100) as "v_main"
+       `SELECT v_rel_pp_i / (100 * (v_main + 1)) as v_main, sum((v_main + v_rel_pp_i) / 100) as v_main
 FROM fot_out AS fot_out
 WHERE ((group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL))
    AND
@@ -184,7 +184,7 @@ it('KOOB access filters LPE with quoted string expr', function() {
                 {"columns":["v_rel_pp_i / (100 * (v_main + 1))", "sum((v_main+v_rel_pp_i)/100)"],
                 "with":"ch.fot_out"},
                         {"_access_filters":["expr", [">","v_main",["'","quoted string"]]]}),
-            `SELECT v_rel_pp_i / (100 * (v_main + 1)) as "v_main", sum((v_main + v_rel_pp_i) / 100) as "v_main"
+            `SELECT v_rel_pp_i / (100 * (v_main + 1)) as v_main, sum((v_main + v_rel_pp_i) / 100) as v_main
 FROM fot_out AS fot_out
 WHERE ((group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL))
    AND
@@ -207,7 +207,7 @@ GROUP BY v_rel_pp_i / (100 * (v_main + 1))`
                      "offset": 10,
                      "with":"ch.fot_out"},
                            {"_target_database": "clickhouse"}),
-`SELECT concat(toString(v_rel_pp),'*',v_rel_pp,hcode_name) as "v_rel_pp", toString(group_pay_name), hcode_name as "hcode_name"
+`SELECT concat(toString(v_rel_pp),'*',v_rel_pp,hcode_name) as v_rel_pp, toString(group_pay_name), hcode_name as hcode_name
 FROM fot_out AS fot_out
 WHERE (hcode_name BETWEEN '2019-01-01' AND '2020-03-01')
 ORDER BY perda, lead DESC LIMIT 100 OFFSET 10
@@ -226,7 +226,7 @@ SETTINGS max_threads = 1`
          "filters":{"hcode_name": ["between", "2019-01-01", "2020-03-01"]},
          "with":"ch.fot_out"},
                {"_target_database": "mysql"}),
-   `SELECT sum((round(v_main,2))) as \`fact\`, (round(v_main,2)) as \`fackt\`, group_pay_name as \`group_pay_name\`, hcode_name as \`hcode_name\`
+   `SELECT sum((round(v_main,2))) as fact, (round(v_main,2)) as fackt, group_pay_name as group_pay_name, hcode_name as hcode_name
 FROM fot_out AS fot_out
 WHERE (hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
 GROUP BY (round(v_main,2)), group_pay_name, hcode_name`
@@ -336,7 +336,7 @@ GROUP BY (round(v_main,2)), group_pay_name, hcode_name`
          "offset": 10,
          "with":"ch.fot_out"},
                {"_target_database": "clickhouse"}),
-   `/*ON1Y*/SELECT toString(v_rel_pp) as "v_rel_pp", sum(group_pay_name) as "group_pay_name", v_rel_pp111, hcode_name as "hcode_name"
+   `/*ON1Y*/SELECT toString(v_rel_pp) as v_rel_pp, sum(group_pay_name) as group_pay_name, v_rel_pp111, hcode_name as hcode_name
 FROM fot_out AS fot_out
 WHERE (hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
 ORDER BY perda, lead DESC LIMIT 100 OFFSET 10
@@ -363,7 +363,7 @@ SETTINGS max_threads = 1`
       "offset": 10,
       "with":"ch.fot_out"},
             {"_target_database": "postgresql"}),
- `SELECT sum(v_rel_pp) as "v_rel_pp", group_pay_name as "group_pay_name", hcode_name as "hcode_name", CASE WHEN sum(v_rel_pp) = 0 THEN 0 ELSE sum(pay_code) / sum(v_rel_pp) END as "d"
+ `SELECT sum(v_rel_pp) as v_rel_pp, group_pay_name as group_pay_name, hcode_name as hcode_name, CASE WHEN sum(v_rel_pp) = 0 THEN 0 ELSE sum(pay_code) / sum(v_rel_pp) END as d
 FROM fot_out AS fot_out
 WHERE (hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND (1=0) AND (1=1) AND ((1=1) OR (pay_code ILIKE 'Муж')) AND (sex_code IS NULL)
 GROUP BY group_pay_name, hcode_name
