@@ -7246,15 +7246,18 @@ function init_koob_context(_vars, default_ds, default_cube) {
   _context[':'].ast = [[], {}, [], 1]; // mark as macro
 
   _context['toString'] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* makeSF */])(function (ast, ctx) {
-    // понимаем a = [null] как a is null
-    // a = [] просто пропускаем, А кстати почему собственно???
-    // a = [null, 1,2] как a in (1,2) or a is null
-    // ["=",["column","vNetwork.cluster"],SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]
-    // var a = Array.prototype.slice.call(arguments)
+    // we need to use makeSF, as normal LISP context will not evaluate column names ???
     //console.log(JSON.stringify(ast))
     var col = ast[0];
-    var c = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context);
-    return "toString(".concat(c, ")");
+    var s = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context);
+
+    if (_context._target_database === 'clickhouse') {
+      return "toString(".concat(s, ")");
+    } else if (_context._target_database === 'postgresql') {
+      return "".concat(s, "::TEXT");
+    } else {
+      return "cast(".concat(s, " AS VARCHAR)");
+    }
   }); // Clickhouse way.... will create extra dataset
   // range(end), range([start, ] end [, step])
   // Returns an array of UInt numbers from start to end - 1 by step.
