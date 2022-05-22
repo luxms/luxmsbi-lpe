@@ -80,11 +80,13 @@ import { part } from 'core-js/core/function';
 function quot_as_expression(db, src, alias) {
   // 1 определяем, нужно ли квотировать 
   let should_quote = false;
-  if (db === 'oracle') {
+  if (db === 'oracle' || db === 'teradata') {
     should_quote = true
     // `select col from dual` вернёт в JDBC `COL` заглавными буквами !!!
     // это ломает клиент, который ждёт lowercase названия объектов
 
+
+    // teradata не понимает max(a) as max
     // Поэтому, для оракла будем брать в кавычки все абсолютно столбцы и делать из них алиасы!
     // потом в условиях order by надо будет добавить кавычки тоже!
     /*if (alias.match(/^[a-zA-Z]\w*$/) === null) {
@@ -537,6 +539,12 @@ function init_koob_context(_vars, default_ds, default_cube) {
             }
           }
         }
+        if (_context["_result"]) {
+          // make alias for calculated columns
+          let parts = col.split('.')
+          if (parts.length === 3)
+          _context["_result"]["alias"] = parts[2]
+        }
         return `(${c.sql_query})`
       }
     }
@@ -973,6 +981,10 @@ function init_koob_context(_vars, default_ds, default_cube) {
     if (_vars["_target_database"] === 'clickhouse') {
       // FIXME: detect column type !!!
       return `toString(${eval_lisp(col,_context)}) ILIKE ${eval_lisp(tmpl,_context)}`
+    } else if (_vars["_target_database"] === 'oracle') {
+      // FIXME! Oracle has something similar to ilike in v12 only :-()
+      // FIXME: use regexp
+      return `UPPER(${eval_lisp(col,_context)}) LIKE UPPER(${eval_lisp(tmpl,_context)})`
     } else {
       return `${eval_lisp(col,_context)} ILIKE ${eval_lisp(tmpl,_context)}`
     } 
@@ -1460,24 +1472,33 @@ function cache_alias_keys(_cfg) {
 
 }
 
-function genereate_subtotals_group_by_postgresql(cfg, group_by_list){
-  var subtotals = cfg["subtotals"]
+//  но возможно для teradata и oracle мы захотим брать в двойные кавычки...
+function genereate_subtotals_group_by(cfg, group_by_list){
+  let subtotals = cfg["subtotals"]
 
+  //console.log(`GROUP BY: ${JSON.stringify(subtotals)} ${JSON.stringify(group_by_list)}`)
   if (group_by_list.length === 0) {
     return ''
   }
   
   //cfg["_group_by"].map(el => console.log(JSON.stringify(el)))
   //subtotals.map(el => console.log(JSON.stringify(el)))
-  var group_by_sql = group_by_list.join(', ')
+  let group_by_exprs = group_by_list.map(el => el.expr)
+  let group_by_aliases = group_by_list.map(el => el.alias).filter(el => el !== undefined)
+
+  let group_by_sql = group_by_exprs.join(', ')
 
   var subtotals_combinations = subtotals.map(col => {
-    var i = group_by_list.indexOf(col)
-    if(i===-1){
-      throw Error(`looking for column ${col} listed in subtotals, but can not find in group_by`)
+    var i = group_by_exprs.indexOf(col)
+    if (i===-1) {
+      i = group_by_aliases.indexOf(col)
+      if (i===-1) {
+        //console.log(`GROUP BY for ${col} : ${JSON.stringify(group_by_list)}`)
+        throw Error(`looking for column ${col} listed in subtotals, but can not find in group_by`)
+      }
     }
     //console.log(JSON.stringify(group_by_list.filter(c => c !== col).join(', ')))
-    return group_by_list.filter(c => c !== col).join(', ')
+    return group_by_list.filter(c => c.expr !== col && c.alias != col).map(c => c.expr).join(', ')
   })
 
   return "\nGROUP BY GROUPING SETS ((".concat(group_by_sql, '),',
@@ -1829,8 +1850,8 @@ export function generate_koob_sql(_cfg, _vars) {
     }
   }
   
-  
-
+  // для teradata limit/offset 
+  let global_extra_columns = []
   var group_by = _cfg["_group_by"].map(el => el.expr)
 
   // нужно дополнить контекст для +,- и суметь сослатся на алиасы!
@@ -1882,13 +1903,31 @@ export function generate_koob_sql(_cfg, _vars) {
     let window_order_by
     if (order_by.length === 0) {
       // надо использовать все столбцы, которые являются dimensions и лежать в group by ??? 
-      throw Error(`Teradata limit/offset without specified sorting order is not YET supported :-(`)
+      //throw Error(`Teradata limit/offset without specified sorting order is not YET supported :-(`)
+
+      if (_cfg["_group_by"].length === 0) {
+        window_order_by = _cfg["_columns"].map( el => {
+          if (el.alias) {
+            return `"${el.alias}"`
+          } else {
+            return el.expr
+          }
+        }).join(',')
+      } else {
+        window_order_by = _cfg["_group_by"].map( el =>
+          el.expr
+        ).join(',')
+      }
     } else {
-       window_order_by = order_by.join(', ')
+      window_order_by = order_by.join(', ')
     }
     //`ROW_NUMBER() OVER (order by ${window_order_by}) as koob__row__num__`
     let column = {"columns":[],"alias":"koob__row__num__","expr":`ROW_NUMBER() OVER (order by ${window_order_by})`}
-    _cfg["_columns"].unshift(column)
+    // мы не можем добавлять это в общий список столбцов, так как нам потребуется ещё одна обёртка!
+    // создаём пока переменную глобальную! но нам нужны вложенные SQL контексты, а не просто outer/inner
+    //_cfg["_columns"].unshift(column)
+    global_extra_columns.unshift(column)
+
     if (limit) {
       //QUALIFY __row_num  BETWEEN 1 and 4;
       if (offset) {
@@ -2074,10 +2113,11 @@ export function generate_koob_sql(_cfg, _vars) {
     order_by = order_by.length ? "\nORDER BY ".concat(order_by.join(', ')) : ''
     return `${select}\nFROM (\n${inner}\n)${order_by}${limit_offset}${ending}`
   } else {
+    // NOT WINDOW! normal SELECT
+    //---------------------------------------------------------------------
     var select = isArray(_cfg["distinct"]) ? "SELECT DISTINCT " : "SELECT "
     // могут быть ньюансы квотации столбцов, обозначения AS и т.д. поэтому каждый участок приводим к LPE и вызываем SQLPE функции с адаптацией под конкретные базы
-    select = select.concat(_cfg["_columns"].map(el => {
-
+    var normal_level_columns = _cfg["_columns"].map(el => {
       // It is only to support dictionaries for Clickhouse!!!
       // FIXME: switch to stacked SELECT idea
       if (el.outer_alias) {
@@ -2098,7 +2138,9 @@ export function generate_koob_sql(_cfg, _vars) {
         }
         return expand_outer_expr(el)
       } 
-    }).join(', '))
+    }).join(', ')
+
+    select = select.concat(normal_level_columns)
 
     order_by = order_by.length ? "\nORDER BY ".concat(order_by.join(', ')) : ''
 
@@ -2114,8 +2156,12 @@ export function generate_koob_sql(_cfg, _vars) {
         }
 
       } else if (isArray(_cfg["subtotals"])){
-        if (_context[0]["_target_database"]==='postgresql') {
-          group_by = genereate_subtotals_group_by_postgresql(_cfg, group_by)
+        if (_context[0]["_target_database"]==='postgresql' || 
+            _context[0]["_target_database"]==='oracle' ||
+            _context[0]["_target_database"]==='teradata' 
+            ) {
+          // FIXME: возможны проблемы с квотированием столбцов (в оракле берём в "")
+          group_by = genereate_subtotals_group_by(_cfg, _cfg["_group_by"])
         } else {
           throw new Error(`named subtotals are not yet supported for ${_context[0]["_target_database"]}`)
         }
@@ -2182,12 +2228,6 @@ export function generate_koob_sql(_cfg, _vars) {
       //final_sql = `${select}\nFROM ${processed_from}${group_by}${order_by}${limit_offset}${ending}`
     }
 
-    if (global_only1 === true) {
-      group_by = ''
-      // plSQL will parse this comment! Sic! 
-      select = `/*ON1Y*/${select}`
-    }
-
     if (global_joins.length > 0) {
       // нужно ещё сделать JOINS
       from = from + ',' + global_joins.map(el=>{
@@ -2198,15 +2238,94 @@ export function generate_koob_sql(_cfg, _vars) {
           } 
       })
     }
-    
-    final_sql = `${select}\nFROM ${from}${where}${group_by}${order_by}${limit_offset}${ending}`
+
+    if (global_extra_columns.length > 0 ) {
+      let saved_columns = _cfg["_columns"]
+      _cfg["_columns"] = global_extra_columns
+      // нам нужно ещё раз обернуть весь запрос!!!
+      // похоже список столбцов нужнео дополнить нашими доп столбцами....
+      var top_level_select = 'SELECT '
+      top_level_select = top_level_select.concat(global_extra_columns.map(el => {
+        // It is only to support dictionaries for Clickhouse!!!
+        // FIXME: switch to stacked SELECT idea
+        // console.log(`global_extra_columns: ${JSON.stringify(el)}`)
+        if (el.outer_alias) {
+          el.alias = el.outer_alias
+        }
+  
+        if (el.outer_expr) {
+          el.expr = el.outer_expr
+        }
+        /////////////////////////////////////////////////////
+        //console.log("COLUMN:", JSON.stringify(el))
+        if (el.alias){
+          return quot_as_expression(_context[0]["_target_database"], expand_outer_expr(el), el.alias)
+        } else {
+          if (el.columns.length === 1) {
+            var parts = el.columns[0].split('.')
+            return quot_as_expression(_context[0]["_target_database"], expand_outer_expr(el), parts[2])
+          }
+          return expand_outer_expr(el)
+        } 
+      }).join(', '))
+
+      //console.log(`global_extra_columns STEP ${top_level_select}`)
+      top_level_select = top_level_select.concat(', ')
+
+      _cfg["_columns"] = saved_columns
+      // ещё раз надо пройтись по столбцам, но теперь нам нужны ТОЛЬКО АЛИАСЫ !
+      top_level_select = top_level_select.concat(_cfg["_columns"].map(el => {
+        // It is only to support dictionaries for Clickhouse!!!
+        // FIXME: switch to stacked SELECT idea
+        if (el.outer_alias) {
+          el.alias = el.outer_alias
+        }
+  
+        if (el.outer_expr) {
+          el.expr = el.outer_expr
+        }
+        /////////////////////////////////////////////////////
+        //console.log("COLUMN:", JSON.stringify(el))
+        if (el.alias){
+          // FIXME: делаем принудительную квотацию для терадаты!!!
+          //return quot_as_expression(_context[0]["_target_database"], expand_outer_expr(el), el.alias)
+          return `"${el.alias}"`
+        } else {
+          if (el.columns.length === 1) {
+            var parts = el.columns[0].split('.')
+            //return quot_as_expression(_context[0]["_target_database"], expand_outer_expr(el), parts[2])
+            return `"${parts[2]}"`
+          }
+          return `"${expand_outer_expr(el)}"`
+        } 
+      }).join(', '))
+      
+      if (global_only1 === true) {
+        group_by = ''
+        // plSQL will parse this comment! Sic! 
+        top_level_select = `/*ON1Y*/${top_level_select}`
+      }
+  
+      final_sql = `${top_level_select} FROM (${select}\nFROM ${from}${where}${group_by}) AS koob__top__level__select__${order_by}${limit_offset}${ending}`
+    } else {
+      if (global_only1 === true) {
+        group_by = ''
+        // plSQL will parse this comment! Sic! 
+        select = `/*ON1Y*/${select}`
+      }  
+      final_sql = `${select}\nFROM ${from}${where}${group_by}${order_by}${limit_offset}${ending}`
+    }
+
+
 
     if (_cfg["return"] === "count") {
       if (_context[0]["_target_database"] === 'clickhouse'){
         final_sql = `select toUInt32(count(300)) as count from (${final_sql})`
+      } else if (_context[0]["_target_database"] === 'teradata'){ 
+        final_sql = `select count(300) as "count" from (${final_sql}) koob__count__src__`
       } else {
         // avoid error in postgresql
-        final_sql = `select count(300) as count from (${final_sql}) as cnt_src`
+        final_sql = `select count(300) as count from (${final_sql}) koob__count__src__`
       }
     }
     return final_sql

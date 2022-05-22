@@ -637,6 +637,7 @@ describe('LPE tests', function() {
            {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":2001}}),
            "table.col or 2001 or 23 or table.col2 = '2001'"
            );
+
      });
 
 

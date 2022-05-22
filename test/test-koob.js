@@ -320,6 +320,12 @@ GROUP BY (round(v_main,2)), group_pay_name, hcode_name`
          "year_start <= 2021 and short_tp = 'ГКБ' or col != 'ГКБ' and version = '2.0'"
          );
 
+         assert.equal( lpe.eval_sql_where(
+            "filter( cond(year_start <= $(row.y), []) and  cond(short_tp = ql($(row.short_tp)) or col != '$(row.short_tp)' && version = ql($(version)), []) )",
+            {"_quoting":"explicit" ,"version":"2.0","row":{"short_tp":["=","ГКБ"],"y":["=",2021]},"limit":100,"offset":0,"context":{"attachment_id":5,"row":{"short_tp":["=","ГКБ"],"y":["=",2021]}}}),
+            "year_start <= 2021 and short_tp = 'ГКБ' or col != 'ГКБ' and version = '2.0'"
+            );
+
    });
 
    it('should eval KOOB only1', function() {
@@ -398,6 +404,22 @@ ORDER BY perda, lead DESC, random() DESC, random() LIMIT 100 OFFSET 10`
                "filters( except(y), short_tp:tp, y:year )",
                {"_quoting":"explicit" ,"version":"2.0","row":{"short_tp":["=","ГКБ","КГБ"],"y":["=",2021]},"limit":100,"offset":0,"context":{"attachment_id":5,"row":{"$measures":["=","m1"],"short_tp":["=","ГКБ!","КГБ"],"y":[">",2021]}}}),
                "tp IN ('ГКБ!','КГБ')"
+               )
+         });
+
+
+         it('should eval KOOB sort (koob lookup)', function() {
+            assert.equal( lpe.eval_sql_where(
+               "order_by()",
+               {"_quoting":"explicit" ,"version":"2.0",
+               "row":{"short_tp":["=","ГКБ","КГБ"],"y":["=",2021]},
+               "limit":100,"offset":0,
+               "sort": ["-short_tp", "y"],
+               "_columns": {"short_tp": {"name": "short_tp", "order": "a.ADDR", "title": "Адрес"},
+                            "y": {"name": "y", "order": "some-crazy-Schema.y", "title": "Й"}
+                           },
+               "context":{"attachment_id":5,"row":{"$measures":["=","m1"],"short_tp":["=","ГКБ!","КГБ"],"y":[">",2021]}}}),
+               'ORDER BY a.ADDR DESC,"some-crazy-Schema".y'
                )
          });
     

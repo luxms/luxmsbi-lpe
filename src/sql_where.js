@@ -144,12 +144,24 @@ export function sql_where_context(_vars) {
     }
     ctx['-'].ast = [[],{},[],1]; // mark as macro
 
-    for(var i = 0; i < arguments.length; i++) {
-        if (arguments[i] instanceof Array) {
-          ret.push(eval_lisp(arguments[i], ctx) );
+    // вот так будет работать: order_by(-short_tp,y)
+    // Но у нас может быть ситуация, когда мы столбцы для сотрировки передали в массиве _vars["sort"] 
+    // Это koob lookup
+    // поэтому делаем разбор этого массива и дописываем аргументы
+    // что-то похожее делается прямо в  function eval_sql_where, но там проверяется что _vars["sort"] = строка.
+    let args = Array.prototype.slice.call(arguments)
+    if (isArray(_vars["sort"])) {
+      var extra_args = _vars["sort"].map(el => parse(el))
+      args = args.concat(extra_args)
+    }
+
+    for(var i = 0; i < args.length; i++) {
+      //console.log(`step ${i} ${JSON.stringify(args[i])}`)
+        if (args[i] instanceof Array) {
+          ret.push(eval_lisp(args[i], ctx) );
         } else {
           // try_to_quote_column берёт текст в двойные кавычки для известных столбцов!!!
-          var a = arguments[i].toString();
+          var a = args[i].toString();
           ret.push(resolve_order_by_literal(a) + get_extra_order(a));
         }
     }
