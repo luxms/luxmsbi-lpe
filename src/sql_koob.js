@@ -1103,19 +1103,23 @@ function init_koob_context(_vars, default_ds, default_cube) {
     if (ast.length === 1) {
       return '1=0'
     } else if (ast.length === 2) {
-      var v = resolveValue(ast[1])
-      return v === null 
-      ? `${c} IS NULL` 
-      : `${c} = ${v}`
-    } else {
+      if (isArray(ast[1]) && ast[1][0] === "[") {
+        var a = eval_lisp(ast[1], _context)
+        ast = [c].concat(a)
+      } else {
+        var v = resolveValue(ast[1])
+        return v === null 
+        ? `${c} IS NULL` 
+        : `${c} = ${v}`
+      }
+    }
       // check if we have null in the array of values...
-      
+
       var resolvedV = ast.slice(1).map(el => resolveValue(el)).filter(el => el !== null)
       const hasNull = resolvedV.length < ast.length - 1;
       var ret = `${c} IN (${resolvedV.join(', ')})`
       if(hasNull) ret = `${ret} OR ${c} IS NULL`
       return ret
-    }
   })
 
 
@@ -1134,22 +1138,30 @@ function init_koob_context(_vars, default_ds, default_cube) {
       if (shouldQuote(col, v)) v = quoteLiteral(v)
       return eval_lisp(v,_context)
     }
+
     if (ast.length === 1) {
       return '1=1'
     } else if (ast.length === 2) {
-      var v = resolveValue(ast[1])
-      return v === null 
-      ? `${c} IS NOT NULL` 
-      : `${c} != ${v}`
-    } else {
-      // check if we have null in the array of values...
       
-      var resolvedV = ast.slice(1).map(el => resolveValue(el)).filter(el => el !== null)
-      const hasNull = resolvedV.length < ast.length - 1;
-      var ret = `${c} NOT IN (${resolvedV.join(', ')})`
-      if(hasNull) ret = `${ret} AND ${c} IS NOT NULL`
-      return ret
-    }
+      if (isArray(ast[1]) && ast[1][0] === "[") {
+        var a = eval_lisp(ast[1], _context)
+        ast = [c].concat(a)
+      } else {
+        var v = resolveValue(ast[1])
+        return v === null 
+        ? `${c} IS NOT NULL` 
+        : `${c} != ${v}`
+      }
+    } 
+
+    // check if we have null in the array of values...
+    
+    var resolvedV = ast.slice(1).map(el => resolveValue(el)).filter(el => el !== null)
+    const hasNull = resolvedV.length < ast.length - 1;
+    var ret = `${c} NOT IN (${resolvedV.join(', ')})`
+    if(hasNull) ret = `${ret} AND ${c} IS NOT NULL`
+    return ret
+
   })
 
   //console.log('CONTEXT!', _context['()'])

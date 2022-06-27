@@ -140,12 +140,12 @@ ORDER BY group_pay_name, v_main, v_agg`
    assert.equal( lpe.generate_koob_sql(
       {"columns":["v_rel_pp_i / (100 * (v_main + 1))", "sum((v_main+v_rel_pp_i)/100)"],
       "with":"ch.fot_out"},
-            {"_access_filters":"v_main > 1 and (v_rel_pp_i < 0 or v_rel_pp_i = 0)"}),
+            {"_access_filters":"v_main > 1 and (v_rel_pp_i < 0 or v_rel_pp_i = 0) and v_main = [1,2,3] and v_main != [1,2,3]"}),
 `SELECT v_rel_pp_i / (100 * (v_main + 1)) as v_main, sum((v_main + v_rel_pp_i) / 100) as v_main
 FROM fot_out AS fot_out
 WHERE ((group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL))
    AND
-   ((v_main > 1) AND (((v_rel_pp_i < 0) OR (v_rel_pp_i = 0))))
+   ((v_main > 1) AND ((((v_rel_pp_i < 0) OR (v_rel_pp_i = 0))) AND ((v_main IN (1, 2, 3)) AND (v_main NOT IN (1, 2, 3)))))
 GROUP BY v_rel_pp_i / (100 * (v_main + 1))`
          );
    })
