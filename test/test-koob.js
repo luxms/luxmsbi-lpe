@@ -422,7 +422,28 @@ ORDER BY perda, lead DESC, random() DESC, random() LIMIT 100 OFFSET 10`
                'ORDER BY a.ADDR DESC,"some-crazy-Schema".y'
                )
          });
-    
+  
+         it('Should eval coefficients', function() {
+            assert.equal( lpe.generate_koob_sql(
+               {"coefficients": {
+                  "$x" : 123,
+                  "$y" : 34
+               },
+               "columns":[
+                           "sum(fackt)*$x:fact",
+                           "fackt + $y",
+                           "group_pay_name - $y", 
+                           'hcode_name'
+                        ],
+               "filters":{"hcode_name": ["between", "2019-01-01", "2020-03-01"]},
+               "with":"ch.fot_out"},
+                     {"_target_database": "mysql"}),
+         `SELECT sum((round(v_main,2))) * 123 as fact, (round(v_main,2)) + 34 as fackt, group_pay_name - 34 as group_pay_name, hcode_name as hcode_name
+FROM fot_out AS fot_out
+WHERE (hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
+GROUP BY (round(v_main,2)) + 34, group_pay_name - 34, hcode_name`
+                  );
+           });
 });
 
 

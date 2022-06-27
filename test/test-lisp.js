@@ -23,6 +23,12 @@ describe('LISP tests', function() {
     assert.deepEqual(lpe.eval_lisp(["let", ["foo", 2], "foo"]), 2);
   });
 
+  it('should allow hash changes declared with let', function() {
+    assert.deepEqual(lpe.eval_lisp(["let", ["foo", {"a":33}], ['begin', [".-", "foo","a", ["*", 10, [".-","foo","a"]]], "foo"]]), {"a":330});    
+    assert.deepEqual(lpe.eval_lisp(lpe.parse('begin(a . 3 . 1)'), {"a":{"3":[300,600]}}), 600);
+    assert.deepEqual(lpe.eval_lisp(lpe.parse('begin(set(a . 3 , 2, "Hoy"), a)'), {"a":{"3":[300,600]}}), 600);
+  });
+
   it('operator =', function() {
     assert.deepEqual(lpe.eval_lisp(["=", 1]), true);
     assert.deepEqual(lpe.eval_lisp(["=", 1, 1]), true);

@@ -1996,6 +1996,7 @@ var make_parse = function make_parse() {
   infixr("::", 90); // for SQL as
 
   infixr(":", 80);
+  infix(":=", 30);
   infixr('~', 40);
   infixr('!~', 40);
   infixr('=', 40);

@@ -372,6 +372,8 @@ var make_parse = function () {
   // for SQL as
   infixr(":", 80);
 
+  infix(":=", 30);
+
   infixr('~', 40);
   infixr('!~', 40);
 
@@ -532,6 +534,7 @@ var make_parse = function () {
     this.sexpr = ["->>"].concat(lift_funseq_2(this));
     return this;
   });
+
 
   // WARNING HACK FIXME DIMA - добавил чтобы писать order_by(+a)
   // А также замена /table на +table в htSQL

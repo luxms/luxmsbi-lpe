@@ -125,7 +125,7 @@ SETTINGS max_threads = 1`
    it('should eval KOOB dictionaries FOR Clickhouse without WINDOW functions', function() {
       assert.equal( lpe.generate_koob_sql(
          {"columns":[
-                     "sum(v_rel_pp)",
+                     "cast(1, float)*sum(v_rel_pp) / sum(v_rel_pp+1000)",
                      "pay_title", 'hcode_name'
                   ],
          "distinct":[],

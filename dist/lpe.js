@@ -1755,6 +1755,7 @@ var make_parse = function make_parse() {
   infixr("::", 90); // for SQL as
 
   infixr(":", 80);
+  infix(":=", 30);
   infixr('~', 40);
   infixr('!~', 40);
   infixr('=', 40);
@@ -7112,6 +7113,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
     return lit;
   }; // функция, которая резолвит имена столбцов для случаев, когда имя функции не определено в явном виде в _vars/_context
+  // а также пытается зарезолвить коэффициенты
 
 
   _ctx.push(function (key, val, resolveOptions) {
@@ -7183,7 +7185,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
         return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* makeSF */])(function (ast, ctx) {
           //console.log(`ANY FUNC ${key}`, JSON.stringify(ast))
           var k = key;
-          var col = ast[0];
+          var col = ast[0]; //FIXME: надо бы тоже quoteLiteral вызывать для c
+
           var c = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, ctx);
 
           if (ast.length === 1) {
@@ -7192,10 +7195,24 @@ function init_koob_context(_vars, default_ds, default_cube) {
           }
 
           var v = ast[1];
-          if (shouldQuote(col, v)) v = quoteLiteral(v);
+
+          if (!(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["e" /* isString */])(v) && v.startsWith('$'))) {
+            // коэфициент не надо квотировать, оно должно замениться на конкретное число!
+            if (shouldQuote(col, v)) v = quoteLiteral(v);
+          }
+
           v = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(v, ctx);
           return "".concat(c, " ").concat(k, " ").concat(v);
         });
+      }
+    }
+
+    if (key.startsWith('$')) {
+      // возможно, это коэффициент?
+      var _val = _context["_coefficients"][key];
+
+      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["f" /* isNumber */])(_val)) {
+        return _val;
       }
     } // We may have references to yet unresolved aliases....
 
@@ -7249,6 +7266,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
       return "varPop(".concat(col, ")");
     } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle' || _context._target_database === 'teradata') {
       return "var_pop(".concat(col, ")");
+    } else if (_context._target_database === 'sqlserver') {
+      return "VarP(".concat(col, ")");
     } else {
       throw Error("var_pop() is not implemented for ".concat(_context._target_database, " yet"));
     }
@@ -7261,6 +7280,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
       return "varSamp(".concat(col, ")");
     } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle' || _context._target_database === 'teradata') {
       return "var_samp(".concat(col, ")");
+    } else if (_context._target_database === 'sqlserver') {
+      return "Var(".concat(col, ")");
     } else {
       throw Error("var_samp() is not implemented for ".concat(_context._target_database, " yet"));
     }
@@ -7273,6 +7294,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
       return "stddevSamp(".concat(col, ")");
     } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle' || _context._target_database === 'teradata') {
       return "stddev_samp(".concat(col, ")");
+    } else if (_context._target_database === 'sqlserver') {
+      return "Stdev(".concat(col, ")");
     } else {
       throw Error("var_samp() is not implemented for ".concat(_context._target_database, " yet"));
     }
@@ -7285,6 +7308,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
       return "stddevPop(".concat(col, ")");
     } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle' || _context._target_database === 'teradata') {
       return "stddev_pop(".concat(col, ")");
+    } else if (_context._target_database === 'sqlserver') {
+      return "StdevP(".concat(col, ")");
     } else {
       throw Error("var_samp() is not implemented for ".concat(_context._target_database, " yet"));
     }
@@ -7564,8 +7589,6 @@ function init_koob_context(_vars, default_ds, default_cube) {
         step = " and MOD(LEVEL, ".concat(step, ") = 0");
       }
 
-      var _f;
-
       if (to === undefined) {
         to = from;
         from = 0;
@@ -7578,7 +7601,36 @@ function init_koob_context(_vars, default_ds, default_cube) {
         "type": "inner",
         "expr": "(\n      select LEVEL-1 AS koob__range__ from dual\n      where LEVEL between ".concat(from, "+1 and ").concat(to).concat(step, "\n      connect by LEVEL <= ").concat(to, "\n      )")
       };
-      return 'koob__range__'; // FIXME: это попадает в GROUP BY !!!
+      return 'koob__range__'; // FIXME: это автоматически попадает в GROUP BY !!!
+    } else if (_context._target_database === 'sqlserver') {
+      // возвращаем здесь просто имя столбца, но потом нужно будет сгенерить
+      // только JOIN 
+      // 
+      if (step === undefined) {
+        step = 1;
+      }
+
+      if (to === undefined) {
+        to = from;
+        from = 0;
+      }
+
+      var numbers = [];
+
+      for (var i = from; i < to; i += step) {
+        numbers.push("(".concat(i, ")"));
+      }
+
+      _context["_result"]["is_range_column"] = true;
+      _context["_result"]["expr"] = 'koob__range__';
+      _context["_result"]["columns"] = ["koob__range__"];
+      _context["_result"]["join"] = {
+        "type": "inner",
+        "alias": "koob__range__table__",
+        "expr": "(\n      select koob__range__ FROM (VALUES ".concat(numbers.join(", "), ") vals(koob__range__)\n      )") // (select n FROM (VALUES (0), (1), (2)) v1(n)) as t
+
+      };
+      return 'koob__range__'; // FIXME: это автоматически попадает в GROUP BY !!!
     } else {
       throw Error("range() is not supported in ".concat(_context._target_database));
     }
@@ -7973,7 +8025,7 @@ function extend_context_for_order_by(_context, _cfg) {
           return 'random()';
         } else if (tdb === 'oracle') {
           return 'dbms_random.value()';
-        } else if (tdb === 'mssql') {
+        } else if (tdb === 'sqlserver') {
           return 'newid()';
         } else {
           return 'rand()';
@@ -8416,7 +8468,7 @@ function genereate_subtotals_group_by(cfg, group_by_list) {
   });
   return "\nGROUP BY GROUPING SETS ((".concat(group_by_sql, '),', "\n                        (".concat(subtotals_combinations.join("),\n                        ("), ')'), "\n                       )");
 }
-/* в _vars могут быть доп. настройки для контекста. Например объявленные переменные.
+/* в _vars могут быть доп. настройки для контекста.
 Вообще говоря это должен быть настоящий контекст! с помощью init_koob_context() мы дописываем в этот 
 контекст новые ключи, типа _columns, _aliases и т.д. Снаружи мы можем получить доп. фильтры. в ключе
 _access_filters
@@ -8425,6 +8477,10 @@ _access_filters
 
 function generate_koob_sql(_cfg, _vars) {
   var _context = _vars;
+
+  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(_cfg["coefficients"])) {
+    _context["_coefficients"] = _cfg["coefficients"];
+  }
   /*
   {
   "with":"czt.fot",
@@ -8444,6 +8500,7 @@ function generate_koob_sql(_cfg, _vars) {
   "sort": ["-dor1","val1",["-","val2"],"-czt.fot.dor2"] 
   }
   */
+
 
   if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(_vars["_data_source"]) && __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["e" /* isString */])(_vars["_data_source"]["url"])) {
     var url = _vars["_data_source"]["url"];
@@ -8477,6 +8534,10 @@ function generate_koob_sql(_cfg, _vars) {
     }
   } else {
     throw new Error("Default cube must be specified in with key");
+  }
+
+  if (_cfg["columns"].length === 0) {
+    throw new Error("Empty columns in the request. Can not create SQL.");
   }
 
   _context = init_koob_context(_context, _cfg["ds"], _cfg["cube"]); //console.log("NORMALIZED CONFIG FILTERS: ", JSON.stringify(_cfg))
@@ -8810,6 +8871,7 @@ function generate_koob_sql(_cfg, _vars) {
 
 
   var global_extra_columns = [];
+  var top_level_where = ''; // for oracle RANGE && LIMIT
 
   var group_by = _cfg["_group_by"].map(function (el) {
     return el.expr;
@@ -8843,21 +8905,31 @@ function generate_koob_sql(_cfg, _vars) {
     }
 
     if (_w) {
-      if (where.length > 3) {
-        where = "".concat(where, " AND ").concat(_w);
+      var column = {
+        "columns": ["ROWNUM"],
+        "alias": "koob__row__num__",
+        "expr": "ROWNUM" // мы не можем добавлять это в общий список столбцов, так как нам потребуется ещё одна обёртка!
+        // создаём пока переменную глобальную! но нам нужны вложенные SQL контексты, а не просто outer/inner
+        //_cfg["_columns"].unshift(column)
+
+      };
+      global_extra_columns.unshift(column);
+
+      if (top_level_where.length > 3) {
+        top_level_where = "".concat(top_level_where, " AND ").concat(_w);
       } else {
-        where = "\nWHERE ".concat(_w);
+        top_level_where = "\nWHERE ".concat(_w);
       }
     }
   } else if (_context[0]["_target_database"] === 'sqlserver') {
     if (limit) {
       if (offset) {
-        limit_offset = " OFFSET ".concat(parseInt(_cfg["offset"]), " ROWS FETCH NEXT ").concat(parseInt(_cfg["limit"]), " ROWS ONLY");
+        limit_offset = "\nOFFSET ".concat(parseInt(_cfg["offset"]), " ROWS FETCH NEXT ").concat(parseInt(_cfg["limit"]), " ROWS ONLY");
       } else {
-        limit_offset = " FETCH NEXT ".concat(parseInt(_cfg["limit"]), " ROWS ONLY");
+        limit_offset = "\nOFFSET 0 ROWS FETCH NEXT ".concat(parseInt(_cfg["limit"]), " ROWS ONLY");
       }
     } else if (offset) {
-      limit_offset = " OFFSET ".concat(parseInt(_cfg["offset"]), " ROWS");
+      limit_offset = "\nOFFSET ".concat(parseInt(_cfg["offset"]), " ROWS");
     }
   } else if (_context[0]["_target_database"] === 'teradata' && (limit || offset)) {
     // Здесь нужно иметь под рукой сотрировку! если её нет, то надо свою выбрать
@@ -8884,7 +8956,7 @@ function generate_koob_sql(_cfg, _vars) {
     } //`ROW_NUMBER() OVER (order by ${window_order_by}) as koob__row__num__`
 
 
-    var column = {
+    var _column = {
       "columns": [],
       "alias": "koob__row__num__",
       "expr": "ROW_NUMBER() OVER (order by ".concat(window_order_by, ")") // мы не можем добавлять это в общий список столбцов, так как нам потребуется ещё одна обёртка!
@@ -8892,7 +8964,7 @@ function generate_koob_sql(_cfg, _vars) {
       //_cfg["_columns"].unshift(column)
 
     };
-    global_extra_columns.unshift(column);
+    global_extra_columns.unshift(_column);
 
     if (limit) {
       //QUALIFY __row_num  BETWEEN 1 and 4;
@@ -9134,8 +9206,15 @@ function generate_koob_sql(_cfg, _vars) {
         return quot_as_expression(_context[0]["_target_database"], expand_outer_expr(el), el.alias);
       } else {
         if (el.columns.length === 1) {
-          var parts = el.columns[0].split('.');
-          return quot_as_expression(_context[0]["_target_database"], expand_outer_expr(el), parts[2]);
+          var parts = el.columns[0].split('.'); // We may have auto-generated columns, which has no dots in name!
+          // COLUMN: {"columns":["ch.fot_out.hcode_name"],"expr":"hcode_name"}
+          // COLUMN: {"columns":["koob__range__"],"is_range_column":true,"expr":"koob__range__","join":{
+
+          if (parts.length === 3) {
+            return quot_as_expression(_context[0]["_target_database"], expand_outer_expr(el), parts[2]);
+          } else {
+            return expand_outer_expr(el);
+          }
         }
 
         return expand_outer_expr(el);
@@ -9156,8 +9235,8 @@ function generate_koob_sql(_cfg, _vars) {
           group_by = "\nGROUP BY CUBE (".concat(group_by.join(', '), ")");
         }
       } else if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(_cfg["subtotals"])) {
-        if (_context[0]["_target_database"] === 'postgresql' || _context[0]["_target_database"] === 'oracle' || _context[0]["_target_database"] === 'teradata') {
-          // FIXME: возможны проблемы с квотированием столбцов (в оракле берём в "")
+        // FIXME: кажется только mysql не алё
+        if (_context[0]["_target_database"] === 'postgresql' || _context[0]["_target_database"] === 'oracle' || _context[0]["_target_database"] === 'teradata' || _context[0]["_target_database"] === 'clickhouse' || _context[0]["_target_database"] === 'sqlserver') {
           group_by = genereate_subtotals_group_by(_cfg, _cfg["_group_by"]);
         } else {
           throw new Error("named subtotals are not yet supported for ".concat(_context[0]["_target_database"]));
@@ -9234,7 +9313,7 @@ function generate_koob_sql(_cfg, _vars) {
       // нужно ещё сделать JOINS
       from = from + ',' + global_joins.map(function (el) {
         if (el["expr"]) {
-          return el["expr"];
+          return el["alias"] ? "".concat(el["expr"], " as ").concat(el["alias"]) : el["expr"];
         } else {
           return el["alias"] ? "".concat(el["table"], " as ").concat(el["alias"]) : el["table"];
         }
@@ -9308,9 +9387,16 @@ function generate_koob_sql(_cfg, _vars) {
         group_by = ''; // plSQL will parse this comment! Sic! 
 
         top_level_select = "/*ON1Y*/".concat(top_level_select);
-      }
+      } // Oracle can not handle `table as alias` So we removed AS from final select
+      // Teradata: [TeraJDBC 16.20.00.13] [Error 3706] [SQLState 42000] Syntax error: ORDER BY is not allowed in subqueries.
 
-      final_sql = "".concat(top_level_select, " FROM (").concat(select, "\nFROM ").concat(from).concat(where).concat(group_by, ") AS koob__top__level__select__").concat(order_by).concat(limit_offset).concat(ending);
+
+      if (_context[0]["_target_database"] === 'teradata') {
+        // FIXME: В терадате используется WINDOW  OVER (ORDER BY) для наших типов запросов, так что должно быть норм. 
+        final_sql = "".concat(top_level_select, " FROM (").concat(select, "\nFROM ").concat(from).concat(where).concat(group_by, ") koob__top__level__select__").concat(top_level_where).concat(order_by).concat(limit_offset).concat(ending);
+      } else {
+        final_sql = "".concat(top_level_select, " FROM (").concat(select, "\nFROM ").concat(from).concat(where).concat(group_by).concat(order_by, ") koob__top__level__select__").concat(top_level_where).concat(limit_offset).concat(ending);
+      }
     } else {
       if (global_only1 === true) {
         group_by = ''; // plSQL will parse this comment! Sic! 
@@ -9324,7 +9410,7 @@ function generate_koob_sql(_cfg, _vars) {
     if (_cfg["return"] === "count") {
       if (_context[0]["_target_database"] === 'clickhouse') {
         final_sql = "select toUInt32(count(300)) as count from (".concat(final_sql, ")");
-      } else if (_context[0]["_target_database"] === 'teradata') {
+      } else if (_context[0]["_target_database"] === 'teradata' || _context[0]["_target_database"] === 'oracle') {
         final_sql = "select count(300) as \"count\" from (".concat(final_sql, ") koob__count__src__");
       } else {
         // avoid error in postgresql

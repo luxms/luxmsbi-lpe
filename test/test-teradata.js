@@ -19,7 +19,7 @@ describe('KOOB Teradata tests', function() {
    `SELECT ROW_NUMBER() OVER (order by hcode_name) as "koob__row__num__", "АХТУНГ", "hcode_name" FROM (SELECT sum(v_rel_pp) as "АХТУНГ", hcode_name as "hcode_name"
 FROM fot_out AS fot_out
 WHERE (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
-GROUP BY hcode_name) AS koob__top__level__select__
+GROUP BY hcode_name) koob__top__level__select__
 ORDER BY hcode_name
 QUALIFY koob__row__num__ <= 10`
             );
@@ -39,7 +39,7 @@ QUALIFY koob__row__num__ <= 10`
    `SELECT ROW_NUMBER() OVER (order by hcode_name) as "koob__row__num__", "АХТУНГ", "hcode_name" FROM (SELECT sum(v_rel_pp) as "АХТУНГ", hcode_name as "hcode_name"
 FROM fot_out AS fot_out
 WHERE (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
-GROUP BY hcode_name) AS koob__top__level__select__
+GROUP BY hcode_name) koob__top__level__select__
 QUALIFY koob__row__num__ <= 10`
             );
    });
@@ -57,7 +57,7 @@ QUALIFY koob__row__num__ <= 10`
          "with":"ch.fot_out"},
                {"_target_database": "teradata"}),
    `SELECT ROW_NUMBER() OVER (order by "АХТУНГ",hcode_name) as "koob__row__num__", "АХТУНГ", "hcode_name" FROM (SELECT v_rel_pp as "АХТУНГ", hcode_name as "hcode_name"
-FROM fot_out AS fot_out) AS koob__top__level__select__
+FROM fot_out AS fot_out) koob__top__level__select__
 QUALIFY koob__row__num__ <= 10`
             );
    });
@@ -77,7 +77,7 @@ QUALIFY koob__row__num__ <= 10`
    `SELECT ROW_NUMBER() OVER (order by hcode_name) as "koob__row__num__", "АХТУНГ", "hcode_name" FROM (SELECT sum(v_rel_pp) as "АХТУНГ", hcode_name as "hcode_name"
 FROM fot_out AS fot_out
 WHERE (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
-GROUP BY hcode_name) AS koob__top__level__select__
+GROUP BY hcode_name) koob__top__level__select__
 ORDER BY hcode_name
 QUALIFY koob__row__num__ > 10`
             );
@@ -99,7 +99,7 @@ QUALIFY koob__row__num__ > 10`
    `SELECT ROW_NUMBER() OVER (order by hcode_name) as "koob__row__num__", "АХТУНГ", "hcode_name" FROM (SELECT sum(v_rel_pp) as "АХТУНГ", hcode_name as "hcode_name"
 FROM fot_out AS fot_out
 WHERE (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
-GROUP BY hcode_name) AS koob__top__level__select__
+GROUP BY hcode_name) koob__top__level__select__
 ORDER BY hcode_name
 QUALIFY koob__row__num__ BETWEEN 11 AND 15`
             );
@@ -121,7 +121,7 @@ QUALIFY koob__row__num__ BETWEEN 11 AND 15`
    `SELECT ROW_NUMBER() OVER (order by hcode_name) as "koob__row__num__", "АХТУНГ", "hcode_name", "rng" FROM (SELECT sum(v_rel_pp) as "АХТУНГ", hcode_name as "hcode_name", koob__range__table__.day_of_calendar - 1 as "rng"
 FROM fot_out AS fot_out,sys_calendar.CALENDAR as koob__range__table__
 WHERE (hcode_name IS NOT NULL) AND (koob__range__table__.day_of_calendar <= 2) AND (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
-GROUP BY hcode_name, koob__range__table__.day_of_calendar - 1) AS koob__top__level__select__
+GROUP BY hcode_name, koob__range__table__.day_of_calendar - 1) koob__top__level__select__
 ORDER BY hcode_name
 QUALIFY koob__row__num__ BETWEEN 11 AND 15`
             );
