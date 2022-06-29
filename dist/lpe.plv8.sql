@@ -7732,20 +7732,25 @@ function init_koob_context(_vars, default_ds, default_cube) {
     if (ast.length === 1) {
       return '1=0';
     } else if (ast.length === 2) {
-      var v = resolveValue(ast[1]);
-      return v === null ? "".concat(c, " IS NULL") : "".concat(c, " = ").concat(v);
-    } else {
-      // check if we have null in the array of values...
-      var resolvedV = ast.slice(1).map(function (el) {
-        return resolveValue(el);
-      }).filter(function (el) {
-        return el !== null;
-      });
-      var hasNull = resolvedV.length < ast.length - 1;
-      var ret = "".concat(c, " IN (").concat(resolvedV.join(', '), ")");
-      if (hasNull) ret = "".concat(ret, " OR ").concat(c, " IS NULL");
-      return ret;
-    }
+      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(ast[1]) && ast[1][0] === "[") {
+        var a = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(ast[1], _context);
+        ast = [c].concat(a);
+      } else {
+        var v = resolveValue(ast[1]);
+        return v === null ? "".concat(c, " IS NULL") : "".concat(c, " = ").concat(v);
+      }
+    } // check if we have null in the array of values...
+
+
+    var resolvedV = ast.slice(1).map(function (el) {
+      return resolveValue(el);
+    }).filter(function (el) {
+      return el !== null;
+    });
+    var hasNull = resolvedV.length < ast.length - 1;
+    var ret = "".concat(c, " IN (").concat(resolvedV.join(', '), ")");
+    if (hasNull) ret = "".concat(ret, " OR ").concat(c, " IS NULL");
+    return ret;
   });
   _context['!='] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* makeSF */])(function (ast, ctx) {
     // понимаем a != [null] как a is not null
@@ -7765,20 +7770,25 @@ function init_koob_context(_vars, default_ds, default_cube) {
     if (ast.length === 1) {
       return '1=1';
     } else if (ast.length === 2) {
-      var v = resolveValue(ast[1]);
-      return v === null ? "".concat(c, " IS NOT NULL") : "".concat(c, " != ").concat(v);
-    } else {
-      // check if we have null in the array of values...
-      var resolvedV = ast.slice(1).map(function (el) {
-        return resolveValue(el);
-      }).filter(function (el) {
-        return el !== null;
-      });
-      var hasNull = resolvedV.length < ast.length - 1;
-      var ret = "".concat(c, " NOT IN (").concat(resolvedV.join(', '), ")");
-      if (hasNull) ret = "".concat(ret, " AND ").concat(c, " IS NOT NULL");
-      return ret;
-    }
+      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(ast[1]) && ast[1][0] === "[") {
+        var a = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(ast[1], _context);
+        ast = [c].concat(a);
+      } else {
+        var v = resolveValue(ast[1]);
+        return v === null ? "".concat(c, " IS NOT NULL") : "".concat(c, " != ").concat(v);
+      }
+    } // check if we have null in the array of values...
+
+
+    var resolvedV = ast.slice(1).map(function (el) {
+      return resolveValue(el);
+    }).filter(function (el) {
+      return el !== null;
+    });
+    var hasNull = resolvedV.length < ast.length - 1;
+    var ret = "".concat(c, " NOT IN (").concat(resolvedV.join(', '), ")");
+    if (hasNull) ret = "".concat(ret, " AND ").concat(c, " IS NOT NULL");
+    return ret;
   }); //console.log('CONTEXT!', _context['()'])
 
   return _ctx;
@@ -8668,7 +8678,9 @@ function generate_koob_sql(_cfg, _vars) {
 
   var order_by = _cfg["sort"].map(function (el) {
     return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(el, order_by_context);
-  }); //console.log("SQL:", JSON.stringify(cube_query_template))
+  }); //console.log("ORDER BY:", JSON.stringify(order_by))
+  // ORDER BY: ["perda","lead DESC","newid() DESC","newid()"]
+  //console.log("SQL:", JSON.stringify(cube_query_template))
 
 
   var from = cube_query_template.query;
@@ -8716,6 +8728,12 @@ function generate_koob_sql(_cfg, _vars) {
       }
     } else if (offset) {
       limit_offset = "\nOFFSET ".concat(parseInt(_cfg["offset"]), " ROWS");
+    } // FIXME: кажется это надо делать абсолютно для всех БД
+    // и надо с умом подбирать список столбцов
+
+
+    if (order_by.length === 0) {
+      order_by = ["1"];
     }
   } else if (_context[0]["_target_database"] === 'teradata' && (limit || offset)) {
     // Здесь нужно иметь под рукой сотрировку! если её нет, то надо свою выбрать

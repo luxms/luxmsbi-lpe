@@ -1932,6 +1932,8 @@ export function generate_koob_sql(_cfg, _vars) {
   var order_by_context = extend_context_for_order_by(_context, _cfg)
   //console.log("SORT:", JSON.stringify(_cfg["sort"]))
   var order_by = _cfg["sort"].map(el => eval_lisp(el, order_by_context))
+  //console.log("ORDER BY:", JSON.stringify(order_by))
+  // ORDER BY: ["perda","lead DESC","newid() DESC","newid()"]
 
   //console.log("SQL:", JSON.stringify(cube_query_template))
   var from = cube_query_template.query
@@ -1977,6 +1979,13 @@ export function generate_koob_sql(_cfg, _vars) {
       }
     } else if (offset) {
       limit_offset = `\nOFFSET ${parseInt(_cfg["offset"])} ROWS`
+    }
+
+    // FIXME: кажется это надо делать абсолютно для всех БД
+    // и надо с умом подбирать список столбцов
+
+    if (order_by.length === 0) {
+      order_by = ["1"]
     }
   } else if (_context[0]["_target_database"] === 'teradata' && (limit || offset)) {
     // Здесь нужно иметь под рукой сотрировку! если её нет, то надо свою выбрать

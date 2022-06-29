@@ -67,6 +67,27 @@ OFFSET 10 ROWS FETCH NEXT 5 ROWS ONLY`
             );
    });
 
+
+   it('should eval LIMIT OFFSET without sort', function() {
+      assert.equal( lpe.generate_koob_sql(
+         {"columns":[
+                     "sum(v_rel_pp):'АХТУНГ'",
+                     'hcode_name'
+                  ],
+         "filters":{},
+         "limit": 5,
+         "offset": 10,
+         "with":"ch.fot_out"},
+               {"_target_database": "sqlserver"}),
+   `SELECT sum(v_rel_pp) as "АХТУНГ", hcode_name as hcode_name
+FROM fot_out AS fot_out
+WHERE (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
+GROUP BY hcode_name
+ORDER BY 1
+OFFSET 10 ROWS FETCH NEXT 5 ROWS ONLY`
+            );
+   });
+
    it('should eval range() LIMIT OFFSET', function() {
       assert.equal( lpe.generate_koob_sql(
          {"columns":[
