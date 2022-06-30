@@ -1940,7 +1940,7 @@ export function generate_koob_sql(_cfg, _vars) {
 
   var limit = isNumber(_cfg["limit"]) ? ` LIMIT ${_cfg["limit"]}` : ''
   var offset = isNumber(_cfg["offset"]) ? ` OFFSET ${_cfg["offset"]}` : ''
-  var limit_offset = ''
+  let limit_offset = ''
 
   if (_context[0]["_target_database"] === 'oracle') {
     //AHTUNG!! это же условие для WHERE FILTERS !!!
@@ -1983,8 +1983,7 @@ export function generate_koob_sql(_cfg, _vars) {
 
     // FIXME: кажется это надо делать абсолютно для всех БД
     // и надо с умом подбирать список столбцов
-
-    if (order_by.length === 0) {
+    if (limit_offset.length > 1 && order_by.length === 0) {
       order_by = ["1"]
     }
   } else if (_context[0]["_target_database"] === 'teradata' && (limit || offset)) {
