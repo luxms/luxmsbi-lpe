@@ -1925,6 +1925,8 @@ export function generate_koob_sql(_cfg, _vars) {
   
   // для teradata limit/offset 
   let global_extra_columns = []
+  // Для Oracle
+  let global_generate_3_level_sql = false
   let top_level_where = '' // for oracle RANGE && LIMIT
   var group_by = _cfg["_group_by"].map(el => el.expr)
 
@@ -1947,22 +1949,16 @@ export function generate_koob_sql(_cfg, _vars) {
     let w
     if (limit) {
       if (offset) {
-        w = `ROWNUM > ${parseInt(_cfg["offset"])} AND ROWNUM <= (${parseInt(_cfg["offset"])} + ${parseInt(_cfg["limit"])})`
+        w = `"koob__row__num__" > ${parseInt(_cfg["offset"])} AND "koob__row__num__" <= (${parseInt(_cfg["offset"])} + ${parseInt(_cfg["limit"])})`
       } else {
-        w = `ROWNUM <= ${parseInt(_cfg["limit"])}`
+        w = `"koob__row__num__" <= ${parseInt(_cfg["limit"])}`
       }
     } else if (offset) {
-      w = `ROWNUM > ${parseInt(_cfg["offset"])}`
+      w = `"koob__row__num__" > ${parseInt(_cfg["offset"])}`
     }
 
     if (w) {
-
-      let column = {"columns":["ROWNUM"],"alias":"koob__row__num__","expr":"ROWNUM"}
-      // мы не можем добавлять это в общий список столбцов, так как нам потребуется ещё одна обёртка!
-      // создаём пока переменную глобальную! но нам нужны вложенные SQL контексты, а не просто outer/inner
-      //_cfg["_columns"].unshift(column)
-      global_extra_columns.unshift(column)
-
+      global_generate_3_level_sql = true
       if (top_level_where.length > 3) {
         top_level_where = `${top_level_where} AND ${w}`
       } else {
@@ -2416,8 +2412,13 @@ export function generate_koob_sql(_cfg, _vars) {
         group_by = ''
         // plSQL will parse this comment! Sic! 
         select = `/*ON1Y*/${select}`
-      }  
-      final_sql = `${select}\nFROM ${from}${where}${group_by}${order_by}${limit_offset}${ending}`
+      } 
+      if (_context[0]["_target_database"]==='oracle' &&  global_generate_3_level_sql === true) {
+        // В оракле приходится 3-х этажный селект делать
+        final_sql = `SELECT * FROM (SELECT koob__inner__select__.*, ROWNUM AS "koob__row__num__" FROM (${select}\nFROM ${from}${where}${group_by}${order_by}) koob__inner__select__) koob__top__level__select__${top_level_where}${ending}`
+      } else {
+        final_sql = `${select}\nFROM ${from}${where}${group_by}${order_by}${limit_offset}${ending}`
+      }
     }
 
 

@@ -8666,7 +8666,9 @@ function generate_koob_sql(_cfg, _vars) {
   } // для teradata limit/offset 
 
 
-  var global_extra_columns = [];
+  var global_extra_columns = []; // Для Oracle
+
+  var global_generate_3_level_sql = false;
   var top_level_where = ''; // for oracle RANGE && LIMIT
 
   var group_by = _cfg["_group_by"].map(function (el) {
@@ -8694,24 +8696,16 @@ function generate_koob_sql(_cfg, _vars) {
 
     if (limit) {
       if (offset) {
-        _w = "ROWNUM > ".concat(parseInt(_cfg["offset"]), " AND ROWNUM <= (").concat(parseInt(_cfg["offset"]), " + ").concat(parseInt(_cfg["limit"]), ")");
+        _w = "\"koob__row__num__\" > ".concat(parseInt(_cfg["offset"]), " AND \"koob__row__num__\" <= (").concat(parseInt(_cfg["offset"]), " + ").concat(parseInt(_cfg["limit"]), ")");
       } else {
-        _w = "ROWNUM <= ".concat(parseInt(_cfg["limit"]));
+        _w = "\"koob__row__num__\" <= ".concat(parseInt(_cfg["limit"]));
       }
     } else if (offset) {
-      _w = "ROWNUM > ".concat(parseInt(_cfg["offset"]));
+      _w = "\"koob__row__num__\" > ".concat(parseInt(_cfg["offset"]));
     }
 
     if (_w) {
-      var column = {
-        "columns": ["ROWNUM"],
-        "alias": "koob__row__num__",
-        "expr": "ROWNUM" // мы не можем добавлять это в общий список столбцов, так как нам потребуется ещё одна обёртка!
-        // создаём пока переменную глобальную! но нам нужны вложенные SQL контексты, а не просто outer/inner
-        //_cfg["_columns"].unshift(column)
-
-      };
-      global_extra_columns.unshift(column);
+      global_generate_3_level_sql = true;
 
       if (top_level_where.length > 3) {
         top_level_where = "".concat(top_level_where, " AND ").concat(_w);
@@ -8732,7 +8726,7 @@ function generate_koob_sql(_cfg, _vars) {
     // и надо с умом подбирать список столбцов
 
 
-    if (order_by.length === 0) {
+    if (limit_offset.length > 1 && order_by.length === 0) {
       order_by = ["1"];
     }
   } else if (_context[0]["_target_database"] === 'teradata' && (limit || offset)) {
@@ -8760,7 +8754,7 @@ function generate_koob_sql(_cfg, _vars) {
     } //`ROW_NUMBER() OVER (order by ${window_order_by}) as koob__row__num__`
 
 
-    var _column = {
+    var column = {
       "columns": [],
       "alias": "koob__row__num__",
       "expr": "ROW_NUMBER() OVER (order by ".concat(window_order_by, ")") // мы не можем добавлять это в общий список столбцов, так как нам потребуется ещё одна обёртка!
@@ -8768,7 +8762,7 @@ function generate_koob_sql(_cfg, _vars) {
       //_cfg["_columns"].unshift(column)
 
     };
-    global_extra_columns.unshift(_column);
+    global_extra_columns.unshift(column);
 
     if (limit) {
       //QUALIFY __row_num  BETWEEN 1 and 4;
@@ -9208,7 +9202,12 @@ function generate_koob_sql(_cfg, _vars) {
         select = "/*ON1Y*/".concat(select);
       }
 
-      final_sql = "".concat(select, "\nFROM ").concat(from).concat(where).concat(group_by).concat(order_by).concat(limit_offset).concat(ending);
+      if (_context[0]["_target_database"] === 'oracle' && global_generate_3_level_sql === true) {
+        // В оракле приходится 3-х этажный селект делать
+        final_sql = "SELECT * FROM (SELECT koob__inner__select__.*, ROWNUM AS \"koob__row__num__\" FROM (".concat(select, "\nFROM ").concat(from).concat(where).concat(group_by).concat(order_by, ") koob__inner__select__) koob__top__level__select__").concat(top_level_where).concat(ending);
+      } else {
+        final_sql = "".concat(select, "\nFROM ").concat(from).concat(where).concat(group_by).concat(order_by).concat(limit_offset).concat(ending);
+      }
     }
 
     if (_cfg["return"] === "count") {
