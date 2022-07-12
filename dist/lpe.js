@@ -7875,7 +7875,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     if (_vars["_target_database"] === 'clickhouse') {
       // FIXME: detect column type !!!
       return "toString(".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), ") ILIKE ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _context));
-    } else if (_vars["_target_database"] === 'oracle') {
+    } else if (_vars["_target_database"] === 'oracle' || _vars["_target_database"] === 'sqlserver') {
       // FIXME! Oracle has something similar to ilike in v12 only :-()
       // FIXME: use regexp
       return "UPPER(".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), ") LIKE UPPER(").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _context), ")");

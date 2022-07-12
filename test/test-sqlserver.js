@@ -183,7 +183,7 @@ it('should eval KOOB ILIKE', function() {
             {"_target_database": "sqlserver"}),
    `SELECT sum(v_rel_pp) as v_rel_pp, group_pay_name as group_pay_name, hcode_name as hcode_name, CASE WHEN sum(v_rel_pp) = 0 THEN 0 ELSE sum(pay_code) / sum(v_rel_pp) END as d
 FROM fot_out AS fot_out
-WHERE (hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND (1=0) AND (1=1) AND ((1=1) OR (pay_code ILIKE 'Муж')) AND (sex_code IS NULL)
+WHERE (hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND (1=0) AND (1=1) AND ((1=1) OR (UPPER(pay_code) LIKE UPPER('Муж'))) AND (sex_code IS NULL)
 GROUP BY group_pay_name, hcode_name
 ORDER BY perda, lead DESC, newid() DESC, newid()
 OFFSET 10 ROWS FETCH NEXT 100 ROWS ONLY`
@@ -241,7 +241,7 @@ OFFSET 10 ROWS FETCH NEXT 5 ROWS ONLY`
                   {"_target_database": "sqlserver"}),
          `select count(300) as count from (SELECT sum(v_rel_pp) as v_rel_pp, group_pay_name as group_pay_name, hcode_name as hcode_name, CASE WHEN sum(v_rel_pp) = 0 THEN 0 ELSE sum(pay_code) / sum(v_rel_pp) END as d
 FROM fot_out AS fot_out
-WHERE (hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND (1=0) AND (1=1) AND ((1=1) OR (pay_code ILIKE 'Муж')) AND (sex_code IS NULL)
+WHERE (hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND (1=0) AND (1=1) AND ((1=1) OR (UPPER(pay_code) LIKE UPPER('Муж'))) AND (sex_code IS NULL)
 GROUP BY group_pay_name, hcode_name) koob__count__src__`
                );
          

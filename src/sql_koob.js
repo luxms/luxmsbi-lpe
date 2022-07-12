@@ -1035,7 +1035,9 @@ function init_koob_context(_vars, default_ds, default_cube) {
     if (_vars["_target_database"] === 'clickhouse') {
       // FIXME: detect column type !!!
       return `toString(${eval_lisp(col,_context)}) ILIKE ${eval_lisp(tmpl,_context)}`
-    } else if (_vars["_target_database"] === 'oracle') {
+    } else if (_vars["_target_database"] === 'oracle' ||
+               _vars["_target_database"] === 'sqlserver') 
+    {
       // FIXME! Oracle has something similar to ilike in v12 only :-()
       // FIXME: use regexp
       return `UPPER(${eval_lisp(col,_context)}) LIKE UPPER(${eval_lisp(tmpl,_context)})`
