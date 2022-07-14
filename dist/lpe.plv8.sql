@@ -4492,11 +4492,9 @@ function sql_where_context(_vars) {
             } else if (ar[0] == "ilike") {
               //_source_database
               // Oracle has no ilike !!!!
-              if (_vars["_target_database"] === 'oracle') {
+              if (_vars["_target_database"] === 'oracle' || _vars["_target_database"] === 'sqlserver') {
                 // UPPER(last_name) LIKE 'SM%' 
-                return "UPPER( ".concat(prnt(ar[1]), " ) LIKE ").concat(prnt(ar[2]));
-              } else if (_vars["_target_database"] === 'sqlserver') {
-                return "UPPER( ".concat(prnt(ar[1]), " ) LIKE ").concat(prnt(ar[2]));
+                return "UPPER( ".concat(prnt(ar[1]), " ) LIKE UPPER(").concat(prnt(ar[2]), ")");
               } else {
                 return prnt(ar[1]) + ' ' + ar[0] + ' ' + prnt(ar[2]);
               }
