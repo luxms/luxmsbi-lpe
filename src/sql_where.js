@@ -23,7 +23,7 @@
 import console from './console/console';
 import {parse} from './lpep';
 import {db_quote_literal, db_quote_ident, get_source_database} from './utils/utils';
-import {eval_lisp, isString, isArray, isHash, makeSF} from './lisp';
+import {eval_lisp, isString, isArray, isNumber, makeSF} from './lisp';
 
 /*
 where - всегда возвращает слово WHERE, а потом условия. На пустом входе вернёт WHERE TRUE
@@ -451,19 +451,21 @@ export function sql_where_context(_vars) {
         //console.log('COND MACRO ifnull: ' + JSON.stringify(ifnull));
         //COND MACRO expr: ["\"","myfunc($(period.title1)) = 234"]
         //COND MACRO ifnull: ["["]
-        var parsed = expr
+        let parsed = expr
         
         //console.log('COND PARSED:' + JSON.stringify(parsed));
         //Мы будем использовать спец флаг, были ли внутри этого cond доступы к переменным,
         // которые дали undefined. через глобальную переменную !!!
-        if ( isArray(ifnull) && ifnull.length === 2 && (ifnull[0] === '"' || ifnull[0] === "'")) {
-          var val = prnt(ifnull)
+        if ( isNumber(ifnull) || 
+              ifnull === null ||
+             (isArray(ifnull) && ifnull.length === 2 && (ifnull[0] === '"' || ifnull[0] === "'"))) {
+          let val = prnt(ifnull)
           track_undefined_values_for_cond.unshift(val)
         } else {
           track_undefined_values_for_cond.unshift(false)
         }
-        var evaluated = prnt(parsed);
-        var unresolved = track_undefined_values_for_cond.shift()
+        let evaluated = prnt(parsed);
+        let unresolved = track_undefined_values_for_cond.shift()
         //console.log('UNRESOLVED:' + unresolved);
         if (unresolved === true) {
           // не удалось найти значение, результат зависит от второго аргумента!
@@ -478,11 +480,13 @@ export function sql_where_context(_vars) {
             } else {
               // надо вычислить значение по умолчанию!!!
               // ["\"","myfunc(1)"]
-              var ast = ifnull[1]
-              var p = prnt(ast)
+              let ast = ifnull[1]
+              let p = prnt(ast)
               if (isArray(ast) && (ast[0] === '"' || ast[0] === "'")) {
+                // убираем кавычки
                 p = p.slice(1,-1)
               }
+              
               return p
             }
           }
@@ -517,7 +521,7 @@ export function sql_where_context(_vars) {
         // a = [null, 1,2] как a in (1,2) or a is null
 
         // ["=",["column","vNetwork.cluster"],["[","SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]]
-        // console.log('========'+ JSON.stringify(l) + ' <> ' + JSON.stringify(r))
+        //console.log('========'+ JSON.stringify(l) + ' <> ' + JSON.stringify(r))
         if (r instanceof Array) {
           if (r.length === 0) {
             return op === 'eq' ? 'TRUE' : 'FALSE';
@@ -564,7 +568,7 @@ export function sql_where_context(_vars) {
               var_expr = eval_lisp(r[1], _context); // actually, we might do eval_lisp(r, ctx) but that will quote everything, including numbers!
                       // здесь мы получаем в том числе и массив, хорошо бы понимать, мы находимся в cond или нет
               // ["=","ГКБ"]
-              // console.log("RESOLVED $" + JSON.stringify(var_expr) )
+              //console.log("RESOLVED $" + JSON.stringify(var_expr) )
               if (isArray(var_expr)) {
                 if (var_expr[0] === '=') {
                   if (var_expr.length === 2){
@@ -581,20 +585,21 @@ export function sql_where_context(_vars) {
               var_expr = prnt(r, ctx);
             }
 
-
-            if (var_expr instanceof Array) {
-              return ctx[op](l,['['].concat(var_expr));
-            } else {
-              //console.log("EVAL = " + JSON.stringify(l) + ' ' + JSON.stringify(var_expr));
-              return ctx[op](l,var_expr);
+            if (var_expr !== undefined) {
+              if (var_expr instanceof Array) {
+                return ctx[op](l,['['].concat(var_expr));
+              } else {
+                //console.log("EVAL = " + JSON.stringify(l) + ' ' + JSON.stringify(var_expr));
+                return ctx[op](l,var_expr);
+              }
             }
           }
         }
 
-        if (r == null) {
+        if (r === null || r === undefined) {
           var defVal = track_undefined_values_for_cond[0]
           //console.log("$ CHECK " + defVal)
-          if (isString(defVal)) {
+          if (isString(defVal) || isNumber(defVal) || defVal === null) {
             return defVal;
           } else {
             // ставим метку, что был резолвинг неопределённого значения
@@ -658,7 +663,7 @@ if (track_undefined_values_for_cond.length > 0) {
           // значит по этому ключу нет элемента в _vars например !!!
           var defVal = track_undefined_values_for_cond[0]
           //console.log("$ CHECK " + defVal)
-          if (isString(defVal)) {
+          if (isString(defVal) || isNumber(defVal) || defVal === null) {
             return defVal;
           } else {
             // ставим метку, что был резолвинг неопределённого значения

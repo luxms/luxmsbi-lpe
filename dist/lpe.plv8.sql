@@ -4535,7 +4535,7 @@ function sql_where_context(_vars) {
       //Мы будем использовать спец флаг, были ли внутри этого cond доступы к переменным,
       // которые дали undefined. через глобальную переменную !!!
 
-      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["d" /* isArray */])(ifnull) && ifnull.length === 2 && (ifnull[0] === '"' || ifnull[0] === "'")) {
+      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["f" /* isNumber */])(ifnull) || ifnull === null || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["d" /* isArray */])(ifnull) && ifnull.length === 2 && (ifnull[0] === '"' || ifnull[0] === "'")) {
         var val = prnt(ifnull);
         track_undefined_values_for_cond.unshift(val);
       } else {
@@ -4563,6 +4563,7 @@ function sql_where_context(_vars) {
             var p = prnt(ast);
 
             if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["d" /* isArray */])(ast) && (ast[0] === '"' || ast[0] === "'")) {
+              // убираем кавычки
               p = p.slice(1, -1);
             }
 
@@ -4600,7 +4601,7 @@ function sql_where_context(_vars) {
       // a = [] просто пропускаем, А кстати почему собственно???
       // a = [null, 1,2] как a in (1,2) or a is null
       // ["=",["column","vNetwork.cluster"],["[","SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]]
-      // console.log('========'+ JSON.stringify(l) + ' <> ' + JSON.stringify(r))
+      //console.log('========'+ JSON.stringify(l) + ' <> ' + JSON.stringify(r))
       if (r instanceof Array) {
         if (r.length === 0) {
           return op === 'eq' ? 'TRUE' : 'FALSE';
@@ -4654,7 +4655,7 @@ function sql_where_context(_vars) {
             var_expr = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(r[1], _context); // actually, we might do eval_lisp(r, ctx) but that will quote everything, including numbers!
             // здесь мы получаем в том числе и массив, хорошо бы понимать, мы находимся в cond или нет
             // ["=","ГКБ"]
-            // console.log("RESOLVED $" + JSON.stringify(var_expr) )
+            //console.log("RESOLVED $" + JSON.stringify(var_expr) )
 
             if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["d" /* isArray */])(var_expr)) {
               if (var_expr[0] === '=') {
@@ -4674,19 +4675,21 @@ function sql_where_context(_vars) {
             var_expr = prnt(r, ctx);
           }
 
-          if (var_expr instanceof Array) {
-            return ctx[op](l, ['['].concat(var_expr));
-          } else {
-            //console.log("EVAL = " + JSON.stringify(l) + ' ' + JSON.stringify(var_expr));
-            return ctx[op](l, var_expr);
+          if (var_expr !== undefined) {
+            if (var_expr instanceof Array) {
+              return ctx[op](l, ['['].concat(var_expr));
+            } else {
+              //console.log("EVAL = " + JSON.stringify(l) + ' ' + JSON.stringify(var_expr));
+              return ctx[op](l, var_expr);
+            }
           }
         }
       }
 
-      if (r == null) {
+      if (r === null || r === undefined) {
         var defVal = track_undefined_values_for_cond[0]; //console.log("$ CHECK " + defVal)
 
-        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["e" /* isString */])(defVal)) {
+        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["e" /* isString */])(defVal) || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["f" /* isNumber */])(defVal) || defVal === null) {
           return defVal;
         } else {
           // ставим метку, что был резолвинг неопределённого значения
@@ -4754,7 +4757,7 @@ function sql_where_context(_vars) {
         // значит по этому ключу нет элемента в _vars например !!!
         var defVal = track_undefined_values_for_cond[0]; //console.log("$ CHECK " + defVal)
 
-        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["e" /* isString */])(defVal)) {
+        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["e" /* isString */])(defVal) || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["f" /* isNumber */])(defVal) || defVal === null) {
           return defVal;
         } else {
           // ставим метку, что был резолвинг неопределённого значения

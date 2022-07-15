@@ -326,6 +326,40 @@ GROUP BY (round(v_main,2)), group_pay_name, hcode_name`
             "year_start <= 2021 and short_tp = 'ГКБ' or col != 'ГКБ' and version = '2.0'"
             );
 
+         assert.equal( lpe.eval_sql_where(
+               "filter( cond(year_start1 = $(row.yyyy), ['year_start2 = \\'2001\\'']))",
+               {"_quoting":"explicit" ,"version":"2.0","row":{"short_tp":["=","ГКБ"],"y":["=",2021]},"limit":100,"offset":0,"context":{"attachment_id":5,"row":{"short_tp":["=","ГКБ"],"y":["=",2021]}}}),
+               "year_start2 = '2001'"
+         );
+
+         assert.equal( lpe.eval_sql_where(
+            "filter( cond(year_start1 = $(row.yyyy), '2001'))",
+            {"_quoting":"explicit" ,"version":"2.0","row":{"short_tp":["=","ГКБ"],"y":["=",2021]},"limit":100,"offset":0,"context":{"attachment_id":5,"row":{"short_tp":["=","ГКБ"],"y":["=",2021]}}}),
+            "year_start1 = '2001'"
+            );
+
+         /********************************
+          * FIXME!!!!!!!!!!! IS NULL 
+          */
+         assert.equal( lpe.eval_sql_where(
+               "filter( cond(year_start1 = $(row.yyyy), null))",
+               {"_quoting":"explicit" ,"version":"2.0","row":{"short_tp":["=","ГКБ"],"y":["=",2021]},"limit":100,"offset":0,"context":{"attachment_id":5,"row":{"short_tp":["=","ГКБ"],"y":["=",2021]}}}),
+               "year_start1 = null"
+               ); 
+   
+
+         assert.equal( lpe.eval_sql_where(
+            "filter( cond(year_start1 = $(row.yyyy), 2001))",
+            {"_quoting":"explicit" ,"version":"2.0","row":{"short_tp":["=","ГКБ"],"y":["=",2021]},"limit":100,"offset":0,"context":{"attachment_id":5,"row":{"short_tp":["=","ГКБ"],"y":["=",2021]}}}),
+            "year_start1 = 2001"
+            );
+
+         assert.equal( lpe.eval_sql_where(
+               "filter( cond(year_start1 > $(row.yyyy), 2001))",
+               {"_quoting":"explicit" ,"version":"2.0","row":{"short_tp":["=","ГКБ"],"y":["=",2021]},"limit":100,"offset":0,"context":{"attachment_id":5,"row":{"short_tp":["=","ГКБ"],"y":["=",2021]}}}),
+               "year_start1 > 2001"
+               );
+
    });
 
    it('should eval KOOB only1', function() {
