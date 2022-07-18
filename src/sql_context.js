@@ -65,7 +65,7 @@ export function sql_context(_vars) {
   _context['sql'] = function() {
     var q; // resulting sql
     var args = Array.prototype.slice.call(arguments);
-    console.log('SQL IN: ', args);
+    //console.log('SQL IN: ', args);
 
     // use sql-struct!
     var command = ["sql-struct"].concat(args)
@@ -113,41 +113,41 @@ export function sql_context(_vars) {
     }; // resulting sql
 
     var args = Array.prototype.slice.call(arguments);
-    console.log('SQL-STRUCT IN: ', args);
+    //console.log('SQL-STRUCT IN: ', args);
 
     var find_part = function(p) {
       return args.find((el) => p == el[0]);
     };
 
     var sel = find_part('select');
-    console.log('FOUND select: ', sel);
+    //console.log('FOUND select: ', sel);
     q.select = eval_lisp(sel, _context);
 
     var from = find_part('from');
-    console.log('FOUND from: ', from);
+    //console.log('FOUND from: ', from);
     q.from = eval_lisp(from, _context);
 
     var where = find_part('filter');
-    console.log("FOUND where: ", where);
+    //console.log("FOUND where: ", where);
     if (where instanceof Array && where.length > 1) {
       q.where = eval_lisp(where, _context );
     }
 
     var grp = find_part('group_by');
-    console.log('FOUND group_by: ', grp);
+    //console.log('FOUND group_by: ', grp);
     if (grp instanceof Array && grp.length > 1) {
       q.group_by = eval_lisp( grp, _context );
     }
 
     var srt = find_part('order_by');
-    console.log('FOUND sort: ', srt);
+    //console.log('FOUND sort: ', srt);
     if (srt instanceof Array && srt.length > 1) {
       q.order_by = eval_lisp( srt, _context );
     }
 
     //slice(offset, pageItemsNum)
     var s = find_part('slice');
-    console.log("FOUND slice: ", s);
+    //console.log("FOUND slice: ", s);
     if (s instanceof Array && s.length > 1) {
       q.limit_offset = eval_lisp(s, _context );
     }
@@ -159,7 +159,7 @@ export function sql_context(_vars) {
 
 
   function prnt(a) {
-    console.log('prnt IN: ', a);
+    //console.log('prnt IN: ', a);
     if (a instanceof Array){
       if (a.length > 0) {
         if (a[0] === '::' && a.length == 3) {
@@ -188,13 +188,13 @@ export function sql_context(_vars) {
   // table.column 
   _context['->'] = function() {
     var a = Array.prototype.slice.call(arguments);
-    console.log("->   " + JSON.stringify(a));
+    //console.log("->   " + JSON.stringify(a));
     return a.join('.');
   }
 
   _context[':'] = function() {
     var a = Array.prototype.slice.call(arguments);
-    console.log("->   " + JSON.stringify(a));
+    //console.log("->   " + JSON.stringify(a));
     return prnt(a[0]) + ' as ' + a[1].replace(/"/,'\\"');
   }
 
@@ -202,7 +202,7 @@ export function sql_context(_vars) {
     // должен вернуть СТРОКУ
   _context['select'] = function() {
     var a = Array.prototype.slice.call(arguments);
-    console.log("select IN: ",  JSON.stringify(a));
+    //console.log("select IN: ",  JSON.stringify(a));
     if (a.length < 1) {
       return "SELECT *";
     } else {
@@ -213,7 +213,7 @@ export function sql_context(_vars) {
 
   _context['from'] = function() {
     var a = Array.prototype.slice.call(arguments);
-    console.log('from IN: ', a);
+    //console.log('from IN: ', a);
     if (a.length < 1) {
       return "";
     } else {
@@ -224,7 +224,7 @@ export function sql_context(_vars) {
 
   _context['slice'] = function() {
     var a = Array.prototype.slice.call(arguments);
-    console.log('slice IN: ', a);
+    //console.log('slice IN: ', a);
     if (a.length < 1) {
       return "";
     } else {
@@ -281,11 +281,11 @@ export function eval_sql_expr(_expr, _vars) {
   // for(var key in _vars) _context[key] = _vars[key];
 
   _context['sql->entrypoint'] = function() {
-    console.log("++++++++++++++++++");
+    //console.log("++++++++++++++++++");
     var ret = [];
     for (var i = 0; i < arguments.length; i++) {
       ret.push(eval_lisp( arguments[i], _context));
-      console.log(JSON.stringify(ret));
+      //console.log(JSON.stringify(ret));
     }
 
     return ret.join(',');
@@ -293,7 +293,7 @@ export function eval_sql_expr(_expr, _vars) {
   _context['sql->entrypoint'].ast = [[],{},[],1]; // mark as macro
 
   var sexpr = parse(_expr);
-  console.log("parsed eval_sql_expr IN: ", sexpr);
+  //console.log("parsed eval_sql_expr IN: ", sexpr);
 
   /*
   if (ctx.hasOwnProperty('where')){
@@ -338,7 +338,7 @@ export function eval_sql_expr(_expr, _vars) {
     if (p) {
       sql.push(["from",fr]);
     }
-    console.log("parse do_select_from: ", sql);
+    //console.log("parse do_select_from: ", sql);
   };
 
   for (var i=1; i<sexpr.length; i++){
@@ -367,7 +367,7 @@ export function eval_sql_expr(_expr, _vars) {
     }
   }
 
-  console.log('parse: ', sql);
+  //console.log('parse: ', sql);
 
   var ret = eval_lisp(sql, _context);
   // console.log("parse: ", ret);
@@ -405,7 +405,7 @@ export function parse_sql_expr(_expr, _vars, _forced_table, _forced_where) {
     // это значит, что на входе у нас всего один вызов функции, мы его обернём в ->
     sexpr = ['sql->entrypoint', sexpr];
   }
-  console.log("DBAPI IN: ", sexpr);
+  //console.log("DBAPI IN: ", sexpr);
 
   /*
   if (ctx.hasOwnProperty('where')){
@@ -450,7 +450,7 @@ export function parse_sql_expr(_expr, _vars, _forced_table, _forced_where) {
     cache[fr].push(["from", _forced_table]);
   }
 
-  console.log("DEBUG", JSON.stringify(cache));
+  //console.log("DEBUG", JSON.stringify(cache));
 
 
   var args = cache["select"].map(ar => ar.slice(1));
@@ -487,9 +487,9 @@ export function parse_sql_expr(_expr, _vars, _forced_table, _forced_where) {
 
 
 
-  console.log("WHERE", JSON.stringify(w));
+  //console.log("WHERE", JSON.stringify(w));
 
-  console.log('DBAPI parse: ', sql);
+  //console.log('DBAPI parse: ', sql);
 
   var ret = eval_lisp(sql, _context);
 
@@ -540,7 +540,7 @@ _context["column"] = function(col) {
 }
 
 _context['generate_sql_struct_for_report'] = function(cfg) {
-  console.log(JSON.stringify(cfg))
+  //console.log(JSON.stringify(cfg))
   if (typeof cfg === 'object' && Array.isArray(cfg)) {
     throw new Error("reports_sql expected {...} as argument")
   }
@@ -731,7 +731,7 @@ _context['generate_sql_struct_for_report'] = function(cfg) {
              .map(h => { return h["lpe"] ? convert_in_to_eq(quote_text_constants(h["lpe"])) : null} )
              .filter(function(el){return el !== null});
 
-  console.log("========= reports_get_join_conditions " + JSON.stringify(join_struct))
+  //console.log("========= reports_get_join_conditions " + JSON.stringify(join_struct))
   if (join_struct.nodes.length > 1) {
     filt = filt.concat( reports_get_join_conditions(join_struct) )
   }
@@ -753,9 +753,9 @@ _context['generate_sql_struct_for_report'] = function(cfg) {
     var offset = cfg["offset"] || 0
     struct.push( ["slice", offset, cfg["limit"]])
   }
-  console.log(JSON.stringify(struct))
+  //console.log(JSON.stringify(struct))
 
-  console.log(`USING ${target_db_type} as target database`)
+  //console.log(`USING ${target_db_type} as target database`)
   var ret = eval_lisp(struct, _context);
 
   return ret;
