@@ -8862,14 +8862,13 @@ function generate_koob_sql(_cfg, _vars) {
   }
 
   var ending = ''; // FIXME! Требуется использовать настройки куба, поле config.query_settings.max_threads
-  //        Если в кубе нет настроек, то проверяем _data_source.query_settings
-  //        Он передаётся на вход!!!
+  //        Если в кубе нет настроек, то настройки из JDBC connect string сами применятся,
+  //        на уровне драйвера !!! Нужна функция по получению инфы про куб (а у нас может быть несколько таблиц!!!)
   // if (isHash(_vars["_data_source"]) && isString(_vars["_data_source"]["url"]) ) {
-
-  if (_context[0]["_target_database"] === 'clickhouse') {
-    // config->'_connection'->'options'->'max_threads'
-    ending = "\nSETTINGS max_threads = 1";
-  }
+  //if (_context[0]["_target_database"] === 'clickhouse'){
+  // config->'_connection'->'options'->'max_threads'
+  // ending = "\nSETTINGS max_threads = 1"
+  //}
 
   var expand_outer_expr = function expand_outer_expr(el) {
     if (el["eval_expr"] === true) {

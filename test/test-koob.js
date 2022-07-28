@@ -210,8 +210,7 @@ GROUP BY v_rel_pp_i / (100 * (v_main + 1))`
 `SELECT concat(toString(v_rel_pp),'*',v_rel_pp,hcode_name) as v_rel_pp, toString(group_pay_name), hcode_name as hcode_name
 FROM fot_out AS fot_out
 WHERE (hcode_name BETWEEN '2019-01-01' AND '2020-03-01')
-ORDER BY perda, lead DESC LIMIT 100 OFFSET 10
-SETTINGS max_threads = 1`
+ORDER BY perda, lead DESC LIMIT 100 OFFSET 10`
                         );
    });
 
@@ -379,8 +378,7 @@ GROUP BY (round(v_main,2)), group_pay_name, hcode_name`
    `/*ON1Y*/SELECT toString(v_rel_pp) as v_rel_pp, sum(group_pay_name) as group_pay_name, v_rel_pp111, hcode_name as hcode_name
 FROM fot_out AS fot_out
 WHERE (hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
-ORDER BY perda, lead DESC LIMIT 100 OFFSET 10
-SETTINGS max_threads = 1`
+ORDER BY perda, lead DESC LIMIT 100 OFFSET 10`
             );
    });
 
