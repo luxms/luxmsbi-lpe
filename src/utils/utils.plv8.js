@@ -1,6 +1,6 @@
 import { isObject } from "core-js/core/object";
 import console from "../console/console.plv8";
-import { isHash } from "../lisp";
+import { isHash, isString } from "../lisp";
 
 export function db_quote_literal(intxt) {
        return plv8.quote_literal(intxt);
@@ -221,6 +221,14 @@ export function get_data_source_info(srcIdent) {
                 //console.log(`DATA SOURCE URL MATCHED ${JSON.stringify(matched)}`)
                 if (matched != null && matched.length > 1) {
                     ret["flavor"] = matched[1]
+                } else {
+                    matched = url.match(/^xdds\:.*sinkDataSource=(\w+)/)
+                    if (matched != null && matched.length > 1) {
+                        return get_data_source_info(matched[1])
+                    } else {
+                        // default
+                        return {"flavor":"postgresql"}
+                    }
                 }
             }
         }
