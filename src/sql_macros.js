@@ -22,7 +22,7 @@
 
 import console from './console/console';
 import {parse} from './lpep';
-import {db_quote_literal, db_quote_ident, get_source_database} from './utils/utils';
+import {db_quote_literal, db_quote_ident} from './utils/utils';
 import {eval_lisp, isString, isArray, isHash, makeSF, isNumber} from './lisp';
 
 

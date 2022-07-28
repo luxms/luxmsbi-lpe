@@ -87,10 +87,19 @@ export function reports_get_join_conditions(link_struct) {
 }
 
 // we should get it from JDBC Connect String
+// DEPRECATED, remove in 2023, use get_data_source_info()
 export function get_source_database(srcIdent) {
      if (srcIdent === 'oracle') {
           return 'oracle'
      } else {
           return 'postgresql'
+     }
+}
+
+export function get_data_source_info(srcIdent) {
+     if (srcIdent === 'oracle') {
+          return {'flavor':'oracle'}
+     } else {
+          return {'flavor':'postgresql'}
      }
 }

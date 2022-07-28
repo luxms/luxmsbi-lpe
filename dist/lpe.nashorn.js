@@ -3632,10 +3632,10 @@ for (var collections = getKeys(DOMIterables), i = 0; i < collections.length; i++
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es7_symbol_async_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_core_js_modules_es7_symbol_async_iterator__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_symbol__ = __webpack_require__(63);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_symbol___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_symbol__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_regexp_search__ = __webpack_require__(105);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_regexp_search___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_regexp_search__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_es7_object_values__ = __webpack_require__(64);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_es7_object_values___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_core_js_modules_es7_object_values__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es7_object_values__ = __webpack_require__(64);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es7_object_values___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_core_js_modules_es7_object_values__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_regexp_search__ = __webpack_require__(105);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_regexp_search___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_regexp_search__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_regexp_match__ = __webpack_require__(104);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_regexp_match___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_regexp_match__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_web_dom_iterable__ = __webpack_require__(66);
@@ -3716,8 +3716,8 @@ function sql_where_context(_vars) {
   var srcIdent = _vars["sourceId"];
 
   if (srcIdent !== undefined) {
-    var target_db_type = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__utils_utils__["a" /* get_source_database */])(srcIdent);
-    _vars["_target_database"] = target_db_type;
+    var ds_info = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__utils_utils__["a" /* get_data_source_info */])(srcIdent);
+    _vars["_target_database"] = ds_info["flavor"];
   }
 
   var _context = _vars;
@@ -4487,14 +4487,16 @@ function sql_where_context(_vars) {
       // Full Text Search based on column_list
 
       if (_typeof(_vars['_columns']) == 'object') {
-        var ilike = Object.values(_vars['_columns']).map(function (col) {
+        var generator_func = function generator_func(col) {
           return col["search"] !== undefined ? ["ilike", col["search"], ["'", '%' + fts + '%']] : null;
-        }).filter(function (el) {
+        };
+
+        var ilike = Object.values(_vars['_columns']).map(generator_func).filter(function (el) {
           return el !== null;
         }).reduce(function (ac, el) {
           return ac ? ['or', ac, el] : el;
-        }, null) || []; //console.log( "FTS PARSED: ",  JSON.stringify(ilike));
-        //console.log( "FTS PARSED: ",  JSON.stringify(tree));
+        }, null) || [];
+        __WEBPACK_IMPORTED_MODULE_14__console_console__["a" /* default */].log("FTS PARSED: ", JSON.stringify(ilike)); //console.log( "FTS PARSED: ",  JSON.stringify(tree));
 
         if (ilike !== undefined && ilike.length > 0) {
           // добавляем корень AND с нашим поиском
@@ -4938,7 +4940,8 @@ function tokenize(s) {
 /* unused harmony export reports_get_table_sql */
 /* unused harmony export reports_get_join_path */
 /* unused harmony export reports_get_join_conditions */
-/* harmony export (immutable) */ __webpack_exports__["a"] = get_source_database;
+/* unused harmony export get_source_database */
+/* harmony export (immutable) */ __webpack_exports__["a"] = get_data_source_info;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_regexp_split__ = __webpack_require__(62);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_regexp_split___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_regexp_split__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_regexp_to_string__ = __webpack_require__(42);
@@ -5338,12 +5341,24 @@ function reports_get_join_path(cubes) {
 function reports_get_join_conditions(link_struct) {
   return 'TRUE';
 } // we should get it from JDBC Connect String
+// DEPRECATED, remove in 2023, use get_data_source_info()
 
 function get_source_database(srcIdent) {
   if (srcIdent === 'oracle') {
     return 'oracle';
   } else {
     return 'postgresql';
+  }
+}
+function get_data_source_info(srcIdent) {
+  if (srcIdent === 'oracle') {
+    return {
+      'flavor': 'oracle'
+    };
+  } else {
+    return {
+      'flavor': 'postgresql'
+    };
   }
 }
 

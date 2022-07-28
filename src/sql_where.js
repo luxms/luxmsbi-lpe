@@ -22,7 +22,7 @@
 
 import console from './console/console';
 import {parse} from './lpep';
-import {db_quote_literal, db_quote_ident, get_source_database} from './utils/utils';
+import {db_quote_literal, db_quote_ident, get_data_source_info} from './utils/utils';
 import {eval_lisp, isString, isArray, isNumber, makeSF} from './lisp';
 
 /*
@@ -40,8 +40,8 @@ export function sql_where_context(_vars) {
   // table lookup queries should be sending us key named sourceId = historical name!
   var srcIdent = _vars["sourceId"]
   if (srcIdent !== undefined) {
-    var target_db_type = get_source_database(srcIdent)
-    _vars["_target_database"] = target_db_type
+    let ds_info = get_data_source_info(srcIdent)
+    _vars["_target_database"] = ds_info["flavor"]
   }
 
   var _context = _vars;
@@ -762,13 +762,15 @@ if (track_undefined_values_for_cond.length > 0) {
         fts = fts.replace(/\'/g , "''"); //' be safe
         // Full Text Search based on column_list
         if (typeof _vars['_columns'] == 'object') {
-          var ilike = Object.values(_vars['_columns']).map(col =>
+          let generator_func = col =>
               col["search"] !== undefined
               ? ["ilike", col["search"], ["'", '%' + fts + '%']]
               : null
-            ).filter(el => el !== null).reduce((ac, el) => ac ? ['or',ac,el] : el, null) || [];
 
-          //console.log( "FTS PARSED: ",  JSON.stringify(ilike));
+          var ilike = Object.values(_vars['_columns']).map(generator_func)
+               .filter(el => el !== null).reduce((ac, el) => ac ? ['or',ac,el] : el, null) || [];
+
+          console.log( "FTS PARSED: ",  JSON.stringify(ilike));
           //console.log( "FTS PARSED: ",  JSON.stringify(tree));
 
           if (ilike !== undefined && ilike.length > 0) {

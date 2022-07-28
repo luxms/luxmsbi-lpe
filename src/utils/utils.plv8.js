@@ -1,4 +1,6 @@
+import { isObject } from "core-js/core/object";
 import console from "../console/console.plv8";
+import { isHash } from "../lisp";
 
 export function db_quote_literal(intxt) {
        return plv8.quote_literal(intxt);
@@ -182,13 +184,14 @@ export function reports_get_join_conditions(link_struct) {
 
 
 // we should get it from JDBC Connect String
+// DEPRECATED, remove in 2023, use get_data_source_info()
 export function get_source_database(srcIdent) {
     var rows = plv8.execute( 'SELECT url FROM adm.data_sources WHERE ident = $1', [srcIdent] );
     if (rows.length > 0) {
         var url = rows[0]["url"]
         if (url) {
             var matched = url.match(/^jdbc\:([^:]+)\:/)
-            console.log(`DATA SOURCE URL MATCHED ${JSON.stringify(matched)}`)
+            //console.log(`DATA SOURCE URL MATCHED ${JSON.stringify(matched)}`)
             if (matched != null && matched.length > 1) {
                 return matched[1]
             }
@@ -196,4 +199,33 @@ export function get_source_database(srcIdent) {
     }
     // default
     return 'postgresql'
+}
+
+export function get_data_source_info(srcIdent) {
+    let rows = plv8.execute( 'SELECT * FROM adm.data_sources WHERE ident = $1', [srcIdent] );
+    let ret = rows[0]
+
+    if (rows.length > 0) {
+        let con = ret["_connection"]
+        let flavor
+        if (isHash(con)){
+            flavor = con["flavor"]
+        }
+        if (isString(flavor) && flavor.length > 0) {
+            ret["flavor"] = flavor
+        } else {
+            // try to get flavor from URL connect string...
+            let url = ret["url"]
+            if (url) {
+                let matched = url.match(/^jdbc\:([^:]+)\:/)
+                //console.log(`DATA SOURCE URL MATCHED ${JSON.stringify(matched)}`)
+                if (matched != null && matched.length > 1) {
+                    ret["flavor"] = matched[1]
+                }
+            }
+        }
+        return ret
+    }
+    // default
+    return {"flavor":"postgresql"}
 }

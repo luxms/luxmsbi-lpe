@@ -30,7 +30,7 @@ import {
   reports_get_table_sql, 
   reports_get_join_path, 
   reports_get_join_conditions, 
-  get_source_database,
+  get_data_source_info,
   db_quote_literal
 } from './utils/utils';
 import { isObject } from 'core-js/fn/object';
@@ -1618,7 +1618,7 @@ export function generate_koob_sql(_cfg, _vars) {
     }
   }
 
-  var target_db_type = null
+  let ds_info = {}
   if ( isString( _cfg["with"]) ) {
     var w = _cfg["with"]
     _context["_columns"] = reports_get_columns(w)
@@ -1629,8 +1629,8 @@ export function generate_koob_sql(_cfg, _vars) {
     if ( w.match( /^("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)$/) !== null ) {
       _cfg = normalize_koob_config(_cfg, w, _context);
       if ( _context["_target_database"] === undefined) {
-        target_db_type = get_source_database(w.split('.')[0])
-        _context["_target_database"] = target_db_type
+        ds_info = get_data_source_info(w.split('.')[0])
+        _context["_target_database"] = ds_info["flavor"]
       }
     } else {
       // это строка, но она не поддерживается, так как либо точек слишком много, либо они не там, либо их нет
@@ -1790,7 +1790,7 @@ export function generate_koob_sql(_cfg, _vars) {
   */
 
 
-  var cube_query_template = reports_get_table_sql(target_db_type, `${_cfg["ds"]}.${_cfg["cube"]}`)
+  var cube_query_template = reports_get_table_sql(ds_info["flavor"], `${_cfg["ds"]}.${_cfg["cube"]}`)
 
   /* Если есть хотя бы один явный столбец group_by, а иначе, если просто считаем агрегаты по всей таблице без группировки по столбцам */
   
@@ -2044,6 +2044,7 @@ export function generate_koob_sql(_cfg, _vars) {
   //        Он передаётся на вход!!!
   // if (isHash(_vars["_data_source"]) && isString(_vars["_data_source"]["url"]) ) {
   if (_context[0]["_target_database"] === 'clickhouse'){
+    // config->'_connection'->'options'->'max_threads'
     ending = "\nSETTINGS max_threads = 1"
   }
 

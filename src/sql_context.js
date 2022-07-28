@@ -29,7 +29,7 @@ import {
   reports_get_table_sql, 
   reports_get_join_path, 
   reports_get_join_conditions, 
-  get_source_database
+  get_data_source_info
 } from './utils/utils';
 
 // polyfill = remove in 2020 !!!
@@ -671,8 +671,8 @@ _context['generate_sql_struct_for_report'] = function(cfg) {
   if (srcIdent === undefined) {
     srcIdent = join_struct.nodes[0].split('.')[0]
   }
-  var target_db_type = get_source_database(srcIdent)
-  _context["_target_database"] = target_db_type
+  let ds_info = get_data_source_info(srcIdent)
+  _context["_target_database"] = ds_info["flavor"]
 
   // column should always be represented as full path source.cube.column
   // for aggregates we should add func names as suffix ! like source.cube.column.max_avg
@@ -716,7 +716,7 @@ _context['generate_sql_struct_for_report'] = function(cfg) {
   }
 
   // will return something like     (select * from abc) AS a
-  var from = ['from'].concat(join_struct.nodes.map( t => reports_get_table_sql(target_db_type, t) ))            
+  var from = ['from'].concat(join_struct.nodes.map( t => reports_get_table_sql(ds_info["flavor"], t) ))            
 
   var order_by = ['order_by'].concat(cfg["columns"].map(h=> {
                                                         if (h["sort"] == 1) {

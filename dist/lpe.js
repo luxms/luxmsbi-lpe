@@ -2825,7 +2825,8 @@ __webpack_require__(97)('asyncIterator');
 /* harmony export (immutable) */ __webpack_exports__["e"] = reports_get_table_sql;
 /* harmony export (immutable) */ __webpack_exports__["g"] = reports_get_join_path;
 /* harmony export (immutable) */ __webpack_exports__["h"] = reports_get_join_conditions;
-/* harmony export (immutable) */ __webpack_exports__["d"] = get_source_database;
+/* unused harmony export get_source_database */
+/* harmony export (immutable) */ __webpack_exports__["d"] = get_data_source_info;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_regexp_split__ = __webpack_require__(37);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_regexp_split___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_regexp_split__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_regexp_to_string__ = __webpack_require__(27);
@@ -3225,12 +3226,24 @@ function reports_get_join_path(cubes) {
 function reports_get_join_conditions(link_struct) {
   return 'TRUE';
 } // we should get it from JDBC Connect String
+// DEPRECATED, remove in 2023, use get_data_source_info()
 
 function get_source_database(srcIdent) {
   if (srcIdent === 'oracle') {
     return 'oracle';
   } else {
     return 'postgresql';
+  }
+}
+function get_data_source_info(srcIdent) {
+  if (srcIdent === 'oracle') {
+    return {
+      'flavor': 'oracle'
+    };
+  } else {
+    return {
+      'flavor': 'postgresql'
+    };
   }
 }
 
@@ -4127,10 +4140,10 @@ __webpack_require__(61)(String, 'String', function (iterated) {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es7_symbol_async_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_core_js_modules_es7_symbol_async_iterator__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_symbol__ = __webpack_require__(28);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_symbol___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_symbol__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_regexp_search__ = __webpack_require__(151);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_regexp_search___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_regexp_search__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_es7_object_values__ = __webpack_require__(53);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_es7_object_values___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_core_js_modules_es7_object_values__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es7_object_values__ = __webpack_require__(53);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es7_object_values___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_core_js_modules_es7_object_values__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_regexp_search__ = __webpack_require__(151);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_regexp_search___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_regexp_search__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_regexp_match__ = __webpack_require__(67);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_regexp_match___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_regexp_match__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_web_dom_iterable__ = __webpack_require__(54);
@@ -4211,8 +4224,8 @@ function sql_where_context(_vars) {
   var srcIdent = _vars["sourceId"];
 
   if (srcIdent !== undefined) {
-    var target_db_type = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__utils_utils__["d" /* get_source_database */])(srcIdent);
-    _vars["_target_database"] = target_db_type;
+    var ds_info = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__utils_utils__["d" /* get_data_source_info */])(srcIdent);
+    _vars["_target_database"] = ds_info["flavor"];
   }
 
   var _context = _vars;
@@ -4982,14 +4995,16 @@ function sql_where_context(_vars) {
       // Full Text Search based on column_list
 
       if (_typeof(_vars['_columns']) == 'object') {
-        var ilike = Object.values(_vars['_columns']).map(function (col) {
+        var generator_func = function generator_func(col) {
           return col["search"] !== undefined ? ["ilike", col["search"], ["'", '%' + fts + '%']] : null;
-        }).filter(function (el) {
+        };
+
+        var ilike = Object.values(_vars['_columns']).map(generator_func).filter(function (el) {
           return el !== null;
         }).reduce(function (ac, el) {
           return ac ? ['or', ac, el] : el;
-        }, null) || []; //console.log( "FTS PARSED: ",  JSON.stringify(ilike));
-        //console.log( "FTS PARSED: ",  JSON.stringify(tree));
+        }, null) || [];
+        __WEBPACK_IMPORTED_MODULE_14__console_console__["a" /* default */].log("FTS PARSED: ", JSON.stringify(ilike)); //console.log( "FTS PARSED: ",  JSON.stringify(tree));
 
         if (ilike !== undefined && ilike.length > 0) {
           // добавляем корень AND с нашим поиском
@@ -5976,8 +5991,8 @@ function sql_context(_vars) {
   _context['sql'] = function () {
     var q; // resulting sql
 
-    var args = Array.prototype.slice.call(arguments);
-    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log('SQL IN: ', args); // use sql-struct!
+    var args = Array.prototype.slice.call(arguments); //console.log('SQL IN: ', args);
+    // use sql-struct!
 
     var command = ["sql-struct"].concat(args);
     var struct = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lisp__["a" /* eval_lisp */])(command, _context);
@@ -6020,8 +6035,7 @@ function sql_context(_vars) {
       "group_by": undefined
     }; // resulting sql
 
-    var args = Array.prototype.slice.call(arguments);
-    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log('SQL-STRUCT IN: ', args);
+    var args = Array.prototype.slice.call(arguments); //console.log('SQL-STRUCT IN: ', args);
 
     var find_part = function find_part(p) {
       return args.find(function (el) {
@@ -6029,36 +6043,32 @@ function sql_context(_vars) {
       });
     };
 
-    var sel = find_part('select');
-    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log('FOUND select: ', sel);
+    var sel = find_part('select'); //console.log('FOUND select: ', sel);
+
     q.select = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lisp__["a" /* eval_lisp */])(sel, _context);
-    var from = find_part('from');
-    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log('FOUND from: ', from);
+    var from = find_part('from'); //console.log('FOUND from: ', from);
+
     q.from = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lisp__["a" /* eval_lisp */])(from, _context);
-    var where = find_part('filter');
-    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("FOUND where: ", where);
+    var where = find_part('filter'); //console.log("FOUND where: ", where);
 
     if (where instanceof Array && where.length > 1) {
       q.where = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lisp__["a" /* eval_lisp */])(where, _context);
     }
 
-    var grp = find_part('group_by');
-    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log('FOUND group_by: ', grp);
+    var grp = find_part('group_by'); //console.log('FOUND group_by: ', grp);
 
     if (grp instanceof Array && grp.length > 1) {
       q.group_by = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lisp__["a" /* eval_lisp */])(grp, _context);
     }
 
-    var srt = find_part('order_by');
-    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log('FOUND sort: ', srt);
+    var srt = find_part('order_by'); //console.log('FOUND sort: ', srt);
 
     if (srt instanceof Array && srt.length > 1) {
       q.order_by = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lisp__["a" /* eval_lisp */])(srt, _context);
     } //slice(offset, pageItemsNum)
 
 
-    var s = find_part('slice');
-    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("FOUND slice: ", s);
+    var s = find_part('slice'); //console.log("FOUND slice: ", s);
 
     if (s instanceof Array && s.length > 1) {
       q.limit_offset = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lisp__["a" /* eval_lisp */])(s, _context);
@@ -6070,8 +6080,7 @@ function sql_context(_vars) {
   _context['sql-struct'].ast = [[], {}, [], 1]; // mark as macro
 
   function prnt(a) {
-    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log('prnt IN: ', a);
-
+    //console.log('prnt IN: ', a);
     if (a instanceof Array) {
       if (a.length > 0) {
         if (a[0] === '::' && a.length == 3) {
@@ -6098,21 +6107,20 @@ function sql_context(_vars) {
 
 
   _context['->'] = function () {
-    var a = Array.prototype.slice.call(arguments);
-    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("->   " + JSON.stringify(a));
+    var a = Array.prototype.slice.call(arguments); //console.log("->   " + JSON.stringify(a));
+
     return a.join('.');
   };
 
   _context[':'] = function () {
-    var a = Array.prototype.slice.call(arguments);
-    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("->   " + JSON.stringify(a));
+    var a = Array.prototype.slice.call(arguments); //console.log("->   " + JSON.stringify(a));
+
     return prnt(a[0]) + ' as ' + a[1].replace(/"/, '\\"');
   }; // должен вернуть СТРОКУ
 
 
   _context['select'] = function () {
-    var a = Array.prototype.slice.call(arguments);
-    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("select IN: ", JSON.stringify(a));
+    var a = Array.prototype.slice.call(arguments); //console.log("select IN: ",  JSON.stringify(a));
 
     if (a.length < 1) {
       return "SELECT *";
@@ -6124,8 +6132,7 @@ function sql_context(_vars) {
   _context['select'].ast = [[], {}, [], 1]; // mark as macro
 
   _context['from'] = function () {
-    var a = Array.prototype.slice.call(arguments);
-    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log('from IN: ', a);
+    var a = Array.prototype.slice.call(arguments); //console.log('from IN: ', a);
 
     if (a.length < 1) {
       return "";
@@ -6137,8 +6144,7 @@ function sql_context(_vars) {
   _context['from'].ast = [[], {}, [], 1]; // mark as macro
 
   _context['slice'] = function () {
-    var a = Array.prototype.slice.call(arguments);
-    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log('slice IN: ', a);
+    var a = Array.prototype.slice.call(arguments); //console.log('slice IN: ', a);
 
     if (a.length < 1) {
       return "";
@@ -6195,12 +6201,11 @@ function eval_sql_expr(_expr, _vars) {
   var _context = ctx; // for(var key in _vars) _context[key] = _vars[key];
 
   _context['sql->entrypoint'] = function () {
-    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("++++++++++++++++++");
+    //console.log("++++++++++++++++++");
     var ret = [];
 
     for (var i = 0; i < arguments.length; i++) {
-      ret.push(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lisp__["a" /* eval_lisp */])(arguments[i], _context));
-      __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log(JSON.stringify(ret));
+      ret.push(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lisp__["a" /* eval_lisp */])(arguments[i], _context)); //console.log(JSON.stringify(ret));
     }
 
     return ret.join(',');
@@ -6208,8 +6213,8 @@ function eval_sql_expr(_expr, _vars) {
 
   _context['sql->entrypoint'].ast = [[], {}, [], 1]; // mark as macro
 
-  var sexpr = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lpep__["a" /* parse */])(_expr);
-  __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("parsed eval_sql_expr IN: ", sexpr);
+  var sexpr = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__lpep__["a" /* parse */])(_expr); //console.log("parsed eval_sql_expr IN: ", sexpr);
+
   /*
   if (ctx.hasOwnProperty('where')){
     console.log('W O W');
@@ -6256,9 +6261,8 @@ function eval_sql_expr(_expr, _vars) {
 
     if (p) {
       sql.push(["from", fr]);
-    }
+    } //console.log("parse do_select_from: ", sql);
 
-    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("parse do_select_from: ", sql);
   };
 
   for (var i = 1; i < sexpr.length; i++) {
@@ -6291,9 +6295,9 @@ function eval_sql_expr(_expr, _vars) {
     } else {
       throw 'unexpected call: ' + JSON.stringify(expr);
     }
-  }
+  } //console.log('parse: ', sql);
 
-  __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log('parse: ', sql);
+
   var ret = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lisp__["a" /* eval_lisp */])(sql, _context); // console.log("parse: ", ret);
 
   return ret;
@@ -6326,9 +6330,8 @@ function parse_sql_expr(_expr, _vars, _forced_table, _forced_where) {
   if (sexpr[0] !== 'sql->entrypoint') {
     // это значит, что на входе у нас всего один вызов функции, мы его обернём в ->
     sexpr = ['sql->entrypoint', sexpr];
-  }
+  } //console.log("DBAPI IN: ", sexpr);
 
-  __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("DBAPI IN: ", sexpr);
   /*
   if (ctx.hasOwnProperty('where')){
     console.log('W O W');
@@ -6342,6 +6345,7 @@ function parse_sql_expr(_expr, _vars, _forced_table, _forced_where) {
   // where(a>1).where(b<1) === where(a>1 and b<1)
   // from(a).from(b).from(c) === from(c)
   // в последнем случае берётся последний from, а все первые игнорятся, но см. test.js = там есть другой пример !!!!
+
 
   var sql = ['sql-struct']; // wrapped by sql call...
 
@@ -6380,9 +6384,9 @@ function parse_sql_expr(_expr, _vars, _forced_table, _forced_where) {
 
   if (_forced_table !== undefined) {
     cache[fr].push(["from", _forced_table]);
-  }
+  } //console.log("DEBUG", JSON.stringify(cache));
 
-  __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("DEBUG", JSON.stringify(cache));
+
   var args = cache["select"].map(function (ar) {
     return ar.slice(1);
   });
@@ -6422,10 +6426,10 @@ function parse_sql_expr(_expr, _vars, _forced_table, _forced_where) {
     }
 
     sql.push(["filter", w]);
-  }
+  } //console.log("WHERE", JSON.stringify(w));
+  //console.log('DBAPI parse: ', sql);
 
-  __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("WHERE", JSON.stringify(w));
-  __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log('DBAPI parse: ', sql);
+
   var ret = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lisp__["a" /* eval_lisp */])(sql, _context);
   return ret;
 }
@@ -6480,8 +6484,7 @@ function generate_report_sql(_cfg, _vars) {
   };
 
   _context['generate_sql_struct_for_report'] = function (cfg) {
-    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log(JSON.stringify(cfg));
-
+    //console.log(JSON.stringify(cfg))
     if (_typeof(cfg) === 'object' && Array.isArray(cfg)) {
       throw new Error("reports_sql expected {...} as argument");
     }
@@ -6625,8 +6628,8 @@ function generate_report_sql(_cfg, _vars) {
       srcIdent = join_struct.nodes[0].split('.')[0];
     }
 
-    var target_db_type = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["d" /* get_source_database */])(srcIdent);
-    _context["_target_database"] = target_db_type; // column should always be represented as full path source.cube.column
+    var ds_info = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["d" /* get_data_source_info */])(srcIdent);
+    _context["_target_database"] = ds_info["flavor"]; // column should always be represented as full path source.cube.column
     // for aggregates we should add func names as suffix ! like source.cube.column.max_avg
 
     var sel = ['select'].concat(cfg["columns"].map(function (h) {
@@ -6673,7 +6676,7 @@ function generate_report_sql(_cfg, _vars) {
 
 
     var from = ['from'].concat(join_struct.nodes.map(function (t) {
-      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["e" /* reports_get_table_sql */])(target_db_type, t);
+      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["e" /* reports_get_table_sql */])(ds_info["flavor"], t);
     }));
     var order_by = ['order_by'].concat(cfg["columns"].map(function (h) {
       if (h["sort"] == 1) {
@@ -6689,8 +6692,7 @@ function generate_report_sql(_cfg, _vars) {
       return h["lpe"] ? convert_in_to_eq(quote_text_constants(h["lpe"])) : null;
     }).filter(function (el) {
       return el !== null;
-    });
-    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("========= reports_get_join_conditions " + JSON.stringify(join_struct));
+    }); //console.log("========= reports_get_join_conditions " + JSON.stringify(join_struct))
 
     if (join_struct.nodes.length > 1) {
       filt = filt.concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__utils_utils__["h" /* reports_get_join_conditions */])(join_struct));
@@ -6713,10 +6715,10 @@ function generate_report_sql(_cfg, _vars) {
     if (cfg["limit"] !== undefined) {
       var offset = cfg["offset"] || 0;
       struct.push(["slice", offset, cfg["limit"]]);
-    }
+    } //console.log(JSON.stringify(struct))
+    //console.log(`USING ${target_db_type} as target database`)
 
-    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log(JSON.stringify(struct));
-    __WEBPACK_IMPORTED_MODULE_13__console_console__["a" /* default */].log("USING ".concat(target_db_type, " as target database"));
+
     var ret = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_14__lisp__["a" /* eval_lisp */])(struct, _context);
     return ret;
   }; // по хорошему, надо столбцы засунуть в _context в _columns и подгрузить их тип из базы!!!
@@ -8524,7 +8526,7 @@ function generate_koob_sql(_cfg, _vars) {
     }
   }
 
-  var target_db_type = null;
+  var ds_info = {};
 
   if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["e" /* isString */])(_cfg["with"])) {
     var w = _cfg["with"];
@@ -8536,8 +8538,8 @@ function generate_koob_sql(_cfg, _vars) {
       _cfg = normalize_koob_config(_cfg, w, _context);
 
       if (_context["_target_database"] === undefined) {
-        target_db_type = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_20__utils_utils__["d" /* get_source_database */])(w.split('.')[0]);
-        _context["_target_database"] = target_db_type;
+        ds_info = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_20__utils_utils__["d" /* get_data_source_info */])(w.split('.')[0]);
+        _context["_target_database"] = ds_info["flavor"];
       }
     } else {
       // это строка, но она не поддерживается, так как либо точек слишком много, либо они не там, либо их нет
@@ -8742,7 +8744,7 @@ function generate_koob_sql(_cfg, _vars) {
   */
 
 
-  var cube_query_template = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_20__utils_utils__["e" /* reports_get_table_sql */])(target_db_type, "".concat(_cfg["ds"], ".").concat(_cfg["cube"]));
+  var cube_query_template = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_20__utils_utils__["e" /* reports_get_table_sql */])(ds_info["flavor"], "".concat(_cfg["ds"], ".").concat(_cfg["cube"]));
   /* Если есть хотя бы один явный столбец group_by, а иначе, если просто считаем агрегаты по всей таблице без группировки по столбцам */
 
   if (_cfg["options"].includes('!MemberALL') === false && (_cfg["_group_by"].length > 0 || _cfg["_measures"].length > 0)) {
@@ -9008,6 +9010,7 @@ function generate_koob_sql(_cfg, _vars) {
   // if (isHash(_vars["_data_source"]) && isString(_vars["_data_source"]["url"]) ) {
 
   if (_context[0]["_target_database"] === 'clickhouse') {
+    // config->'_connection'->'options'->'max_threads'
     ending = "\nSETTINGS max_threads = 1";
   }
 
