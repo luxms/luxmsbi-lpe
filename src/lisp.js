@@ -114,7 +114,7 @@ const SPECIAL_FORMS = {                                                         
   'let': makeSF((ast, ctx, rs) => EVAL(['begin', ...ast.slice(1)], [makeLetBindings(ast[0], ctx, rs), ctx], rs)),
   '`': makeSF((ast, ctx) => ast[0]),                                            // quote
   'macroexpand': makeSF(macroexpand),
-  'begin': makeSF((ast, ctx) => ast.reduce((acc, astItem) => EVAL(astItem, ctx), null)),
+  'begin': makeSF((ast, ctx, rs) => ast.reduce((acc, astItem) => EVAL(astItem, ctx, rs), null)),
   'do': makeSF((ast, ctx) => { throw new Error('DO not implemented') }),
   'if': makeSF((ast, ctx, ro) => EVAL(ast[0], ctx, {...ro, resolveString: false}) ? EVAL(ast[1], ctx, ro) : EVAL(ast[2], ctx, ro)),
   '~': makeSF((ast, ctx, rs) => {                                               // mark as macro
@@ -178,6 +178,20 @@ const SPECIAL_FORMS = {                                                         
     const result = Array.prototype.map.call(array, (it, idx) => eval_lisp(conditionAST, [{it, idx}, ctx], rs));
     return result;
   }),
+  'get_in': makeSF((ast, ctx, rs) => {
+    const array = eval_lisp(ast[1], ctx, rs);
+    // но вообще-то вот так ещё круче ["->","a",3,1]
+    // const m = ["->"].concat( array.slice(1).reduce((a, b) => {a.push([".-",b]); return a}, [[".-", ast[0], array[0]]]) );
+    const m = ["->", ast[0]].concat( array );
+    return eval_lisp(m, ctx, rs);
+  }),
+  'assoc_in': makeSF((ast, ctx, rs) => {
+    const array = eval_lisp(ast[1], ctx, rs);
+    // удивительно, но работает set(a . 3 , 2, "Hoy")
+    const m = ["->", ast[0]].concat( array.slice(0,-1) );
+    const e = ["set", m, array.pop(), ast[2]]
+    return eval_lisp(e, ctx, rs);
+  }),
 };
 
 
@@ -191,6 +205,7 @@ const STDLIB = {
   'false': false,
   'Array': Array,                                                               // TODO: consider removing these properties
   'Object': Object,
+  'Hashmap': {},
   'Date': Date,
   'console': console,
   'JSON': JSON,
@@ -260,20 +275,19 @@ const STDLIB = {
   'join': (a, sep) => Array.prototype.join.call(a, sep),
   // operator from APL language
   '⍴': (len, ...values) => Array.apply(null, Array(len)).map((a, idx) => values[idx % values.length]),
-
+  '"' : (a) => a.toString(),
+  '\'' : (a) => a.toString(),
   // not implemented yet
   // 'hash-table->alist'
 
   // macros
-  '\'': makeMacro(a => a.toString()),
-  '"': makeMacro(a => a.toString()),
  // '()': makeMacro((...args) => ['begin', ...args]), from 2022 It is just grouping of expressions
   '()': makeMacro(args => args),
   '->': makeMacro((acc, ...ast) => {                                            // thread first macro
     // императивная лапша для макроса ->
     // надо вот так: https://clojuredocs.org/clojure.core/-%3E%3E
     // AST[["filterit",[">",1,0]]]
-    //console.log("---------> " +JSON.stringify(acc) + " " + JSON.stringify(ast));
+    // console.log("---------> " +JSON.stringify(acc) + " " + JSON.stringify(ast));
     for (let arr of ast) {
       if (!isArray(arr)) {
         arr = [".-", acc, arr];                                                 // это может быть обращение к хэшу или массиву через индекс или ключ....
@@ -338,7 +352,7 @@ function macroexpand(ast, ctx, resolveString = true) {
     if (!isArray(ast)) break;
     if (!isString(ast[0])) break;
 
-    const v = $var$(ctx, ast[0]);
+    const v = $var$(ctx, ast[0], undefined, {"resolveString": resolveString});
     if (!isFunction(v)) break;
 
     if (!isMacro(v)) break;
@@ -374,7 +388,10 @@ function env_bind(ast, ctx, exprs) {
 
 
 function EVAL(ast, ctx, resolveOptions) {
+  
   while (true) {
+    ast = macroexpand(ast, ctx);
+    //ast = macroexpand(ast, ctx, resolveOptions && resolveOptions.resolveString ? true: false);
     if (!isArray(ast)) {                                                        // atom
       if (isString(ast)) {
         const value = $var$(ctx, ast, undefined, resolveOptions);
@@ -387,11 +404,12 @@ function EVAL(ast, ctx, resolveOptions) {
     }
 
     // apply
-    ast = macroexpand(ast, ctx);
+    // c 2022 делаем macroexpand сначала, а не после
+    // ast = macroexpand(ast, ctx, resolveOptions && resolveOptions.resolveString ? true: false);
     if (!Array.isArray(ast)) return ast;                                        // TODO: do we need eval here?
-    if (ast.length === 0) return null;                                          // TODO: [] => empty list (or, maybe return vector [])
+    if (ast.length === 0) return null;                                         // TODO: [] => empty list (or, maybe return vector [])
 
-    //console.log("EVAL1: ", JSON.stringify(ast))
+    //console.log("EVAL1: ", JSON.stringify(resolveOptions),  JSON.stringify(ast))
     const [opAst, ...argsAst] = ast;
 
     const op = EVAL(opAst, ctx, {... resolveOptions, wantCallable: true});                                 // evaluate operator
@@ -405,7 +423,7 @@ function EVAL(ast, ctx, resolveOptions) {
       return sfResult;
     }
 
-      
+    //console.log("EVAL NOT SF evaluated args 11111: ", JSON.stringify(argsAst))
     const args = argsAst.map(a => EVAL(a, ctx, resolveOptions));                 // evaluate arguments
     //console.log("EVAL NOT SF evaluated args: ", JSON.stringify(args)) 
     if (op.ast) {
