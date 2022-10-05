@@ -11,6 +11,7 @@
  *  2017-2019
  */
 
+import { split } from 'core-js/fn/symbol';
 import console from './console/console';
 import {parse, LPESyntaxError} from './lpep';
 
@@ -159,6 +160,10 @@ const SPECIAL_FORMS = {                                                         
     const result = $var$(ctx, ast[0], value);
     return result;
   }),
+  'resolve': makeSF((ast, ctx, rs) => {                                             
+    const result = $var$(ctx, ast[0]);
+    return result;
+  }),
   'eval_lpe': makeSF((ast, ctx, rs) => {
     const lpeCode = eval_lisp(ast[0], ctx, rs);
     const lisp = parse(lpeCode);
@@ -183,15 +188,48 @@ const SPECIAL_FORMS = {                                                         
     // но вообще-то вот так ещё круче ["->","a",3,1]
     // const m = ["->"].concat( array.slice(1).reduce((a, b) => {a.push([".-",b]); return a}, [[".-", ast[0], array[0]]]) );
     const m = ["->", ast[0]].concat( array );
+    //console.log('get_in', JSON.stringify(m))
     return eval_lisp(m, ctx, rs);
   }),
   'assoc_in': makeSF((ast, ctx, rs) => {
     const array = eval_lisp(ast[1], ctx, rs);
     // удивительно, но работает set(a . 3 , 2, "Hoy")
-    const m = ["->", ast[0]].concat( array.slice(0,-1) );
-    const e = ["set", m, array.pop(), ast[2]]
+    //const m = ["->", ast[0]].concat( array.slice(0,-1) );
+    //const e = ["set", m, array.pop(), ast[2]]
+    // первый аргумент в ast - ссылка на контекст/имя переменной
+    //console.log('assoc_in var:', JSON.stringify(ast))
+    let focus = $var$(ctx, ast[0], undefined, rs);
+    let top = focus
+    for (var i = 0; i < array.length-1; i++) {
+      if (focus[array[i]] === undefined) {
+        // нужно создать
+        if (isString(array[i+1])) {
+          focus = focus[array[i]] = {}
+        } else {
+          focus = focus[array[i]] = []
+        }
+      } else {
+        focus = focus[array[i]]
+      }
+    }
+    const e = ["set", focus, array.pop(), ast[2]]
+    //console.log(JSON.stringify(e), JSON.stringify(eval_lisp(e, ctx, rs)))
     return eval_lisp(e, ctx, rs);
   }),
+  'cp': makeSF((ast, ctx, rs) => {
+    const from = eval_lisp(ast[0], ctx, rs)
+    const to = eval_lisp(ast[1], ctx, rs)
+    //console.log('CP to ', JSON.stringify(to))
+    const lpe = ["assoc_in", to[0], ["["].concat(to.slice(1)), ["get_in", from[0], ["["].concat(from.slice(1))]]
+    //console.log('CP', JSON.stringify(lpe))
+    return eval_lisp(lpe, ctx, rs);
+  }),
+  'ctx': makeSF((ast, ctx, rs) => {
+    //FIXME will work only for single keys, we want: ctx(k1,k2,k3.df)
+    let ret = {}
+    ast.map(k=>ret[k]=$var$(ctx, k, undefined, rs))
+    return ret
+  })
 };
 
 
@@ -256,6 +294,7 @@ const STDLIB = {
   'keys': (a) => Object.keys(a),
   'vals': (a) => Object.values(a),
   'rest': (a) => a.slice(1),
+  'split': (s,d) => s.split(d),
   'println': (...args) => console.log(args.map(x => isString(x) ? x : JSON.stringify(x)).join(' ')),
   'empty?': (a) => isArray(a) ? a.length === 0 : false,
   'cons': (a, b) => [].concat([a], b),
@@ -275,12 +314,12 @@ const STDLIB = {
   'join': (a, sep) => Array.prototype.join.call(a, sep),
   // operator from APL language
   '⍴': (len, ...values) => Array.apply(null, Array(len)).map((a, idx) => values[idx % values.length]),
-  '"' : (a) => a.toString(),
-  '\'' : (a) => a.toString(),
   // not implemented yet
   // 'hash-table->alist'
 
   // macros
+  '"' :  makeMacro((a) => a.toString()),
+  '\'' :  makeMacro((a) => a.toString()),
  // '()': makeMacro((...args) => ['begin', ...args]), from 2022 It is just grouping of expressions
   '()': makeMacro(args => args),
   '->': makeMacro((acc, ...ast) => {                                            // thread first macro
@@ -288,6 +327,7 @@ const STDLIB = {
     // надо вот так: https://clojuredocs.org/clojure.core/-%3E%3E
     // AST[["filterit",[">",1,0]]]
     // console.log("---------> " +JSON.stringify(acc) + " " + JSON.stringify(ast));
+
     for (let arr of ast) {
       if (!isArray(arr)) {
         arr = [".-", acc, arr];                                                 // это может быть обращение к хэшу или массиву через индекс или ключ....
@@ -303,7 +343,10 @@ const STDLIB = {
       }
       acc = arr;
     }
-    //console.log("AST !!!!" + JSON.stringify(acc))  
+    //console.log("AST !!!!" + JSON.stringify(acc))
+    if (!isArray(acc)){
+      return ["resolve", acc]
+    }
     return acc;
   }),
   '->>': makeMacro((acc, ...ast) => {                                           // thread last macro
@@ -351,8 +394,8 @@ function macroexpand(ast, ctx, resolveString = true) {
   while (true) {
     if (!isArray(ast)) break;
     if (!isString(ast[0])) break;
-
-    const v = $var$(ctx, ast[0], undefined, {"resolveString": resolveString});
+    const v = $var$(ctx, ast[0]);
+    //const v = $var$(ctx, ast[0], undefined, {"resolveString": resolveString}); возможно надо так 
     if (!isFunction(v)) break;
 
     if (!isMacro(v)) break;
@@ -360,6 +403,7 @@ function macroexpand(ast, ctx, resolveString = true) {
     ast = v.apply(v, ast.slice(1));                                             // Это макрос! 3-й элемент макроса установлен в 1 через push
   }
   //console.log("MACROEXPAND RETURN: " + JSON.stringify(ast))
+
   return ast;
 }
 
@@ -390,12 +434,14 @@ function env_bind(ast, ctx, exprs) {
 function EVAL(ast, ctx, resolveOptions) {
   
   while (true) {
-    ast = macroexpand(ast, ctx);
+    //ast = macroexpand(ast, ctx);
     //ast = macroexpand(ast, ctx, resolveOptions && resolveOptions.resolveString ? true: false);
     if (!isArray(ast)) {                                                        // atom
       if (isString(ast)) {
         const value = $var$(ctx, ast, undefined, resolveOptions);
+        //console.log(`${JSON.stringify(resolveOptions)} var ${ast} resolved to ${JSON.stringify(value)}`)
         if (value !== undefined) {                                              // variable
+          //console.log(`resolved var ${value}`)
           return value;
         }
         return resolveOptions && resolveOptions.resolveString ? ast : undefined;                                 // if string and not in ctx
@@ -405,7 +451,7 @@ function EVAL(ast, ctx, resolveOptions) {
 
     // apply
     // c 2022 делаем macroexpand сначала, а не после
-    // ast = macroexpand(ast, ctx, resolveOptions && resolveOptions.resolveString ? true: false);
+    ast = macroexpand(ast, ctx, resolveOptions && resolveOptions.resolveString ? true: false);
     if (!Array.isArray(ast)) return ast;                                        // TODO: do we need eval here?
     if (ast.length === 0) return null;                                         // TODO: [] => empty list (or, maybe return vector [])
 
@@ -423,11 +469,11 @@ function EVAL(ast, ctx, resolveOptions) {
       return sfResult;
     }
 
-    //console.log("EVAL NOT SF evaluated args 11111: ", JSON.stringify(argsAst))
+    //console.log("EVAL NOT SF evaluated args 11111: ", op.name, JSON.stringify(argsAst))
     const args = argsAst.map(a => EVAL(a, ctx, resolveOptions));                 // evaluate arguments
     //console.log("EVAL NOT SF evaluated args: ", JSON.stringify(args)) 
     if (op.ast) {
-      //console.log("EVAL NOT SF evaluated args AST: ", JSON.stringify(ast)) 
+      console.log("EVAL NOT SF evaluated args AST: ", JSON.stringify(ast)) 
       ast = op.ast[0];
       ctx = env_bind(op.ast[2], op.ast[1], args);                               // TCO
     } else {

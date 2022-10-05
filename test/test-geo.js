@@ -23,8 +23,7 @@ describe('LPE GEO', function() {
      `SELECT concat(toString(v_rel_pp),'*',v_rel_pp,hcode_name) as v_rel_pp, toString(group_pay_name), hcode_name as hcode_name
 FROM fot_out AS fot_out
 WHERE (hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND (pointInPolygon((lat,lng), [tuple(0,0),tuple(0,1),tuple(1,0),tuple(1,1)])) AND ((1 = pointInEllipses(0,0,0,0,1,1)) OR (pointInPolygon(tuple(lat,lng), [tuple(0,0),tuple(0,1),tuple(1,0),tuple(1,1)]) = 1))
-ORDER BY perda, lead DESC LIMIT 100 OFFSET 10
-SETTINGS max_threads = 1`
+ORDER BY perda, lead DESC LIMIT 100 OFFSET 10`
               );
      
        });

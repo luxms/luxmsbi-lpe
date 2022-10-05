@@ -35,7 +35,11 @@ AS $function$
     return '["function"]';
   } else {
     /*plv8.elog(NOTICE, "tp = ", typeof(ret));*/
-    return ret;
+    if (typeof(ret)==='string'){
+	    return '"'+ret+'"';
+    } else {
+      return ret;
+    }
   }
 
 $function$;

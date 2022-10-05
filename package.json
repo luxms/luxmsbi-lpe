@@ -48,5 +48,8 @@
     "mocha": "^6.2.0",
     "webpack": "^2.7.0",
     "webpack-auto-inject-version": "^1.2.2"
+  },
+  "dependencies": {
+    "license-report": "^6.1.0"
   }
 }

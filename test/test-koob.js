@@ -260,10 +260,16 @@ GROUP BY (round(v_main,2)), group_pay_name, hcode_name`
       );
 
      assert.equal( lpe.eval_sql_where(
-      'where( cond(myfunc($(period.title1)) = 234, ["myfunc(1)"])  )',
+      'where( cond(myfunc($(period.title1)) = 234, ["date_part(\'year\', NOW())"])  )',
       {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
-      'WHERE myfunc(1)'
+      "WHERE date_part('year', NOW())"
       );
+
+      assert.equal( lpe.eval_sql_where(
+         'where( cond( NDOC_YEAR = $(period.date), ["NDOC_YEAR = date_part(\'year\', NOW())"] )  )',
+         {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
+         "WHERE NDOC_YEAR = date_part('year', NOW())"
+         );
 
       assert.equal( lpe.eval_sql_where(
          "where( cond(myfunc($(period.title1)) = '234')  )",

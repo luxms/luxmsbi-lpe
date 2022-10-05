@@ -26,7 +26,10 @@ import console from './console/console';
 
 
 const isDigit = (c) => (c >= '0' && c <= '9');
-const isLetter = (c) => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+//const isLetter = (c) => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+// https://stackoverflow.com/questions/9862761/how-to-check-if-character-is-a-letter-in-javascript
+//const isLetter = (c) => RegExp(/^\p{L}$/,'u').test(c);
+const isLetter = (c) => c.toLowerCase() != c.toUpperCase()
 
 
 // Transform a token object into an exception object and throw it.
