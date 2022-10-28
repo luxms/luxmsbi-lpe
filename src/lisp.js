@@ -309,11 +309,12 @@ const STDLIB = {
   'min': (a) => isArray(a) ? a.reduce(function (p, v) {return ( p < v ? p : v );}) : [],
   'apply': (f, ...b) => f.apply(f, b),
   'concat': (...a) => [].concat.apply([], a),
-  'pr-str': (...a) => a.map(x => JSON.stringify(x)).join(' '),
+  'pr_str': (...a) => a.map(x => JSON.stringify(x)).join(' '),
   'classOf': (a) => Object.prototype.toString.call(a),
   'join': (a, sep) => Array.prototype.join.call(a, sep),
   // operator from APL language
   '⍴': (len, ...values) => Array.apply(null, Array(len)).map((a, idx) => values[idx % values.length]),
+  re_match: (t,r,o) => t.match(new RegExp(r,o)),
   // not implemented yet
   // 'hash-table->alist'
 

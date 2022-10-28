@@ -25,6 +25,7 @@ import {parse} from './lpep';
 import {db_quote_literal, db_quote_ident, get_data_source_info} from './utils/utils';
 import {eval_lisp, isString, isArray, isNumber, makeSF} from './lisp';
 
+
 /*
 where - всегда возвращает слово WHERE, а потом условия. На пустом входе вернёт WHERE TRUE
 filter - на пустом входе вернёт пустую строку
@@ -781,6 +782,17 @@ if (track_undefined_values_for_cond.length > 0) {
               tree = [['()',ilike]];
             }
           }
+        }
+      }
+
+      // Проверяем волшебный ключ в контексте _rls_filters
+      let rls = _vars["_rls_filters"];
+      if (isArray(rls) && rls.length > 0) {
+        // добавляем корень AND с нашими фильтрами
+        if (tree[0]) {
+          tree = [["and",tree[0],['()',rls]]];
+        } else {
+          tree = [['()',rls]];
         }
       }
 
