@@ -30,13 +30,13 @@ AS $function$
 
   ret = plv8.lpe.eval_lisp(ast, context);
 
-  if (typeof(ret) == "function") {
+  if (typeof(ret) === "function") {
     /*plv8.elog(NOTICE, "RET = ", ret.toString());*/
     return '["function"]';
   } else {
     /*plv8.elog(NOTICE, "tp = ", typeof(ret));*/
-    if (typeof(ret)==='string'){
-	    return '"'+ret+'"';
+    if (typeof(ret) === 'string'){
+	    return JSON.stringify(ret);
     } else {
       return ret;
     }

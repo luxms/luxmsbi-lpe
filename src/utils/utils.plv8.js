@@ -1,6 +1,6 @@
 import { isObject } from "core-js/core/object";
 import console from "../console/console.plv8";
-import { isHash, isString } from "../lisp";
+import { isArray, isHash, isString } from "../lisp";
 
 export function db_quote_literal(intxt) {
        return plv8.quote_literal(intxt);
@@ -11,27 +11,44 @@ export function db_quote_ident(intxt) {
 }
 
 
-export function reports_get_columns(cubeId) {
-    var r = plv8.execute( 'SELECT id, sql_query, "type", config FROM koob.dimensions WHERE id LIKE $1', [`${cubeId}.%`] );
-    if (r.length > 0) {
-        var parts = cubeId.split('.')
-
-        var res = {}
-        res[parts[0]] = {}
-        
-        var deep = {}
-        r.map(el => {
-             var ids = el.id.split('.')
-             el["_ds"] = ids[0]
-             el["_cube"] = ids[1]
-             el["_col"] = ids[2]
-             deep[el["_col"]] = el
-             res[el.id] = el
-        })
-        res[parts[0]][parts[1]] = deep
-        return res;
+export function reports_get_columns(cubeId, dims) {
+    // name column is generated from id, so we can skip it!
+    let r = dims
+    if (isArray(r) || r.length > 0) {
+            var parts = cubeId.split('.')
+    
+            var res = {}
+            res[parts[0]] = {}   
+            var deep = {}
+            r.map(el => {
+                 deep[el["_col"]] = el
+                 res[el.id] = el
+            })
+            res[parts[0]][parts[1]] = deep
+            return res;
+    } else {
+        // FIXME: we don't need this fallback, we better throw exception right here!!
+        r = plv8.execute( 'SELECT id, sql_query, "type", config FROM koob.dimensions WHERE id LIKE $1', [`${cubeId}.%`] )
+        if (r.length > 0) {
+            var parts = cubeId.split('.')
+    
+            var res = {}
+            res[parts[0]] = {}
+            
+            var deep = {}
+            r.map(el => {
+                 var ids = el.id.split('.')
+                 el["_ds"] = ids[0]
+                 el["_cube"] = ids[1]
+                 el["_col"] = ids[2]
+                 deep[el["_col"]] = el
+                 res[el.id] = el
+            })
+            res[parts[0]][parts[1]] = deep
+            return res;
+        }
+        throw new Error("Can not find column descriptions in the koob.cube " + cubeId);
     }
-    throw new Error("Can not find column descriptions in the koob.cube " + cubeId);
 
 }
 

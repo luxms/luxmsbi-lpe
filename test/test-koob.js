@@ -482,6 +482,50 @@ WHERE (hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND (pay_code = 'Не �
 GROUP BY (round(v_main,2)) + 34, group_pay_name - 34, hcode_name`
                   );
            });
+
+           it('should eval sum with quoted columns', function() {
+            assert.equal( lpe.generate_koob_sql(
+               {"columns":[
+                           "sum(Val):sum_Val",
+                           "fackt",
+                           "group_pay_name", 
+                           'hcode_name',
+                           'My version'
+                        ],
+               "filters":{"hcode_name": ["between", "2019-01-01", "2020-03-01"]},
+               "sort":["+My version"],
+               "with":"ch.fot_out"},
+                     {"_target_database": "mysql"}),
+         `SELECT sum("Val") as \`sum_Val\`, (round(v_main,2)) as fackt, group_pay_name as group_pay_name, hcode_name as hcode_name, "My version" as \`My version\`
+FROM fot_out AS fot_out
+WHERE (hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
+GROUP BY (round(v_main,2)), group_pay_name, hcode_name, "My version"
+ORDER BY "My version"`
+                  );
+
+            assert.equal( lpe.generate_koob_sql(
+               {"columns":[
+                           "sum(Val):sum_Val",
+                           "fackt",
+                           "group_pay_name", 
+                           'hcode_name',
+                           'My version'
+                        ],
+               "filters":{"hcode_name": ["between", "2019-01-01", "2020-03-01"],
+               "My version":["=","9.0"]
+            
+            },
+               "sort":["+My version"],
+               "with":"ch.fot_out"},
+                     {"_target_database": "postgresql"}),
+         `SELECT sum("Val") as "sum_Val", (round(v_main,2)) as fackt, group_pay_name as group_pay_name, hcode_name as hcode_name, "My version" as "My version"
+FROM fot_out AS fot_out
+WHERE (hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND ("My version" = '9.0') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
+GROUP BY (round(v_main,2)), group_pay_name, hcode_name, "My version"
+ORDER BY "My version"`
+                  );
+         
+           });
 });
 
 

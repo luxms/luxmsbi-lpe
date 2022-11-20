@@ -77,6 +77,20 @@ import { part } from 'core-js/core/function';
 7) при генерации SQL в ПРОСТОМ случае, когда у нас один единственный куб, генрим КОРОТКИЕ имена столбцов
 */
 
+
+// из клиента приходят имена столбов в разных регистрах, и ответ клиент ждёт тоже в разных
+// регистрах...
+function should_quote_alias(name) {
+  return name.match(/^[_a-z][_a-z0-9]*$/) === null
+}
+
+/**
+ * возвращает строку `col AS alias`
+ * @param {*} db 
+ * @param {*} src 
+ * @param {*} alias 
+ * @returns 
+ */
 function quot_as_expression(db, src, alias) {
   // 1 определяем, нужно ли квотировать 
   let should_quote = false;
@@ -93,7 +107,8 @@ function quot_as_expression(db, src, alias) {
       should_quote = true
     }*/
   } else {
-    if (alias.match(/^[_a-zA-Z]\w*$/) === null) {
+    // если есть хоть одна заглавная буква, пробел или не ASCII символ
+    if (should_quote_alias(alias)) {
       should_quote = true
     }
   }
@@ -181,6 +196,7 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
   // "sort": ["-dor1","val1",["-","val2"],"-czt.fot.dor2", ["-",["column","val3"]]]
   // FIXME: нужна поддержка "sort": [1,3,-2]
   // FIXME: может быть лучше перейти на ORDER BY 2, 1 DESC, 4 ???? 
+  // FIXME: тогда не надо будет париться с квотацией
   if (isArray(_cfg["sort"])) {
     ret["sort"] = _cfg["sort"].map(el => {
       if(Array.isArray(el)){
@@ -219,12 +235,12 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
   var expand_column_expression = function(el) {
     if (isString(el)) {
       // do not call parse on simple strings, which looks like column names !!!
-      if (el.match(/^[a-zA-Z_]\w+$/) !== null) {
+      if (el.match(/^[a-zA-Z_][\w ]*$/) !== null) {
         return ["column", expand_column( el )]
       }
 
       // exactly full column name, но может быть лучше это скинуть в ->
-      if (el.match(/^([a-zA-Z_]\w+\.){1,2}[a-zA-Z_]\w+$/) !== null) {
+      if (el.match(/^([a-zA-Z_][\w ]*\.){1,2}[a-zA-Z_][\w ]*$/) !== null) {
         return ["column",  el]
       }
       var ast = parse(`expr(${el})`)
@@ -249,7 +265,7 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
     }
   })
 
-  //console.log(`COLUMNS: ${JSON.stringify(ret)}`)
+  //console.log(`COLUMNS: ${JSON.stringify(ret["sort"])}`)
 
   return ret;
 }
@@ -525,15 +541,18 @@ function init_koob_context(_vars, default_ds, default_cube) {
           _context["_result"]["agg"] = true
         }
       }
-      var parts = col.split('.')
-      if (parts[2].localeCompare(c.sql_query, undefined, { sensitivity: 'accent' }) === 0 ) {
+      let parts = col.split('.')
+      let colname = parts[2]
+      if (colname.localeCompare(c.sql_query, undefined, { sensitivity: 'accent' }) === 0 ||
+      `"${colname}"`.localeCompare(c.sql_query, undefined, { sensitivity: 'accent' }) === 0 
+      ) {
         // we have just column name, prepend table alias !
         return `${c.sql_query}`
         // temporarily disabled by DIMA FIXME
         //return `${parts[1]}.${c.sql_query}`
       } else {
         //console.log(`OPANKI: ${c.sql_query}`)
-        // FIXME: WE JSUT TRY TO match getDict, if ANY. there should be a better way!!!
+        // FIXME: WE JUST TRY TO match getDict, if ANY. there should be a better way!!!
         // dictGet('gpn.group_pay_dict', some_real_field, tuple(pay_code))
         //console.log(`OPANKI: ${c.sql_query}`, JSON.stringify(_context))
         if (_context._target_database == 'clickhouse') {
@@ -1207,7 +1226,9 @@ function extend_context_for_order_by(_context, _cfg) {
 
 
           if (col[0] in _cfg["_aliases"]) {
-            if ( _context[0]._target_database  === 'oracle'){
+            if ( _context[0]._target_database  === 'oracle' ||
+              should_quote_alias(col[0])
+            ){
               return `"${col[0]}"`
             } else {
               return col[0]
@@ -1220,7 +1241,7 @@ function extend_context_for_order_by(_context, _cfg) {
             return `${parts[1]}.${parts[2]}`
             //return parts[2]
           } else {
-            if ( _context[0]._target_database  === 'oracle'){
+            if ( _context[0]._target_database  === 'oracle' || should_quote_alias(col[0])){
               // пытаемся полечить проблему Oracle UPPER CASE имён
               //console.log(`HOPP ${JSON.stringify(_cfg["_aliases"])}`)
               // в алиасах у нас нет такого столбца
@@ -1559,14 +1580,20 @@ function genereate_subtotals_group_by(cfg, group_by_list){
   var subtotals_combinations = subtotals.map(col => {
     var i = group_by_exprs.indexOf(col)
     if (i===-1) {
-      i = group_by_aliases.indexOf(col)
+      i = group_by_exprs.indexOf(`"${col}"`)
       if (i===-1) {
-        //console.log(`GROUP BY for ${col} : ${JSON.stringify(group_by_list)}`)
-        throw Error(`looking for column ${col} listed in subtotals, but can not find in group_by`)
+        i = group_by_aliases.indexOf(col)
+        if (i===-1) {
+          i = group_by_aliases.indexOf(`"${col}"`) //FIXME - не уверен что в адиасы попадут заквотированные имена!
+          if (i===-1){
+            //console.log(`GROUP BY for ${col} : ${JSON.stringify(group_by_list)}`)
+            throw Error(`looking for column ${col} listed in subtotals, but can not find in group_by`)
+          }
+        }
       }
     }
     //console.log(JSON.stringify(group_by_list.filter(c => c !== col).join(', ')))
-    return group_by_list.filter(c => c.expr !== col && c.alias != col).map(c => c.expr).join(', ')
+    return group_by_list.filter(c => c.expr !== col && c.expr !== `"${col}"` && c.alias != col).map(c => c.expr).join(', ')
   })
 
   return "\nGROUP BY GROUPING SETS ((".concat(group_by_sql, '),',
@@ -1581,7 +1608,10 @@ function genereate_subtotals_group_by(cfg, group_by_list){
 Вообще говоря это должен быть настоящий контекст! с помощью init_koob_context() мы дописываем в этот 
 контекст новые ключи, типа _columns, _aliases и т.д. Снаружи мы можем получить доп. фильтры. в ключе
 _access_filters
+
+_vars["_dimensions"] соддержит уже выбранные из базы записи из koob.dimensions для нужного куба
 */
+
 export function generate_koob_sql(_cfg, _vars) {
   var _context = _vars;
   if (isHash(_cfg["coefficients"])){
@@ -1621,7 +1651,7 @@ export function generate_koob_sql(_cfg, _vars) {
   let ds_info = {}
   if ( isString( _cfg["with"]) ) {
     var w = _cfg["with"]
-    _context["_columns"] = reports_get_columns(w)
+    _context["_columns"] = reports_get_columns(w, _vars["_dimensions"])
 
     _context["_aliases"] = {} // will be filled while we are parsing columns
 

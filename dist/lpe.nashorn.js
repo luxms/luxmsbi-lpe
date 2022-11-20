@@ -5100,9 +5100,22 @@ function db_quote_literal(intxt) {
 function db_quote_ident(intxt) {
   return '"' + intxt.toString() + '"';
 } // for debugging outside of database !!!
+// FIXME: dims has all info about columns !!!
 
-function reports_get_columns(cubeId) {
+function reports_get_columns(cubeId, dims) {
   var r = [{
+    "id": "ch.fot_out.Val",
+    "type": "NUMBER",
+    "title": "Val",
+    "sql_query": "\"Val\"",
+    "config": {}
+  }, {
+    "id": "ch.fot_out.My version",
+    "type": "STRING",
+    "title": "My version",
+    "sql_query": "\"My version\"",
+    "config": {}
+  }, {
     "id": "ch.fot_out.dt",
     "type": "PERIOD",
     "title": "dt",

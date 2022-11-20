@@ -8,23 +8,50 @@ export function db_quote_ident(intxt) {
 } 
 
 // for debugging outside of database !!!
-export function reports_get_columns(cubeId) {
-     var r = [{"id":"ch.fot_out.dt","type":"PERIOD","title":"dt","sql_query":"NOW() - INERVAL '1 DAY'","config":{}}, {"id":"ch.fot_out.hcode_id","type":"NUMBER","title":"hcode_id","sql_query":"hcode_id",
-     "config":{}}, {"id":"ch.fot_out.hcode_name","type":"STRING","title":"hcode_name","sql_query":"hcode_name","config":{}}, {"id":"ch.fot_out.unit_name","type":"STRING","title":
-     "unit_name","sql_query":"unit_name","config":{}}, {"id":"ch.fot_out.date_type_id","type":"NUMBER","title":"date_type_id","sql_query":"date_type_id","config":{}}, {"id"
-     :"ch.fot_out.dor_id","type":"NUMBER","title":"dor_id","sql_query":"dor_id","config":{}}, {"id":"ch.fot_out.dor_tlg","type":"STRING","title":"dor_tlg","sql_query":"dor_tlg",
-     "config":{}}, {"id":"ch.fot_out.dor_name","type":"STRING","title":"dor_name","sql_query":"dor_name","config":{}}, {"id":"ch.fot_out.obj_id","type":"NUMBER","title":"obj_id",
-     "sql_query":"obj_id","config":{}}, {"id":"ch.fot_out.tlg","type":"STRING","title":"tlg","sql_query":"tlg","config":{}}, {"id":"ch.fot_out.obj_name","type":"STRING",
-     "title":"obj_name","sql_query":"obj_name","config":{}}, {"id":"ch.fot_out.oe_type","type":"STRING","title":"oe_type","sql_query":"oe_type","config":{}}, {"id":"ch.fot_out.priox_int",
-     "type":"NUMBER","title":"priox_int","sql_query":"priox_int","config":{}}, {"id":"ch.fot_out.type_oe_bi","type":"STRING","title":"type_oe_bi","sql_query":"type_oe_bi",
-     "config":{}}, {"id":"ch.fot_out.dor1","type":"STRING","title":"dor1","sql_query":"dor1","config":{}}, {"id":"ch.fot_out.dor2","type":"STRING","title":"dor2","sql_query":
-     "dor2","config":{}}, {"id":"ch.fot_out.dor3","type":"STRING","title":"dor3","sql_query":"dor3","config":{}}, {"id":"ch.fot_out.dor4","type":"STRING","title":"dor4",
-     "sql_query":"dor4","config":{}}, {"id":"ch.fot_out.dor5","type":"STRING","title":"dor5","sql_query":"dor5","config":{}}, {"id":"ch.fot_out.dor6","type":"STRING","title":"dor6",
-     "sql_query":"dor6","config":{}}, {"id":"ch.fot_out.branch1","type":"STRING","title":"branch1","sql_query":"branch1","config":{}}, {"id":"ch.fot_out.branch2","type":
-     "STRING","title":"branch2","sql_query":"branch2","config":{}}, {"id":"ch.fot_out.branch3","type":"STRING","title":"branch3","sql_query":"branch3","config":{}}, 
+// FIXME: dims has all info about columns !!!
+export function reports_get_columns(cubeId, dims) {
+     var r = [
+     {"id":"ch.fot_out.Val","type":"NUMBER","title":"Val","sql_query":"\"Val\"","config":{}}, 
+     {"id":"ch.fot_out.My version","type":"STRING","title":"My version","sql_query":"\"My version\"","config":{}}, 
+     {"id":"ch.fot_out.dt","type":"PERIOD","title":"dt","sql_query":"NOW() - INERVAL '1 DAY'","config":{}}, 
+     {"id":"ch.fot_out.hcode_id","type":"NUMBER","title":"hcode_id","sql_query":"hcode_id",
+     "config":{}}, 
+     {"id":"ch.fot_out.hcode_name","type":"STRING","title":"hcode_name","sql_query":"hcode_name","config":{}}, 
+     {"id":"ch.fot_out.unit_name","type":"STRING","title":
+     "unit_name","sql_query":"unit_name","config":{}}, 
+     {"id":"ch.fot_out.date_type_id","type":"NUMBER","title":"date_type_id","sql_query":"date_type_id","config":{}}, 
+     {"id"
+     :"ch.fot_out.dor_id","type":"NUMBER","title":"dor_id","sql_query":"dor_id","config":{}}, 
+     {"id":"ch.fot_out.dor_tlg","type":"STRING","title":"dor_tlg","sql_query":"dor_tlg",
+     "config":{}}, 
+     {"id":"ch.fot_out.dor_name","type":"STRING","title":"dor_name","sql_query":"dor_name","config":{}}, {"id":"ch.fot_out.obj_id","type":"NUMBER","title":"obj_id",
+     "sql_query":"obj_id","config":{}}, 
+     {"id":"ch.fot_out.tlg","type":"STRING","title":"tlg","sql_query":"tlg","config":{}}, 
+     {"id":"ch.fot_out.obj_name","type":"STRING",
+     "title":"obj_name","sql_query":"obj_name","config":{}}, 
+     {"id":"ch.fot_out.oe_type","type":"STRING","title":"oe_type","sql_query":"oe_type","config":{}}, 
+     {"id":"ch.fot_out.priox_int",
+     "type":"NUMBER","title":"priox_int","sql_query":"priox_int","config":{}}, 
+     {"id":"ch.fot_out.type_oe_bi","type":"STRING","title":"type_oe_bi","sql_query":"type_oe_bi",
+     "config":{}}, 
+     {"id":"ch.fot_out.dor1","type":"STRING","title":"dor1","sql_query":"dor1","config":{}}, 
+     {"id":"ch.fot_out.dor2","type":"STRING","title":"dor2","sql_query":
+     "dor2","config":{}}, 
+     {"id":"ch.fot_out.dor3","type":"STRING","title":"dor3","sql_query":"dor3","config":{}}, 
+     {"id":"ch.fot_out.dor4","type":"STRING","title":"dor4",
+     "sql_query":"dor4","config":{}}, 
+     {"id":"ch.fot_out.dor5","type":"STRING","title":"dor5","sql_query":"dor5","config":{}}, 
+     {"id":"ch.fot_out.dor6","type":"STRING","title":"dor6",
+     "sql_query":"dor6","config":{}}, 
+     {"id":"ch.fot_out.branch1","type":"STRING","title":"branch1","sql_query":"branch1","config":{}}, 
+     {"id":"ch.fot_out.branch2","type":
+     "STRING","title":"branch2","sql_query":"branch2","config":{}}, 
+     {"id":"ch.fot_out.branch3","type":"STRING","title":"branch3","sql_query":"branch3","config":{}}, 
      {"id":"ch.fot_out.branch4","type":"STRING","title":"branch4","sql_query":"branch4","config":{}}, {"id":"ch.fot_out.branch5","type":"STRING","title":"branch5","sql_query":"branch5",
-     "config":{}}, {"id":"ch.fot_out.branch6","type":"STRING","title":"branch6","sql_query":"branch6","config":{}}, {"id":"ch.fot_out.ss1","type":"STRING","title":"ss1",
-     "sql_query":"ss1","config":{}}, {"id":"ch.fot_out.ss2","type":"STRING","title":"ss2","sql_query":"ss2","config":{}}, {"id":"ch.fot_out.ss3","type":"STRING","title":"ss3",
+     "config":{}}, 
+     {"id":"ch.fot_out.branch6","type":"STRING","title":"branch6","sql_query":"branch6","config":{}}, {"id":"ch.fot_out.ss1","type":"STRING","title":"ss1",
+     "sql_query":"ss1","config":{}}, 
+     {"id":"ch.fot_out.ss2","type":"STRING","title":"ss2","sql_query":"ss2","config":{}}, {"id":"ch.fot_out.ss3","type":"STRING","title":"ss3",
      "sql_query":"ss3","config":{}}, {"id":"ch.fot_out.ss4","type":"STRING","title":"ss4","sql_query":"ss4","config":{}}, {"id":"ch.fot_out.ss5","type":"STRING","title":"ss5",
      "sql_query":"ss5","config":{}}, {"id":"ch.fot_out.ss6","type":"STRING","title":"ss6","sql_query":"ss6","config":{}}, {"id":"ch.fot_out.indicator_v","type":"NUMBER","title":
      "indicator_v","sql_query":"indicator_v","config":{}}, {"id":"ch.fot_out.group_pay_name","type":"STRING","title":"group_pay_name","sql_query":"group_pay_name","config":{"follow": ["fot_out.group_pay_id"], "children": ["fot_out.pay_name", "fot_out.pay_code"], "memberALL": "Не задано"}},
