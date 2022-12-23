@@ -98,8 +98,10 @@ export function reports_get_column_info(srcId, col) {
      if (target_db_type === 'oracle') {
           return {"query": `${table_name} ${table_name}`, "config": {"is_template": 0}}
      }
-     return {"query": `${table_name} AS ${table_name}`, "config": {"is_template": 0}}
-     //return {"query": `${table_name} AS ${table_name}` + '${filters(hcode_name)}', "config": {"is_template": 1}}
+     //return {"query": `${table_name} AS ${table_name}`, "config": {"is_template": 0}}
+     // hcode_name
+     // and ${filters(group_pay_name)}
+     return {"query": `${table_name} AS ${table_name} where ` + '${filters(sex_code,pay_code)} ', "config": {"is_template": 1,"skip_where":0}}
  }
 
 /* should find path to JOIN all tables listed in cubes array */

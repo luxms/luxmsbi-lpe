@@ -442,7 +442,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
     _context["_result"]["agg"] = true
     if (_context._target_database === 'clickhouse') {
       return `quantile(0.5)(${col})`
-    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle') {
+    } else if (_context._target_database === 'postgresql' || 
+               _context._target_database === 'oracle') {
       return `percentile_cont(0.5) WITHIN GROUP (ORDER BY ${col} DESC)`
     } else if (_context._target_database === 'teradata'){
       return `median(${col})`
@@ -470,7 +471,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
       return `varPop(${col})`
     } else if (_context._target_database === 'postgresql' || 
                _context._target_database === 'oracle' ||
-               _context._target_database === 'teradata' 
+               _context._target_database === 'teradata' ||
+               _context._target_database === 'vertica'
                ) {
       return `var_pop(${col})`
     } else if (_context._target_database === 'sqlserver') {
@@ -486,7 +488,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
       return `varSamp(${col})`
     } else if (_context._target_database === 'postgresql' || 
                _context._target_database === 'oracle' ||
-               _context._target_database === 'teradata'
+               _context._target_database === 'teradata' ||
+               _context._target_database === 'vertica'
               ) {
       return `var_samp(${col})`
     } else if (_context._target_database === 'sqlserver') {
@@ -502,7 +505,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
       return `stddevSamp(${col})`
     } else if (_context._target_database === 'postgresql' || 
                _context._target_database === 'oracle' ||
-               _context._target_database === 'teradata'
+               _context._target_database === 'teradata' ||
+               _context._target_database === 'vertica'
                ) {
       return `stddev_samp(${col})`
     } else if (_context._target_database === 'sqlserver') {
@@ -518,7 +522,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
       return `stddevPop(${col})`
     } else if (_context._target_database === 'postgresql' || 
                _context._target_database === 'oracle' ||
-               _context._target_database === 'teradata'
+               _context._target_database === 'teradata' ||
+               _context._target_database === 'vertica'
               ) {
       return `stddev_pop(${col})`
     } else if (_context._target_database === 'sqlserver') {
@@ -827,6 +832,41 @@ function init_koob_context(_vars, default_ds, default_cube) {
                                     }
       return 'koob__range__'
       // FIXME: это автоматически попадает в GROUP BY !!!
+    } else if (_context._target_database === 'vertica'){
+      // возвращаем здесь просто имя столбца, но потом нужно будет сгенерить
+      // только JOIN 
+      // 
+      if (step === undefined) {
+        step = ''
+      } else {
+        step = ` WHERE MOD(koob__range__, ${step}) = 0`
+      }
+
+      if (to === undefined) {
+        to = from - 1
+        from = 0
+      } else {
+        to = to - 1
+      }
+
+      _context["_result"]["is_range_column"] = true
+      _context["_result"]["expr"] = 'koob__range__'
+      _context["_result"]["columns"] = ["koob__range__"]
+      _context["_result"]["join"] = { "type":"inner",
+                                      "alias":"koob__range__table__",
+                                      "expr":`(
+          WITH koob__range__table__seq AS (
+            SELECT ROW_NUMBER() OVER() - 1 AS koob__range__ FROM (
+                SELECT 1 FROM (
+                    SELECT date(0) + INTERVAL '${from} second' AS se UNION ALL
+                    SELECT date(0) + INTERVAL '${to} seconds' AS se ) a
+                TIMESERIES tm AS '1 second' OVER(ORDER BY se)
+            ) b  
+        )
+        SELECT koob__range__ FROM koob__range__table__seq${step})`
+                                    }
+      return 'koob__range__'
+      // FIXME: это автоматически попадает в GROUP BY !!!
     } else {
       throw Error(`range() is not supported in ${_context._target_database}`)
     }
@@ -904,7 +944,11 @@ function init_koob_context(_vars, default_ds, default_cube) {
   var partial_filter = function(a) {
     if (isArray(a[0]) && a[0][0] === "ignore(me)") {
       var ignoreme = a.shift()
-      a = a.map(el => {if (isArray(el)) {el.splice(1,0, ignoreme); return el} else {return el}})
+      a = a.map(el => {if (isArray(el)) {
+                        el.splice(1,0, ignoreme); return el
+                      } else {
+                        return el
+                      }})
     }
     //console.log("OR->OR->OR", JSON.stringify(a))
     a = a.map(el => eval_lisp(el,_ctx))
@@ -918,7 +962,13 @@ function init_koob_context(_vars, default_ds, default_cube) {
     //console.log("OR OR OR", JSON.stringify(a))
     // [["ignore(me)",["column","ch.fot_out.pay_code"]],["!="],["ilike","Муж"]]
     a = partial_filter(a)
-    return `(${a.join(') OR (')})`
+    if (isArray(a)){
+      if (a.length>0){
+        return `(${a.join(') OR (')})`
+      }
+    }
+    // https://mathematica.stackexchange.com/questions/264386/logical-functions-with-no-arguments
+    return '1=0'
   }
   _context['or'].ast = [[],{},[],1]; // mark as macro
 
@@ -926,7 +976,13 @@ function init_koob_context(_vars, default_ds, default_cube) {
   _context['and'] = function() {
     var a = Array.prototype.slice.call(arguments)
     a = partial_filter(a)
-    return `(${a.join(') AND (')})`
+    if (isArray(a)){
+      if (a.length>0){
+        return `(${a.join(') AND (')})`
+      }
+    }
+    // https://mathematica.stackexchange.com/questions/264386/logical-functions-with-no-arguments
+    return '1=1'
   }
   _context['and'].ast = [[],{},[],1]; // mark as macro
 
@@ -1475,13 +1531,14 @@ function get_all_member_filters(_cfg, columns, _filters) {
 */
 function get_filters_array(context, filters_array, cube, required_columns, negate) {
 
+//console.log("get_filters_array " + JSON.stringify(filters_array))
+//console.log(`get_filters_array ${negate} required_columns: ` + JSON.stringify(required_columns))
+//console.log("======")
   var comparator = function(k) {
     return k !== ""
   }
 
-  var second_time = false;
   if (isArray(required_columns) && required_columns.length > 0) {
-    second_time = true; // for templates, which will process _cfg second time!!!
     required_columns = required_columns.map(el => cube + '.' + el)
     if (negate) {
       comparator = function(k) {
@@ -1495,16 +1552,21 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
   }
 
   var ret = filters_array.map(_filters => {
-      var part_where = null
-      var pw = Object.keys(_filters).filter(k => comparator(k)).map( 
+      let part_where = null
+      let pw = Object.keys(_filters).filter(k => comparator(k)).map( 
         key => {
-                  if (!second_time) {
                     // специальная функция `ignore(me)` = которая ничего не делает, но является меткой для
                     // and or not
-                    var a = _filters[key].splice(1,0,["ignore(me)",["column",key]])
-                  }
-                  return _filters[key]
+                    const [op, ...args] = _filters[key];
+                    return [op, ["ignore(me)", ["column",key]], ...args];
+                    
+                    /*
+                    let el = _filters[key].slice(0)
+                    el.splice(1,0,["ignore(me)",["column",key]])
+                    return el*/
                 });
+//console.log("step:" + JSON.stringify(pw))
+
       // условия по пустому ключу "" подставляем только если у нас генерация полного условия WHERE,
       // а если это filter(col1,col2) то не надо
       if (required_columns === undefined || negate === true) {
@@ -1518,15 +1580,21 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
       }
 
       if (pw.length > 0) {
-        var wh = ["and"].concat(pw)
+        let wh = ["and"].concat(pw)
         // console.log("WHERE", JSON.stringify(wh))
         // возможно, тут нужен спец. контекст с правильной обработкой or/and  функций.
-        // ибо первым аргументом мы тут всегда ставим столбец!!!    
-        part_where = eval_lisp(wh, context)
+        // ибо первым аргументом мы тут всегда ставим столбец!!! 
+        //console.log('*****: ' + JSON.stringify(wh))
+        part_where = eval_lisp(JSON.parse(JSON.stringify(wh)), context)
+        //console.log('.....: ' + JSON.stringify(filters_array))
+      } else {
+        part_where = eval_lisp(JSON.parse(JSON.stringify(pw)), context)
       }
       return part_where
     }).filter(el => el !== null && el.length > 0)
-
+//console.log("RET: " + ret)
+//console.log(JSON.stringify(filters_array))
+//console.log("---------------------------")
   return ret
 }
 
@@ -2286,7 +2354,8 @@ export function generate_koob_sql(_cfg, _vars) {
             _context[0]["_target_database"]==='oracle' ||
             _context[0]["_target_database"]==='teradata' ||
             _context[0]["_target_database"]==='clickhouse' ||
-            _context[0]["_target_database"]==='sqlserver'
+            _context[0]["_target_database"]==='sqlserver' ||
+            _context[0]["_target_database"]==='vertica'
             ) {
           group_by = genereate_subtotals_group_by(_cfg, _cfg["_group_by"])
         } else {

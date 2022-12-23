@@ -14,11 +14,12 @@ export function db_quote_ident(intxt) {
 export function reports_get_columns(cubeId, dims) {
     // name column is generated from id, so we can skip it!
     let r = dims
-    if (isArray(r) || r.length > 0) {
+    if (isArray(r) && r.length > 0) {
             var parts = cubeId.split('.')
     
             var res = {}
-            res[parts[0]] = {}   
+            res[parts[0]] = {}
+
             var deep = {}
             r.map(el => {
                  deep[el["_col"]] = el

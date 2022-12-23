@@ -3296,14 +3296,17 @@ function reports_get_table_sql(target_db_type, tbl) {
         "is_template": 0
       }
     };
-  }
+  } //return {"query": `${table_name} AS ${table_name}`, "config": {"is_template": 0}}
+  // hcode_name
+  // and ${filters(group_pay_name)}
+
 
   return {
-    "query": "".concat(table_name, " AS ").concat(table_name),
+    "query": "".concat(table_name, " AS ").concat(table_name, " where ") + '${filters(sex_code,pay_code)} ',
     "config": {
-      "is_template": 0
-    } //return {"query": `${table_name} AS ${table_name}` + '${filters(hcode_name)}', "config": {"is_template": 1}}
-
+      "is_template": 1,
+      "skip_where": 0
+    }
   };
 }
 /* should find path to JOIN all tables listed in cubes array */
@@ -6924,6 +6927,12 @@ function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { va
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
+function _toArray(arr) { return _arrayWithHoles(arr) || _iterableToArray(arr) || _nonIterableRest(); }
+
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
+
+function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
 
 function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
@@ -7406,7 +7415,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
     if (_context._target_database === 'clickhouse') {
       return "varPop(".concat(col, ")");
-    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle' || _context._target_database === 'teradata') {
+    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle' || _context._target_database === 'teradata' || _context._target_database === 'vertica') {
       return "var_pop(".concat(col, ")");
     } else if (_context._target_database === 'sqlserver') {
       return "VarP(".concat(col, ")");
@@ -7420,7 +7429,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
     if (_context._target_database === 'clickhouse') {
       return "varSamp(".concat(col, ")");
-    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle' || _context._target_database === 'teradata') {
+    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle' || _context._target_database === 'teradata' || _context._target_database === 'vertica') {
       return "var_samp(".concat(col, ")");
     } else if (_context._target_database === 'sqlserver') {
       return "Var(".concat(col, ")");
@@ -7434,7 +7443,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
     if (_context._target_database === 'clickhouse') {
       return "stddevSamp(".concat(col, ")");
-    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle' || _context._target_database === 'teradata') {
+    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle' || _context._target_database === 'teradata' || _context._target_database === 'vertica') {
       return "stddev_samp(".concat(col, ")");
     } else if (_context._target_database === 'sqlserver') {
       return "Stdev(".concat(col, ")");
@@ -7448,7 +7457,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
     if (_context._target_database === 'clickhouse') {
       return "stddevPop(".concat(col, ")");
-    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle' || _context._target_database === 'teradata') {
+    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle' || _context._target_database === 'teradata' || _context._target_database === 'vertica') {
       return "stddev_pop(".concat(col, ")");
     } else if (_context._target_database === 'sqlserver') {
       return "StdevP(".concat(col, ")");
@@ -7776,6 +7785,32 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
       };
       return 'koob__range__'; // FIXME: это автоматически попадает в GROUP BY !!!
+    } else if (_context._target_database === 'vertica') {
+      // возвращаем здесь просто имя столбца, но потом нужно будет сгенерить
+      // только JOIN 
+      // 
+      if (step === undefined) {
+        step = '';
+      } else {
+        step = " WHERE MOD(koob__range__, ".concat(step, ") = 0");
+      }
+
+      if (to === undefined) {
+        to = from - 1;
+        from = 0;
+      } else {
+        to = to - 1;
+      }
+
+      _context["_result"]["is_range_column"] = true;
+      _context["_result"]["expr"] = 'koob__range__';
+      _context["_result"]["columns"] = ["koob__range__"];
+      _context["_result"]["join"] = {
+        "type": "inner",
+        "alias": "koob__range__table__",
+        "expr": "(\n          WITH koob__range__table__seq AS (\n            SELECT ROW_NUMBER() OVER() - 1 AS koob__range__ FROM (\n                SELECT 1 FROM (\n                    SELECT date(0) + INTERVAL '".concat(from, " second' AS se UNION ALL\n                    SELECT date(0) + INTERVAL '").concat(to, " seconds' AS se ) a\n                TIMESERIES tm AS '1 second' OVER(ORDER BY se)\n            ) b  \n        )\n        SELECT koob__range__ FROM koob__range__table__seq").concat(step, ")")
+      };
+      return 'koob__range__'; // FIXME: это автоматически попадает в GROUP BY !!!
     } else {
       throw Error("range() is not supported in ".concat(_context._target_database));
     }
@@ -7882,7 +7917,15 @@ function init_koob_context(_vars, default_ds, default_cube) {
     // [["ignore(me)",["column","ch.fot_out.pay_code"]],["!="],["ilike","Муж"]]
 
     a = partial_filter(a);
-    return "(".concat(a.join(') OR ('), ")");
+
+    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(a)) {
+      if (a.length > 0) {
+        return "(".concat(a.join(') OR ('), ")");
+      }
+    } // https://mathematica.stackexchange.com/questions/264386/logical-functions-with-no-arguments
+
+
+    return '1=0';
   };
 
   _context['or'].ast = [[], {}, [], 1]; // mark as macro
@@ -7890,7 +7933,15 @@ function init_koob_context(_vars, default_ds, default_cube) {
   _context['and'] = function () {
     var a = Array.prototype.slice.call(arguments);
     a = partial_filter(a);
-    return "(".concat(a.join(') AND ('), ")");
+
+    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(a)) {
+      if (a.length > 0) {
+        return "(".concat(a.join(') AND ('), ")");
+      }
+    } // https://mathematica.stackexchange.com/questions/264386/logical-functions-with-no-arguments
+
+
+    return '1=1';
   };
 
   _context['and'].ast = [[], {}, [], 1]; // mark as macro
@@ -8487,15 +8538,14 @@ function get_all_member_filters(_cfg, columns, _filters) {
 
 
 function get_filters_array(context, filters_array, cube, required_columns, negate) {
+  //console.log("get_filters_array " + JSON.stringify(filters_array))
+  //console.log(`get_filters_array ${negate} required_columns: ` + JSON.stringify(required_columns))
+  //console.log("======")
   var comparator = function comparator(k) {
     return k !== "";
   };
 
-  var second_time = false;
-
   if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(required_columns) && required_columns.length > 0) {
-    second_time = true; // for templates, which will process _cfg second time!!!
-
     required_columns = required_columns.map(function (el) {
       return cube + '.' + el;
     });
@@ -8516,14 +8566,19 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
     var pw = Object.keys(_filters).filter(function (k) {
       return comparator(k);
     }).map(function (key) {
-      if (!second_time) {
-        // специальная функция `ignore(me)` = которая ничего не делает, но является меткой для
-        // and or not
-        var a = _filters[key].splice(1, 0, ["ignore(me)", ["column", key]]);
-      }
+      // специальная функция `ignore(me)` = которая ничего не делает, но является меткой для
+      // and or not
+      var _filters$key = _toArray(_filters[key]),
+          op = _filters$key[0],
+          args = _filters$key.slice(1);
 
-      return _filters[key];
-    }); // условия по пустому ключу "" подставляем только если у нас генерация полного условия WHERE,
+      return [op, ["ignore(me)", ["column", key]]].concat(_toConsumableArray(args));
+      /*
+      let el = _filters[key].slice(0)
+      el.splice(1,0,["ignore(me)",["column",key]])
+      return el*/
+    }); //console.log("step:" + JSON.stringify(pw))
+    // условия по пустому ключу "" подставляем только если у нас генерация полного условия WHERE,
     // а если это filter(col1,col2) то не надо
 
     if (required_columns === undefined || negate === true) {
@@ -8539,15 +8594,21 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
     if (pw.length > 0) {
       var wh = ["and"].concat(pw); // console.log("WHERE", JSON.stringify(wh))
       // возможно, тут нужен спец. контекст с правильной обработкой or/and  функций.
-      // ибо первым аргументом мы тут всегда ставим столбец!!!    
+      // ибо первым аргументом мы тут всегда ставим столбец!!! 
+      //console.log('*****: ' + JSON.stringify(wh))
 
-      part_where = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(wh, context);
+      part_where = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(JSON.parse(JSON.stringify(wh)), context); //console.log('.....: ' + JSON.stringify(filters_array))
+    } else {
+      part_where = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(JSON.parse(JSON.stringify(pw)), context);
     }
 
     return part_where;
   }).filter(function (el) {
     return el !== null && el.length > 0;
-  });
+  }); //console.log("RET: " + ret)
+  //console.log(JSON.stringify(filters_array))
+  //console.log("---------------------------")
+
   return ret;
 }
 /* Добавляем ключ "_aliases", чтобы можно было легко найти столбец по алиасу */
@@ -9403,7 +9464,7 @@ function generate_koob_sql(_cfg, _vars) {
         }
       } else if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(_cfg["subtotals"])) {
         // FIXME: кажется только mysql не алё
-        if (_context[0]["_target_database"] === 'postgresql' || _context[0]["_target_database"] === 'oracle' || _context[0]["_target_database"] === 'teradata' || _context[0]["_target_database"] === 'clickhouse' || _context[0]["_target_database"] === 'sqlserver') {
+        if (_context[0]["_target_database"] === 'postgresql' || _context[0]["_target_database"] === 'oracle' || _context[0]["_target_database"] === 'teradata' || _context[0]["_target_database"] === 'clickhouse' || _context[0]["_target_database"] === 'sqlserver' || _context[0]["_target_database"] === 'vertica') {
           group_by = genereate_subtotals_group_by(_cfg, _cfg["_group_by"]);
         } else {
           throw new Error("named subtotals are not yet supported for ".concat(_context[0]["_target_database"]));

@@ -5473,14 +5473,17 @@ function reports_get_table_sql(target_db_type, tbl) {
         "is_template": 0
       }
     };
-  }
+  } //return {"query": `${table_name} AS ${table_name}`, "config": {"is_template": 0}}
+  // hcode_name
+  // and ${filters(group_pay_name)}
+
 
   return {
-    "query": "".concat(table_name, " AS ").concat(table_name),
+    "query": "".concat(table_name, " AS ").concat(table_name, " where ") + '${filters(sex_code,pay_code)} ',
     "config": {
-      "is_template": 0
-    } //return {"query": `${table_name} AS ${table_name}` + '${filters(hcode_name)}', "config": {"is_template": 1}}
-
+      "is_template": 1,
+      "skip_where": 0
+    }
   };
 }
 /* should find path to JOIN all tables listed in cubes array */
