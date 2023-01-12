@@ -6833,6 +6833,7 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 */
 
  //import {sql_where_context} from './sql_where';
+//import {eval_sql_where} from './sql_where';
 
 
 
@@ -7080,6 +7081,46 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
   }); //console.log(`COLUMNS: ${JSON.stringify(ret["sort"])}`)
 
   return ret;
+}
+
+function init_mssql_args_context(_vars) {
+  // ожидаем на вход хэш с фильтрами прямо из нашего запроса koob...
+
+  /*
+  {"dt":["between",2019,2022],"id":["=",23000035],"regions":["=","Moscow","piter","tumen"]}
+  mssql_sp_args:  ["dir","regions","id","id","dt","dt"]
+  mssql_sp_args:  ["dir",["cl","regions"],"id","id","dt","dt"]
+  для квотации уже не работает, нужен кастомный резолвер имён ;-) а значит специальный контекст, в котором
+  надо эвалить каждый второй аргумент: TODO
+  */
+  var _ctx = {};
+  _ctx["mssql_sp_args"] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* makeSF */])(function (ast, ctx) {
+    // аргументы = пары значениий, 
+    //console.log(`mssql_sp_args: `, JSON.stringify(ast))
+    var pairs = ast.reduce(function (list, _, index, source) {
+      if (index % 2 === 0) {
+        var name = source[index];
+        var filter_name = source[index + 1];
+        name = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(name, _ctx); // should eval to itself !
+
+        var filter_ast = _vars[filter_name];
+
+        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(filter_ast)) {
+          if (filter_ast[0] === '=') {
+            var expr = filter_ast.slice(1).join('@');
+
+            if (expr.length > 0) {
+              list.push("@".concat(name, " = '").concat(expr, "'"));
+            }
+          }
+        }
+      }
+
+      return list;
+    }, []);
+    return pairs.join(', ');
+  });
+  return [_ctx, _vars];
 }
 /*********************************
  * 
@@ -8620,8 +8661,14 @@ function generate_koob_sql(_cfg, _vars) {
       _cfg = normalize_koob_config(_cfg, w, _context);
 
       if (_context["_target_database"] === undefined) {
+        // это выполняется в БД на лету
         ds_info = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_20__utils_utils__["d" /* get_data_source_info */])(w.split('.')[0]);
         _context["_target_database"] = ds_info["flavor"];
+      } else {
+        //Это выполняется в тестах
+        ds_info = {
+          "flavor": _context["_target_database"]
+        };
       }
     } else {
       // это строка, но она не поддерживается, так как либо точек слишком много, либо они не там, либо их нет
@@ -9386,6 +9433,24 @@ function generate_koob_sql(_cfg, _vars) {
         return subst;
       };
 
+      var mssql_sp_args_replacer = function mssql_sp_args_replacer(match, columns_text, offset, string) {
+        var filters_array = _cfg["filters"];
+
+        if (!__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(filters_array)) {
+          throw new Error("filters as array is not supported for mssql_sp_args(). Sorry.");
+        } //console.log(JSON.stringify(filters_array))
+        //var subst = get_filters_array(_context, filters_array, _cfg.ds + '.' + _cfg.cube, columns, false)
+
+
+        var ast = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lpep__["a" /* parse */])("mssql_sp_args(".concat(columns_text, ")"));
+
+        if (ast.length == 0) {
+          return "";
+        }
+
+        return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(ast, c);
+      };
+
       // надо подставить WHERE аккуратно, это уже посчитано, заменяем ${filters} и ${filters()}
       var re = /\$\{filters(?:\(\))?\}/gi;
       var processed_from = from.replace(re, part_where); // access_filters
@@ -9404,6 +9469,13 @@ function generate_koob_sql(_cfg, _vars) {
       re = /\$\{filters\(([^\)]+)\)\}/gi;
       processed_from = processed_from.replace(re, inclusive_replacer);
       from = processed_from; //final_sql = `${select}\nFROM ${processed_from}${group_by}${order_by}${limit_offset}${ending}`
+      ///////////////////////////////////////////////////////////////////////
+      // ищем ${mssql_sp_args(column , title, name1, filter1, ....)}
+
+      re = /\$\{mssql_sp_args\(([^\}]+)\)\}/gi;
+      var c = init_mssql_args_context(_cfg["filters"]);
+      processed_from = processed_from.replace(re, mssql_sp_args_replacer);
+      from = processed_from;
     }
 
     if (global_joins.length > 0) {

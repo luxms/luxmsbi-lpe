@@ -23,6 +23,9 @@
 import console from './console/console';
 import {eval_lisp, isString, isArray, isHash, isFunction, makeSF, isNumber} from './lisp';
 //import {sql_where_context} from './sql_where';
+
+//import {eval_sql_where} from './sql_where';
+
 import {parse} from './lpep';
 import {
   reports_get_column_info, 
@@ -269,6 +272,48 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
 
   return ret;
 }
+
+
+function init_mssql_args_context(_vars) {
+  // ожидаем на вход хэш с фильтрами прямо из нашего запроса koob...
+  /*
+  {"dt":["between",2019,2022],"id":["=",23000035],"regions":["=","Moscow","piter","tumen"]}
+  mssql_sp_args:  ["dir","regions","id","id","dt","dt"]
+  mssql_sp_args:  ["dir",["cl","regions"],"id","id","dt","dt"]
+  для квотации уже не работает, нужен кастомный резолвер имён ;-) а значит специальный контекст, в котором
+  надо эвалить каждый второй аргумент: TODO
+  */
+  let _ctx = {};
+  _ctx["mssql_sp_args"] = makeSF((ast,ctx) => {
+      // аргументы = пары значениий, 
+      //console.log(`mssql_sp_args: `, JSON.stringify(ast))
+
+      let pairs = ast.reduce((list, _, index, source) => {
+        if (index % 2 === 0) {
+          let name = source[index];
+          let filter_name = source[index+1];
+
+          name = eval_lisp(name, _ctx); // should eval to itself !
+          let filter_ast = _vars[filter_name];
+          if (isArray(filter_ast)){
+            if (filter_ast[0] === '=') {
+              let expr = filter_ast.slice(1).join('@');
+              if (expr.length>0) {
+                list.push(`@${name} = '${expr}'`)
+              }
+            }
+          }
+        }
+        return list;
+      }, []);
+
+    return pairs.join(', ')
+  });
+
+  return [_ctx, _vars];
+
+}
+ 
 
 /*********************************
  * 
@@ -1727,8 +1772,12 @@ export function generate_koob_sql(_cfg, _vars) {
     if ( w.match( /^("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)$/) !== null ) {
       _cfg = normalize_koob_config(_cfg, w, _context);
       if ( _context["_target_database"] === undefined) {
+        // это выполняется в БД на лету
         ds_info = get_data_source_info(w.split('.')[0])
         _context["_target_database"] = ds_info["flavor"]
+      } else {
+        //Это выполняется в тестах
+        ds_info = {"flavor": _context["_target_database"]}
       }
     } else {
       // это строка, но она не поддерживается, так как либо точек слишком много, либо они не там, либо их нет
@@ -2422,6 +2471,29 @@ export function generate_koob_sql(_cfg, _vars) {
       processed_from = processed_from.replace(re, inclusive_replacer);
       from = processed_from
       //final_sql = `${select}\nFROM ${processed_from}${group_by}${order_by}${limit_offset}${ending}`
+
+      ///////////////////////////////////////////////////////////////////////
+      // ищем ${mssql_sp_args(column , title, name1, filter1, ....)}
+      re = /\$\{mssql_sp_args\(([^\}]+)\)\}/gi
+      let c = init_mssql_args_context(_cfg["filters"]);
+
+      function mssql_sp_args_replacer(match, columns_text, offset, string) {
+
+        var filters_array = _cfg["filters"];
+        if (!isHash(filters_array)) {
+          throw new Error(`filters as array is not supported for mssql_sp_args(). Sorry.`)
+        }
+        //console.log(JSON.stringify(filters_array))
+        //var subst = get_filters_array(_context, filters_array, _cfg.ds + '.' + _cfg.cube, columns, false)
+        var ast = parse( `mssql_sp_args(${columns_text})`);
+        if (ast.length == 0) {
+          return ""
+        }
+        return eval_lisp(ast, c);
+      }
+      processed_from = processed_from.replace(re, mssql_sp_args_replacer);
+      from = processed_from
+
     }
 
     if (global_joins.length > 0) {

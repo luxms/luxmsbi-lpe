@@ -80,7 +80,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 0 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var store = __webpack_require__(28)('wks');
+var store = __webpack_require__(29)('wks');
 var uid = __webpack_require__(20);
 var Symbol = __webpack_require__(4).Symbol;
 var USE_SYMBOL = typeof Symbol == 'function';
@@ -169,7 +169,7 @@ var global = __webpack_require__(4);
 var core = __webpack_require__(10);
 var hide = __webpack_require__(8);
 var redefine = __webpack_require__(9);
-var ctx = __webpack_require__(22);
+var ctx = __webpack_require__(23);
 var PROTOTYPE = 'prototype';
 
 var $export = function (type, name, source) {
@@ -305,7 +305,7 @@ module.exports = function (it) {
 /***/ (function(module, exports, __webpack_require__) {
 
 // 7.1.15 ToLength
-var toInteger = __webpack_require__(29);
+var toInteger = __webpack_require__(30);
 var min = Math.min;
 module.exports = function (it) {
   return it > 0 ? min(toInteger(it), 0x1fffffffffffff) : 0; // pow(2, 53) - 1 == 9007199254740991
@@ -428,238 +428,6 @@ module.exports = function (key) {
 
 /***/ }),
 /* 21 */
-/***/ (function(module, exports) {
-
-var toString = {}.toString;
-
-module.exports = function (it) {
-  return toString.call(it).slice(8, -1);
-};
-
-
-/***/ }),
-/* 22 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// optional / simple context binding
-var aFunction = __webpack_require__(32);
-module.exports = function (fn, that, length) {
-  aFunction(fn);
-  if (that === undefined) return fn;
-  switch (length) {
-    case 1: return function (a) {
-      return fn.call(that, a);
-    };
-    case 2: return function (a, b) {
-      return fn.call(that, a, b);
-    };
-    case 3: return function (a, b, c) {
-      return fn.call(that, a, b, c);
-    };
-  }
-  return function (/* ...args */) {
-    return fn.apply(that, arguments);
-  };
-};
-
-
-/***/ }),
-/* 23 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-__webpack_require__(105);
-var redefine = __webpack_require__(9);
-var hide = __webpack_require__(8);
-var fails = __webpack_require__(3);
-var defined = __webpack_require__(17);
-var wks = __webpack_require__(0);
-var regexpExec = __webpack_require__(38);
-
-var SPECIES = wks('species');
-
-var REPLACE_SUPPORTS_NAMED_GROUPS = !fails(function () {
-  // #replace needs built-in support for named groups.
-  // #match works fine because it just return the exec results, even if it has
-  // a "grops" property.
-  var re = /./;
-  re.exec = function () {
-    var result = [];
-    result.groups = { a: '7' };
-    return result;
-  };
-  return ''.replace(re, '$<a>') !== '7';
-});
-
-var SPLIT_WORKS_WITH_OVERWRITTEN_EXEC = (function () {
-  // Chrome 51 has a buggy "split" implementation when RegExp#exec !== nativeExec
-  var re = /(?:)/;
-  var originalExec = re.exec;
-  re.exec = function () { return originalExec.apply(this, arguments); };
-  var result = 'ab'.split(re);
-  return result.length === 2 && result[0] === 'a' && result[1] === 'b';
-})();
-
-module.exports = function (KEY, length, exec) {
-  var SYMBOL = wks(KEY);
-
-  var DELEGATES_TO_SYMBOL = !fails(function () {
-    // String methods call symbol-named RegEp methods
-    var O = {};
-    O[SYMBOL] = function () { return 7; };
-    return ''[KEY](O) != 7;
-  });
-
-  var DELEGATES_TO_EXEC = DELEGATES_TO_SYMBOL ? !fails(function () {
-    // Symbol-named RegExp methods call .exec
-    var execCalled = false;
-    var re = /a/;
-    re.exec = function () { execCalled = true; return null; };
-    if (KEY === 'split') {
-      // RegExp[@@split] doesn't call the regex's exec method, but first creates
-      // a new one. We need to return the patched regex when creating the new one.
-      re.constructor = {};
-      re.constructor[SPECIES] = function () { return re; };
-    }
-    re[SYMBOL]('');
-    return !execCalled;
-  }) : undefined;
-
-  if (
-    !DELEGATES_TO_SYMBOL ||
-    !DELEGATES_TO_EXEC ||
-    (KEY === 'replace' && !REPLACE_SUPPORTS_NAMED_GROUPS) ||
-    (KEY === 'split' && !SPLIT_WORKS_WITH_OVERWRITTEN_EXEC)
-  ) {
-    var nativeRegExpMethod = /./[SYMBOL];
-    var fns = exec(
-      defined,
-      SYMBOL,
-      ''[KEY],
-      function maybeCallNative(nativeMethod, regexp, str, arg2, forceStringMethod) {
-        if (regexp.exec === regexpExec) {
-          if (DELEGATES_TO_SYMBOL && !forceStringMethod) {
-            // The native String method already delegates to @@method (this
-            // polyfilled function), leasing to infinite recursion.
-            // We avoid it by directly calling the native @@method method.
-            return { done: true, value: nativeRegExpMethod.call(regexp, str, arg2) };
-          }
-          return { done: true, value: nativeMethod.call(str, regexp, arg2) };
-        }
-        return { done: false };
-      }
-    );
-    var strfn = fns[0];
-    var rxfn = fns[1];
-
-    redefine(String.prototype, KEY, strfn);
-    hide(RegExp.prototype, SYMBOL, length == 2
-      // 21.2.5.8 RegExp.prototype[@@replace](string, replaceValue)
-      // 21.2.5.11 RegExp.prototype[@@split](string, limit)
-      ? function (string, arg) { return rxfn.call(string, this, arg); }
-      // 21.2.5.6 RegExp.prototype[@@match](string)
-      // 21.2.5.9 RegExp.prototype[@@search](string)
-      : function (string) { return rxfn.call(string, this); }
-    );
-  }
-};
-
-
-/***/ }),
-/* 24 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-// 21.2.5.3 get RegExp.prototype.flags
-var anObject = __webpack_require__(1);
-module.exports = function () {
-  var that = anObject(this);
-  var result = '';
-  if (that.global) result += 'g';
-  if (that.ignoreCase) result += 'i';
-  if (that.multiline) result += 'm';
-  if (that.unicode) result += 'u';
-  if (that.sticky) result += 'y';
-  return result;
-};
-
-
-/***/ }),
-/* 25 */
-/***/ (function(module, exports) {
-
-module.exports = false;
-
-
-/***/ }),
-/* 26 */
-/***/ (function(module, exports) {
-
-exports.f = {}.propertyIsEnumerable;
-
-
-/***/ }),
-/* 27 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var classof = __webpack_require__(34);
-var builtinExec = RegExp.prototype.exec;
-
- // `RegExpExec` abstract operation
-// https://tc39.github.io/ecma262/#sec-regexpexec
-module.exports = function (R, S) {
-  var exec = R.exec;
-  if (typeof exec === 'function') {
-    var result = exec.call(R, S);
-    if (typeof result !== 'object') {
-      throw new TypeError('RegExp exec method returned something other than an Object or null');
-    }
-    return result;
-  }
-  if (classof(R) !== 'RegExp') {
-    throw new TypeError('RegExp#exec called on incompatible receiver');
-  }
-  return builtinExec.call(R, S);
-};
-
-
-/***/ }),
-/* 28 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var core = __webpack_require__(10);
-var global = __webpack_require__(4);
-var SHARED = '__core-js_shared__';
-var store = global[SHARED] || (global[SHARED] = {});
-
-(module.exports = function (key, value) {
-  return store[key] || (store[key] = value !== undefined ? value : {});
-})('versions', []).push({
-  version: core.version,
-  mode: __webpack_require__(25) ? 'pure' : 'global',
-  copyright: '© 2019 Denis Pushkarev (zloirock.ru)'
-});
-
-
-/***/ }),
-/* 29 */
-/***/ (function(module, exports) {
-
-// 7.1.4 ToInteger
-var ceil = Math.ceil;
-var floor = Math.floor;
-module.exports = function (it) {
-  return isNaN(it = +it) ? 0 : (it > 0 ? floor : ceil)(it);
-};
-
-
-/***/ }),
-/* 30 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -667,7 +435,7 @@ module.exports = function (it) {
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "d", function() { return isString; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "c", function() { return isNumber; });
 /* unused harmony export isBoolean */
-/* unused harmony export isHash */
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "e", function() { return isHash; });
 /* unused harmony export isFunction */
 /* unused harmony export makeMacro */
 /* unused harmony export makeSF */
@@ -1662,6 +1430,238 @@ function evaluate(ast, ctx) {
 }
 
 /***/ }),
+/* 22 */
+/***/ (function(module, exports) {
+
+var toString = {}.toString;
+
+module.exports = function (it) {
+  return toString.call(it).slice(8, -1);
+};
+
+
+/***/ }),
+/* 23 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// optional / simple context binding
+var aFunction = __webpack_require__(32);
+module.exports = function (fn, that, length) {
+  aFunction(fn);
+  if (that === undefined) return fn;
+  switch (length) {
+    case 1: return function (a) {
+      return fn.call(that, a);
+    };
+    case 2: return function (a, b) {
+      return fn.call(that, a, b);
+    };
+    case 3: return function (a, b, c) {
+      return fn.call(that, a, b, c);
+    };
+  }
+  return function (/* ...args */) {
+    return fn.apply(that, arguments);
+  };
+};
+
+
+/***/ }),
+/* 24 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+__webpack_require__(105);
+var redefine = __webpack_require__(9);
+var hide = __webpack_require__(8);
+var fails = __webpack_require__(3);
+var defined = __webpack_require__(17);
+var wks = __webpack_require__(0);
+var regexpExec = __webpack_require__(38);
+
+var SPECIES = wks('species');
+
+var REPLACE_SUPPORTS_NAMED_GROUPS = !fails(function () {
+  // #replace needs built-in support for named groups.
+  // #match works fine because it just return the exec results, even if it has
+  // a "grops" property.
+  var re = /./;
+  re.exec = function () {
+    var result = [];
+    result.groups = { a: '7' };
+    return result;
+  };
+  return ''.replace(re, '$<a>') !== '7';
+});
+
+var SPLIT_WORKS_WITH_OVERWRITTEN_EXEC = (function () {
+  // Chrome 51 has a buggy "split" implementation when RegExp#exec !== nativeExec
+  var re = /(?:)/;
+  var originalExec = re.exec;
+  re.exec = function () { return originalExec.apply(this, arguments); };
+  var result = 'ab'.split(re);
+  return result.length === 2 && result[0] === 'a' && result[1] === 'b';
+})();
+
+module.exports = function (KEY, length, exec) {
+  var SYMBOL = wks(KEY);
+
+  var DELEGATES_TO_SYMBOL = !fails(function () {
+    // String methods call symbol-named RegEp methods
+    var O = {};
+    O[SYMBOL] = function () { return 7; };
+    return ''[KEY](O) != 7;
+  });
+
+  var DELEGATES_TO_EXEC = DELEGATES_TO_SYMBOL ? !fails(function () {
+    // Symbol-named RegExp methods call .exec
+    var execCalled = false;
+    var re = /a/;
+    re.exec = function () { execCalled = true; return null; };
+    if (KEY === 'split') {
+      // RegExp[@@split] doesn't call the regex's exec method, but first creates
+      // a new one. We need to return the patched regex when creating the new one.
+      re.constructor = {};
+      re.constructor[SPECIES] = function () { return re; };
+    }
+    re[SYMBOL]('');
+    return !execCalled;
+  }) : undefined;
+
+  if (
+    !DELEGATES_TO_SYMBOL ||
+    !DELEGATES_TO_EXEC ||
+    (KEY === 'replace' && !REPLACE_SUPPORTS_NAMED_GROUPS) ||
+    (KEY === 'split' && !SPLIT_WORKS_WITH_OVERWRITTEN_EXEC)
+  ) {
+    var nativeRegExpMethod = /./[SYMBOL];
+    var fns = exec(
+      defined,
+      SYMBOL,
+      ''[KEY],
+      function maybeCallNative(nativeMethod, regexp, str, arg2, forceStringMethod) {
+        if (regexp.exec === regexpExec) {
+          if (DELEGATES_TO_SYMBOL && !forceStringMethod) {
+            // The native String method already delegates to @@method (this
+            // polyfilled function), leasing to infinite recursion.
+            // We avoid it by directly calling the native @@method method.
+            return { done: true, value: nativeRegExpMethod.call(regexp, str, arg2) };
+          }
+          return { done: true, value: nativeMethod.call(str, regexp, arg2) };
+        }
+        return { done: false };
+      }
+    );
+    var strfn = fns[0];
+    var rxfn = fns[1];
+
+    redefine(String.prototype, KEY, strfn);
+    hide(RegExp.prototype, SYMBOL, length == 2
+      // 21.2.5.8 RegExp.prototype[@@replace](string, replaceValue)
+      // 21.2.5.11 RegExp.prototype[@@split](string, limit)
+      ? function (string, arg) { return rxfn.call(string, this, arg); }
+      // 21.2.5.6 RegExp.prototype[@@match](string)
+      // 21.2.5.9 RegExp.prototype[@@search](string)
+      : function (string) { return rxfn.call(string, this); }
+    );
+  }
+};
+
+
+/***/ }),
+/* 25 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+// 21.2.5.3 get RegExp.prototype.flags
+var anObject = __webpack_require__(1);
+module.exports = function () {
+  var that = anObject(this);
+  var result = '';
+  if (that.global) result += 'g';
+  if (that.ignoreCase) result += 'i';
+  if (that.multiline) result += 'm';
+  if (that.unicode) result += 'u';
+  if (that.sticky) result += 'y';
+  return result;
+};
+
+
+/***/ }),
+/* 26 */
+/***/ (function(module, exports) {
+
+module.exports = false;
+
+
+/***/ }),
+/* 27 */
+/***/ (function(module, exports) {
+
+exports.f = {}.propertyIsEnumerable;
+
+
+/***/ }),
+/* 28 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var classof = __webpack_require__(34);
+var builtinExec = RegExp.prototype.exec;
+
+ // `RegExpExec` abstract operation
+// https://tc39.github.io/ecma262/#sec-regexpexec
+module.exports = function (R, S) {
+  var exec = R.exec;
+  if (typeof exec === 'function') {
+    var result = exec.call(R, S);
+    if (typeof result !== 'object') {
+      throw new TypeError('RegExp exec method returned something other than an Object or null');
+    }
+    return result;
+  }
+  if (classof(R) !== 'RegExp') {
+    throw new TypeError('RegExp#exec called on incompatible receiver');
+  }
+  return builtinExec.call(R, S);
+};
+
+
+/***/ }),
+/* 29 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var core = __webpack_require__(10);
+var global = __webpack_require__(4);
+var SHARED = '__core-js_shared__';
+var store = global[SHARED] || (global[SHARED] = {});
+
+(module.exports = function (key, value) {
+  return store[key] || (store[key] = value !== undefined ? value : {});
+})('versions', []).push({
+  version: core.version,
+  mode: __webpack_require__(26) ? 'pure' : 'global',
+  copyright: '© 2019 Denis Pushkarev (zloirock.ru)'
+});
+
+
+/***/ }),
+/* 30 */
+/***/ (function(module, exports) {
+
+// 7.1.4 ToInteger
+var ceil = Math.ceil;
+var floor = Math.floor;
+module.exports = function (it) {
+  return isNaN(it = +it) ? 0 : (it > 0 ? floor : ceil)(it);
+};
+
+
+/***/ }),
 /* 31 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -1670,7 +1670,7 @@ function evaluate(ast, ctx) {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_array_find__ = __webpack_require__(102);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_array_find___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_array_find__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__console_console__ = __webpack_require__(16);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__lisp__ = __webpack_require__(30);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__lisp__ = __webpack_require__(21);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__lpel__ = __webpack_require__(70);
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return __WEBPACK_IMPORTED_MODULE_3__lpel__["c"]; });
 
@@ -2474,7 +2474,7 @@ module.exports = function (S, index, unicode) {
 /***/ (function(module, exports, __webpack_require__) {
 
 // getting tag from 19.1.3.6 Object.prototype.toString()
-var cof = __webpack_require__(21);
+var cof = __webpack_require__(22);
 var TAG = __webpack_require__(0)('toStringTag');
 // ES3 wrong here
 var ARG = cof(function () { return arguments; }()) == 'Arguments';
@@ -2514,7 +2514,7 @@ module.exports = (
 
 // 7.2.8 IsRegExp(argument)
 var isObject = __webpack_require__(7);
-var cof = __webpack_require__(21);
+var cof = __webpack_require__(22);
 var MATCH = __webpack_require__(0)('match');
 module.exports = function (it) {
   var isRegExp;
@@ -2542,7 +2542,7 @@ exports.f = Object.getOwnPropertyNames || function getOwnPropertyNames(O) {
 "use strict";
 
 
-var regexpFlags = __webpack_require__(24);
+var regexpFlags = __webpack_require__(25);
 
 var nativeExec = RegExp.prototype.exec;
 // This always refers to the native implementation, because the
@@ -2617,7 +2617,7 @@ module.exports = function (it, tag, stat) {
 /* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var shared = __webpack_require__(28)('keys');
+var shared = __webpack_require__(29)('keys');
 var uid = __webpack_require__(20);
 module.exports = function (key) {
   return shared[key] || (shared[key] = uid(key));
@@ -2648,7 +2648,7 @@ module.exports = function (it, S) {
 
 var global = __webpack_require__(4);
 var core = __webpack_require__(10);
-var LIBRARY = __webpack_require__(25);
+var LIBRARY = __webpack_require__(26);
 var wksExt = __webpack_require__(59);
 var defineProperty = __webpack_require__(5).f;
 module.exports = function (name) {
@@ -2710,7 +2710,7 @@ var anObject = __webpack_require__(1);
 var speciesConstructor = __webpack_require__(97);
 var advanceStringIndex = __webpack_require__(33);
 var toLength = __webpack_require__(13);
-var callRegExpExec = __webpack_require__(27);
+var callRegExpExec = __webpack_require__(28);
 var regexpExec = __webpack_require__(38);
 var fails = __webpack_require__(3);
 var $min = Math.min;
@@ -2724,7 +2724,7 @@ var MAX_UINT32 = 0xffffffff;
 var SUPPORTS_Y = !fails(function () { RegExp(MAX_UINT32, 'y'); });
 
 // @@split logic
-__webpack_require__(23)('split', 2, function (defined, SPLIT, $split, maybeCallNative) {
+__webpack_require__(24)('split', 2, function (defined, SPLIT, $split, maybeCallNative) {
   var internalSplit;
   if (
     'abbc'[$SPLIT](/(b)*/)[1] == 'c' ||
@@ -2847,7 +2847,7 @@ __webpack_require__(23)('split', 2, function (defined, SPLIT, $split, maybeCallN
 
 __webpack_require__(106);
 var anObject = __webpack_require__(1);
-var $flags = __webpack_require__(24);
+var $flags = __webpack_require__(25);
 var DESCRIPTORS = __webpack_require__(2);
 var TO_STRING = 'toString';
 var $toString = /./[TO_STRING];
@@ -2885,7 +2885,7 @@ var $export = __webpack_require__(6);
 var redefine = __webpack_require__(9);
 var META = __webpack_require__(88).KEY;
 var $fails = __webpack_require__(3);
-var shared = __webpack_require__(28);
+var shared = __webpack_require__(29);
 var setToStringTag = __webpack_require__(39);
 var uid = __webpack_require__(20);
 var wks = __webpack_require__(0);
@@ -3026,10 +3026,10 @@ if (!USE_NATIVE) {
   $GOPD.f = $getOwnPropertyDescriptor;
   $DP.f = $defineProperty;
   __webpack_require__(37).f = gOPNExt.f = $getOwnPropertyNames;
-  __webpack_require__(26).f = $propertyIsEnumerable;
+  __webpack_require__(27).f = $propertyIsEnumerable;
   __webpack_require__(56).f = $getOwnPropertySymbols;
 
-  if (DESCRIPTORS && !__webpack_require__(25)) {
+  if (DESCRIPTORS && !__webpack_require__(26)) {
     redefine(ObjectProto, 'propertyIsEnumerable', $propertyIsEnumerable, true);
   }
 
@@ -3159,7 +3159,7 @@ module.exports = !__webpack_require__(2) && !__webpack_require__(3)(function () 
 /***/ (function(module, exports, __webpack_require__) {
 
 // fallback for non-array-like ES3 and non-enumerable old V8 strings
-var cof = __webpack_require__(21);
+var cof = __webpack_require__(22);
 // eslint-disable-next-line no-prototype-builtins
 module.exports = Object('z').propertyIsEnumerable(0) ? Object : function (it) {
   return cof(it) == 'String' ? it.split('') : Object(it);
@@ -3171,7 +3171,7 @@ module.exports = Object('z').propertyIsEnumerable(0) ? Object : function (it) {
 /***/ (function(module, exports, __webpack_require__) {
 
 // 7.2.2 IsArray(argument)
-var cof = __webpack_require__(21);
+var cof = __webpack_require__(22);
 module.exports = Array.isArray || function isArray(arg) {
   return cof(arg) == 'Array';
 };
@@ -3183,7 +3183,7 @@ module.exports = Array.isArray || function isArray(arg) {
 
 "use strict";
 
-var LIBRARY = __webpack_require__(25);
+var LIBRARY = __webpack_require__(26);
 var $export = __webpack_require__(6);
 var redefine = __webpack_require__(9);
 var hide = __webpack_require__(8);
@@ -3304,7 +3304,7 @@ module.exports = Object.create || function create(O, Properties) {
 /* 55 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var pIE = __webpack_require__(26);
+var pIE = __webpack_require__(27);
 var createDesc = __webpack_require__(19);
 var toIObject = __webpack_require__(12);
 var toPrimitive = __webpack_require__(41);
@@ -3356,7 +3356,7 @@ module.exports = function (object, names) {
 /* 58 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var toInteger = __webpack_require__(29);
+var toInteger = __webpack_require__(30);
 var defined = __webpack_require__(17);
 // true  -> String#at
 // false -> String#codePointAt
@@ -3458,7 +3458,7 @@ var inheritIfRequired = __webpack_require__(82);
 var dP = __webpack_require__(5).f;
 var gOPN = __webpack_require__(37).f;
 var isRegExp = __webpack_require__(36);
-var $flags = __webpack_require__(24);
+var $flags = __webpack_require__(25);
 var $RegExp = global.RegExp;
 var Base = $RegExp;
 var proto = $RegExp.prototype;
@@ -3508,10 +3508,10 @@ __webpack_require__(96)('RegExp');
 var anObject = __webpack_require__(1);
 var toLength = __webpack_require__(13);
 var advanceStringIndex = __webpack_require__(33);
-var regExpExec = __webpack_require__(27);
+var regExpExec = __webpack_require__(28);
 
 // @@match logic
-__webpack_require__(23)('match', 1, function (defined, MATCH, $match, maybeCallNative) {
+__webpack_require__(24)('match', 1, function (defined, MATCH, $match, maybeCallNative) {
   return [
     // `String.prototype.match` method
     // https://tc39.github.io/ecma262/#sec-string.prototype.match
@@ -3555,9 +3555,9 @@ __webpack_require__(23)('match', 1, function (defined, MATCH, $match, maybeCallN
 var anObject = __webpack_require__(1);
 var toObject = __webpack_require__(15);
 var toLength = __webpack_require__(13);
-var toInteger = __webpack_require__(29);
+var toInteger = __webpack_require__(30);
 var advanceStringIndex = __webpack_require__(33);
-var regExpExec = __webpack_require__(27);
+var regExpExec = __webpack_require__(28);
 var max = Math.max;
 var min = Math.min;
 var floor = Math.floor;
@@ -3569,7 +3569,7 @@ var maybeToString = function (it) {
 };
 
 // @@replace logic
-__webpack_require__(23)('replace', 2, function (defined, REPLACE, $replace, maybeCallNative) {
+__webpack_require__(24)('replace', 2, function (defined, REPLACE, $replace, maybeCallNative) {
   return [
     // `String.prototype.replace` method
     // https://tc39.github.io/ecma262/#sec-string.prototype.replace
@@ -3787,7 +3787,7 @@ for (var collections = getKeys(DOMIterables), i = 0; i < collections.length; i++
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__console_console__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__lpep__ = __webpack_require__(31);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_16__utils_utils__ = __webpack_require__(71);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_17__lisp__ = __webpack_require__(30);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_17__lisp__ = __webpack_require__(21);
 
 
 
@@ -4743,7 +4743,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "eval_lpe", function() { return eval_lpe; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__console_console__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__lpep__ = __webpack_require__(31);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__lisp__ = __webpack_require__(30);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__lisp__ = __webpack_require__(21);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__sql_where__ = __webpack_require__(68);
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "parse", function() { return __WEBPACK_IMPORTED_MODULE_1__lpep__["a"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "LPESyntaxError", function() { return __WEBPACK_IMPORTED_MODULE_1__lpep__["b"]; });
@@ -5091,6 +5091,8 @@ function tokenize(s) {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_regexp_to_string___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_regexp_to_string__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_regexp_replace__ = __webpack_require__(65);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_regexp_replace___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_regexp_replace__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__lisp__ = __webpack_require__(21);
+
 
 
 
@@ -5103,341 +5105,347 @@ function db_quote_ident(intxt) {
 // FIXME: dims has all info about columns !!!
 
 function reports_get_columns(cubeId, dims) {
-  var r = [{
-    "id": "ch.fot_out.Val",
-    "type": "NUMBER",
-    "title": "Val",
-    "sql_query": "\"Val\"",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.My version",
-    "type": "STRING",
-    "title": "My version",
-    "sql_query": "\"My version\"",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.dt",
-    "type": "PERIOD",
-    "title": "dt",
-    "sql_query": "NOW() - INERVAL '1 DAY'",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.hcode_id",
-    "type": "NUMBER",
-    "title": "hcode_id",
-    "sql_query": "hcode_id",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.hcode_name",
-    "type": "STRING",
-    "title": "hcode_name",
-    "sql_query": "hcode_name",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.unit_name",
-    "type": "STRING",
-    "title": "unit_name",
-    "sql_query": "unit_name",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.date_type_id",
-    "type": "NUMBER",
-    "title": "date_type_id",
-    "sql_query": "date_type_id",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.dor_id",
-    "type": "NUMBER",
-    "title": "dor_id",
-    "sql_query": "dor_id",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.dor_tlg",
-    "type": "STRING",
-    "title": "dor_tlg",
-    "sql_query": "dor_tlg",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.dor_name",
-    "type": "STRING",
-    "title": "dor_name",
-    "sql_query": "dor_name",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.obj_id",
-    "type": "NUMBER",
-    "title": "obj_id",
-    "sql_query": "obj_id",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.tlg",
-    "type": "STRING",
-    "title": "tlg",
-    "sql_query": "tlg",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.obj_name",
-    "type": "STRING",
-    "title": "obj_name",
-    "sql_query": "obj_name",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.oe_type",
-    "type": "STRING",
-    "title": "oe_type",
-    "sql_query": "oe_type",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.priox_int",
-    "type": "NUMBER",
-    "title": "priox_int",
-    "sql_query": "priox_int",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.type_oe_bi",
-    "type": "STRING",
-    "title": "type_oe_bi",
-    "sql_query": "type_oe_bi",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.dor1",
-    "type": "STRING",
-    "title": "dor1",
-    "sql_query": "dor1",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.dor2",
-    "type": "STRING",
-    "title": "dor2",
-    "sql_query": "dor2",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.dor3",
-    "type": "STRING",
-    "title": "dor3",
-    "sql_query": "dor3",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.dor4",
-    "type": "STRING",
-    "title": "dor4",
-    "sql_query": "dor4",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.dor5",
-    "type": "STRING",
-    "title": "dor5",
-    "sql_query": "dor5",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.dor6",
-    "type": "STRING",
-    "title": "dor6",
-    "sql_query": "dor6",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.branch1",
-    "type": "STRING",
-    "title": "branch1",
-    "sql_query": "branch1",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.branch2",
-    "type": "STRING",
-    "title": "branch2",
-    "sql_query": "branch2",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.branch3",
-    "type": "STRING",
-    "title": "branch3",
-    "sql_query": "branch3",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.branch4",
-    "type": "STRING",
-    "title": "branch4",
-    "sql_query": "branch4",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.branch5",
-    "type": "STRING",
-    "title": "branch5",
-    "sql_query": "branch5",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.branch6",
-    "type": "STRING",
-    "title": "branch6",
-    "sql_query": "branch6",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.ss1",
-    "type": "STRING",
-    "title": "ss1",
-    "sql_query": "ss1",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.ss2",
-    "type": "STRING",
-    "title": "ss2",
-    "sql_query": "ss2",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.ss3",
-    "type": "STRING",
-    "title": "ss3",
-    "sql_query": "ss3",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.ss4",
-    "type": "STRING",
-    "title": "ss4",
-    "sql_query": "ss4",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.ss5",
-    "type": "STRING",
-    "title": "ss5",
-    "sql_query": "ss5",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.ss6",
-    "type": "STRING",
-    "title": "ss6",
-    "sql_query": "ss6",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.indicator_v",
-    "type": "NUMBER",
-    "title": "indicator_v",
-    "sql_query": "indicator_v",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.group_pay_name",
-    "type": "STRING",
-    "title": "group_pay_name",
-    "sql_query": "group_pay_name",
-    "config": {
-      "follow": ["fot_out.group_pay_id"],
-      "children": ["fot_out.pay_name", "fot_out.pay_code"],
-      "memberALL": "Не задано"
-    }
-  }, {
-    "id": "ch.fot_out.pay_code",
-    "type": "STRING",
-    "title": "pay_code",
-    "sql_query": "pay_code",
-    "config": {
-      "memberALL": "Не задано",
-      "follow": ["fot_out.pay_name"]
-    }
-  }, {
-    "id": "ch.fot_out.pay_title",
-    "type": "STRING",
-    "title": "pay_title",
-    "sql_query": "dictGet('gpn.group_pay_dict', 'some_real_field', tuple(pay_code))",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.pay_name",
-    "type": "STRING",
-    "title": "pay_name",
-    "sql_query": "pay_name",
-    "config": {
-      "memberALL": "Не задано",
-      "follow": ["fot_out.pay_code"]
-    }
-  }, {
-    "id": "ch.fot_out.category_name",
-    "type": "STRING",
-    "title": "category_name",
-    "sql_query": "category_name",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.sex_code",
-    "type": "STRING",
-    "title": "sex_code",
-    "sql_query": "sex_code",
-    "config": {
-      "memberALL": null,
-      "altDimensions": ["fot_out.sex_name"]
-    }
-  }, {
-    "id": "ch.fot_out.sex_name",
-    "type": "STRING",
-    "title": "sex_name",
-    "sql_query": "sex_name",
-    "config": {
-      "memberALL": "Все",
-      "altDimensions": ["fot_out.sex_code"]
-    }
-  }, {
-    "id": "ch.fot_out.area_name",
-    "type": "STRING",
-    "title": "area_name",
-    "sql_query": "area_name",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.region_name",
-    "type": "STRING",
-    "title": "region_name",
-    "sql_query": "region_name",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.municipal_name",
-    "type": "STRING",
-    "title": "municipal_name",
-    "sql_query": "municipal_name",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.prod_group_name",
-    "type": "STRING",
-    "title": "prod_group_name",
-    "sql_query": "prod_group_name",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.profession_name",
-    "type": "STRING",
-    "title": "profession_name",
-    "sql_query": "profession_name",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.v_agg",
-    "type": "AGGFN",
-    "title": "v_agg",
-    "sql_query": "max(sum(v_main))",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.v_rel_fzp",
-    "type": "SUM",
-    "title": "v_rel_fzp",
-    "sql_query": "v_rel_fzp",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.v_main",
-    "type": "SUM",
-    "title": "v_main",
-    "sql_query": "v_main",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.v_rel_fzp",
-    "type": "SUM",
-    "title": "v_rel_fzp",
-    "sql_query": "v_rel_fzp",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.v_rel_pp",
-    "type": "SUM",
-    "title": "v_rel_pp",
-    "sql_query": "v_rel_pp",
-    "config": {}
-  }, {
-    "id": "ch.fot_out.fackt",
-    "type": "SUM",
-    "title": "fackt",
-    "sql_query": "round(v_main,2)",
-    "config": {}
-  }]; //r = globalThis.mockCubeJSON;
+  var r = [];
+
+  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_3__lisp__["b" /* isArray */])(globalThis.MOCKcubeColumns)) {
+    r = globalThis.MOCKcubeColumns;
+  } else {
+    var r = [{
+      "id": "ch.fot_out.Val",
+      "type": "NUMBER",
+      "title": "Val",
+      "sql_query": "\"Val\"",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.My version",
+      "type": "STRING",
+      "title": "My version",
+      "sql_query": "\"My version\"",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.dt",
+      "type": "PERIOD",
+      "title": "dt",
+      "sql_query": "NOW() - INERVAL '1 DAY'",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.hcode_id",
+      "type": "NUMBER",
+      "title": "hcode_id",
+      "sql_query": "hcode_id",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.hcode_name",
+      "type": "STRING",
+      "title": "hcode_name",
+      "sql_query": "hcode_name",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.unit_name",
+      "type": "STRING",
+      "title": "unit_name",
+      "sql_query": "unit_name",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.date_type_id",
+      "type": "NUMBER",
+      "title": "date_type_id",
+      "sql_query": "date_type_id",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.dor_id",
+      "type": "NUMBER",
+      "title": "dor_id",
+      "sql_query": "dor_id",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.dor_tlg",
+      "type": "STRING",
+      "title": "dor_tlg",
+      "sql_query": "dor_tlg",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.dor_name",
+      "type": "STRING",
+      "title": "dor_name",
+      "sql_query": "dor_name",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.obj_id",
+      "type": "NUMBER",
+      "title": "obj_id",
+      "sql_query": "obj_id",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.tlg",
+      "type": "STRING",
+      "title": "tlg",
+      "sql_query": "tlg",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.obj_name",
+      "type": "STRING",
+      "title": "obj_name",
+      "sql_query": "obj_name",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.oe_type",
+      "type": "STRING",
+      "title": "oe_type",
+      "sql_query": "oe_type",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.priox_int",
+      "type": "NUMBER",
+      "title": "priox_int",
+      "sql_query": "priox_int",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.type_oe_bi",
+      "type": "STRING",
+      "title": "type_oe_bi",
+      "sql_query": "type_oe_bi",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.dor1",
+      "type": "STRING",
+      "title": "dor1",
+      "sql_query": "dor1",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.dor2",
+      "type": "STRING",
+      "title": "dor2",
+      "sql_query": "dor2",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.dor3",
+      "type": "STRING",
+      "title": "dor3",
+      "sql_query": "dor3",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.dor4",
+      "type": "STRING",
+      "title": "dor4",
+      "sql_query": "dor4",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.dor5",
+      "type": "STRING",
+      "title": "dor5",
+      "sql_query": "dor5",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.dor6",
+      "type": "STRING",
+      "title": "dor6",
+      "sql_query": "dor6",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.branch1",
+      "type": "STRING",
+      "title": "branch1",
+      "sql_query": "branch1",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.branch2",
+      "type": "STRING",
+      "title": "branch2",
+      "sql_query": "branch2",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.branch3",
+      "type": "STRING",
+      "title": "branch3",
+      "sql_query": "branch3",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.branch4",
+      "type": "STRING",
+      "title": "branch4",
+      "sql_query": "branch4",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.branch5",
+      "type": "STRING",
+      "title": "branch5",
+      "sql_query": "branch5",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.branch6",
+      "type": "STRING",
+      "title": "branch6",
+      "sql_query": "branch6",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.ss1",
+      "type": "STRING",
+      "title": "ss1",
+      "sql_query": "ss1",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.ss2",
+      "type": "STRING",
+      "title": "ss2",
+      "sql_query": "ss2",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.ss3",
+      "type": "STRING",
+      "title": "ss3",
+      "sql_query": "ss3",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.ss4",
+      "type": "STRING",
+      "title": "ss4",
+      "sql_query": "ss4",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.ss5",
+      "type": "STRING",
+      "title": "ss5",
+      "sql_query": "ss5",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.ss6",
+      "type": "STRING",
+      "title": "ss6",
+      "sql_query": "ss6",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.indicator_v",
+      "type": "NUMBER",
+      "title": "indicator_v",
+      "sql_query": "indicator_v",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.group_pay_name",
+      "type": "STRING",
+      "title": "group_pay_name",
+      "sql_query": "group_pay_name",
+      "config": {
+        "follow": ["fot_out.group_pay_id"],
+        "children": ["fot_out.pay_name", "fot_out.pay_code"],
+        "memberALL": "Не задано"
+      }
+    }, {
+      "id": "ch.fot_out.pay_code",
+      "type": "STRING",
+      "title": "pay_code",
+      "sql_query": "pay_code",
+      "config": {
+        "memberALL": "Не задано",
+        "follow": ["fot_out.pay_name"]
+      }
+    }, {
+      "id": "ch.fot_out.pay_title",
+      "type": "STRING",
+      "title": "pay_title",
+      "sql_query": "dictGet('gpn.group_pay_dict', 'some_real_field', tuple(pay_code))",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.pay_name",
+      "type": "STRING",
+      "title": "pay_name",
+      "sql_query": "pay_name",
+      "config": {
+        "memberALL": "Не задано",
+        "follow": ["fot_out.pay_code"]
+      }
+    }, {
+      "id": "ch.fot_out.category_name",
+      "type": "STRING",
+      "title": "category_name",
+      "sql_query": "category_name",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.sex_code",
+      "type": "STRING",
+      "title": "sex_code",
+      "sql_query": "sex_code",
+      "config": {
+        "memberALL": null,
+        "altDimensions": ["fot_out.sex_name"]
+      }
+    }, {
+      "id": "ch.fot_out.sex_name",
+      "type": "STRING",
+      "title": "sex_name",
+      "sql_query": "sex_name",
+      "config": {
+        "memberALL": "Все",
+        "altDimensions": ["fot_out.sex_code"]
+      }
+    }, {
+      "id": "ch.fot_out.area_name",
+      "type": "STRING",
+      "title": "area_name",
+      "sql_query": "area_name",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.region_name",
+      "type": "STRING",
+      "title": "region_name",
+      "sql_query": "region_name",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.municipal_name",
+      "type": "STRING",
+      "title": "municipal_name",
+      "sql_query": "municipal_name",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.prod_group_name",
+      "type": "STRING",
+      "title": "prod_group_name",
+      "sql_query": "prod_group_name",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.profession_name",
+      "type": "STRING",
+      "title": "profession_name",
+      "sql_query": "profession_name",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.v_agg",
+      "type": "AGGFN",
+      "title": "v_agg",
+      "sql_query": "max(sum(v_main))",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.v_rel_fzp",
+      "type": "SUM",
+      "title": "v_rel_fzp",
+      "sql_query": "v_rel_fzp",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.v_main",
+      "type": "SUM",
+      "title": "v_main",
+      "sql_query": "v_main",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.v_rel_fzp",
+      "type": "SUM",
+      "title": "v_rel_fzp",
+      "sql_query": "v_rel_fzp",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.v_rel_pp",
+      "type": "SUM",
+      "title": "v_rel_pp",
+      "sql_query": "v_rel_pp",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.fackt",
+      "type": "SUM",
+      "title": "fackt",
+      "sql_query": "round(v_main,2)",
+      "config": {}
+    }];
+  }
 
   var parts = cubeId.split('.');
   var res = {};
@@ -5466,6 +5474,10 @@ function reports_get_column_info(srcId, col) {
 function reports_get_table_sql(target_db_type, tbl) {
   var table_name = tbl.split('.')[1];
 
+  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_3__lisp__["e" /* isHash */])(globalThis.MOCKCubeSQL["".concat(target_db_type, "-").concat(tbl)])) {
+    return globalThis.MOCKCubeSQL["".concat(target_db_type, "-").concat(tbl)];
+  }
+
   if (target_db_type === 'oracle') {
     return {
       "query": "".concat(table_name, " ").concat(table_name),
@@ -5473,17 +5485,16 @@ function reports_get_table_sql(target_db_type, tbl) {
         "is_template": 0
       }
     };
-  } //return {"query": `${table_name} AS ${table_name}`, "config": {"is_template": 0}}
-  // hcode_name
-  // and ${filters(group_pay_name)}
-
+  }
 
   return {
-    "query": "".concat(table_name, " AS ").concat(table_name, " where ") + '${filters(sex_code,pay_code)} ',
+    "query": "".concat(table_name, " AS ").concat(table_name),
     "config": {
-      "is_template": 1,
-      "skip_where": 0
-    }
+      "is_template": 0
+    } // hcode_name
+    // and ${filters(group_pay_name)}
+    //return {"query": `${table_name} AS ${table_name} where ` + '${filters(sex_code,pay_code)} ', "config": {"is_template": 1,"skip_where":0}}
+
   };
 }
 /* should find path to JOIN all tables listed in cubes array */
@@ -5572,7 +5583,7 @@ module.exports = function (IS_INCLUDES) {
 // 4 -> Array#every
 // 5 -> Array#find
 // 6 -> Array#findIndex
-var ctx = __webpack_require__(22);
+var ctx = __webpack_require__(23);
 var IObject = __webpack_require__(51);
 var toObject = __webpack_require__(15);
 var toLength = __webpack_require__(13);
@@ -5667,7 +5678,7 @@ module.exports = function (object, index, value) {
 // all enumerable object keys, includes symbols
 var getKeys = __webpack_require__(14);
 var gOPS = __webpack_require__(56);
-var pIE = __webpack_require__(26);
+var pIE = __webpack_require__(27);
 module.exports = function (it) {
   var result = getKeys(it);
   var getSymbols = gOPS.f;
@@ -5703,7 +5714,7 @@ module.exports = function (KEY) {
 /* 80 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(28)('native-function-to-string', Function.toString);
+module.exports = __webpack_require__(29)('native-function-to-string', Function.toString);
 
 
 /***/ }),
@@ -5962,7 +5973,7 @@ module.exports = function (KEY, exec) {
 
 var getKeys = __webpack_require__(14);
 var toIObject = __webpack_require__(12);
-var isEnum = __webpack_require__(26).f;
+var isEnum = __webpack_require__(27).f;
 module.exports = function (isEntries) {
   return function (it) {
     var O = toIObject(it);
@@ -6005,7 +6016,7 @@ module.exports = {
   set: Object.setPrototypeOf || ('__proto__' in {} ? // eslint-disable-line
     function (test, buggy, set) {
       try {
-        set = __webpack_require__(22)(Function.call, __webpack_require__(55).f(Object.prototype, '__proto__').set, 2);
+        set = __webpack_require__(23)(Function.call, __webpack_require__(55).f(Object.prototype, '__proto__').set, 2);
         set(test, []);
         buggy = !(test instanceof Array);
       } catch (e) { buggy = true; }
@@ -6089,7 +6100,7 @@ module.exports = function (that, searchString, NAME) {
 /* 100 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var toInteger = __webpack_require__(29);
+var toInteger = __webpack_require__(30);
 var max = Math.max;
 var min = Math.min;
 module.exports = function (index, length) {
@@ -6139,7 +6150,7 @@ __webpack_require__(48)(KEY);
 
 "use strict";
 
-var ctx = __webpack_require__(22);
+var ctx = __webpack_require__(23);
 var $export = __webpack_require__(6);
 var toObject = __webpack_require__(15);
 var call = __webpack_require__(84);
@@ -6217,7 +6228,7 @@ __webpack_require__(6)({
 // 21.2.5.3 get RegExp.prototype.flags()
 if (__webpack_require__(2) && /./g.flags != 'g') __webpack_require__(5).f(RegExp.prototype, 'flags', {
   configurable: true,
-  get: __webpack_require__(24)
+  get: __webpack_require__(25)
 });
 
 
@@ -6230,10 +6241,10 @@ if (__webpack_require__(2) && /./g.flags != 'g') __webpack_require__(5).f(RegExp
 
 var anObject = __webpack_require__(1);
 var sameValue = __webpack_require__(94);
-var regExpExec = __webpack_require__(27);
+var regExpExec = __webpack_require__(28);
 
 // @@search logic
-__webpack_require__(23)('search', 1, function (defined, SEARCH, $search, maybeCallNative) {
+__webpack_require__(24)('search', 1, function (defined, SEARCH, $search, maybeCallNative) {
   return [
     // `String.prototype.search` method
     // https://tc39.github.io/ecma262/#sec-string.prototype.search

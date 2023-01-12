@@ -1,11 +1,10 @@
 var assert = require('assert');
 var lpe = require('../dist/lpe');
 
-globalThis.mockCubeJSON = '[]';
-
+globalThis.MOCKCubeSQL = {};
 
 describe('LPE tests', function() {
-
+   
     it('should eval KOOB queries', function() {
 
             assert.equal( lpe.generate_koob_sql(

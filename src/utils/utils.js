@@ -1,3 +1,4 @@
+import { isArray, isHash } from "../lisp";
 
 export function db_quote_literal(intxt) {
      return "'" + intxt.toString().replace(/\'/g , "''") + "'";
@@ -10,6 +11,10 @@ export function db_quote_ident(intxt) {
 // for debugging outside of database !!!
 // FIXME: dims has all info about columns !!!
 export function reports_get_columns(cubeId, dims) {
+     var r = [];
+     if (isArray(globalThis.MOCKcubeColumns)) {
+          r = globalThis.MOCKcubeColumns
+     } else {
      var r = [
      {"id":"ch.fot_out.Val","type":"NUMBER","title":"Val","sql_query":"\"Val\"","config":{}}, 
      {"id":"ch.fot_out.My version","type":"STRING","title":"My version","sql_query":"\"My version\"","config":{}}, 
@@ -67,8 +72,8 @@ export function reports_get_columns(cubeId, dims) {
      "title":"v_rel_fzp","sql_query":"v_rel_fzp","config":{}}, {"id":"ch.fot_out.v_main","type":"SUM","title":"v_main","sql_query":"v_main","config":{}}, {"id":"ch.fot_out.v_rel_fzp","type":"SUM",
      "title":"v_rel_fzp","sql_query":"v_rel_fzp","config":{}}, {"id":"ch.fot_out.v_rel_pp","type":"SUM","title":"v_rel_pp","sql_query":"v_rel_pp","config":{}},
      {"id":"ch.fot_out.fackt","type":"SUM","title":"fackt","sql_query":"round(v_main,2)","config":{}}];
+     }
 
-     //r = globalThis.mockCubeJSON;
      var parts = cubeId.split('.')
 
      var res = {}
@@ -95,13 +100,17 @@ export function reports_get_column_info(srcId, col) {
 
  export function reports_get_table_sql(target_db_type, tbl) {
      var table_name = tbl.split('.')[1]
+     if (isHash(globalThis.MOCKCubeSQL[`${target_db_type}-${tbl}`])) {
+          return globalThis.MOCKCubeSQL[`${target_db_type}-${tbl}`];
+     }
+
      if (target_db_type === 'oracle') {
           return {"query": `${table_name} ${table_name}`, "config": {"is_template": 0}}
      }
-     //return {"query": `${table_name} AS ${table_name}`, "config": {"is_template": 0}}
+     return {"query": `${table_name} AS ${table_name}`, "config": {"is_template": 0}}
      // hcode_name
      // and ${filters(group_pay_name)}
-     return {"query": `${table_name} AS ${table_name} where ` + '${filters(sex_code,pay_code)} ', "config": {"is_template": 1,"skip_where":0}}
+     //return {"query": `${table_name} AS ${table_name} where ` + '${filters(sex_code,pay_code)} ', "config": {"is_template": 1,"skip_where":0}}
  }
 
 /* should find path to JOIN all tables listed in cubes array */
