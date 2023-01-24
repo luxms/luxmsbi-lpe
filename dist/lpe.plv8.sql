@@ -7083,11 +7083,11 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
   return ret;
 }
 
-function init_mssql_args_context(_vars) {
+function init_mssql_args_context(_cube, _vars) {
   // ожидаем на вход хэш с фильтрами прямо из нашего запроса koob...
 
   /*
-  {"dt":["between",2019,2022],"id":["=",23000035],"regions":["=","Moscow","piter","tumen"]}
+   {"dt":["between",2019,2022],"id":["=",23000035],"regions":["=","Moscow","piter","tumen"]}
   mssql_sp_args:  ["dir","regions","id","id","dt","dt"]
   mssql_sp_args:  ["dir",["cl","regions"],"id","id","dt","dt"]
   для квотации уже не работает, нужен кастомный резолвер имён ;-) а значит специальный контекст, в котором
@@ -7100,17 +7100,32 @@ function init_mssql_args_context(_vars) {
     var pairs = ast.reduce(function (list, _, index, source) {
       if (index % 2 === 0) {
         var name = source[index];
-        var filter_name = source[index + 1];
+        var filter_ast = source[index + 1];
         name = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(name, _ctx); // should eval to itself !
 
-        var filter_ast = _vars[filter_name];
+        var filters = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(filter_ast, ctx, {
+          "resolveString": false
+        }); // включая _vars !
+        //console.log('evaled to ' + JSON.stringify(filters))
 
-        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(filter_ast)) {
-          if (filter_ast[0] === '=') {
-            var expr = filter_ast.slice(1).join('@');
+        if (filters !== undefined) {
+          if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(filters)) {
+            if (filters[0] === '=') {
+              if (filters.length > 2) {
+                var expr = filters.slice(1).join('@');
 
-            if (expr.length > 0) {
-              list.push("@".concat(name, " = '").concat(expr, "'"));
+                if (expr.length > 0) {
+                  list.push("@".concat(name, " = '").concat(expr, "'"));
+                }
+              } else {
+                if (filters.length === 2) {
+                  list.push("@".concat(name, " = ").concat(filters[1]));
+                }
+              }
+            }
+          } else {
+            if (filters.length > 0) {
+              list.push("@".concat(name, " = ").concat(filters));
             }
           }
         }
@@ -7120,7 +7135,26 @@ function init_mssql_args_context(_vars) {
     }, []);
     return pairs.join(', ');
   });
-  return [_ctx, _vars];
+
+  _ctx["ql"] = function (arg) {
+    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(arg)) {
+      var expr = arg.slice(1).join('@');
+      return "'".concat(expr, "'");
+    } else {
+      if (arg !== undefined) {
+        return "'".concat(arg, "'");
+      }
+    }
+
+    return undefined;
+  };
+
+  return [_ctx, // функция, которая резолвит имена столбцов для случаев, когда имя функции не определено в явном виде в _vars/_context
+  // а также пытается зарезолвить коэффициенты
+  function (key, val, resolveOptions) {
+    var fullname = "".concat(_cube, ".").concat(key);
+    return _vars[fullname];
+  }];
 }
 /*********************************
  * 
@@ -8556,7 +8590,8 @@ function cache_alias_keys(_cfg) {
 
 
 function genereate_subtotals_group_by(cfg, group_by_list) {
-  var subtotals = cfg["subtotals"]; //console.log(`GROUP BY: ${JSON.stringify(subtotals)} ${JSON.stringify(group_by_list)}`)
+  var subtotals = cfg["subtotals"];
+  __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log("GROUP BY: ".concat(JSON.stringify(subtotals), " ").concat(JSON.stringify(group_by_list)));
 
   if (group_by_list.length === 0) {
     return '';
@@ -9345,9 +9380,51 @@ function generate_koob_sql(_cfg, _vars) {
       } /////////////////////////////////////////////////////
       //console.log("COLUMN:", JSON.stringify(el))
 
+      /* в этом месте нужно обернуть expand_outer_expr() в generate_grouping(),
+        Которая либо noop, либо делает if(GROUPING(datacenter)=1,datacenter,NULL)
+        для clickhouse и CASE/WHEN для остальных
+      */
+
+
+      var generate_grouping = function generate_grouping(arg) {
+        return expand_outer_expr(arg);
+      };
+
+      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(_cfg["subtotals"])) {
+        if (_context[0]["_target_database"] === 'clickhouse') {
+          generate_grouping = function generate_grouping(arg) {
+            var expanded = expand_outer_expr(arg);
+
+            if (arg.agg === true) {
+              return expanded;
+            } else {
+              // начиная с 22.6 появилась функция grouping
+              // начиная с 22.9 она работает правильно, но есть проблема с алиасом на if(GROUPING())!!!
+              // Это бага!!! даже в 22.12
+              // Поэтому отключаем!!!
+              // return `if(GROUPING(${expanded})=0,${expanded},NULL)`
+              return expanded;
+            }
+          };
+        } else if (_context[0]["_target_database"] === 'postgresql' ||
+        /* есть проблема с генерацией SQL _context[0]["_target_database"]==='oracle' || */
+        _context[0]["_target_database"] === 'teradata' || _context[0]["_target_database"] === 'sqlserver' || _context[0]["_target_database"] === 'vertica') {
+          generate_grouping = function generate_grouping(arg) {
+            var expanded = expand_outer_expr(arg);
+
+            if (arg.agg === true) {
+              return expanded;
+            } else {
+              return "CASE WHEN GROUPING(".concat(expanded, ")=0 THEN ").concat(expanded, " ELSE NULL END");
+            }
+          };
+        } else {
+          return expand_outer_expr(arg);
+        }
+      }
 
       if (el.alias) {
-        return quot_as_expression(_context[0]["_target_database"], expand_outer_expr(el), el.alias);
+        return quot_as_expression(_context[0]["_target_database"], generate_grouping(el), el.alias);
       } else {
         if (el.columns.length === 1) {
           var parts = el.columns[0].split('.'); // We may have auto-generated columns, which has no dots in name!
@@ -9355,13 +9432,13 @@ function generate_koob_sql(_cfg, _vars) {
           // COLUMN: {"columns":["koob__range__"],"is_range_column":true,"expr":"koob__range__","join":{
 
           if (parts.length === 3) {
-            return quot_as_expression(_context[0]["_target_database"], expand_outer_expr(el), parts[2]);
+            return quot_as_expression(_context[0]["_target_database"], generate_grouping(el), parts[2]);
           } else {
-            return expand_outer_expr(el);
+            return generate_grouping(el);
           }
         }
 
-        return expand_outer_expr(el);
+        return generate_grouping(el);
       }
     }).join(', ');
 
@@ -9467,13 +9544,12 @@ function generate_koob_sql(_cfg, _vars) {
       // FIXME: не делаем access_filters :()
 
       re = /\$\{filters\(([^\)]+)\)\}/gi;
-      processed_from = processed_from.replace(re, inclusive_replacer);
-      from = processed_from; //final_sql = `${select}\nFROM ${processed_from}${group_by}${order_by}${limit_offset}${ending}`
+      processed_from = processed_from.replace(re, inclusive_replacer); //final_sql = `${select}\nFROM ${processed_from}${group_by}${order_by}${limit_offset}${ending}`
       ///////////////////////////////////////////////////////////////////////
       // ищем ${mssql_sp_args(column , title, name1, filter1, ....)}
 
       re = /\$\{mssql_sp_args\(([^\}]+)\)\}/gi;
-      var c = init_mssql_args_context(_cfg["filters"]);
+      var c = init_mssql_args_context("".concat(_cfg.ds, ".").concat(_cfg.cube), _cfg["filters"]);
       processed_from = processed_from.replace(re, mssql_sp_args_replacer);
       from = processed_from;
     }
@@ -9584,11 +9660,9 @@ function generate_koob_sql(_cfg, _vars) {
     if (_cfg["return"] === "count") {
       if (_context[0]["_target_database"] === 'clickhouse') {
         final_sql = "select toUInt32(count(300)) as count from (".concat(final_sql, ")");
-      } else if (_context[0]["_target_database"] === 'teradata' || _context[0]["_target_database"] === 'oracle') {
-        final_sql = "select count(300) as \"count\" from (".concat(final_sql, ") koob__count__src__");
       } else {
-        // avoid error in postgresql
-        final_sql = "select count(300) as count from (".concat(final_sql, ") koob__count__src__");
+        // use quotes to interact with our Web client in all cases (prevent upper case)
+        final_sql = "select count(300) as \"count\" from (".concat(final_sql, ") koob__count__src__");
       }
     }
 

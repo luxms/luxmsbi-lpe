@@ -1,6 +1,7 @@
 var assert = require('assert');
 var lpe = require('../dist/lpe');
 
+globalThis.MOCKCubeSQL = {};
 
 describe('LPE KOOB tests', function() {
 

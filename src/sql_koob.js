@@ -274,10 +274,10 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
 }
 
 
-function init_mssql_args_context(_vars) {
+function init_mssql_args_context(_cube, _vars) {
   // ожидаем на вход хэш с фильтрами прямо из нашего запроса koob...
   /*
-  {"dt":["between",2019,2022],"id":["=",23000035],"regions":["=","Moscow","piter","tumen"]}
+   {"dt":["between",2019,2022],"id":["=",23000035],"regions":["=","Moscow","piter","tumen"]}
   mssql_sp_args:  ["dir","regions","id","id","dt","dt"]
   mssql_sp_args:  ["dir",["cl","regions"],"id","id","dt","dt"]
   для квотации уже не работает, нужен кастомный резолвер имён ;-) а значит специальный контекст, в котором
@@ -291,15 +291,28 @@ function init_mssql_args_context(_vars) {
       let pairs = ast.reduce((list, _, index, source) => {
         if (index % 2 === 0) {
           let name = source[index];
-          let filter_name = source[index+1];
+          let filter_ast = source[index+1];
 
           name = eval_lisp(name, _ctx); // should eval to itself !
-          let filter_ast = _vars[filter_name];
-          if (isArray(filter_ast)){
-            if (filter_ast[0] === '=') {
-              let expr = filter_ast.slice(1).join('@');
-              if (expr.length>0) {
-                list.push(`@${name} = '${expr}'`)
+          let filters = eval_lisp(filter_ast, ctx, {"resolveString":false}); // включая _vars !
+          //console.log('evaled to ' + JSON.stringify(filters))
+          if (filters !== undefined) {
+            if (isArray(filters)){
+              if (filters[0] === '=') {
+                if (filters.length > 2){
+                  let expr = filters.slice(1).join('@');
+                  if (expr.length>0) {
+                    list.push(`@${name} = '${expr}'`)
+                  }
+                } else {
+                  if (filters.length === 2) {
+                    list.push(`@${name} = ${filters[1]}`)
+                  }
+                }
+              }
+            } else {
+              if (filters.length > 0) {
+                list.push(`@${name} = ${filters}`)
               }
             }
           }
@@ -310,7 +323,26 @@ function init_mssql_args_context(_vars) {
     return pairs.join(', ')
   });
 
-  return [_ctx, _vars];
+  _ctx["ql"] = function(arg) {
+    if (isArray(arg)){
+      let expr = arg.slice(1).join('@');
+      return `'${expr}'`
+    }else{
+      if (arg !== undefined) {
+        return `'${arg}'`
+      } 
+    }
+    return undefined
+  }
+
+  return [_ctx,   
+    // функция, которая резолвит имена столбцов для случаев, когда имя функции не определено в явном виде в _vars/_context
+    // а также пытается зарезолвить коэффициенты
+    (key, val, resolveOptions) => {
+      let fullname = `${_cube}.${key}`
+      return _vars[fullname]
+    }
+];
 
 }
  
@@ -1678,7 +1710,7 @@ function cache_alias_keys(_cfg) {
 function genereate_subtotals_group_by(cfg, group_by_list){
   let subtotals = cfg["subtotals"]
 
-  //console.log(`GROUP BY: ${JSON.stringify(subtotals)} ${JSON.stringify(group_by_list)}`)
+  console.log(`GROUP BY: ${JSON.stringify(subtotals)} ${JSON.stringify(group_by_list)}`)
   if (group_by_list.length === 0) {
     return ''
   }
@@ -2364,8 +2396,50 @@ export function generate_koob_sql(_cfg, _vars) {
       }
       /////////////////////////////////////////////////////
       //console.log("COLUMN:", JSON.stringify(el))
+
+      /* в этом месте нужно обернуть expand_outer_expr() в generate_grouping(),
+        Которая либо noop, либо делает if(GROUPING(datacenter)=1,datacenter,NULL)
+        для clickhouse и CASE/WHEN для остальных
+      */
+      let generate_grouping = function(arg) {
+        return expand_outer_expr(arg)
+      }
+
+      if (isArray(_cfg["subtotals"])){
+        if (_context[0]["_target_database"]==='clickhouse') {
+          generate_grouping = function(arg) {
+            let expanded = expand_outer_expr(arg)
+            if (arg.agg === true) {
+              return expanded
+            } else {
+              // начиная с 22.6 появилась функция grouping
+              // начиная с 22.9 она работает правильно, но есть проблема с алиасом на if(GROUPING())!!!
+              // Это бага!!! даже в 22.12
+              // Поэтому отключаем!!!
+              // return `if(GROUPING(${expanded})=0,${expanded},NULL)`
+              return expanded
+            }
+          }
+        } else if (_context[0]["_target_database"]==='postgresql' || 
+          /* есть проблема с генерацией SQL _context[0]["_target_database"]==='oracle' || */
+          _context[0]["_target_database"]==='teradata' ||
+          _context[0]["_target_database"]==='sqlserver' ||
+          _context[0]["_target_database"]==='vertica') {
+            generate_grouping = function(arg) {
+              let expanded = expand_outer_expr(arg)
+              if (arg.agg === true) {
+                return expanded
+              } else {
+                return `CASE WHEN GROUPING(${expanded})=0 THEN ${expanded} ELSE NULL END`
+              }
+            }
+        } else {
+          return expand_outer_expr(arg)
+        }
+      }
+      
       if (el.alias){
-        return quot_as_expression(_context[0]["_target_database"], expand_outer_expr(el), el.alias)
+        return quot_as_expression(_context[0]["_target_database"], generate_grouping(el), el.alias)
       } else {
         if (el.columns.length === 1) {
           var parts = el.columns[0].split('.')
@@ -2373,12 +2447,12 @@ export function generate_koob_sql(_cfg, _vars) {
           // COLUMN: {"columns":["ch.fot_out.hcode_name"],"expr":"hcode_name"}
           // COLUMN: {"columns":["koob__range__"],"is_range_column":true,"expr":"koob__range__","join":{
           if (parts.length === 3) {
-            return quot_as_expression(_context[0]["_target_database"], expand_outer_expr(el), parts[2])
+            return quot_as_expression(_context[0]["_target_database"], generate_grouping(el), parts[2])
           } else {
-            return expand_outer_expr(el)
+            return generate_grouping(el)
           }
         }
-        return expand_outer_expr(el)
+        return generate_grouping(el)
       } 
     }).join(', ')
 
@@ -2469,13 +2543,13 @@ export function generate_koob_sql(_cfg, _vars) {
         return subst;
       }
       processed_from = processed_from.replace(re, inclusive_replacer);
-      from = processed_from
+
       //final_sql = `${select}\nFROM ${processed_from}${group_by}${order_by}${limit_offset}${ending}`
 
       ///////////////////////////////////////////////////////////////////////
       // ищем ${mssql_sp_args(column , title, name1, filter1, ....)}
       re = /\$\{mssql_sp_args\(([^\}]+)\)\}/gi
-      let c = init_mssql_args_context(_cfg["filters"]);
+      let c = init_mssql_args_context(`${_cfg.ds}.${_cfg.cube}`, _cfg["filters"]);
 
       function mssql_sp_args_replacer(match, columns_text, offset, string) {
 
@@ -2600,12 +2674,9 @@ export function generate_koob_sql(_cfg, _vars) {
     if (_cfg["return"] === "count") {
       if (_context[0]["_target_database"] === 'clickhouse'){
         final_sql = `select toUInt32(count(300)) as count from (${final_sql})`
-      } else if (_context[0]["_target_database"] === 'teradata' ||
-                 _context[0]["_target_database"] === 'oracle'  ){ 
-        final_sql = `select count(300) as "count" from (${final_sql}) koob__count__src__`
       } else {
-        // avoid error in postgresql
-        final_sql = `select count(300) as count from (${final_sql}) koob__count__src__`
+        // use quotes to interact with our Web client in all cases (prevent upper case)
+        final_sql = `select count(300) as "count" from (${final_sql}) koob__count__src__`
       }
     }
     return final_sql
