@@ -49,11 +49,11 @@ describe('KOOB templates', function() {
          "limit": 10,
          "with":"bi.cube"},
                {"_target_database": "clickhouse"}),
-   `SELECT sum(id) as "АХТУНГ", id
+   `SELECT sum(id) as "АХТУНГ", id as id
 FROM (SELECT 1 from cube where
 (toString(regions) ILIKE '%N%') AND ((toString(dt) ILIKE '%А%') AND (dt IN ('2022-01-02', '2022-10-10', '2020-09-09')))
 or (toString(regions) ILIKE '%N%') AND ((toString(dt) ILIKE '%А%') AND (dt IN ('2022-01-02', '2022-10-10', '2020-09-09')))
-or 1=1)
+or ((toString(dt) ILIKE '%А%') AND (dt IN ('2022-01-02', '2022-10-10', '2020-09-09'))))
 GROUP BY id
 ORDER BY id LIMIT 10`
             );
@@ -73,11 +73,11 @@ ORDER BY id LIMIT 10`
          "limit": 10,
          "with":"bi.cube"},
                {"_target_database": "clickhouse"}),
-   `SELECT sum(id) as "АХТУНГ", id
+   `SELECT sum(id) as "АХТУНГ", id as id
 FROM (SELECT 1 from cube where
 (1=1)
 or (1=1)
-or 1=1)
+or (1=1))
 GROUP BY id
 ORDER BY dt LIMIT 10`
             );
@@ -112,17 +112,17 @@ where \${filters(id)}
                },
                "with":"bi.cube"},
                      {"_target_database": "clickhouse"}),
-         `SELECT regions
+         `SELECT regions as regions
 FROM (SELECT 1 from cube where
 where (dt BETWEEN 2019 AND 2022) AND (id = 23000035)
-where 1=1 and status_nm = 'Закрыт'
+where (id = 23000035) and status_nm = 'Закрыт'
 where (dt BETWEEN 2019 AND 2022) AND (id = 23000035) and status_nm != 'Проект'
 where (dt BETWEEN 2019 AND 2022) AND (id = 23000035) and status_nm != 'Проект'
+where (dt BETWEEN 2019 AND 2022) and status_nm != 'Проект'
+where (id = 23000035)
 where (dt BETWEEN 2019 AND 2022) AND (id = 23000035) and status_nm != 'Проект'
-where 1=1
 where (dt BETWEEN 2019 AND 2022) AND (id = 23000035) and status_nm != 'Проект'
-where (dt BETWEEN 2019 AND 2022) AND (id = 23000035) and status_nm != 'Проект'
-where 1=1
+where (id = 23000035)
 `
                   );
          });
@@ -136,7 +136,8 @@ where 1=1
                   "query": `(SELECT 1 from cube
 where \${mssql_sp_args(dir, ql(ql(regions)), id, id, dt, ql(ql(d)))}
 where \${mssql_sp_args(dir, ql(regions), id, ql(id), dt, dt)}
-where \${mssql_sp_args(dir, ql(regions.1), id, ql(id), dt, dt)}`, 
+where \${mssql_sp_args(dir, ql(regions.1), id, ql(id), dt, dt)}
+where func_call(\${mssql_sp_args('', ql(regions))})`,
                   "config": {"is_template": 1,"skip_where": 1}}}
             
             assert.equal( lpe.generate_koob_sql(
@@ -150,11 +151,12 @@ where \${mssql_sp_args(dir, ql(regions.1), id, ql(id), dt, dt)}`,
                },
                "with":"bi.cube"},
                      {"_target_database": "clickhouse"}),
-            `SELECT regions
+            `SELECT regions as regions
 FROM (SELECT 1 from cube
 where @dir = ''Moscow@piter@tumen'', @id = 23000035
 where @dir = 'Moscow@piter@tumen', @id = '23000035'
-where @dir = 'Moscow', @id = '23000035'`
+where @dir = 'Moscow', @id = '23000035'
+where func_call('Moscow@piter@tumen')`
                               );
                      });
 

@@ -7027,6 +7027,10 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 function should_quote_alias(name) {
   return name.match(/^[_a-z][_a-z0-9]*$/) === null;
 }
+
+function upper_by_default(db) {
+  return db === 'oracle' || db === 'teradata' || db === 'sap';
+}
 /**
  * возвращает строку `col AS alias`
  * @param {*} db 
@@ -7040,7 +7044,7 @@ function quot_as_expression(db, src, alias) {
   // 1 определяем, нужно ли квотировать 
   var should_quote = false;
 
-  if (db === 'oracle' || db === 'teradata') {
+  if (upper_by_default(db)) {
     should_quote = true; // `select col from dual` вернёт в JDBC `COL` заглавными буквами !!!
     // это ломает клиент, который ждёт lowercase названия объектов
     // teradata не понимает max(a) as max
@@ -7231,9 +7235,10 @@ function init_mssql_args_context(_cube, _vars) {
   /*
    {"dt":["between",2019,2022],"id":["=",23000035],"regions":["=","Moscow","piter","tumen"]}
   mssql_sp_args:  ["dir","regions","id","id","dt","dt"]
-  mssql_sp_args:  ["dir",["cl","regions"],"id","id","dt","dt"]
+  mssql_sp_args:  ["dir",["ql","regions"],"id","id","dt","dt"]
   для квотации уже не работает, нужен кастомный резолвер имён ;-) а значит специальный контекст, в котором
   надо эвалить каждый второй аргумент: TODO
+   если ключ (нечётный аргумент - пустой, то пишем без имени аргумента...)
   */
   var _ctx = {};
   _ctx["mssql_sp_args"] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* makeSF */])(function (ast, ctx) {
@@ -7257,7 +7262,11 @@ function init_mssql_args_context(_cube, _vars) {
                 var expr = filters.slice(1).join('@');
 
                 if (expr.length > 0) {
-                  list.push("@".concat(name, " = '").concat(expr, "'"));
+                  if (name && name.length > 0) {
+                    list.push("@".concat(name, " = '").concat(expr, "'"));
+                  } else {
+                    list.push("'".concat(expr, "'"));
+                  }
                 }
               } else {
                 if (filters.length === 2) {
@@ -7267,7 +7276,11 @@ function init_mssql_args_context(_cube, _vars) {
             }
           } else {
             if (filters.length > 0) {
-              list.push("@".concat(name, " = ").concat(filters));
+              if (name && name.length > 0) {
+                list.push("@".concat(name, " = ").concat(filters));
+              } else {
+                list.push("".concat(filters));
+              }
             }
           }
         }
@@ -7475,7 +7488,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
       return "quantile(0.5)(".concat(col, ")");
     } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle') {
       return "percentile_cont(0.5) WITHIN GROUP (ORDER BY ".concat(col, " DESC)");
-    } else if (_context._target_database === 'teradata') {
+    } else if (_context._target_database === 'teradata' || _context._target_database === 'sap') {
       return "median(".concat(col, ")");
     } else {
       throw Error("median() is not implemented for ".concat(_context._target_database, " yet"));
@@ -7501,7 +7514,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
     if (_context._target_database === 'clickhouse') {
       return "varPop(".concat(col, ")");
-    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle' || _context._target_database === 'teradata' || _context._target_database === 'vertica') {
+    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle' || _context._target_database === 'teradata' || _context._target_database === 'vertica' || _context._target_database === 'sap') {
       return "var_pop(".concat(col, ")");
     } else if (_context._target_database === 'sqlserver') {
       return "VarP(".concat(col, ")");
@@ -7515,7 +7528,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
     if (_context._target_database === 'clickhouse') {
       return "varSamp(".concat(col, ")");
-    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle' || _context._target_database === 'teradata' || _context._target_database === 'vertica') {
+    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle' || _context._target_database === 'teradata' || _context._target_database === 'vertica' || _context._target_database === 'sap') {
       return "var_samp(".concat(col, ")");
     } else if (_context._target_database === 'sqlserver') {
       return "Var(".concat(col, ")");
@@ -7529,7 +7542,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
     if (_context._target_database === 'clickhouse') {
       return "stddevSamp(".concat(col, ")");
-    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle' || _context._target_database === 'teradata' || _context._target_database === 'vertica') {
+    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle' || _context._target_database === 'teradata' || _context._target_database === 'vertica' || _context._target_database === 'sap') {
       return "stddev_samp(".concat(col, ")");
     } else if (_context._target_database === 'sqlserver') {
       return "Stdev(".concat(col, ")");
@@ -7543,7 +7556,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
     if (_context._target_database === 'clickhouse') {
       return "stddevPop(".concat(col, ")");
-    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle' || _context._target_database === 'teradata' || _context._target_database === 'vertica') {
+    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle' || _context._target_database === 'teradata' || _context._target_database === 'vertica' || _context._target_database === 'sap') {
       return "stddev_pop(".concat(col, ")");
     } else if (_context._target_database === 'sqlserver') {
       return "StdevP(".concat(col, ")");
@@ -7778,15 +7791,27 @@ function init_koob_context(_vars, default_ds, default_cube) {
         }
       }
     } else if (_context._target_database === 'postgresql') {
+      var s = '';
+
       if (to === undefined) {
-        return "generate_series(0, ".concat(from, "-1)");
+        s = "generate_series(0, ".concat(from, "-1)");
       } else {
         if (step === undefined) {
-          return "generate_series(".concat(from, ", ").concat(to, "-1)");
+          s = "generate_series(".concat(from, ", ").concat(to, "-1)");
         } else {
-          return "generate_series(".concat(from, ", ").concat(to, "-1, ").concat(step, ")");
+          s = "generate_series(".concat(from, ", ").concat(to, "-1, ").concat(step, ")");
         }
       }
+
+      _context["_result"]["is_range_column"] = true;
+      _context["_result"]["expr"] = 'koob__range__';
+      _context["_result"]["columns"] = ["koob__range__"];
+      _context["_result"]["join"] = {
+        "type": "inner",
+        "alias": "koob__range__",
+        "expr": "".concat(s)
+      };
+      return 'koob__range__';
     } else if (_context._target_database === 'teradata') {
       // возвращаем здесь просто имя столбца, но потом нужно будет сгенерить
       // JOIN и WHERE!!!
@@ -7895,6 +7920,27 @@ function init_koob_context(_vars, default_ds, default_cube) {
         "type": "inner",
         "alias": "koob__range__table__",
         "expr": "(\n          WITH koob__range__table__seq AS (\n            SELECT ROW_NUMBER() OVER() - 1 AS koob__range__ FROM (\n                SELECT 1 FROM (\n                    SELECT date(0) + INTERVAL '".concat(from, " second' AS se UNION ALL\n                    SELECT date(0) + INTERVAL '").concat(to, " seconds' AS se ) a\n                TIMESERIES tm AS '1 second' OVER(ORDER BY se)\n            ) b  \n        )\n        SELECT koob__range__ FROM koob__range__table__seq").concat(step, ")")
+      };
+      return 'koob__range__'; // FIXME: это автоматически попадает в GROUP BY !!!
+    } else if (_context._target_database === 'sap') {
+      // SAP HANA
+      if (step === undefined) {
+        step = '1';
+      } else {
+        step = "".concat(step);
+      }
+
+      if (to === undefined) {
+        to = from;
+        from = 0;
+      }
+
+      _context["_result"]["is_range_column"] = true;
+      _context["_result"]["expr"] = 'koob__range__';
+      _context["_result"]["columns"] = ["koob__range__"];
+      _context["_result"]["join"] = {
+        "type": "inner",
+        "expr": "(\n      select GENERATED_PERIOD_START AS koob__range__ from SERIES_GENERATE_INTEGER(".concat(step, ", ").concat(from, ", ").concat(to, ")\n      )")
       };
       return 'koob__range__'; // FIXME: это автоматически попадает в GROUP BY !!!
     } else {
@@ -8325,7 +8371,7 @@ function extend_context_for_order_by(_context, _cfg) {
       }
 
       if (col[0] in _cfg["_aliases"]) {
-        if (_context[0]._target_database === 'oracle' || should_quote_alias(col[0])) {
+        if (upper_by_default(_context[0]._target_database) || should_quote_alias(col[0])) {
           return "\"".concat(col[0], "\"");
         } else {
           return col[0];
@@ -8337,7 +8383,7 @@ function extend_context_for_order_by(_context, _cfg) {
       if (parts.length === 3) {
         return "".concat(parts[1], ".").concat(parts[2]); //return parts[2]
       } else {
-        if (_context[0]._target_database === 'oracle' || should_quote_alias(col[0])) {
+        if (upper_by_default(_context[0]._target_database) || should_quote_alias(col[0])) {
           // пытаемся полечить проблему Oracle UPPER CASE имён
           //console.log(`HOPP ${JSON.stringify(_cfg["_aliases"])}`)
           // в алиасах у нас нет такого столбца
@@ -8733,10 +8779,14 @@ function cache_alias_keys(_cfg) {
 
 function genereate_subtotals_group_by(cfg, group_by_list) {
   var subtotals = cfg["subtotals"];
+  var ret = {
+    'group_by': '',
+    'select': []
+  };
   __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log("GROUP BY: ".concat(JSON.stringify(subtotals), " ").concat(JSON.stringify(group_by_list)));
 
   if (group_by_list.length === 0) {
-    return '';
+    return ret;
   } //cfg["_group_by"].map(el => console.log(JSON.stringify(el)))
   //subtotals.map(el => console.log(JSON.stringify(el)))
 
@@ -8760,7 +8810,7 @@ function genereate_subtotals_group_by(cfg, group_by_list) {
         i = group_by_aliases.indexOf(col);
 
         if (i === -1) {
-          i = group_by_aliases.indexOf("\"".concat(col, "\"")); //FIXME - не уверен что в адиасы попадут заквотированные имена!
+          i = group_by_aliases.indexOf("\"".concat(col, "\"")); //FIXME - не уверен что в алиасы попадут заквотированные имена!
 
           if (i === -1) {
             //console.log(`GROUP BY for ${col} : ${JSON.stringify(group_by_list)}`)
@@ -8777,7 +8827,29 @@ function genereate_subtotals_group_by(cfg, group_by_list) {
       return c.expr;
     }).join(', ');
   });
-  return "\nGROUP BY GROUPING SETS ((".concat(group_by_sql, '),', "\n                        (".concat(subtotals_combinations.join("),\n                        ("), ')'), "\n                       )");
+  ret.group_by = "\nGROUP BY GROUPING SETS ((".concat(group_by_sql, '),', "\n                        (".concat(subtotals_combinations.join("),\n                        ("), ')'), "\n                       )"); // This might be a hard problem:
+  // {"columns":["ch.fot_out.indicator_v","ch.fot_out.v_main"],"agg":true,"alias":"new","expr": "avg(fot_out.indicator_v + fot_out.v_main)"}
+
+  var get_alias = function get_alias(el) {
+    var r;
+
+    if (el.alias !== undefined) {
+      r = el.alias;
+    } else {
+      r = el.expr;
+    }
+
+    if (r.startsWith('"')) {
+      return r.replace(/^"/, '"∑');
+    } else {
+      return "\"\u2211".concat(r, "\"");
+    }
+  };
+
+  ret.select = group_by_list.map(function (el) {
+    return "GROUPING(".concat(el.expr, ") AS ").concat(get_alias(el));
+  });
+  return ret;
 }
 /* в _vars могут быть доп. настройки для контекста.
 Вообще говоря это должен быть настоящий контекст! с помощью init_koob_context() мы дописываем в этот 
@@ -9527,6 +9599,8 @@ function generate_koob_sql(_cfg, _vars) {
         для clickhouse и CASE/WHEN для остальных
       */
 
+      /* v8.11 возвращает отдельные столбцы с GROUPING(col), generate_grouping больше не актуально */
+
 
       var generate_grouping = function generate_grouping(arg) {
         return expand_outer_expr(arg);
@@ -9560,13 +9634,11 @@ function generate_koob_sql(_cfg, _vars) {
               return "CASE WHEN GROUPING(".concat(expanded, ")=0 THEN ").concat(expanded, " ELSE NULL END");
             }
           };
-        } else {
-          return expand_outer_expr(arg);
         }
       }
 
       if (el.alias) {
-        return quot_as_expression(_context[0]["_target_database"], generate_grouping(el), el.alias);
+        return quot_as_expression(_context[0]["_target_database"], expand_outer_expr(el), el.alias);
       } else {
         if (el.columns.length === 1) {
           var parts = el.columns[0].split('.'); // We may have auto-generated columns, which has no dots in name!
@@ -9574,13 +9646,13 @@ function generate_koob_sql(_cfg, _vars) {
           // COLUMN: {"columns":["koob__range__"],"is_range_column":true,"expr":"koob__range__","join":{
 
           if (parts.length === 3) {
-            return quot_as_expression(_context[0]["_target_database"], generate_grouping(el), parts[2]);
+            return quot_as_expression(_context[0]["_target_database"], expand_outer_expr(el), parts[2]);
           } else {
-            return generate_grouping(el);
+            return expand_outer_expr(el);
           }
         }
 
-        return generate_grouping(el);
+        return expand_outer_expr(el);
       }
     }).join(', ');
 
@@ -9600,7 +9672,9 @@ function generate_koob_sql(_cfg, _vars) {
       } else if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(_cfg["subtotals"])) {
         // FIXME: кажется только mysql не алё
         if (_context[0]["_target_database"] === 'postgresql' || _context[0]["_target_database"] === 'oracle' || _context[0]["_target_database"] === 'teradata' || _context[0]["_target_database"] === 'clickhouse' || _context[0]["_target_database"] === 'sqlserver' || _context[0]["_target_database"] === 'vertica') {
-          group_by = genereate_subtotals_group_by(_cfg, _cfg["_group_by"]);
+          var subtotals = genereate_subtotals_group_by(_cfg, _cfg["_group_by"]);
+          group_by = subtotals.group_by;
+          select = "".concat(select, ", ").concat(subtotals.select.join(', ')); // We need to add extra columns to the select as well
         } else {
           throw new Error("named subtotals are not yet supported for ".concat(_context[0]["_target_database"]));
         }

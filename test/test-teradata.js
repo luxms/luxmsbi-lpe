@@ -1,7 +1,7 @@
 var assert = require('assert');
 var lpe = require('../dist/lpe');
 
-
+globalThis.MOCKCubeSQL = {};
 
 describe('KOOB Teradata tests', function() {
 
