@@ -98,8 +98,17 @@ export function reports_get_column_info(srcId, col) {
      return {"id": col, "sql_query": parts[2], "type": "STRING", "config": {}}
  }
 
- export function reports_get_table_sql(target_db_type, tbl) {
+ export function reports_get_table_sql(target_db_type, tbl, cube) {
      var table_name = tbl.split('.')[1]
+     if (isHash(cube)){
+          var sql = cube.sql_query
+          if (sql.match(/ /) !== null) sql = `(${sql})` // it's select ... FROM or something like this
+          if (target_db_type === 'oracle') {
+               return {"query": `${sql} ${tsable_name}`, "config": cube.config}
+          }
+          return {"query": `${sql} AS ${table_name}`, "config": cube.config}
+     }
+     
      if (isHash(globalThis.MOCKCubeSQL[`${target_db_type}-${tbl}`])) {
           return globalThis.MOCKCubeSQL[`${target_db_type}-${tbl}`];
      }

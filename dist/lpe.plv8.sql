@@ -3158,30 +3158,39 @@ function reports_get_column_info(srcId, col) {
 }
 /* will make select from the local PostgreSQL */
 
-function reports_get_table_sql(target_db_type, tbl) {
+function reports_get_table_sql(target_db_type, tbl, data) {
   // on Error plv8 will generate Exception!
+  // data already has json hashmap with cube record
   var id = tbl;
-  var rows = plv8.execute("SELECT sql_query, config FROM koob.cubes WHERE id = $1", [id]);
+  var cube;
 
-  if (rows.length > 0) {
-    var parts = tbl.split('.');
-    var sql = rows[0].sql_query;
-    if (sql.match(/ /) !== null) sql = "(".concat(sql, ")"); // it's select ... FROM or something like this
+  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_11__lisp__["b" /* isHash */])(data)) {
+    cube = data;
+  } else {
+    var rows = plv8.execute("SELECT sql_query, config FROM koob.cubes WHERE id = $1", [id]);
 
-    if (target_db_type === 'oracle') {
-      return {
-        "query": "".concat(sql, " ").concat(parts[1]),
-        "config": rows[0].config
-      };
+    if (rows.length > 0) {
+      cube = rows[0];
+    } else {
+      throw new Error("Can not find table description in the koob.cubes for table " + id);
     }
+  }
 
+  var parts = tbl.split('.');
+  var sql = cube.sql_query;
+  if (sql.match(/ /) !== null) sql = "(".concat(sql, ")"); // it's select ... FROM or something like this
+
+  if (target_db_type === 'oracle') {
     return {
-      "query": "".concat(sql, " AS ").concat(parts[1]),
-      "config": rows[0].config
+      "query": "".concat(sql, " ").concat(parts[1]),
+      "config": cube.config
     };
   }
 
-  throw new Error("Can not find table description in the koob.cubes for table " + id);
+  return {
+    "query": "".concat(sql, " AS ").concat(parts[1]),
+    "config": cube.config
+  };
 }
 /* should find path to JOIN all tables listed in cubes array */
 
@@ -8639,9 +8648,9 @@ function genereate_subtotals_group_by(cfg, group_by_list) {
   var subtotals = cfg["subtotals"];
   var ret = {
     'group_by': '',
-    'select': []
+    'select': [] //console.log(`GROUP BY: ${JSON.stringify(subtotals)} ${JSON.stringify(group_by_list)}`)
+
   };
-  __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log("GROUP BY: ".concat(JSON.stringify(subtotals), " ").concat(JSON.stringify(group_by_list)));
 
   if (group_by_list.length === 0) {
     return ret;
@@ -8658,7 +8667,8 @@ function genereate_subtotals_group_by(cfg, group_by_list) {
     return el !== undefined;
   });
   var group_by_sql = group_by_exprs.join(', ');
-  var subtotals_combinations = subtotals.map(function (col) {
+
+  var check_column_existence = function check_column_existence(col) {
     var i = group_by_exprs.indexOf(col);
 
     if (i === -1) {
@@ -8676,17 +8686,56 @@ function genereate_subtotals_group_by(cfg, group_by_list) {
           }
         }
       }
-    } //console.log(JSON.stringify(group_by_list.filter(c => c !== col).join(', ')))
+    }
+  }; // {"options": ["CrossSubtotals"] }
 
 
-    return group_by_list.filter(function (c) {
-      return c.expr !== col && c.expr !== "\"".concat(col, "\"") && c.alias != col;
-    }).map(function (c) {
-      return c.expr;
-    }).join(', ');
-  });
-  ret.group_by = "\nGROUP BY GROUPING SETS ((".concat(group_by_sql, '),', "\n                        (".concat(subtotals_combinations.join("),\n                        ("), ')'), "\n                       )"); // This might be a hard problem:
+  var sross_subtotals_combinations = function sross_subtotals_combinations() {
+    return subtotals.map(function (col) {
+      check_column_existence(col); //console.log(JSON.stringify(group_by_list.filter(c => c !== col).join(', ')))
+
+      return group_by_list.filter(function (c) {
+        return c.expr !== col && c.expr !== "\"".concat(col, "\"") && c.alias !== col && c.alias !== "\"".concat(col, "\"");
+      }).map(function (c) {
+        return c.expr;
+      }).join(', ');
+    });
+  };
+
+  var hier_subtotals_combinations = function hier_subtotals_combinations() {
+    var res = subtotals.reduce(function (accum, col) {
+      check_column_existence(col); //console.log(`accum: ${JSON.stringify(accum)} + col: ${col} + first: ${JSON.stringify(accum.slice(-1).pop())}`)
+
+      var match = group_by_list.filter(function (c) {
+        return c.expr == col || c.expr == "\"".concat(col, "\"") || c.alias == col || c.alias == "\"".concat(col, "\"");
+      });
+
+      if (match.length == 0) {
+        throw Error("hier_subtotals_combinations: looking for column ".concat(col, " listed in subtotals, but can not find in group_by"));
+      } //console.log(`FOUND: ${JSON.stringify(match)} in ${JSON.stringify(group_by_list)}`)
+
+
+      return accum.concat([accum.slice(-1).pop().concat(match[0].expr)]);
+    }, [[]]);
+    res.shift();
+    return res;
+  };
+
+  var conf = cfg["config"] || {};
+  var subtotals_combinations = conf["subtotalsMode"] == "AllButOneInterleaved" ? sross_subtotals_combinations : hier_subtotals_combinations;
+  ret.group_by = "\nGROUP BY GROUPING SETS ((".concat(group_by_sql, '),', "\n                        (".concat(subtotals_combinations().join("),\n                        ("), ')'), "\n                       )"); // делать дедупликацию пока что сложно, поэтому временно сделаем distinct
+  // FIXME
+
+  if (conf["subtotalsMode"] != "AllButOneInterleaved") {
+    if (group_by_list.length == subtotals.length) {
+      if (!__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(cfg["distinct"])) {
+        // ou! changing global hash :()
+        cfg["distinct"] = [];
+      }
+    }
+  } // This might be a hard problem:
   // {"columns":["ch.fot_out.indicator_v","ch.fot_out.v_main"],"agg":true,"alias":"new","expr": "avg(fot_out.indicator_v + fot_out.v_main)"}
+
 
   var get_alias = function get_alias(el) {
     var r;
@@ -8715,6 +8764,7 @@ function genereate_subtotals_group_by(cfg, group_by_list) {
 _access_filters
 
 _vars["_dimensions"] соддержит уже выбранные из базы записи из koob.dimensions для нужного куба
+_vars["_cube"] содержит уже выбранную запись из базы из koob.cubes для нужного куба
 */
 
 
@@ -8980,7 +9030,7 @@ function generate_koob_sql(_cfg, _vars) {
   */
 
 
-  var cube_query_template = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_20__utils_utils__["e" /* reports_get_table_sql */])(ds_info["flavor"], "".concat(_cfg["ds"], ".").concat(_cfg["cube"]));
+  var cube_query_template = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_20__utils_utils__["e" /* reports_get_table_sql */])(ds_info["flavor"], "".concat(_cfg["ds"], ".").concat(_cfg["cube"]), _vars["_cube"]);
   /* Если есть хотя бы один явный столбец group_by, а иначе, если просто считаем агрегаты по всей таблице без группировки по столбцам */
 
   if (_cfg["options"].includes('!MemberALL') === false && (_cfg["_group_by"].length > 0 || _cfg["_measures"].length > 0)) {
@@ -9438,8 +9488,7 @@ function generate_koob_sql(_cfg, _vars) {
   } else {
     // NOT WINDOW! normal SELECT
     //---------------------------------------------------------------------
-    var select = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(_cfg["distinct"]) ? "SELECT DISTINCT " : "SELECT "; // могут быть ньюансы квотации столбцов, обозначения AS и т.д. поэтому каждый участок приводим к LPE и вызываем SQLPE функции с адаптацией под конкретные базы
-
+    // могут быть ньюансы квотации столбцов, обозначения AS и т.д. поэтому каждый участок приводим к LPE и вызываем SQLPE функции с адаптацией под конкретные базы
     var normal_level_columns = _cfg["_columns"].map(function (el) {
       // It is only to support dictionaries for Clickhouse!!!
       // FIXME: switch to stacked SELECT idea
@@ -9451,11 +9500,6 @@ function generate_koob_sql(_cfg, _vars) {
         el.expr = el.outer_expr;
       } /////////////////////////////////////////////////////
       //console.log("COLUMN:", JSON.stringify(el))
-
-      /* в этом месте нужно обернуть expand_outer_expr() в generate_grouping(),
-        Которая либо noop, либо делает if(GROUPING(datacenter)=1,datacenter,NULL)
-        для clickhouse и CASE/WHEN для остальных
-      */
 
       /* v8.11 возвращает отдельные столбцы с GROUPING(col), generate_grouping больше не актуально */
 
@@ -9514,8 +9558,8 @@ function generate_koob_sql(_cfg, _vars) {
       }
     }).join(', ');
 
-    select = select.concat(normal_level_columns);
     order_by = order_by.length ? "\nORDER BY ".concat(order_by.join(', ')) : '';
+    var select_tail = normal_level_columns;
 
     if (group_by.length == 0) {
       group_by = '';
@@ -9532,7 +9576,7 @@ function generate_koob_sql(_cfg, _vars) {
         if (_context[0]["_target_database"] === 'postgresql' || _context[0]["_target_database"] === 'oracle' || _context[0]["_target_database"] === 'teradata' || _context[0]["_target_database"] === 'clickhouse' || _context[0]["_target_database"] === 'sqlserver' || _context[0]["_target_database"] === 'vertica') {
           var subtotals = genereate_subtotals_group_by(_cfg, _cfg["_group_by"]);
           group_by = subtotals.group_by;
-          select = "".concat(select, ", ").concat(subtotals.select.join(', ')); // We need to add extra columns to the select as well
+          select_tail = "".concat(select_tail, ", ").concat(subtotals.select.join(', ')); // We need to add extra columns to the select as well
         } else {
           throw new Error("named subtotals are not yet supported for ".concat(_context[0]["_target_database"]));
         }
@@ -9541,6 +9585,8 @@ function generate_koob_sql(_cfg, _vars) {
       }
     }
 
+    select = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(_cfg["distinct"]) ? "SELECT DISTINCT " : "SELECT ";
+    select = select.concat(select_tail);
     var final_sql = '';
 
     if (cube_query_template.config.is_template) {

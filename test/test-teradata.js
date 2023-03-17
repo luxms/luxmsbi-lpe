@@ -131,7 +131,8 @@ QUALIFY koob__row__num__ BETWEEN 11 AND 15`
 
       assert.equal( lpe.generate_koob_sql(
          {"columns":["dt", "type_oe_bi", "region_name", "pay_name", "avg(v_rel_fzp)","sum(v_rel_pp_i)"],
-         "subtotals": ["dt", "type_oe_bi", "region_name"],
+         "subtotals": ["dt", "type_oe_bi", "region_name", "pay_name"],
+         "config": {"subtotalsMode":"!AllButOneInterleaved"},
          "filters":{"dt":["!=","2020-03","2020-04"],
          "pay_name":["!=","Не задано"]},
          "sort":["group_pay_name","v_main"],

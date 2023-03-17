@@ -28,13 +28,9 @@ import {eval_lisp, isString, isArray, isHash, isFunction, makeSF, isNumber} from
 
 import {parse} from './lpep';
 import {
-  reports_get_column_info, 
   reports_get_columns,
   reports_get_table_sql, 
-  reports_get_join_path, 
-  reports_get_join_conditions, 
-  get_data_source_info,
-  db_quote_literal
+  get_data_source_info
 } from './utils/utils';
 import { isObject } from 'core-js/fn/object';
 import { has } from 'core-js/fn/dict';
@@ -1761,7 +1757,7 @@ function cache_alias_keys(_cfg) {
 function genereate_subtotals_group_by(cfg, group_by_list){
   let subtotals = cfg["subtotals"]
   let ret = {'group_by':'', 'select':[]}
-  console.log(`GROUP BY: ${JSON.stringify(subtotals)} ${JSON.stringify(group_by_list)}`)
+  //console.log(`GROUP BY: ${JSON.stringify(subtotals)} ${JSON.stringify(group_by_list)}`)
   if (group_by_list.length === 0) {
     return ret
   }
@@ -1773,7 +1769,7 @@ function genereate_subtotals_group_by(cfg, group_by_list){
 
   let group_by_sql = group_by_exprs.join(', ')
 
-  var subtotals_combinations = subtotals.map(col => {
+  let check_column_existence = function(col){
     var i = group_by_exprs.indexOf(col)
     if (i===-1) {
       i = group_by_exprs.indexOf(`"${col}"`)
@@ -1788,15 +1784,52 @@ function genereate_subtotals_group_by(cfg, group_by_list){
         }
       }
     }
+  }
+
+  // {"options": ["CrossSubtotals"] }
+  let sross_subtotals_combinations = function() {
+    return subtotals.map(col => {
+    check_column_existence(col);
     //console.log(JSON.stringify(group_by_list.filter(c => c !== col).join(', ')))
-    return group_by_list.filter(c => c.expr !== col && c.expr !== `"${col}"` && c.alias != col).map(c => c.expr).join(', ')
-  })
+    return group_by_list.filter(c => c.expr !== col && c.expr !== `"${col}"` && c.alias !== col && c.alias !== `"${col}"`).map(c => c.expr).join(', ')
+    })
+  }
+
+  let hier_subtotals_combinations = function() {
+          let res = subtotals.reduce((accum, col) => {
+            check_column_existence(col)
+            //console.log(`accum: ${JSON.stringify(accum)} + col: ${col} + first: ${JSON.stringify(accum.slice(-1).pop())}`)
+            let match = group_by_list.filter(c => c.expr == col || c.expr == `"${col}"` || c.alias == col || c.alias == `"${col}"`)
+            if (match.length == 0) {
+              throw Error(`hier_subtotals_combinations: looking for column ${col} listed in subtotals, but can not find in group_by`)
+            }
+            //console.log(`FOUND: ${JSON.stringify(match)} in ${JSON.stringify(group_by_list)}`)
+            return accum.concat([accum.slice(-1).pop().concat(match[0].expr)])
+          }, 
+          [[]])
+          res.shift();
+          return res;
+        }
+  let conf = cfg["config"] || {};
+  let subtotals_combinations = conf["subtotalsMode"] == "AllButOneInterleaved"
+                              ? sross_subtotals_combinations
+                              : hier_subtotals_combinations;
 
   ret.group_by = "\nGROUP BY GROUPING SETS ((".concat(group_by_sql, '),',
-         "\n                        (".concat(subtotals_combinations.join(
+         "\n                        (".concat(subtotals_combinations().join(
        "),\n                        ("),')'),
          "\n                       )")
 
+  // делать дедупликацию пока что сложно, поэтому временно сделаем distinct
+  // FIXME
+  if (conf["subtotalsMode"] != "AllButOneInterleaved") {
+    if (group_by_list.length == subtotals.length){
+      if (!isArray(cfg["distinct"])) {
+        // ou! changing global hash :()
+        cfg["distinct"] = [];
+      }
+    }
+  }
   // This might be a hard problem:
   // {"columns":["ch.fot_out.indicator_v","ch.fot_out.v_main"],"agg":true,"alias":"new","expr": "avg(fot_out.indicator_v + fot_out.v_main)"}
   let get_alias = function(el){
@@ -1823,6 +1856,7 @@ function genereate_subtotals_group_by(cfg, group_by_list){
 _access_filters
 
 _vars["_dimensions"] соддержит уже выбранные из базы записи из koob.dimensions для нужного куба
+_vars["_cube"] содержит уже выбранную запись из базы из koob.cubes для нужного куба
 */
 
 export function generate_koob_sql(_cfg, _vars) {
@@ -2037,7 +2071,7 @@ export function generate_koob_sql(_cfg, _vars) {
   */
 
 
-  var cube_query_template = reports_get_table_sql(ds_info["flavor"], `${_cfg["ds"]}.${_cfg["cube"]}`)
+  var cube_query_template = reports_get_table_sql(ds_info["flavor"], `${_cfg["ds"]}.${_cfg["cube"]}`, _vars["_cube"])
 
   /* Если есть хотя бы один явный столбец group_by, а иначе, если просто считаем агрегаты по всей таблице без группировки по столбцам */
   
@@ -2450,7 +2484,7 @@ export function generate_koob_sql(_cfg, _vars) {
   } else {
     // NOT WINDOW! normal SELECT
     //---------------------------------------------------------------------
-    var select = isArray(_cfg["distinct"]) ? "SELECT DISTINCT " : "SELECT "
+
     // могут быть ньюансы квотации столбцов, обозначения AS и т.д. поэтому каждый участок приводим к LPE и вызываем SQLPE функции с адаптацией под конкретные базы
     var normal_level_columns = _cfg["_columns"].map(el => {
       // It is only to support dictionaries for Clickhouse!!!
@@ -2464,11 +2498,6 @@ export function generate_koob_sql(_cfg, _vars) {
       }
       /////////////////////////////////////////////////////
       //console.log("COLUMN:", JSON.stringify(el))
-
-      /* в этом месте нужно обернуть expand_outer_expr() в generate_grouping(),
-        Которая либо noop, либо делает if(GROUPING(datacenter)=1,datacenter,NULL)
-        для clickhouse и CASE/WHEN для остальных
-      */
 
       /* v8.11 возвращает отдельные столбцы с GROUPING(col), generate_grouping больше не актуально */
       let generate_grouping = function(arg) {
@@ -2524,9 +2553,8 @@ export function generate_koob_sql(_cfg, _vars) {
       } 
     }).join(', ')
 
-    select = select.concat(normal_level_columns)
-
     order_by = order_by.length ? "\nORDER BY ".concat(order_by.join(', ')) : ''
+    let select_tail = normal_level_columns
 
     if (group_by.length == 0) {
       group_by = ''
@@ -2538,7 +2566,6 @@ export function generate_koob_sql(_cfg, _vars) {
           // postgresql
           group_by =`\nGROUP BY CUBE (${group_by.join(', ')})`
         }
-
       } else if (isArray(_cfg["subtotals"])){
         // FIXME: кажется только mysql не алё
         if (_context[0]["_target_database"]==='postgresql' || 
@@ -2549,8 +2576,9 @@ export function generate_koob_sql(_cfg, _vars) {
             _context[0]["_target_database"]==='vertica'
             ) {
           let subtotals = genereate_subtotals_group_by(_cfg, _cfg["_group_by"])
+
           group_by = subtotals.group_by
-          select = `${select}, ${subtotals.select.join(', ')}`
+          select_tail = `${select_tail}, ${subtotals.select.join(', ')}`
           // We need to add extra columns to the select as well
         } else {
           throw new Error(`named subtotals are not yet supported for ${_context[0]["_target_database"]}`)
@@ -2559,6 +2587,9 @@ export function generate_koob_sql(_cfg, _vars) {
         group_by ="\nGROUP BY ".concat(group_by.join(', '))
       }
     }
+
+    select = isArray(_cfg["distinct"]) ? "SELECT DISTINCT " : "SELECT "
+    select = select.concat(select_tail)
 
     var final_sql = ''
     if (cube_query_template.config.is_template) {

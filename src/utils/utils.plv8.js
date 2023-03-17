@@ -67,20 +67,29 @@ export function reports_get_column_info(srcId, col) {
 
 
 /* will make select from the local PostgreSQL */
-export function reports_get_table_sql(target_db_type, tbl) {
+export function reports_get_table_sql(target_db_type, tbl, data) {
     // on Error plv8 will generate Exception!
+    // data already has json hashmap with cube record
     var id = tbl
-    var rows = plv8.execute( "SELECT sql_query, config FROM koob.cubes WHERE id = $1", [id] );
-    if (rows.length > 0) {
-        var parts = tbl.split('.')
-        var sql = rows[0].sql_query
-        if (sql.match(/ /) !== null) sql = `(${sql})` // it's select ... FROM or something like this
-        if (target_db_type === 'oracle') {
-            return {"query": `${sql} ${parts[1]}`, "config": rows[0].config  }
+    let cube;
+    if (isHash(data)){
+        cube = data
+    } else {
+        var rows = plv8.execute( "SELECT sql_query, config FROM koob.cubes WHERE id = $1", [id] );
+        if (rows.length > 0) {
+            cube = rows[0]
+        } else {
+            throw new Error("Can not find table description in the koob.cubes for table " + id);
         }
-        return {"query": `${sql} AS ${parts[1]}`, "config": rows[0].config }
     }
-    throw new Error("Can not find table description in the koob.cubes for table " + id);
+
+    var parts = tbl.split('.')
+    var sql = cube.sql_query
+    if (sql.match(/ /) !== null) sql = `(${sql})` // it's select ... FROM or something like this
+    if (target_db_type === 'oracle') {
+        return {"query": `${sql} ${parts[1]}`, "config": cube.config  }
+    }
+    return {"query": `${sql} AS ${parts[1]}`, "config": cube.config }
 }
 
 /* should find path to JOIN all tables listed in cubes array */
