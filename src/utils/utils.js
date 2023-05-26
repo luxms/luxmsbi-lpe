@@ -15,6 +15,7 @@ export function reports_get_columns(cubeId, dims) {
      if (isArray(globalThis.MOCKcubeColumns)) {
           r = globalThis.MOCKcubeColumns
      } else {
+          //console.log("Built in Cube COLUMNS")
      var r = [
      {"id":"ch.fot_out.Val","type":"NUMBER","title":"Val","sql_query":"\"Val\"","config":{}}, 
      {"id":"ch.fot_out.My version","type":"STRING","title":"My version","sql_query":"\"My version\"","config":{}}, 
@@ -101,6 +102,7 @@ export function reports_get_column_info(srcId, col) {
  export function reports_get_table_sql(target_db_type, tbl, cube) {
      var table_name = tbl.split('.')[1]
      if (isHash(cube)){
+          console.log("Cube SQL provided as func arg")
           var sql = cube.sql_query
           if (sql.match(/ /) !== null) sql = `(${sql})` // it's select ... FROM or something like this
           if (target_db_type === 'oracle') {
@@ -108,14 +110,15 @@ export function reports_get_column_info(srcId, col) {
           }
           return {"query": `${sql} AS ${table_name}`, "config": cube.config}
      }
-     
-     if (isHash(globalThis.MOCKCubeSQL[`${target_db_type}-${tbl}`])) {
+
+     if (globalThis.MOCKCubeSQL !== undefined && isHash(globalThis.MOCKCubeSQL[`${target_db_type}-${tbl}`])) {
           return globalThis.MOCKCubeSQL[`${target_db_type}-${tbl}`];
      }
 
      if (target_db_type === 'oracle') {
           return {"query": `${table_name} ${table_name}`, "config": {"is_template": 0}}
      }
+
      return {"query": `${table_name} AS ${table_name}`, "config": {"is_template": 0}}
      // hcode_name
      // and ${filters(group_pay_name)}

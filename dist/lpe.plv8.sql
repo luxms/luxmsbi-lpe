@@ -233,7 +233,7 @@ if (typeof __e == 'number') __e = core; // eslint-disable-line no-undef
 /***/ (function(module, exports, __webpack_require__) {
 
 // to indexed object, toObject with fallback for non-array-like ES3 strings
-var IObject = __webpack_require__(61);
+var IObject = __webpack_require__(62);
 var defined = __webpack_require__(30);
 module.exports = function (it) {
   return IObject(defined(it));
@@ -350,7 +350,7 @@ function prepareOutput() {
 
 // 19.1.2.14 / 15.2.3.14 Object.keys(O)
 var $keys = __webpack_require__(88);
-var enumBugKeys = __webpack_require__(59);
+var enumBugKeys = __webpack_require__(60);
 
 module.exports = Object.keys || function keys(O) {
   return $keys(O, enumBugKeys);
@@ -1473,7 +1473,7 @@ var setToStringTag = __webpack_require__(50);
 var uid = __webpack_require__(35);
 var wks = __webpack_require__(1);
 var wksExt = __webpack_require__(99);
-var wksDefine = __webpack_require__(67);
+var wksDefine = __webpack_require__(68);
 var enumKeys = __webpack_require__(123);
 var isArray = __webpack_require__(80);
 var anObject = __webpack_require__(5);
@@ -1701,7 +1701,7 @@ setToStringTag(global.JSON, 'JSON', true);
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = parse;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_array_find__ = __webpack_require__(68);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_array_find__ = __webpack_require__(69);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_array_find___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_array_find__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__console_console__ = __webpack_require__(13);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__lisp__ = __webpack_require__(18);
@@ -2551,8 +2551,8 @@ var meta = module.exports = {
 // 19.1.2.2 / 15.2.3.5 Object.create(O [, Properties])
 var anObject = __webpack_require__(5);
 var dPs = __webpack_require__(86);
-var enumBugKeys = __webpack_require__(59);
-var IE_PROTO = __webpack_require__(66)('IE_PROTO');
+var enumBugKeys = __webpack_require__(60);
+var IE_PROTO = __webpack_require__(67)('IE_PROTO');
 var Empty = function () { /* empty */ };
 var PROTOTYPE = 'prototype';
 
@@ -2609,7 +2609,7 @@ module.exports = function (bitmap, value) {
 /* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(67)('asyncIterator');
+__webpack_require__(68)('asyncIterator');
 
 
 /***/ }),
@@ -2666,7 +2666,7 @@ module.exports = false;
 // 19.1.2.9 / 15.2.3.2 Object.getPrototypeOf(O)
 var has = __webpack_require__(15);
 var toObject = __webpack_require__(10);
-var IE_PROTO = __webpack_require__(66)('IE_PROTO');
+var IE_PROTO = __webpack_require__(67)('IE_PROTO');
 var ObjectProto = Object.prototype;
 
 module.exports = Object.getPrototypeOf || function (O) {
@@ -2721,7 +2721,7 @@ module.exports = function (key) {
 "use strict";
 
 var addToUnscopables = __webpack_require__(42);
-var step = __webpack_require__(64);
+var step = __webpack_require__(65);
 var Iterators = __webpack_require__(24);
 var toIObject = __webpack_require__(9);
 
@@ -2729,7 +2729,7 @@ var toIObject = __webpack_require__(9);
 // 22.1.3.13 Array.prototype.keys()
 // 22.1.3.29 Array.prototype.values()
 // 22.1.3.30 Array.prototype[@@iterator]()
-module.exports = __webpack_require__(63)(Array, 'Array', function (iterated, kind) {
+module.exports = __webpack_require__(64)(Array, 'Array', function (iterated, kind) {
   this._t = toIObject(iterated); // target
   this._i = 0;                   // next index
   this._k = kind;                // kind
@@ -2764,7 +2764,7 @@ addToUnscopables('entries');
 
 var anObject = __webpack_require__(5);
 var toLength = __webpack_require__(17);
-var advanceStringIndex = __webpack_require__(58);
+var advanceStringIndex = __webpack_require__(59);
 var regExpExec = __webpack_require__(49);
 
 // @@match logic
@@ -2809,13 +2809,13 @@ __webpack_require__(44)('match', 1, function (defined, MATCH, $match, maybeCallN
 "use strict";
 
 
-var isRegExp = __webpack_require__(62);
+var isRegExp = __webpack_require__(63);
 var anObject = __webpack_require__(5);
 var speciesConstructor = __webpack_require__(129);
-var advanceStringIndex = __webpack_require__(58);
+var advanceStringIndex = __webpack_require__(59);
 var toLength = __webpack_require__(17);
 var callRegExpExec = __webpack_require__(49);
-var regexpExec = __webpack_require__(65);
+var regexpExec = __webpack_require__(66);
 var fails = __webpack_require__(7);
 var $min = Math.min;
 var $push = [].push;
@@ -3413,7 +3413,7 @@ var hide = __webpack_require__(16);
 var fails = __webpack_require__(7);
 var defined = __webpack_require__(30);
 var wks = __webpack_require__(1);
-var regexpExec = __webpack_require__(65);
+var regexpExec = __webpack_require__(66);
 
 var SPECIES = wks('species');
 
@@ -3546,7 +3546,7 @@ module.exports = __webpack_require__(31) || !__webpack_require__(7)(function () 
 
 // 19.1.2.7 / 15.2.3.4 Object.getOwnPropertyNames(O)
 var $keys = __webpack_require__(88);
-var hiddenKeys = __webpack_require__(59).concat('length', 'prototype');
+var hiddenKeys = __webpack_require__(60).concat('length', 'prototype');
 
 exports.f = Object.getOwnPropertyNames || function getOwnPropertyNames(O) {
   return $keys(O, hiddenKeys);
@@ -3729,7 +3729,7 @@ __webpack_require__(11)('keys', function () {
 var $at = __webpack_require__(96)(true);
 
 // 21.1.3.27 String.prototype[@@iterator]()
-__webpack_require__(63)(String, 'String', function (iterated) {
+__webpack_require__(64)(String, 'String', function (iterated) {
   this._t = String(iterated); // target
   this._i = 0;                // next index
 // 21.1.5.2.1 %StringIteratorPrototype%.next()
@@ -3761,410 +3761,6 @@ $export($export.S, 'Object', {
 
 /***/ }),
 /* 58 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-var at = __webpack_require__(96)(true);
-
- // `AdvanceStringIndex` abstract operation
-// https://tc39.github.io/ecma262/#sec-advancestringindex
-module.exports = function (S, index, unicode) {
-  return index + (unicode ? at(S, index).length : 1);
-};
-
-
-/***/ }),
-/* 59 */
-/***/ (function(module, exports) {
-
-// IE 8- don't enum bug keys
-module.exports = (
-  'constructor,hasOwnProperty,isPrototypeOf,propertyIsEnumerable,toLocaleString,toString,valueOf'
-).split(',');
-
-
-/***/ }),
-/* 60 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var ctx = __webpack_require__(20);
-var call = __webpack_require__(81);
-var isArrayIter = __webpack_require__(79);
-var anObject = __webpack_require__(5);
-var toLength = __webpack_require__(17);
-var getIterFn = __webpack_require__(100);
-var BREAK = {};
-var RETURN = {};
-var exports = module.exports = function (iterable, entries, fn, that, ITERATOR) {
-  var iterFn = ITERATOR ? function () { return iterable; } : getIterFn(iterable);
-  var f = ctx(fn, that, entries ? 2 : 1);
-  var index = 0;
-  var length, step, iterator, result;
-  if (typeof iterFn != 'function') throw TypeError(iterable + ' is not iterable!');
-  // fast case for arrays with default iterator
-  if (isArrayIter(iterFn)) for (length = toLength(iterable.length); length > index; index++) {
-    result = entries ? f(anObject(step = iterable[index])[0], step[1]) : f(iterable[index]);
-    if (result === BREAK || result === RETURN) return result;
-  } else for (iterator = iterFn.call(iterable); !(step = iterator.next()).done;) {
-    result = call(iterator, f, step.value, entries);
-    if (result === BREAK || result === RETURN) return result;
-  }
-};
-exports.BREAK = BREAK;
-exports.RETURN = RETURN;
-
-
-/***/ }),
-/* 61 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// fallback for non-array-like ES3 and non-enumerable old V8 strings
-var cof = __webpack_require__(43);
-// eslint-disable-next-line no-prototype-builtins
-module.exports = Object('z').propertyIsEnumerable(0) ? Object : function (it) {
-  return cof(it) == 'String' ? it.split('') : Object(it);
-};
-
-
-/***/ }),
-/* 62 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// 7.2.8 IsRegExp(argument)
-var isObject = __webpack_require__(3);
-var cof = __webpack_require__(43);
-var MATCH = __webpack_require__(1)('match');
-module.exports = function (it) {
-  var isRegExp;
-  return isObject(it) && ((isRegExp = it[MATCH]) !== undefined ? !!isRegExp : cof(it) == 'RegExp');
-};
-
-
-/***/ }),
-/* 63 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-var LIBRARY = __webpack_require__(31);
-var $export = __webpack_require__(0);
-var redefine = __webpack_require__(12);
-var hide = __webpack_require__(16);
-var Iterators = __webpack_require__(24);
-var $iterCreate = __webpack_require__(82);
-var setToStringTag = __webpack_require__(50);
-var getPrototypeOf = __webpack_require__(32);
-var ITERATOR = __webpack_require__(1)('iterator');
-var BUGGY = !([].keys && 'next' in [].keys()); // Safari has buggy iterators w/o `next`
-var FF_ITERATOR = '@@iterator';
-var KEYS = 'keys';
-var VALUES = 'values';
-
-var returnThis = function () { return this; };
-
-module.exports = function (Base, NAME, Constructor, next, DEFAULT, IS_SET, FORCED) {
-  $iterCreate(Constructor, NAME, next);
-  var getMethod = function (kind) {
-    if (!BUGGY && kind in proto) return proto[kind];
-    switch (kind) {
-      case KEYS: return function keys() { return new Constructor(this, kind); };
-      case VALUES: return function values() { return new Constructor(this, kind); };
-    } return function entries() { return new Constructor(this, kind); };
-  };
-  var TAG = NAME + ' Iterator';
-  var DEF_VALUES = DEFAULT == VALUES;
-  var VALUES_BUG = false;
-  var proto = Base.prototype;
-  var $native = proto[ITERATOR] || proto[FF_ITERATOR] || DEFAULT && proto[DEFAULT];
-  var $default = $native || getMethod(DEFAULT);
-  var $entries = DEFAULT ? !DEF_VALUES ? $default : getMethod('entries') : undefined;
-  var $anyNative = NAME == 'Array' ? proto.entries || $native : $native;
-  var methods, key, IteratorPrototype;
-  // Fix native
-  if ($anyNative) {
-    IteratorPrototype = getPrototypeOf($anyNative.call(new Base()));
-    if (IteratorPrototype !== Object.prototype && IteratorPrototype.next) {
-      // Set @@toStringTag to native iterators
-      setToStringTag(IteratorPrototype, TAG, true);
-      // fix for some old engines
-      if (!LIBRARY && typeof IteratorPrototype[ITERATOR] != 'function') hide(IteratorPrototype, ITERATOR, returnThis);
-    }
-  }
-  // fix Array#{values, @@iterator}.name in V8 / FF
-  if (DEF_VALUES && $native && $native.name !== VALUES) {
-    VALUES_BUG = true;
-    $default = function values() { return $native.call(this); };
-  }
-  // Define iterator
-  if ((!LIBRARY || FORCED) && (BUGGY || VALUES_BUG || !proto[ITERATOR])) {
-    hide(proto, ITERATOR, $default);
-  }
-  // Plug for library
-  Iterators[NAME] = $default;
-  Iterators[TAG] = returnThis;
-  if (DEFAULT) {
-    methods = {
-      values: DEF_VALUES ? $default : getMethod(VALUES),
-      keys: IS_SET ? $default : getMethod(KEYS),
-      entries: $entries
-    };
-    if (FORCED) for (key in methods) {
-      if (!(key in proto)) redefine(proto, key, methods[key]);
-    } else $export($export.P + $export.F * (BUGGY || VALUES_BUG), NAME, methods);
-  }
-  return methods;
-};
-
-
-/***/ }),
-/* 64 */
-/***/ (function(module, exports) {
-
-module.exports = function (done, value) {
-  return { value: value, done: !!done };
-};
-
-
-/***/ }),
-/* 65 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var regexpFlags = __webpack_require__(45);
-
-var nativeExec = RegExp.prototype.exec;
-// This always refers to the native implementation, because the
-// String#replace polyfill uses ./fix-regexp-well-known-symbol-logic.js,
-// which loads this file before patching the method.
-var nativeReplace = String.prototype.replace;
-
-var patchedExec = nativeExec;
-
-var LAST_INDEX = 'lastIndex';
-
-var UPDATES_LAST_INDEX_WRONG = (function () {
-  var re1 = /a/,
-      re2 = /b*/g;
-  nativeExec.call(re1, 'a');
-  nativeExec.call(re2, 'a');
-  return re1[LAST_INDEX] !== 0 || re2[LAST_INDEX] !== 0;
-})();
-
-// nonparticipating capturing group, copied from es5-shim's String#split patch.
-var NPCG_INCLUDED = /()??/.exec('')[1] !== undefined;
-
-var PATCH = UPDATES_LAST_INDEX_WRONG || NPCG_INCLUDED;
-
-if (PATCH) {
-  patchedExec = function exec(str) {
-    var re = this;
-    var lastIndex, reCopy, match, i;
-
-    if (NPCG_INCLUDED) {
-      reCopy = new RegExp('^' + re.source + '$(?!\\s)', regexpFlags.call(re));
-    }
-    if (UPDATES_LAST_INDEX_WRONG) lastIndex = re[LAST_INDEX];
-
-    match = nativeExec.call(re, str);
-
-    if (UPDATES_LAST_INDEX_WRONG && match) {
-      re[LAST_INDEX] = re.global ? match.index + match[0].length : lastIndex;
-    }
-    if (NPCG_INCLUDED && match && match.length > 1) {
-      // Fix browsers whose `exec` methods don't consistently return `undefined`
-      // for NPCG, like IE8. NOTE: This doesn' work for /(.?)?/
-      // eslint-disable-next-line no-loop-func
-      nativeReplace.call(match[0], reCopy, function () {
-        for (i = 1; i < arguments.length - 2; i++) {
-          if (arguments[i] === undefined) match[i] = undefined;
-        }
-      });
-    }
-
-    return match;
-  };
-}
-
-module.exports = patchedExec;
-
-
-/***/ }),
-/* 66 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var shared = __webpack_require__(51)('keys');
-var uid = __webpack_require__(35);
-module.exports = function (key) {
-  return shared[key] || (shared[key] = uid(key));
-};
-
-
-/***/ }),
-/* 67 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var global = __webpack_require__(6);
-var core = __webpack_require__(8);
-var LIBRARY = __webpack_require__(31);
-var wksExt = __webpack_require__(99);
-var defineProperty = __webpack_require__(4).f;
-module.exports = function (name) {
-  var $Symbol = core.Symbol || (core.Symbol = LIBRARY ? {} : global.Symbol || {});
-  if (name.charAt(0) != '_' && !(name in $Symbol)) defineProperty($Symbol, name, { value: wksExt.f(name) });
-};
-
-
-/***/ }),
-/* 68 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-// 22.1.3.8 Array.prototype.find(predicate, thisArg = undefined)
-var $export = __webpack_require__(0);
-var $find = __webpack_require__(73)(5);
-var KEY = 'find';
-var forced = true;
-// Shouldn't skip holes
-if (KEY in []) Array(1)[KEY](function () { forced = false; });
-$export($export.P + $export.F * forced, 'Array', {
-  find: function find(callbackfn /* , that = undefined */) {
-    return $find(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
-  }
-});
-__webpack_require__(42)(KEY);
-
-
-/***/ }),
-/* 69 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var anObject = __webpack_require__(5);
-var toObject = __webpack_require__(10);
-var toLength = __webpack_require__(17);
-var toInteger = __webpack_require__(52);
-var advanceStringIndex = __webpack_require__(58);
-var regExpExec = __webpack_require__(49);
-var max = Math.max;
-var min = Math.min;
-var floor = Math.floor;
-var SUBSTITUTION_SYMBOLS = /\$([$&`']|\d\d?|<[^>]*>)/g;
-var SUBSTITUTION_SYMBOLS_NO_NAMED = /\$([$&`']|\d\d?)/g;
-
-var maybeToString = function (it) {
-  return it === undefined ? it : String(it);
-};
-
-// @@replace logic
-__webpack_require__(44)('replace', 2, function (defined, REPLACE, $replace, maybeCallNative) {
-  return [
-    // `String.prototype.replace` method
-    // https://tc39.github.io/ecma262/#sec-string.prototype.replace
-    function replace(searchValue, replaceValue) {
-      var O = defined(this);
-      var fn = searchValue == undefined ? undefined : searchValue[REPLACE];
-      return fn !== undefined
-        ? fn.call(searchValue, O, replaceValue)
-        : $replace.call(String(O), searchValue, replaceValue);
-    },
-    // `RegExp.prototype[@@replace]` method
-    // https://tc39.github.io/ecma262/#sec-regexp.prototype-@@replace
-    function (regexp, replaceValue) {
-      var res = maybeCallNative($replace, regexp, this, replaceValue);
-      if (res.done) return res.value;
-
-      var rx = anObject(regexp);
-      var S = String(this);
-      var functionalReplace = typeof replaceValue === 'function';
-      if (!functionalReplace) replaceValue = String(replaceValue);
-      var global = rx.global;
-      if (global) {
-        var fullUnicode = rx.unicode;
-        rx.lastIndex = 0;
-      }
-      var results = [];
-      while (true) {
-        var result = regExpExec(rx, S);
-        if (result === null) break;
-        results.push(result);
-        if (!global) break;
-        var matchStr = String(result[0]);
-        if (matchStr === '') rx.lastIndex = advanceStringIndex(S, toLength(rx.lastIndex), fullUnicode);
-      }
-      var accumulatedResult = '';
-      var nextSourcePosition = 0;
-      for (var i = 0; i < results.length; i++) {
-        result = results[i];
-        var matched = String(result[0]);
-        var position = max(min(toInteger(result.index), S.length), 0);
-        var captures = [];
-        // NOTE: This is equivalent to
-        //   captures = result.slice(1).map(maybeToString)
-        // but for some reason `nativeSlice.call(result, 1, result.length)` (called in
-        // the slice polyfill when slicing native arrays) "doesn't work" in safari 9 and
-        // causes a crash (https://pastebin.com/N21QzeQA) when trying to debug it.
-        for (var j = 1; j < result.length; j++) captures.push(maybeToString(result[j]));
-        var namedCaptures = result.groups;
-        if (functionalReplace) {
-          var replacerArgs = [matched].concat(captures, position, S);
-          if (namedCaptures !== undefined) replacerArgs.push(namedCaptures);
-          var replacement = String(replaceValue.apply(undefined, replacerArgs));
-        } else {
-          replacement = getSubstitution(matched, S, position, captures, namedCaptures, replaceValue);
-        }
-        if (position >= nextSourcePosition) {
-          accumulatedResult += S.slice(nextSourcePosition, position) + replacement;
-          nextSourcePosition = position + matched.length;
-        }
-      }
-      return accumulatedResult + S.slice(nextSourcePosition);
-    }
-  ];
-
-    // https://tc39.github.io/ecma262/#sec-getsubstitution
-  function getSubstitution(matched, str, position, captures, namedCaptures, replacement) {
-    var tailPos = position + matched.length;
-    var m = captures.length;
-    var symbols = SUBSTITUTION_SYMBOLS_NO_NAMED;
-    if (namedCaptures !== undefined) {
-      namedCaptures = toObject(namedCaptures);
-      symbols = SUBSTITUTION_SYMBOLS;
-    }
-    return $replace.call(replacement, symbols, function (match, ch) {
-      var capture;
-      switch (ch.charAt(0)) {
-        case '$': return '$';
-        case '&': return matched;
-        case '`': return str.slice(0, position);
-        case "'": return str.slice(tailPos);
-        case '<':
-          capture = namedCaptures[ch.slice(1, -1)];
-          break;
-        default: // \d\d?
-          var n = +ch;
-          if (n === 0) return match;
-          if (n > m) {
-            var f = floor(n / 10);
-            if (f === 0) return match;
-            if (f <= m) return captures[f - 1] === undefined ? ch.charAt(1) : captures[f - 1] + ch.charAt(1);
-            return match;
-          }
-          capture = captures[n - 1];
-      }
-      return capture === undefined ? '' : capture;
-    });
-  }
-});
-
-
-/***/ }),
-/* 70 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -4186,7 +3782,7 @@ __webpack_require__(44)('replace', 2, function (defined, REPLACE, $replace, mayb
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_array_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_array_iterator__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_object_keys__ = __webpack_require__(55);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_object_keys___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_object_keys__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_regexp_replace__ = __webpack_require__(69);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_regexp_replace__ = __webpack_require__(70);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_regexp_replace___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_regexp_replace__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_array_sort__ = __webpack_require__(54);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_array_sort___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_array_sort__);
@@ -4816,6 +4412,7 @@ function sql_where_context(_vars) {
           }
         } else {
           //console.log(r[0] + " RESOLVING VAR " + JSON.stringify(r[1]));
+          // FIXME: сюда может прилететь ->
           //console.log("RESOLVING VAR " + JSON.stringify(_context));
           var var_expr;
 
@@ -4839,11 +4436,11 @@ function sql_where_context(_vars) {
                 } else {
                   throw new Error("Resolved value is array with length of not 2, which is not yet supported. ".concat(JSON.stringify(var_expr)));
                 }
+              } else {
+                // array here: pass it to the next logic
+                __WEBPACK_IMPORTED_MODULE_14__console_console__["a" /* default */].log('array in $ evaluation'); // возможно значение переменной резолвится в массив???
+                //throw new Error(`Resolved value is array, with operation different from = which is not yet supported. ${JSON.stringify(var_expr)}`)
               }
-              /*else { // array here: pass it to the next logic
-              throw new Error(`Resolved value is array, with operation different from = which is not yet supported. ${JSON.stringify(var_expr)}`)
-              }*/
-
             }
           } else {
             var_expr = prnt(r, ctx);
@@ -4851,6 +4448,7 @@ function sql_where_context(_vars) {
 
           if (var_expr !== undefined) {
             if (var_expr instanceof Array) {
+              //console.log(`EVAL = ${op}` + JSON.stringify(l) + ' ' + JSON.stringify(var_expr));
               return ctx[op](l, ['['].concat(var_expr));
             } else {
               //console.log("EVAL = " + JSON.stringify(l) + ' ' + JSON.stringify(var_expr));
@@ -5149,6 +4747,410 @@ function eval_sql_where(_expr, _vars) {
 }
 
 /***/ }),
+/* 59 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var at = __webpack_require__(96)(true);
+
+ // `AdvanceStringIndex` abstract operation
+// https://tc39.github.io/ecma262/#sec-advancestringindex
+module.exports = function (S, index, unicode) {
+  return index + (unicode ? at(S, index).length : 1);
+};
+
+
+/***/ }),
+/* 60 */
+/***/ (function(module, exports) {
+
+// IE 8- don't enum bug keys
+module.exports = (
+  'constructor,hasOwnProperty,isPrototypeOf,propertyIsEnumerable,toLocaleString,toString,valueOf'
+).split(',');
+
+
+/***/ }),
+/* 61 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var ctx = __webpack_require__(20);
+var call = __webpack_require__(81);
+var isArrayIter = __webpack_require__(79);
+var anObject = __webpack_require__(5);
+var toLength = __webpack_require__(17);
+var getIterFn = __webpack_require__(100);
+var BREAK = {};
+var RETURN = {};
+var exports = module.exports = function (iterable, entries, fn, that, ITERATOR) {
+  var iterFn = ITERATOR ? function () { return iterable; } : getIterFn(iterable);
+  var f = ctx(fn, that, entries ? 2 : 1);
+  var index = 0;
+  var length, step, iterator, result;
+  if (typeof iterFn != 'function') throw TypeError(iterable + ' is not iterable!');
+  // fast case for arrays with default iterator
+  if (isArrayIter(iterFn)) for (length = toLength(iterable.length); length > index; index++) {
+    result = entries ? f(anObject(step = iterable[index])[0], step[1]) : f(iterable[index]);
+    if (result === BREAK || result === RETURN) return result;
+  } else for (iterator = iterFn.call(iterable); !(step = iterator.next()).done;) {
+    result = call(iterator, f, step.value, entries);
+    if (result === BREAK || result === RETURN) return result;
+  }
+};
+exports.BREAK = BREAK;
+exports.RETURN = RETURN;
+
+
+/***/ }),
+/* 62 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// fallback for non-array-like ES3 and non-enumerable old V8 strings
+var cof = __webpack_require__(43);
+// eslint-disable-next-line no-prototype-builtins
+module.exports = Object('z').propertyIsEnumerable(0) ? Object : function (it) {
+  return cof(it) == 'String' ? it.split('') : Object(it);
+};
+
+
+/***/ }),
+/* 63 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// 7.2.8 IsRegExp(argument)
+var isObject = __webpack_require__(3);
+var cof = __webpack_require__(43);
+var MATCH = __webpack_require__(1)('match');
+module.exports = function (it) {
+  var isRegExp;
+  return isObject(it) && ((isRegExp = it[MATCH]) !== undefined ? !!isRegExp : cof(it) == 'RegExp');
+};
+
+
+/***/ }),
+/* 64 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var LIBRARY = __webpack_require__(31);
+var $export = __webpack_require__(0);
+var redefine = __webpack_require__(12);
+var hide = __webpack_require__(16);
+var Iterators = __webpack_require__(24);
+var $iterCreate = __webpack_require__(82);
+var setToStringTag = __webpack_require__(50);
+var getPrototypeOf = __webpack_require__(32);
+var ITERATOR = __webpack_require__(1)('iterator');
+var BUGGY = !([].keys && 'next' in [].keys()); // Safari has buggy iterators w/o `next`
+var FF_ITERATOR = '@@iterator';
+var KEYS = 'keys';
+var VALUES = 'values';
+
+var returnThis = function () { return this; };
+
+module.exports = function (Base, NAME, Constructor, next, DEFAULT, IS_SET, FORCED) {
+  $iterCreate(Constructor, NAME, next);
+  var getMethod = function (kind) {
+    if (!BUGGY && kind in proto) return proto[kind];
+    switch (kind) {
+      case KEYS: return function keys() { return new Constructor(this, kind); };
+      case VALUES: return function values() { return new Constructor(this, kind); };
+    } return function entries() { return new Constructor(this, kind); };
+  };
+  var TAG = NAME + ' Iterator';
+  var DEF_VALUES = DEFAULT == VALUES;
+  var VALUES_BUG = false;
+  var proto = Base.prototype;
+  var $native = proto[ITERATOR] || proto[FF_ITERATOR] || DEFAULT && proto[DEFAULT];
+  var $default = $native || getMethod(DEFAULT);
+  var $entries = DEFAULT ? !DEF_VALUES ? $default : getMethod('entries') : undefined;
+  var $anyNative = NAME == 'Array' ? proto.entries || $native : $native;
+  var methods, key, IteratorPrototype;
+  // Fix native
+  if ($anyNative) {
+    IteratorPrototype = getPrototypeOf($anyNative.call(new Base()));
+    if (IteratorPrototype !== Object.prototype && IteratorPrototype.next) {
+      // Set @@toStringTag to native iterators
+      setToStringTag(IteratorPrototype, TAG, true);
+      // fix for some old engines
+      if (!LIBRARY && typeof IteratorPrototype[ITERATOR] != 'function') hide(IteratorPrototype, ITERATOR, returnThis);
+    }
+  }
+  // fix Array#{values, @@iterator}.name in V8 / FF
+  if (DEF_VALUES && $native && $native.name !== VALUES) {
+    VALUES_BUG = true;
+    $default = function values() { return $native.call(this); };
+  }
+  // Define iterator
+  if ((!LIBRARY || FORCED) && (BUGGY || VALUES_BUG || !proto[ITERATOR])) {
+    hide(proto, ITERATOR, $default);
+  }
+  // Plug for library
+  Iterators[NAME] = $default;
+  Iterators[TAG] = returnThis;
+  if (DEFAULT) {
+    methods = {
+      values: DEF_VALUES ? $default : getMethod(VALUES),
+      keys: IS_SET ? $default : getMethod(KEYS),
+      entries: $entries
+    };
+    if (FORCED) for (key in methods) {
+      if (!(key in proto)) redefine(proto, key, methods[key]);
+    } else $export($export.P + $export.F * (BUGGY || VALUES_BUG), NAME, methods);
+  }
+  return methods;
+};
+
+
+/***/ }),
+/* 65 */
+/***/ (function(module, exports) {
+
+module.exports = function (done, value) {
+  return { value: value, done: !!done };
+};
+
+
+/***/ }),
+/* 66 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var regexpFlags = __webpack_require__(45);
+
+var nativeExec = RegExp.prototype.exec;
+// This always refers to the native implementation, because the
+// String#replace polyfill uses ./fix-regexp-well-known-symbol-logic.js,
+// which loads this file before patching the method.
+var nativeReplace = String.prototype.replace;
+
+var patchedExec = nativeExec;
+
+var LAST_INDEX = 'lastIndex';
+
+var UPDATES_LAST_INDEX_WRONG = (function () {
+  var re1 = /a/,
+      re2 = /b*/g;
+  nativeExec.call(re1, 'a');
+  nativeExec.call(re2, 'a');
+  return re1[LAST_INDEX] !== 0 || re2[LAST_INDEX] !== 0;
+})();
+
+// nonparticipating capturing group, copied from es5-shim's String#split patch.
+var NPCG_INCLUDED = /()??/.exec('')[1] !== undefined;
+
+var PATCH = UPDATES_LAST_INDEX_WRONG || NPCG_INCLUDED;
+
+if (PATCH) {
+  patchedExec = function exec(str) {
+    var re = this;
+    var lastIndex, reCopy, match, i;
+
+    if (NPCG_INCLUDED) {
+      reCopy = new RegExp('^' + re.source + '$(?!\\s)', regexpFlags.call(re));
+    }
+    if (UPDATES_LAST_INDEX_WRONG) lastIndex = re[LAST_INDEX];
+
+    match = nativeExec.call(re, str);
+
+    if (UPDATES_LAST_INDEX_WRONG && match) {
+      re[LAST_INDEX] = re.global ? match.index + match[0].length : lastIndex;
+    }
+    if (NPCG_INCLUDED && match && match.length > 1) {
+      // Fix browsers whose `exec` methods don't consistently return `undefined`
+      // for NPCG, like IE8. NOTE: This doesn' work for /(.?)?/
+      // eslint-disable-next-line no-loop-func
+      nativeReplace.call(match[0], reCopy, function () {
+        for (i = 1; i < arguments.length - 2; i++) {
+          if (arguments[i] === undefined) match[i] = undefined;
+        }
+      });
+    }
+
+    return match;
+  };
+}
+
+module.exports = patchedExec;
+
+
+/***/ }),
+/* 67 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var shared = __webpack_require__(51)('keys');
+var uid = __webpack_require__(35);
+module.exports = function (key) {
+  return shared[key] || (shared[key] = uid(key));
+};
+
+
+/***/ }),
+/* 68 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var global = __webpack_require__(6);
+var core = __webpack_require__(8);
+var LIBRARY = __webpack_require__(31);
+var wksExt = __webpack_require__(99);
+var defineProperty = __webpack_require__(4).f;
+module.exports = function (name) {
+  var $Symbol = core.Symbol || (core.Symbol = LIBRARY ? {} : global.Symbol || {});
+  if (name.charAt(0) != '_' && !(name in $Symbol)) defineProperty($Symbol, name, { value: wksExt.f(name) });
+};
+
+
+/***/ }),
+/* 69 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+// 22.1.3.8 Array.prototype.find(predicate, thisArg = undefined)
+var $export = __webpack_require__(0);
+var $find = __webpack_require__(73)(5);
+var KEY = 'find';
+var forced = true;
+// Shouldn't skip holes
+if (KEY in []) Array(1)[KEY](function () { forced = false; });
+$export($export.P + $export.F * forced, 'Array', {
+  find: function find(callbackfn /* , that = undefined */) {
+    return $find(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+  }
+});
+__webpack_require__(42)(KEY);
+
+
+/***/ }),
+/* 70 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var anObject = __webpack_require__(5);
+var toObject = __webpack_require__(10);
+var toLength = __webpack_require__(17);
+var toInteger = __webpack_require__(52);
+var advanceStringIndex = __webpack_require__(59);
+var regExpExec = __webpack_require__(49);
+var max = Math.max;
+var min = Math.min;
+var floor = Math.floor;
+var SUBSTITUTION_SYMBOLS = /\$([$&`']|\d\d?|<[^>]*>)/g;
+var SUBSTITUTION_SYMBOLS_NO_NAMED = /\$([$&`']|\d\d?)/g;
+
+var maybeToString = function (it) {
+  return it === undefined ? it : String(it);
+};
+
+// @@replace logic
+__webpack_require__(44)('replace', 2, function (defined, REPLACE, $replace, maybeCallNative) {
+  return [
+    // `String.prototype.replace` method
+    // https://tc39.github.io/ecma262/#sec-string.prototype.replace
+    function replace(searchValue, replaceValue) {
+      var O = defined(this);
+      var fn = searchValue == undefined ? undefined : searchValue[REPLACE];
+      return fn !== undefined
+        ? fn.call(searchValue, O, replaceValue)
+        : $replace.call(String(O), searchValue, replaceValue);
+    },
+    // `RegExp.prototype[@@replace]` method
+    // https://tc39.github.io/ecma262/#sec-regexp.prototype-@@replace
+    function (regexp, replaceValue) {
+      var res = maybeCallNative($replace, regexp, this, replaceValue);
+      if (res.done) return res.value;
+
+      var rx = anObject(regexp);
+      var S = String(this);
+      var functionalReplace = typeof replaceValue === 'function';
+      if (!functionalReplace) replaceValue = String(replaceValue);
+      var global = rx.global;
+      if (global) {
+        var fullUnicode = rx.unicode;
+        rx.lastIndex = 0;
+      }
+      var results = [];
+      while (true) {
+        var result = regExpExec(rx, S);
+        if (result === null) break;
+        results.push(result);
+        if (!global) break;
+        var matchStr = String(result[0]);
+        if (matchStr === '') rx.lastIndex = advanceStringIndex(S, toLength(rx.lastIndex), fullUnicode);
+      }
+      var accumulatedResult = '';
+      var nextSourcePosition = 0;
+      for (var i = 0; i < results.length; i++) {
+        result = results[i];
+        var matched = String(result[0]);
+        var position = max(min(toInteger(result.index), S.length), 0);
+        var captures = [];
+        // NOTE: This is equivalent to
+        //   captures = result.slice(1).map(maybeToString)
+        // but for some reason `nativeSlice.call(result, 1, result.length)` (called in
+        // the slice polyfill when slicing native arrays) "doesn't work" in safari 9 and
+        // causes a crash (https://pastebin.com/N21QzeQA) when trying to debug it.
+        for (var j = 1; j < result.length; j++) captures.push(maybeToString(result[j]));
+        var namedCaptures = result.groups;
+        if (functionalReplace) {
+          var replacerArgs = [matched].concat(captures, position, S);
+          if (namedCaptures !== undefined) replacerArgs.push(namedCaptures);
+          var replacement = String(replaceValue.apply(undefined, replacerArgs));
+        } else {
+          replacement = getSubstitution(matched, S, position, captures, namedCaptures, replaceValue);
+        }
+        if (position >= nextSourcePosition) {
+          accumulatedResult += S.slice(nextSourcePosition, position) + replacement;
+          nextSourcePosition = position + matched.length;
+        }
+      }
+      return accumulatedResult + S.slice(nextSourcePosition);
+    }
+  ];
+
+    // https://tc39.github.io/ecma262/#sec-getsubstitution
+  function getSubstitution(matched, str, position, captures, namedCaptures, replacement) {
+    var tailPos = position + matched.length;
+    var m = captures.length;
+    var symbols = SUBSTITUTION_SYMBOLS_NO_NAMED;
+    if (namedCaptures !== undefined) {
+      namedCaptures = toObject(namedCaptures);
+      symbols = SUBSTITUTION_SYMBOLS;
+    }
+    return $replace.call(replacement, symbols, function (match, ch) {
+      var capture;
+      switch (ch.charAt(0)) {
+        case '$': return '$';
+        case '&': return matched;
+        case '`': return str.slice(0, position);
+        case "'": return str.slice(tailPos);
+        case '<':
+          capture = namedCaptures[ch.slice(1, -1)];
+          break;
+        default: // \d\d?
+          var n = +ch;
+          if (n === 0) return match;
+          if (n > m) {
+            var f = floor(n / 10);
+            if (f === 0) return match;
+            if (f <= m) return captures[f - 1] === undefined ? ch.charAt(1) : captures[f - 1] + ch.charAt(1);
+            return match;
+          }
+          capture = captures[n - 1];
+      }
+      return capture === undefined ? '' : capture;
+    });
+  }
+});
+
+
+/***/ }),
 /* 71 */
 /***/ (function(module, exports) {
 
@@ -5200,7 +5202,7 @@ module.exports = function (IS_INCLUDES) {
 // 5 -> Array#find
 // 6 -> Array#findIndex
 var ctx = __webpack_require__(20);
-var IObject = __webpack_require__(61);
+var IObject = __webpack_require__(62);
 var toObject = __webpack_require__(10);
 var toLength = __webpack_require__(17);
 var asc = __webpack_require__(120);
@@ -5410,7 +5412,7 @@ var getKeys = __webpack_require__(14);
 var gOPS = __webpack_require__(48);
 var pIE = __webpack_require__(33);
 var toObject = __webpack_require__(10);
-var IObject = __webpack_require__(61);
+var IObject = __webpack_require__(62);
 var $assign = Object.assign;
 
 // should work with symbols and should have deterministic property order (V8 bug)
@@ -5510,7 +5512,7 @@ module.exports.f = function getOwnPropertyNames(it) {
 var has = __webpack_require__(15);
 var toIObject = __webpack_require__(9);
 var arrayIndexOf = __webpack_require__(72)(false);
-var IE_PROTO = __webpack_require__(66)('IE_PROTO');
+var IE_PROTO = __webpack_require__(67)('IE_PROTO');
 
 module.exports = function (object, names) {
   var O = toIObject(object);
@@ -5672,7 +5674,7 @@ module.exports = function (TO_STRING) {
 /***/ (function(module, exports, __webpack_require__) {
 
 // helper for String#{startsWith, endsWith, includes}
-var isRegExp = __webpack_require__(62);
+var isRegExp = __webpack_require__(63);
 var defined = __webpack_require__(30);
 
 module.exports = function (that, searchString, NAME) {
@@ -5803,7 +5805,7 @@ var global = __webpack_require__(6);
 var inheritIfRequired = __webpack_require__(78);
 var dP = __webpack_require__(4).f;
 var gOPN = __webpack_require__(47).f;
-var isRegExp = __webpack_require__(62);
+var isRegExp = __webpack_require__(63);
 var $flags = __webpack_require__(45);
 var $RegExp = global.RegExp;
 var Base = $RegExp;
@@ -5900,13 +5902,13 @@ $export($export.P + $export.F * __webpack_require__(76)(STARTS_WITH), 'String', 
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_regexp_match___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_regexp_match__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_10_core_js_modules_es6_regexp_to_string__ = __webpack_require__(39);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_10_core_js_modules_es6_regexp_to_string___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_10_core_js_modules_es6_regexp_to_string__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11_core_js_modules_es6_regexp_replace__ = __webpack_require__(69);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11_core_js_modules_es6_regexp_replace__ = __webpack_require__(70);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_11_core_js_modules_es6_regexp_replace___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_11_core_js_modules_es6_regexp_replace__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12_core_js_modules_es6_array_find__ = __webpack_require__(68);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12_core_js_modules_es6_array_find__ = __webpack_require__(69);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_12_core_js_modules_es6_array_find___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_12_core_js_modules_es6_array_find__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__console_console__ = __webpack_require__(13);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__lisp__ = __webpack_require__(18);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__sql_where__ = __webpack_require__(70);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__sql_where__ = __webpack_require__(58);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_16__lpep__ = __webpack_require__(23);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_17__utils_utils__ = __webpack_require__(41);
 
@@ -6743,46 +6745,47 @@ function generate_report_sql(_cfg, _vars) {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_string_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_core_js_modules_es6_string_iterator__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_array_from__ = __webpack_require__(53);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_array_from___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_core_js_modules_es6_array_from__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es7_array_includes__ = __webpack_require__(156);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es7_array_includes___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_core_js_modules_es7_array_includes__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_string_includes__ = __webpack_require__(155);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_string_includes___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_core_js_modules_es6_string_includes__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es7_symbol_async_iterator__ = __webpack_require__(28);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es7_symbol_async_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_core_js_modules_es7_symbol_async_iterator__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es6_symbol__ = __webpack_require__(22);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es6_symbol___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_core_js_modules_es6_symbol__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_array_find__ = __webpack_require__(68);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_array_find___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_array_find__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_core_js_modules_es7_object_values__ = __webpack_require__(57);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_core_js_modules_es7_object_values___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7_core_js_modules_es7_object_values__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_string_starts_with__ = __webpack_require__(108);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_string_starts_with___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8_core_js_modules_es6_string_starts_with__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_array_sort__ = __webpack_require__(54);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_array_sort___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_array_sort__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10_core_js_modules_web_dom_iterable__ = __webpack_require__(40);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10_core_js_modules_web_dom_iterable___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_10_core_js_modules_web_dom_iterable__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11_core_js_modules_es6_array_iterator__ = __webpack_require__(36);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11_core_js_modules_es6_array_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_11_core_js_modules_es6_array_iterator__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12_core_js_modules_es6_object_keys__ = __webpack_require__(55);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12_core_js_modules_es6_object_keys___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_12_core_js_modules_es6_object_keys__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13_core_js_modules_es6_regexp_split__ = __webpack_require__(38);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13_core_js_modules_es6_regexp_split___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_13_core_js_modules_es6_regexp_split__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14_core_js_modules_es6_regexp_to_string__ = __webpack_require__(39);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14_core_js_modules_es6_regexp_to_string___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_14_core_js_modules_es6_regexp_to_string__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15_core_js_modules_es6_regexp_replace__ = __webpack_require__(69);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15_core_js_modules_es6_regexp_replace___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_15_core_js_modules_es6_regexp_replace__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_regexp_replace__ = __webpack_require__(70);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_regexp_replace___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_core_js_modules_es6_regexp_replace__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_es7_array_includes__ = __webpack_require__(156);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_core_js_modules_es7_array_includes___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_core_js_modules_es7_array_includes__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_string_includes__ = __webpack_require__(155);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_string_includes___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_core_js_modules_es6_string_includes__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es7_symbol_async_iterator__ = __webpack_require__(28);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_core_js_modules_es7_symbol_async_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_core_js_modules_es7_symbol_async_iterator__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_symbol__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_symbol___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_core_js_modules_es6_symbol__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_array_find__ = __webpack_require__(69);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_array_find___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7_core_js_modules_es6_array_find__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_core_js_modules_es7_object_values__ = __webpack_require__(57);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_core_js_modules_es7_object_values___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8_core_js_modules_es7_object_values__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_regexp_to_string__ = __webpack_require__(39);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_regexp_to_string___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_9_core_js_modules_es6_regexp_to_string__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10_core_js_modules_es6_string_starts_with__ = __webpack_require__(108);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10_core_js_modules_es6_string_starts_with___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_10_core_js_modules_es6_string_starts_with__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11_core_js_modules_es6_array_sort__ = __webpack_require__(54);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11_core_js_modules_es6_array_sort___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_11_core_js_modules_es6_array_sort__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12_core_js_modules_web_dom_iterable__ = __webpack_require__(40);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12_core_js_modules_web_dom_iterable___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_12_core_js_modules_web_dom_iterable__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13_core_js_modules_es6_array_iterator__ = __webpack_require__(36);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13_core_js_modules_es6_array_iterator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_13_core_js_modules_es6_array_iterator__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14_core_js_modules_es6_object_keys__ = __webpack_require__(55);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14_core_js_modules_es6_object_keys___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_14_core_js_modules_es6_object_keys__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15_core_js_modules_es6_regexp_split__ = __webpack_require__(38);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15_core_js_modules_es6_regexp_split___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_15_core_js_modules_es6_regexp_split__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_16_core_js_modules_es6_regexp_match__ = __webpack_require__(37);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_16_core_js_modules_es6_regexp_match___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_16_core_js_modules_es6_regexp_match__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_17__console_console__ = __webpack_require__(13);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_18__lisp__ = __webpack_require__(18);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_19__lpep__ = __webpack_require__(23);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_20__utils_utils__ = __webpack_require__(41);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_21_core_js_fn_object__ = __webpack_require__(117);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_21_core_js_fn_object___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_21_core_js_fn_object__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_22_core_js_fn_dict__ = __webpack_require__(116);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_22_core_js_fn_dict___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_22_core_js_fn_dict__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_23_core_js_core_function__ = __webpack_require__(114);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_23_core_js_core_function___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_23_core_js_core_function__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_19__sql_where__ = __webpack_require__(58);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_20__lpep__ = __webpack_require__(23);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_21__utils_utils__ = __webpack_require__(41);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_22_core_js_fn_object__ = __webpack_require__(117);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_22_core_js_fn_object___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_22_core_js_fn_object__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_23_core_js_fn_dict__ = __webpack_require__(116);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_23_core_js_fn_dict___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_23_core_js_fn_dict__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_24_core_js_core_function__ = __webpack_require__(114);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_24_core_js_core_function___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_24_core_js_core_function__);
 
 
 
@@ -6841,13 +6844,15 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
     OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
- //import {sql_where_context} from './sql_where';
-//import {eval_sql_where} from './sql_where';
+
+ //import {eval_sql_where} from './sql_where';
 
 
 
 
 
+ //import util from 'license-report/lib/util';
+//const SQL_where_context = sql_where_context({});
 
 /* Постановка
 На входе имеем структуру данных из браузера:
@@ -6938,10 +6943,6 @@ function quot_as_expression(db, src, alias) {
     return "".concat(src, " as \"").concat(alias, "\"");
   }
 }
-
-function any_db_quote_literal(el) {
-  return "'" + el.toString().replace(/'/g, "''") + "'";
-}
 /***************************************************************
  * Дописывает имена столбцов в структуре _cfg, до полных имён, используя префикс cube_prefix, там, где это очевидно.
  * простые тексты переводит в LPE скоботу
@@ -6965,7 +6966,8 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
     "offset": _cfg["offset"],
     "subtotals": _cfg["subtotals"],
     "options": __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(_cfg["options"]) ? _cfg["options"] : [],
-    "return": _cfg["return"]
+    "return": _cfg["return"],
+    "config": _cfg["config"]
   };
   var aliases = {};
   if (_cfg["distinct"]) ret["distinct"] = [];
@@ -7069,7 +7071,7 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
         return ["column", el];
       }
 
-      var ast = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lpep__["a" /* parse */])("expr(".concat(el, ")"));
+      var ast = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_20__lpep__["a" /* parse */])("expr(".concat(el, ")"));
 
       if (typeof ast === 'string') {
         // but if it was string, try to expand
@@ -7096,21 +7098,150 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
   return ret;
 }
 
-function init_mssql_args_context(_cube, _vars) {
+function init_udf_args_context(_cube, _vars, _target_database) {
   // ожидаем на вход хэш с фильтрами прямо из нашего запроса koob...
+  // _context._target_database === 'postgresql'
 
   /*
    {"dt":["between",2019,2022],"id":["=",23000035],"regions":["=","Moscow","piter","tumen"]}
-  mssql_sp_args:  ["dir","regions","id","id","dt","dt"]
-  mssql_sp_args:  ["dir",["ql","regions"],"id","id","dt","dt"]
+  udf_args:  ["dir","regions","id","id","dt","dt"]
+  udf_args:  ["dir",["ql","regions"],"id","id","dt","dt"]
   для квотации уже не работает, нужен кастомный резолвер имён ;-) а значит специальный контекст, в котором
   надо эвалить каждый второй аргумент: TODO
    если ключ (нечётный аргумент - пустой, то пишем без имени аргумента...)
+   where @dir = 'Moscow@piter@tumen', @id = 23000035 => sep(@)
+  'VAL1, VAL2, VAL3'                                => sep(,)
+  '''VAL1'',''VAL2'',''VAL3'''                      => sep(,), quot( ql2 )
   */
+  var udf_arg_cfg = {
+    "sqlserver": {
+      "arg_prefix": "",
+      "arg_suffix": "",
+      "arg_sep": ", ",
+      "array_val_sep": "@",
+      "array_val_quot": "",
+      "array_val_quot_enforced": true,
+      // always quoting, ignore what user wants
+      "array_quot": "ql",
+      "varname_prefix": "@",
+      "varname_suffix": " = "
+    },
+    "sap": {
+      "arg_prefix": "'PLACEHOLDER' = (",
+      "arg_suffix": ")",
+      "arg_sep": ", ",
+      "array_val_sep": ",",
+      "array_val_quot": "ql",
+      // if ql() provided in template we call this func
+      "array_val_quot_enforced": false,
+      "array_quot": "ql",
+      // hard coded func called in any case !
+      "varname_prefix": "'$$",
+      "varname_suffix": "$$', "
+    },
+    "postgresql": {
+      "arg_prefix": "",
+      "arg_suffix": "",
+      "arg_sep": ", ",
+      "array_val_sep": ",",
+      "array_val_quot": "qj",
+      // quot JSON val with "" 
+      "array_val_quot_enforced": true,
+      // always quoting, ignore what user wants
+      "array_quot": "",
+      // if empty, then try array_prefix
+      "array_prefix": "$lpe_array_quot$[",
+      "array_suffix": "]$lpe_array_quot$",
+      // '["val1","val2","val\"123"]'
+      "varname_prefix": null,
+      // means that var name should be skipped!!!
+      "varname_suffix": null
+    }
+  };
+
+  if (udf_arg_cfg[_target_database] === undefined) {
+    throw new Error("udf_args() is not yet supported for: ".concat(_target_database));
+  }
+
+  var c = udf_arg_cfg[_target_database];
+
+  var generate_array_literal = function generate_array_literal(list, is_in_ql_call) {
+    var possible_quot = c.array_val_quot;
+
+    if (!c.array_val_quot_enforced && !is_in_ql_call) {
+      possible_quot = "";
+    }
+
+    if (possible_quot === "") {
+      return list.join(c.array_val_sep);
+    } else if (possible_quot === "ql") {
+      return list.map(function (v) {
+        return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_21__utils_utils__["a" /* db_quote_literal */])(v);
+      }).join(c.array_val_sep);
+    } else if (possible_quot === "qj") {
+      // json quoting
+      return list.map(function (v) {
+        return JSON.stringify(v);
+      }).join(c.array_val_sep);
+    }
+  };
+
   var _ctx = {};
-  _ctx["mssql_sp_args"] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* makeSF */])(function (ast, ctx) {
+
+  var quote_array_literal = function quote_array_literal(v) {
+    if (c.array_quot === "ql") {
+      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_21__utils_utils__["a" /* db_quote_literal */])(v);
+    } else if (c.array_prefix) {
+      return "".concat(c.array_prefix).concat(v).concat(c.array_suffix);
+    } else {
+      return v;
+    }
+  };
+  /* we may need to query datbase to generate val list
+  for example: ["between", '2001-01-01','2002-02-01'] should generate list of dates...
+  for now this part is buggy and very limited...
+  basically it either return one value, or list value
+    */
+
+
+  function eval_filters_expr(filters, name) {
+    if (filters[0] === '=') {
+      if (filters.length > 2) {
+        // return array
+        return filters.slice(1);
+      } else {
+        if (filters.length === 2) {
+          // return just value
+          return filters[1];
+        }
+      }
+    }
+
+    throw new Error("udf_args() can not handle filter op ".concat(filters[0], " yet"));
+  }
+
+  _ctx["udf_args"] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* makeSF */])(function (ast, ctx) {
     // аргументы = пары значениий, 
-    //console.log(`mssql_sp_args: `, JSON.stringify(ast))
+    //console.log(`udf_args: `, JSON.stringify(ast))
+    var print_val_var_pair = function print_val_var_pair(k, v, is_array) {
+      //console.log(`KV: ${k} = ${v}`)
+      var s = c.arg_prefix;
+
+      if (c.varname_prefix === null) {
+        // skip var name completely !!! usefull for postgresql??
+        // and other positional arg functions
+        s = "".concat(s);
+      } else {
+        s = "".concat(s).concat(c.varname_prefix).concat(k).concat(c.varname_suffix);
+      }
+
+      if (is_array) {
+        return "".concat(s).concat(quote_array_literal(v)).concat(c.arg_suffix);
+      } else {
+        return "".concat(s).concat(v).concat(c.arg_suffix);
+      }
+    };
+
     var pairs = ast.reduce(function (list, _, index, source) {
       if (index % 2 === 0) {
         var name = source[index];
@@ -7120,32 +7251,30 @@ function init_mssql_args_context(_cube, _vars) {
         var filters = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(filter_ast, ctx, {
           "resolveString": false
         }); // включая _vars !
-        //console.log('evaled to ' + JSON.stringify(filters))
+        //console.log('filters evaled to ' + JSON.stringify(filters))
 
         if (filters !== undefined) {
           if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(filters)) {
-            if (filters[0] === '=') {
-              if (filters.length > 2) {
-                var expr = filters.slice(1).join('@');
+            var vallist = eval_filters_expr(filters);
 
-                if (expr.length > 0) {
-                  if (name && name.length > 0) {
-                    list.push("@".concat(name, " = '").concat(expr, "'"));
-                  } else {
-                    list.push("'".concat(expr, "'"));
-                  }
-                }
+            if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(vallist)) {
+              var expr = generate_array_literal(vallist, false);
+
+              if (expr.length > 0) {
+                list.push(print_val_var_pair(name, expr, true));
               } else {
-                if (filters.length === 2) {
-                  list.push("@".concat(name, " = ").concat(filters[1]));
-                }
+                throw new Error("udf_args() has filter without value, only op ".concat(filters[0]));
               }
+            } else {
+              list.push(print_val_var_pair(name, vallist));
             }
           } else {
+            //console.log(`NEVER BE HERE! ${filters}`)
             if (filters.length > 0) {
               if (name && name.length > 0) {
-                list.push("@".concat(name, " = ").concat(filters));
+                list.push(print_val_var_pair(name, filters));
               } else {
+                // postgresql might skip names ???
                 list.push("".concat(filters));
               }
             }
@@ -7155,16 +7284,25 @@ function init_mssql_args_context(_cube, _vars) {
 
       return list;
     }, []);
-    return pairs.join(', ');
+    return pairs.join(c.arg_sep);
   });
 
   _ctx["ql"] = function (arg) {
     if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(arg)) {
-      var expr = arg.slice(1).join('@');
-      return "'".concat(expr, "'");
+      //console.log('QL:'  + JSON.stringify(arg))
+      var vallist = eval_filters_expr(arg);
+
+      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(vallist)) {
+        var expr = generate_array_literal(vallist, true); // enforce quoting as it is ql() call
+
+        return quote_array_literal(expr);
+      } else {
+        return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_21__utils_utils__["a" /* db_quote_literal */])(vallist);
+      }
     } else {
       if (arg !== undefined) {
-        return "'".concat(arg, "'");
+        //console.log(`QUOT FOR ${arg}`)
+        return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_21__utils_utils__["a" /* db_quote_literal */])(arg);
       }
     }
 
@@ -7954,7 +8092,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
   _context['not'].ast = [[], {}, [], 1]; // mark as macro
 
   _context["'"] = function (a) {
-    return any_db_quote_literal(a);
+    return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_21__utils_utils__["a" /* db_quote_literal */])(a);
   }; // overwrite STDLIB! or we will treat (a = 'null') as (a = null) which is wrong in SQL !
 
 
@@ -7966,7 +8104,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     // NULL values should not be quoted
     // plv8 version of db_quote_literal returns E'\\d\\d' for '\d\d' which is not supported in ClickHose :-()
     // so we created our own version...
-    return el === null ? null : any_db_quote_literal(el);
+    return el === null ? null : __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_21__utils_utils__["a" /* db_quote_literal */])(el);
   };
   /* тут мы не пометили AGG !!!
   _context['count'] = makeSF( (ast,ctx) => {
@@ -8690,7 +8828,7 @@ function genereate_subtotals_group_by(cfg, group_by_list) {
   }; // {"options": ["CrossSubtotals"] }
 
 
-  var sross_subtotals_combinations = function sross_subtotals_combinations() {
+  var cross_subtotals_combinations = function cross_subtotals_combinations() {
     return subtotals.map(function (col) {
       check_column_existence(col); //console.log(JSON.stringify(group_by_list.filter(c => c !== col).join(', ')))
 
@@ -8703,6 +8841,12 @@ function genereate_subtotals_group_by(cfg, group_by_list) {
   };
 
   var hier_subtotals_combinations = function hier_subtotals_combinations() {
+    // check existance of range() column, we should include it as first column in every grouping set!
+    var range_cols = group_by_list.filter(function (el) {
+      return el.is_range_column === true;
+    });
+    var range_col = range_cols[0];
+    var accum_val = range_col ? [range_col.expr] : [];
     var res = subtotals.reduce(function (accum, col) {
       check_column_existence(col); //console.log(`accum: ${JSON.stringify(accum)} + col: ${col} + first: ${JSON.stringify(accum.slice(-1).pop())}`)
 
@@ -8716,13 +8860,13 @@ function genereate_subtotals_group_by(cfg, group_by_list) {
 
 
       return accum.concat([accum.slice(-1).pop().concat(match[0].expr)]);
-    }, [[]]);
+    }, [accum_val]);
     res.shift();
     return res;
   };
 
   var conf = cfg["config"] || {};
-  var subtotals_combinations = conf["subtotalsMode"] == "AllButOneInterleaved" ? sross_subtotals_combinations : hier_subtotals_combinations;
+  var subtotals_combinations = conf["subtotalsMode"] == "AllButOneInterleaved" ? cross_subtotals_combinations : hier_subtotals_combinations;
   ret.group_by = "\nGROUP BY GROUPING SETS ((".concat(group_by_sql, '),', "\n                        (".concat(subtotals_combinations().join("),\n                        ("), ')'), "\n                       )"); // делать дедупликацию пока что сложно, поэтому временно сделаем distinct
   // FIXME
 
@@ -8810,7 +8954,7 @@ function generate_koob_sql(_cfg, _vars) {
 
   if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["e" /* isString */])(_cfg["with"])) {
     var w = _cfg["with"];
-    _context["_columns"] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_20__utils_utils__["c" /* reports_get_columns */])(w, _vars["_dimensions"]);
+    _context["_columns"] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_21__utils_utils__["c" /* reports_get_columns */])(w, _vars["_dimensions"]);
     _context["_aliases"] = {}; // will be filled while we are parsing columns
     // это корректный префикс: "дс.перв"."куб.2"  так что тупой подсчёт точек не катит.
 
@@ -8819,7 +8963,7 @@ function generate_koob_sql(_cfg, _vars) {
 
       if (_context["_target_database"] === undefined) {
         // это выполняется в БД на лету
-        ds_info = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_20__utils_utils__["d" /* get_data_source_info */])(w.split('.')[0]);
+        ds_info = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_21__utils_utils__["d" /* get_data_source_info */])(w.split('.')[0]);
         _context["_target_database"] = ds_info["flavor"];
       } else {
         //Это выполняется в тестах
@@ -9030,7 +9174,7 @@ function generate_koob_sql(_cfg, _vars) {
   */
 
 
-  var cube_query_template = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_20__utils_utils__["e" /* reports_get_table_sql */])(ds_info["flavor"], "".concat(_cfg["ds"], ".").concat(_cfg["cube"]), _vars["_cube"]);
+  var cube_query_template = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_21__utils_utils__["e" /* reports_get_table_sql */])(ds_info["flavor"], "".concat(_cfg["ds"], ".").concat(_cfg["cube"]), _vars["_cube"]);
   /* Если есть хотя бы один явный столбец group_by, а иначе, если просто считаем агрегаты по всей таблице без группировки по столбцам */
 
   if (_cfg["options"].includes('!MemberALL') === false && (_cfg["_group_by"].length > 0 || _cfg["_measures"].length > 0)) {
@@ -9116,7 +9260,7 @@ function generate_koob_sql(_cfg, _vars) {
   var ast = []; //console.log("WHERE access filters: ", JSON.stringify(filters))
 
   if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["e" /* isString */])(filters) && filters.length > 0) {
-    var ast = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lpep__["a" /* parse */])("expr(".concat(filters, ")"));
+    var ast = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_20__lpep__["a" /* parse */])("expr(".concat(filters, ")"));
     ast.splice(0, 1, '()'); // replace expr with ()
   } else if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(filters) && filters.length > 0) {
     if (filters[0] === 'expr') {
@@ -9630,22 +9774,35 @@ function generate_koob_sql(_cfg, _vars) {
         return subst;
       };
 
-      var mssql_sp_args_replacer = function mssql_sp_args_replacer(match, columns_text, offset, string) {
+      var udf_args_replacer = function udf_args_replacer(match, columns_text, offset, string) {
         var filters_array = _cfg["filters"];
 
         if (!__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(filters_array)) {
-          throw new Error("filters as array is not supported for mssql_sp_args(). Sorry.");
+          throw new Error("filters as array is not supported for udf_args(). Sorry.");
         } //console.log(JSON.stringify(filters_array))
         //var subst = get_filters_array(_context, filters_array, _cfg.ds + '.' + _cfg.cube, columns, false)
 
 
-        var ast = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lpep__["a" /* parse */])("mssql_sp_args(".concat(columns_text, ")"));
+        var ast = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_20__lpep__["a" /* parse */])("udf_args(".concat(columns_text, ")"));
 
         if (ast.length == 0) {
           return "";
         }
 
         return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(ast, c);
+      };
+
+      var filter_replacer = function filter_replacer(match, expression, offset, string) {
+        //console.log(`Detected filters expresssion: ${expression}`)
+        //var subst = get_filters_array(_context, filters_array, _cfg.ds + '.' + _cfg.cube, columns, false)
+        var ast = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_20__lpep__["a" /* parse */])("filter(".concat(expression, ")"));
+
+        if (ast.length == 0) {
+          return "1=1";
+        } //console.log(`Parsed expr: ${JSON.stringify(ast)}`)
+
+
+        return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(ast, cc);
       };
 
       // надо подставить WHERE аккуратно, это уже посчитано, заменяем ${filters} и ${filters()}
@@ -9666,11 +9823,19 @@ function generate_koob_sql(_cfg, _vars) {
       re = /\$\{filters\(([^\)]+)\)\}/gi;
       processed_from = processed_from.replace(re, inclusive_replacer); //final_sql = `${select}\nFROM ${processed_from}${group_by}${order_by}${limit_offset}${ending}`
       ///////////////////////////////////////////////////////////////////////
-      // ищем ${mssql_sp_args(column , title, name1, filter1, ....)}
+      // ищем ${udf_args(column , title, name1, filter1, ....)}
 
-      re = /\$\{mssql_sp_args\(([^\}]+)\)\}/gi;
-      var c = init_mssql_args_context("".concat(_cfg.ds, ".").concat(_cfg.cube), _cfg["filters"]);
-      processed_from = processed_from.replace(re, mssql_sp_args_replacer);
+      re = /\$\{udf_args\(([^\}]+)\)\}/gi;
+      var c = init_udf_args_context("".concat(_cfg.ds, ".").concat(_cfg.cube), _cfg["filters"], _context[0]["_target_database"]);
+      processed_from = processed_from.replace(re, udf_args_replacer); // функция filter из table lookup, но тут своя реализация... пробуем
+
+      re = /\$\{filter\(([^\}]+)\)\}/gi; // FIXME: надо инитить глобальный контекст, и подкидывать переменные про юзера.
+      // let cc = [ {_target_database: "HOY"}, SQL_where_context ];
+
+      var cc = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__sql_where__["a" /* sql_where_context */])({
+        'user': _vars["_user_info"]
+      });
+      processed_from = processed_from.replace(re, filter_replacer);
       from = processed_from;
     }
 
@@ -9961,7 +10126,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__console_console__ = __webpack_require__(13);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__lpep__ = __webpack_require__(23);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__lisp__ = __webpack_require__(18);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__sql_where__ = __webpack_require__(70);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__sql_where__ = __webpack_require__(58);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__sql_context__ = __webpack_require__(109);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__sql_koob__ = __webpack_require__(110);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__sql_macros__ = __webpack_require__(111);
@@ -10472,9 +10637,9 @@ var create = __webpack_require__(26);
 var redefineAll = __webpack_require__(92);
 var ctx = __webpack_require__(20);
 var anInstance = __webpack_require__(71);
-var forOf = __webpack_require__(60);
-var $iterDefine = __webpack_require__(63);
-var step = __webpack_require__(64);
+var forOf = __webpack_require__(61);
+var $iterDefine = __webpack_require__(64);
+var step = __webpack_require__(65);
 var setSpecies = __webpack_require__(95);
 var DESCRIPTORS = __webpack_require__(2);
 var fastKey = __webpack_require__(25).fastKey;
@@ -10623,7 +10788,7 @@ var $export = __webpack_require__(0);
 var redefine = __webpack_require__(12);
 var redefineAll = __webpack_require__(92);
 var meta = __webpack_require__(25);
-var forOf = __webpack_require__(60);
+var forOf = __webpack_require__(61);
 var anInstance = __webpack_require__(71);
 var isObject = __webpack_require__(3);
 var fails = __webpack_require__(7);
@@ -10870,10 +11035,10 @@ var getKeys = __webpack_require__(14);
 var dP = __webpack_require__(4);
 var keyOf = __webpack_require__(127);
 var aFunction = __webpack_require__(19);
-var forOf = __webpack_require__(60);
+var forOf = __webpack_require__(61);
 var isIterable = __webpack_require__(134);
 var $iterCreate = __webpack_require__(82);
-var step = __webpack_require__(64);
+var step = __webpack_require__(65);
 var isObject = __webpack_require__(3);
 var toIObject = __webpack_require__(9);
 var DESCRIPTORS = __webpack_require__(2);
@@ -11256,7 +11421,7 @@ $export($export.S, 'Object', { setPrototypeOf: __webpack_require__(94).set });
 
 "use strict";
 
-var regexpExec = __webpack_require__(65);
+var regexpExec = __webpack_require__(66);
 __webpack_require__(0)({
   target: 'RegExp',
   proto: true,
@@ -11509,7 +11674,7 @@ __webpack_require__(2) && $export($export.P + __webpack_require__(46), 'Object',
 /* 163 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(67)('observable');
+__webpack_require__(68)('observable');
 
 
 /***/ })

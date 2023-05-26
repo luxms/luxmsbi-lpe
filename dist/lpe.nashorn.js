@@ -4402,6 +4402,7 @@ function sql_where_context(_vars) {
           }
         } else {
           //console.log(r[0] + " RESOLVING VAR " + JSON.stringify(r[1]));
+          // FIXME: сюда может прилететь ->
           //console.log("RESOLVING VAR " + JSON.stringify(_context));
           var var_expr;
 
@@ -4425,11 +4426,11 @@ function sql_where_context(_vars) {
                 } else {
                   throw new Error("Resolved value is array with length of not 2, which is not yet supported. ".concat(JSON.stringify(var_expr)));
                 }
+              } else {
+                // array here: pass it to the next logic
+                __WEBPACK_IMPORTED_MODULE_14__console_console__["a" /* default */].log('array in $ evaluation'); // возможно значение переменной резолвится в массив???
+                //throw new Error(`Resolved value is array, with operation different from = which is not yet supported. ${JSON.stringify(var_expr)}`)
               }
-              /*else { // array here: pass it to the next logic
-              throw new Error(`Resolved value is array, with operation different from = which is not yet supported. ${JSON.stringify(var_expr)}`)
-              }*/
-
             }
           } else {
             var_expr = prnt(r, ctx);
@@ -4437,6 +4438,7 @@ function sql_where_context(_vars) {
 
           if (var_expr !== undefined) {
             if (var_expr instanceof Array) {
+              //console.log(`EVAL = ${op}` + JSON.stringify(l) + ' ' + JSON.stringify(var_expr));
               return ctx[op](l, ['['].concat(var_expr));
             } else {
               //console.log("EVAL = " + JSON.stringify(l) + ' ' + JSON.stringify(var_expr));
@@ -5113,6 +5115,7 @@ function reports_get_columns(cubeId, dims) {
   if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_4__lisp__["b" /* isArray */])(globalThis.MOCKcubeColumns)) {
     r = globalThis.MOCKcubeColumns;
   } else {
+    //console.log("Built in Cube COLUMNS")
     var r = [{
       "id": "ch.fot_out.Val",
       "type": "NUMBER",
@@ -5478,6 +5481,7 @@ function reports_get_table_sql(target_db_type, tbl, cube) {
   var table_name = tbl.split('.')[1];
 
   if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_4__lisp__["e" /* isHash */])(cube)) {
+    console.log("Cube SQL provided as func arg");
     var sql = cube.sql_query;
     if (sql.match(/ /) !== null) sql = "(".concat(sql, ")"); // it's select ... FROM or something like this
 
@@ -5494,7 +5498,7 @@ function reports_get_table_sql(target_db_type, tbl, cube) {
     };
   }
 
-  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_4__lisp__["e" /* isHash */])(globalThis.MOCKCubeSQL["".concat(target_db_type, "-").concat(tbl)])) {
+  if (globalThis.MOCKCubeSQL !== undefined && __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_4__lisp__["e" /* isHash */])(globalThis.MOCKCubeSQL["".concat(target_db_type, "-").concat(tbl)])) {
     return globalThis.MOCKCubeSQL["".concat(target_db_type, "-").concat(tbl)];
   }
 

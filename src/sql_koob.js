@@ -22,19 +22,24 @@
 
 import console from './console/console';
 import {eval_lisp, isString, isArray, isHash, isFunction, makeSF, isNumber} from './lisp';
-//import {sql_where_context} from './sql_where';
-
+import {sql_where_context} from './sql_where';
 //import {eval_sql_where} from './sql_where';
 
 import {parse} from './lpep';
 import {
   reports_get_columns,
   reports_get_table_sql, 
-  get_data_source_info
+  get_data_source_info,
+  db_quote_literal
 } from './utils/utils';
+
 import { isObject } from 'core-js/fn/object';
 import { has } from 'core-js/fn/dict';
 import { part } from 'core-js/core/function';
+
+//import util from 'license-report/lib/util';
+
+//const SQL_where_context = sql_where_context({});
 
 /* Постановка
 На входе имеем структуру данных из браузера:
@@ -87,7 +92,6 @@ function upper_by_default(db) {
   return db === 'oracle' || db === 'teradata' || db === 'sap'
 }
 
-
 /**
  * возвращает строку `col AS alias`
  * @param {*} db 
@@ -129,11 +133,6 @@ function quot_as_expression(db, src, alias) {
   }
 }
 
-
-function any_db_quote_literal(el) {
-  return "'" + el.toString().replace(/'/g, "''") + "'";
-}
-
 /***************************************************************
  * Дописывает имена столбцов в структуре _cfg, до полных имён, используя префикс cube_prefix, там, где это очевидно.
  * простые тексты переводит в LPE скоботу
@@ -148,7 +147,7 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
     "ds":ds, "cube":cube, "filters":{}, "having":{}, "columns":[], "sort": [], 
     "limit": _cfg["limit"], "offset": _cfg["offset"], "subtotals": _cfg["subtotals"],
     "options": isArray(_cfg["options"]) ? _cfg["options"] : [],
-    "return": _cfg["return"]
+    "return": _cfg["return"], "config": _cfg["config"]
   }
   var aliases = {}
 
@@ -275,53 +274,162 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
 }
 
 
-function init_mssql_args_context(_cube, _vars) {
+function init_udf_args_context(_cube, _vars, _target_database) {
   // ожидаем на вход хэш с фильтрами прямо из нашего запроса koob...
+  // _context._target_database === 'postgresql'
   /*
    {"dt":["between",2019,2022],"id":["=",23000035],"regions":["=","Moscow","piter","tumen"]}
-  mssql_sp_args:  ["dir","regions","id","id","dt","dt"]
-  mssql_sp_args:  ["dir",["ql","regions"],"id","id","dt","dt"]
+  udf_args:  ["dir","regions","id","id","dt","dt"]
+  udf_args:  ["dir",["ql","regions"],"id","id","dt","dt"]
   для квотации уже не работает, нужен кастомный резолвер имён ;-) а значит специальный контекст, в котором
   надо эвалить каждый второй аргумент: TODO
 
   если ключ (нечётный аргумент - пустой, то пишем без имени аргумента...)
+
+  where @dir = 'Moscow@piter@tumen', @id = 23000035 => sep(@)
+  'VAL1, VAL2, VAL3'                                => sep(,)
+  '''VAL1'',''VAL2'',''VAL3'''                      => sep(,), quot( ql2 )
   */
+
+  let udf_arg_cfg = {
+    "sqlserver":{
+      "arg_prefix": "",
+      "arg_suffix": "",
+      "arg_sep": ", ",
+      "array_val_sep": "@",
+      "array_val_quot": "",
+      "array_val_quot_enforced": true, // always quoting, ignore what user wants
+      "array_quot": "ql",
+      "varname_prefix": "@",
+      "varname_suffix": " = "
+    },
+    "sap":{
+      "arg_prefix": "'PLACEHOLDER' = (",
+      "arg_suffix": ")",
+      "arg_sep": ", ",
+      "array_val_sep": ",",
+      "array_val_quot": "ql", // if ql() provided in template we call this func
+      "array_val_quot_enforced": false, 
+      "array_quot": "ql", // hard coded func called in any case !
+      "varname_prefix": "'$$",
+      "varname_suffix": "$$', "
+    },
+    "postgresql":{
+      "arg_prefix": "",
+      "arg_suffix": "",
+      "arg_sep": ", ",
+      "array_val_sep": ",",
+      "array_val_quot": "qj", // quot JSON val with "" 
+      "array_val_quot_enforced": true, // always quoting, ignore what user wants
+      "array_quot": "", // if empty, then try array_prefix
+      "array_prefix": "$lpe_array_quot$[",
+      "array_suffix": "]$lpe_array_quot$", // '["val1","val2","val\"123"]'
+      "varname_prefix": null, // means that var name should be skipped!!!
+      "varname_suffix": null
+    }
+  }
+
+  if (udf_arg_cfg[_target_database] === undefined) {
+    throw new Error(`udf_args() is not yet supported for: ${_target_database}`)
+  }
+
+  let c = udf_arg_cfg[_target_database]
+  let generate_array_literal = function(list, is_in_ql_call){
+    let possible_quot = c.array_val_quot
+    if (!c.array_val_quot_enforced && !is_in_ql_call) {
+      possible_quot = ""
+    }
+    if (possible_quot === "") {
+      return list.join(c.array_val_sep);
+    } else if (possible_quot === "ql"){
+      return list.map(v=> db_quote_literal(v)).join(c.array_val_sep)
+    } else if (possible_quot === "qj"){
+      // json quoting
+      return list.map(v=> JSON.stringify(v)).join(c.array_val_sep)
+    } 
+  } 
   let _ctx = {};
-  _ctx["mssql_sp_args"] = makeSF((ast,ctx) => {
+
+  let quote_array_literal = function(v) {
+    if (c.array_quot==="ql") {
+      return db_quote_literal(v)
+    } else if (c.array_prefix){
+      return `${c.array_prefix}${v}${c.array_suffix}`
+    } else {
+      return v
+    }
+  }
+
+  /* we may need to query datbase to generate val list
+  for example: ["between", '2001-01-01','2002-02-01'] should generate list of dates...
+  for now this part is buggy and very limited...
+  basically it either return one value, or list value
+
+
+  */
+  function eval_filters_expr(filters, name) {
+    if (filters[0] === '=') {
+      if (filters.length > 2){
+        // return array
+        return filters.slice(1);
+      } else {
+        if (filters.length === 2) {
+          // return just value
+          return filters[1]
+        }
+      }
+    }
+    throw new Error(`udf_args() can not handle filter op ${filters[0]} yet`)
+  }
+
+  _ctx["udf_args"] = makeSF((ast,ctx) => {
       // аргументы = пары значениий, 
-      //console.log(`mssql_sp_args: `, JSON.stringify(ast))
+      //console.log(`udf_args: `, JSON.stringify(ast))
+
+      let print_val_var_pair = function(k,v, is_array) {
+        //console.log(`KV: ${k} = ${v}`)
+        let s = c.arg_prefix
+        if (c.varname_prefix === null) {
+          // skip var name completely !!! usefull for postgresql??
+          // and other positional arg functions
+          s = `${s}`;
+        } else {
+          s = `${s}${c.varname_prefix}${k}${c.varname_suffix}`;
+        }
+        if (is_array) {
+          return `${s}${quote_array_literal(v)}${c.arg_suffix}`
+        } else {
+          return `${s}${v}${c.arg_suffix}`
+        }
+      }
 
       let pairs = ast.reduce((list, _, index, source) => {
         if (index % 2 === 0) {
           let name = source[index];
           let filter_ast = source[index+1];
-
           name = eval_lisp(name, _ctx); // should eval to itself !
           let filters = eval_lisp(filter_ast, ctx, {"resolveString":false}); // включая _vars !
-          //console.log('evaled to ' + JSON.stringify(filters))
+          //console.log('filters evaled to ' + JSON.stringify(filters))
           if (filters !== undefined) {
             if (isArray(filters)){
-              if (filters[0] === '=') {
-                if (filters.length > 2){
-                  let expr = filters.slice(1).join('@');
-                  if (expr.length>0) {
-                    if (name && name.length > 0){
-                      list.push(`@${name} = '${expr}'`)
-                    } else {
-                      list.push(`'${expr}'`)
-                    }
-                  }
+              let vallist = eval_filters_expr(filters)
+              if (isArray(vallist)){
+                let expr = generate_array_literal(vallist, false);
+                if (expr.length>0) {
+                  list.push( print_val_var_pair(name, expr, true) )
                 } else {
-                  if (filters.length === 2) {
-                    list.push(`@${name} = ${filters[1]}`)
-                  }
+                  throw new Error(`udf_args() has filter without value, only op ${filters[0]}`)
                 }
+              } else {
+                list.push( print_val_var_pair(name, vallist) )
               }
             } else {
+              //console.log(`NEVER BE HERE! ${filters}`)
               if (filters.length > 0) {
                 if (name && name.length > 0){
-                  list.push(`@${name} = ${filters}`)
+                  list.push(print_val_var_pair(name, filters))
                 } else {
+                  // postgresql might skip names ???
                   list.push(`${filters}`)
                 }
               }
@@ -331,16 +439,23 @@ function init_mssql_args_context(_cube, _vars) {
         return list;
       }, []);
 
-    return pairs.join(', ')
+    return pairs.join(c.arg_sep)
   });
 
   _ctx["ql"] = function(arg) {
     if (isArray(arg)){
-      let expr = arg.slice(1).join('@');
-      return `'${expr}'`
-    }else{
+      //console.log('QL:'  + JSON.stringify(arg))
+      let vallist = eval_filters_expr(arg)
+      if (isArray(vallist)){
+        let expr = generate_array_literal(vallist, true); // enforce quoting as it is ql() call
+        return quote_array_literal(expr)
+      } else {
+        return db_quote_literal(vallist)
+      }
+    } else {
       if (arg !== undefined) {
-        return `'${arg}'`
+        //console.log(`QUOT FOR ${arg}`)
+        return db_quote_literal(arg)
       } 
     }
     return undefined
@@ -1118,7 +1233,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
   _context['not'].ast = [[],{},[],1]; // mark as macro
 
   _context["'"] = function(a) {
-    return any_db_quote_literal(a)
+    return db_quote_literal(a)
   }
 
   // overwrite STDLIB! or we will treat (a = 'null') as (a = null) which is wrong in SQL !
@@ -1130,7 +1245,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     // NULL values should not be quoted
     // plv8 version of db_quote_literal returns E'\\d\\d' for '\d\d' which is not supported in ClickHose :-()
     // so we created our own version...
-    return el === null ? null : any_db_quote_literal(el)
+    return el === null ? null : db_quote_literal(el)
   }
 
   /* тут мы не пометили AGG !!!
@@ -1787,7 +1902,7 @@ function genereate_subtotals_group_by(cfg, group_by_list){
   }
 
   // {"options": ["CrossSubtotals"] }
-  let sross_subtotals_combinations = function() {
+  let cross_subtotals_combinations = function() {
     return subtotals.map(col => {
     check_column_existence(col);
     //console.log(JSON.stringify(group_by_list.filter(c => c !== col).join(', ')))
@@ -1796,6 +1911,11 @@ function genereate_subtotals_group_by(cfg, group_by_list){
   }
 
   let hier_subtotals_combinations = function() {
+    // check existance of range() column, we should include it as first column in every grouping set!
+    let range_cols = group_by_list.filter(el => el.is_range_column === true)
+    let range_col = range_cols[0]
+    let accum_val = range_col ? [range_col.expr] : []
+
           let res = subtotals.reduce((accum, col) => {
             check_column_existence(col)
             //console.log(`accum: ${JSON.stringify(accum)} + col: ${col} + first: ${JSON.stringify(accum.slice(-1).pop())}`)
@@ -1806,13 +1926,14 @@ function genereate_subtotals_group_by(cfg, group_by_list){
             //console.log(`FOUND: ${JSON.stringify(match)} in ${JSON.stringify(group_by_list)}`)
             return accum.concat([accum.slice(-1).pop().concat(match[0].expr)])
           }, 
-          [[]])
+          [accum_val])
           res.shift();
           return res;
-        }
+    }
   let conf = cfg["config"] || {};
+
   let subtotals_combinations = conf["subtotalsMode"] == "AllButOneInterleaved"
-                              ? sross_subtotals_combinations
+                              ? cross_subtotals_combinations
                               : hier_subtotals_combinations;
 
   ret.group_by = "\nGROUP BY GROUPING SETS ((".concat(group_by_sql, '),',
@@ -1864,6 +1985,8 @@ export function generate_koob_sql(_cfg, _vars) {
   if (isHash(_cfg["coefficients"])){
     _context["_coefficients"] = _cfg["coefficients"]
   }
+
+
 /*
 {
 "with":"czt.fot",
@@ -2649,25 +2772,46 @@ export function generate_koob_sql(_cfg, _vars) {
       //final_sql = `${select}\nFROM ${processed_from}${group_by}${order_by}${limit_offset}${ending}`
 
       ///////////////////////////////////////////////////////////////////////
-      // ищем ${mssql_sp_args(column , title, name1, filter1, ....)}
-      re = /\$\{mssql_sp_args\(([^\}]+)\)\}/gi
-      let c = init_mssql_args_context(`${_cfg.ds}.${_cfg.cube}`, _cfg["filters"]);
+      // ищем ${udf_args(column , title, name1, filter1, ....)}
+      re = /\$\{udf_args\(([^\}]+)\)\}/gi
+      let c = init_udf_args_context(`${_cfg.ds}.${_cfg.cube}`, _cfg["filters"], _context[0]["_target_database"]);
 
-      function mssql_sp_args_replacer(match, columns_text, offset, string) {
+      function udf_args_replacer(match, columns_text, offset, string) {
 
         var filters_array = _cfg["filters"];
         if (!isHash(filters_array)) {
-          throw new Error(`filters as array is not supported for mssql_sp_args(). Sorry.`)
+          throw new Error(`filters as array is not supported for udf_args(). Sorry.`)
         }
         //console.log(JSON.stringify(filters_array))
         //var subst = get_filters_array(_context, filters_array, _cfg.ds + '.' + _cfg.cube, columns, false)
-        var ast = parse( `mssql_sp_args(${columns_text})`);
+        var ast = parse( `udf_args(${columns_text})`);
         if (ast.length == 0) {
           return ""
         }
         return eval_lisp(ast, c);
       }
-      processed_from = processed_from.replace(re, mssql_sp_args_replacer);
+      processed_from = processed_from.replace(re, udf_args_replacer);
+
+      // функция filter из table lookup, но тут своя реализация... пробуем
+      re = /\$\{filter\(([^\}]+)\)\}/gi
+
+      // FIXME: надо инитить глобальный контекст, и подкидывать переменные про юзера.
+      // let cc = [ {_target_database: "HOY"}, SQL_where_context ];
+
+      let cc = sql_where_context({'user': _vars["_user_info"]});
+
+      function filter_replacer(match, expression, offset, string) {
+        //console.log(`Detected filters expresssion: ${expression}`)
+        //var subst = get_filters_array(_context, filters_array, _cfg.ds + '.' + _cfg.cube, columns, false)
+        var ast = parse( `filter(${expression})`);
+        if (ast.length == 0) {
+          return "1=1"
+        }
+        //console.log(`Parsed expr: ${JSON.stringify(ast)}`)
+        return eval_lisp(ast, cc);
+      }
+      processed_from = processed_from.replace(re, filter_replacer);
+
       from = processed_from
 
     }

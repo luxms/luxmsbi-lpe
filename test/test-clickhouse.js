@@ -129,39 +129,32 @@ where (id = 23000035)
 
 
 
-         it('should eval mssql_sp_args()', function() {
-
-            globalThis.MOCKCubeSQL = {
-               "clickhouse-bi.cube":{
-                  "query": `(SELECT 1 from cube
-where \${mssql_sp_args(dir, ql(ql(regions)), id, id, dt, ql(ql(d)))}
-where \${mssql_sp_args(dir, ql(regions), id, ql(id), dt, dt)}
-where \${mssql_sp_args(dir, ql(regions.1), id, ql(id), dt, dt)}
-where func_call(\${mssql_sp_args('', ql(regions))})`,
-                  "config": {"is_template": 1,"skip_where": 1}}}
-            
-            assert.equal( lpe.generate_koob_sql(
-               {"columns":[
-                           "regions"
-                        ],
-               "filters":{
-                  "dt":["between",2019,2022],
-                  "id":["=",23000035],
-                  "regions":["=","Moscow","piter","tumen"]
-               },
-               "with":"bi.cube"},
-                     {"_target_database": "clickhouse"}),
-            `SELECT regions as regions
-FROM (SELECT 1 from cube
-where @dir = ''Moscow@piter@tumen'', @id = 23000035
-where @dir = 'Moscow@piter@tumen', @id = '23000035'
-where @dir = 'Moscow', @id = '23000035'
-where func_call('Moscow@piter@tumen')`
-                              );
-                     });
-
-
-
+// FIXME: ->(user,sys_config,ext_groups) MUST BE FIXED
+            it('should filter()', function() {
+                        globalThis.MOCKCubeSQL = {
+                           "clickhouse-bi.cube":{
+                              "query": `SELECT 1 from cube where \${filter(a = $(user.sys_config.external) or b = var_samp(regions) or a = [1,2,3] 
+                                 or b = user.sys_config.ext_groups 
+                                 or b = $(user.sys_config.ext_groups)
+                                 or b in ($(user.sys_config.ext_groups))
+                                 and cond(col in ($(user.sys_config.ext_groups)), ['col is null']) )}`,
+                              "config": {"is_template": 1,"skip_where": 1}}}
+                        
+                        assert.equal( lpe.generate_koob_sql(
+                           {"columns":[
+                                       "regions"
+                                    ],
+                           "filters":{
+                              "dt":["between",2019,2022],
+                              "id":["=",23000035],
+                              "regions":["=","Moscow","piter","tumen"]
+                           },
+                           "with":"bi.cube"},
+                                 {"_target_database": "clickhouse", "_user_info": {"username":"vasya","sys_config":{"external":true, "ext_groups":["a","b","c"]}}}),
+                        `SELECT regions as regions
+FROM SELECT 1 from cube where a = true or b = var_samp(regions) or a IN (1,2,3) or b = ->(user,sys_config,ext_groups) or b IN (a,b,c) or b in ('a','b','c') and col in ('a','b','c')`
+                                          );
+                                 });
 });
 
 

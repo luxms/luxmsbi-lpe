@@ -25,7 +25,6 @@ import {parse} from './lpep';
 import {db_quote_literal, db_quote_ident, get_data_source_info} from './utils/utils';
 import {eval_lisp, isString, isArray, isNumber, makeSF} from './lisp';
 
-
 /*
 where - всегда возвращает слово WHERE, а потом условия. На пустом входе вернёт WHERE TRUE
 filter - на пустом входе вернёт пустую строку
@@ -557,6 +556,7 @@ export function sql_where_context(_vars) {
             }
           } else {
             //console.log(r[0] + " RESOLVING VAR " + JSON.stringify(r[1]));
+            // FIXME: сюда может прилететь ->
             //console.log("RESOLVING VAR " + JSON.stringify(_context));
             var var_expr
             if (r[0] === '$') {
@@ -578,9 +578,11 @@ export function sql_where_context(_vars) {
                   } else {
                     throw new Error(`Resolved value is array with length of not 2, which is not yet supported. ${JSON.stringify(var_expr)}`)
                   }
-                } /*else { // array here: pass it to the next logic
-                  throw new Error(`Resolved value is array, with operation different from = which is not yet supported. ${JSON.stringify(var_expr)}`)
-                }*/
+                } else { // array here: pass it to the next logic
+                  console.log('array in $ evaluation')
+                  // возможно значение переменной резолвится в массив???
+                  //throw new Error(`Resolved value is array, with operation different from = which is not yet supported. ${JSON.stringify(var_expr)}`)
+                }
               }
             } else {
               var_expr = prnt(r, ctx);
@@ -588,6 +590,7 @@ export function sql_where_context(_vars) {
 
             if (var_expr !== undefined) {
               if (var_expr instanceof Array) {
+                //console.log(`EVAL = ${op}` + JSON.stringify(l) + ' ' + JSON.stringify(var_expr));
                 return ctx[op](l,['['].concat(var_expr));
               } else {
                 //console.log("EVAL = " + JSON.stringify(l) + ' ' + JSON.stringify(var_expr));
