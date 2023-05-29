@@ -7313,11 +7313,6 @@ function init_udf_args_context(_cube, _vars, _target_database) {
       "varname_suffix": null
     }
   };
-
-  if (udf_arg_cfg[_target_database] === undefined) {
-    throw new Error("udf_args() is not yet supported for: ".concat(_target_database));
-  }
-
   var c = udf_arg_cfg[_target_database];
 
   var generate_array_literal = function generate_array_literal(list, is_in_ql_call) {
@@ -7378,6 +7373,10 @@ function init_udf_args_context(_cube, _vars, _target_database) {
   _ctx["udf_args"] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* makeSF */])(function (ast, ctx) {
     // аргументы = пары значениий, 
     //console.log(`udf_args: `, JSON.stringify(ast))
+    if (udf_arg_cfg[_target_database] === undefined) {
+      throw new Error("udf_args() is not yet supported for: ".concat(_target_database));
+    }
+
     var print_val_var_pair = function print_val_var_pair(k, v, is_array) {
       //console.log(`KV: ${k} = ${v}`)
       var s = c.arg_prefix;

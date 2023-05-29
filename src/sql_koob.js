@@ -329,10 +329,6 @@ function init_udf_args_context(_cube, _vars, _target_database) {
     }
   }
 
-  if (udf_arg_cfg[_target_database] === undefined) {
-    throw new Error(`udf_args() is not yet supported for: ${_target_database}`)
-  }
-
   let c = udf_arg_cfg[_target_database]
   let generate_array_literal = function(list, is_in_ql_call){
     let possible_quot = c.array_val_quot
@@ -385,6 +381,10 @@ function init_udf_args_context(_cube, _vars, _target_database) {
   _ctx["udf_args"] = makeSF((ast,ctx) => {
       // аргументы = пары значениий, 
       //console.log(`udf_args: `, JSON.stringify(ast))
+
+      if (udf_arg_cfg[_target_database] === undefined) {
+        throw new Error("udf_args() is not yet supported for: ".concat(_target_database));
+      }
 
       let print_val_var_pair = function(k,v, is_array) {
         //console.log(`KV: ${k} = ${v}`)
