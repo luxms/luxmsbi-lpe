@@ -4084,6 +4084,11 @@ function sql_where_context(_vars) {
     // NULL values should not be quoted
     // console.log('QL: ' + JSON.stringify(el))
     return el === null ? null : __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_16__utils_utils__["a" /* db_quote_literal */])(el);
+  };
+
+  _context["includes"] = function (col, el) {
+    // First arg = column name, second arg = string literal
+    return "".concat(col, " ? ").concat(el);
   }; // required for Oracle Reports
 
 
@@ -4227,7 +4232,7 @@ function sql_where_context(_vars) {
     var prnt = function prnt(ar) {
       //console.log("PRNT:" + JSON.stringify(ar))
       if (ar instanceof Array) {
-        if (ar[0] === '$' || ar[0] === '"' || ar[0] === "'" || ar[0] === "str" || ar[0] === "[" || ar[0] === 'parse_kv' || ar[0] === 'parse_cond' || ar[0] === "=" || ar[0] === "!=" || ar[0] === "ql" || ar[0] === "pg_interval" || ar[0] === "lpe_pg_tstz_at_time_zone" || ar[0] === "column" || ar[0] === "cond") {
+        if (ar[0] === '$' || ar[0] === '"' || ar[0] === "'" || ar[0] === "str" || ar[0] === "[" || ar[0] === 'parse_kv' || ar[0] === 'parse_cond' || ar[0] === "=" || ar[0] === "!=" || ar[0] === "ql" || ar[0] === "pg_interval" || ar[0] === "lpe_pg_tstz_at_time_zone" || ar[0] === "column" || ar[0] === "cond" || ar[0] === "includes") {
           return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(ar, ctx);
         } else {
           if (ar.length == 2) {
@@ -4352,8 +4357,11 @@ function sql_where_context(_vars) {
       return '"' + el.toString() + '"';
     };
 
+    ctx['"'].ast = [[], {}, [], 1]; // mark as macro
+
     ctx["'"] = function (expr) {
       // we should eval things in the cond ( a = '$(abs.ext)')
+      //console.log("QUOT:" + expr)
       if (expr.match(/^\s*\$\(.*\)\s*$/)) {
         var parsed = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lpep__["a" /* parse */])(expr);
         return "'".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(parsed, ctx), "'");
@@ -4361,6 +4369,8 @@ function sql_where_context(_vars) {
         return "'" + expr.toString() + "'";
       }
     };
+
+    ctx["'"].ast = [[], {}, [], 1]; // mark as macro: IF it is not a macro, than '*' is evaled to func body!
 
     ctx["["] = function (el) {
       return "[" + Array.prototype.slice.call(arguments).join(',') + "]";

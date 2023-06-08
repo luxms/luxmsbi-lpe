@@ -649,4 +649,23 @@ describe('LPE tests', function() {
         );
     });
 
+
+
+    it('should eval complex formatting', function() {
+        assert.equal( lpe.eval_sql_where(
+            "filter( column = '*' && c < ql('*') || c > ql(\"*\") )",
+            {"_quoting":"explicit", "period": {"title":2001}}),
+            "column = '*' and c < '''*''' or c > '\"*\"'"
+        );
+    });
+
+
+    it('should eval includes()', function() {
+        assert.equal( lpe.eval_sql_where(
+            "filter( includes(column, 'asd') )",
+            {"_quoting":"explicit", "period": {"title":2001}}),
+            "column ? 'asd'"
+        );
+    });
+
 });

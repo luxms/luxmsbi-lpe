@@ -21,6 +21,7 @@
   "license": "MIT",
   "scripts": {
     "test": "mocha --reporter spec",
+    "t": "mocha --reporter spec test/test.js",
     "test-sql": "mocha --reporter spec test/test-sql.js",
     "test-koob": "mocha --reporter spec test/test-koob.js",
     "test-koob-range": "mocha --reporter spec test/test-koob-range.js",

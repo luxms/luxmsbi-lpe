@@ -224,6 +224,11 @@ export function sql_where_context(_vars) {
     return el === null ? null : db_quote_literal(el)
   }
 
+  _context["includes"] = function(col, el) {
+    // First arg = column name, second arg = string literal
+    return `${col} ? ${el}`
+  }
+
   // required for Oracle Reports
   _context["to_timestamp"] = function(el, fmt, nls) {
     return `to_timestamp(${el})`
@@ -368,7 +373,8 @@ export function sql_where_context(_vars) {
                 ar[0] === "pg_interval" ||
                 ar[0] === "lpe_pg_tstz_at_time_zone" ||
                 ar[0] === "column" ||
-                ar[0] === "cond"
+                ar[0] === "cond" ||
+                ar[0] === "includes"
                 ) {
             return eval_lisp(ar, ctx);
           } else {
@@ -499,10 +505,11 @@ export function sql_where_context(_vars) {
       ctx['"'] = function (el) {
         return '"' + el.toString() + '"';
       }
+      ctx['"'].ast = [[],{},[],1]; // mark as macro
 
       ctx["'"] = function (expr) {
         // we should eval things in the cond ( a = '$(abs.ext)')
-        
+        //console.log("QUOT:" + expr)
         if (expr.match(/^\s*\$\(.*\)\s*$/)){
           var parsed = parse(expr)
           return `'${eval_lisp(parsed, ctx)}'`
@@ -510,6 +517,8 @@ export function sql_where_context(_vars) {
           return "'" + expr.toString() + "'";
         }
       }
+      ctx["'"].ast = [[],{},[],1]; // mark as macro: IF it is not a macro, than '*' is evaled to func body!
+
 
       ctx["["] = function (el) {
         return "[" + Array.prototype.slice.call(arguments).join(',') + "]";
