@@ -274,7 +274,7 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
 }
 
 
-function init_udf_args_context(_cube, _vars, _target_database) {
+function init_udf_args_context(_cube, _vars, _target_database, _cfg) {
   // ожидаем на вход хэш с фильтрами прямо из нашего запроса koob...
   // _context._target_database === 'postgresql'
   /*
@@ -376,6 +376,12 @@ function init_udf_args_context(_cube, _vars, _target_database) {
       }
     }
     throw new Error(`udf_args() can not handle filter op ${filters[0]} yet`)
+  }
+
+  // возвращает JSON запрос целиком! 
+  _ctx["koob_filters"] = function() {
+    //console.log(JSON.stringify(_vars))
+    return JSON.stringify(_vars)
   }
 
   _ctx["udf_args"] = makeSF((ast,ctx) => {
@@ -1355,6 +1361,9 @@ function init_koob_context(_vars, default_ds, default_cube) {
       // FIXME! Oracle has something similar to ilike in v12 only :-()
       // FIXME: use regexp
       return `UPPER(${eval_lisp(col,_context)}) LIKE UPPER(${eval_lisp(tmpl,_context)})`
+    } else if (_vars["_target_database"] === 'mysql') {
+      // https://www.oreilly.com/library/view/mysql-cookbook/0596001452/ch04s11.html
+      return `${eval_lisp(col,_context)} LIKE ${eval_lisp(tmpl,_context)}`
     } else {
       return `${eval_lisp(col,_context)} ILIKE ${eval_lisp(tmpl,_context)}`
     } 

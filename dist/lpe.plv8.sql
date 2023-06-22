@@ -7108,7 +7108,7 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
   return ret;
 }
 
-function init_udf_args_context(_cube, _vars, _target_database) {
+function init_udf_args_context(_cube, _vars, _target_database, _cfg) {
   // ожидаем на вход хэш с фильтрами прямо из нашего запроса koob...
   // _context._target_database === 'postgresql'
 
@@ -7223,7 +7223,13 @@ function init_udf_args_context(_cube, _vars, _target_database) {
     }
 
     throw new Error("udf_args() can not handle filter op ".concat(filters[0], " yet"));
-  }
+  } // возвращает JSON запрос целиком! 
+
+
+  _ctx["koob_filters"] = function () {
+    __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log(JSON.stringify(_vars));
+    return JSON.stringify(_vars);
+  };
 
   _ctx["udf_args"] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* makeSF */])(function (ast, ctx) {
     // аргументы = пары значениий, 
@@ -8221,6 +8227,9 @@ function init_koob_context(_vars, default_ds, default_cube) {
       // FIXME! Oracle has something similar to ilike in v12 only :-()
       // FIXME: use regexp
       return "UPPER(".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), ") LIKE UPPER(").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _context), ")");
+    } else if (_vars["_target_database"] === 'mysql') {
+      // https://www.oreilly.com/library/view/mysql-cookbook/0596001452/ch04s11.html
+      return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), " LIKE ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _context));
     } else {
       return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), " ILIKE ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _context));
     }
