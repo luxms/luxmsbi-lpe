@@ -381,7 +381,8 @@ function init_udf_args_context(_cube, _vars, _target_database, _cfg) {
   // возвращает JSON запрос целиком! 
   _ctx["koob_filters"] = function() {
     //console.log(JSON.stringify(_vars))
-    return JSON.stringify(_vars)
+    //return JSON.stringify(_vars)
+    return _vars
   }
 
   _ctx["udf_args"] = makeSF((ast,ctx) => {
@@ -461,6 +462,10 @@ function init_udf_args_context(_cube, _vars, _target_database, _cfg) {
     } else {
       if (arg !== undefined) {
         //console.log(`QUOT FOR ${arg}`)
+        if (isHash(arg)){
+          // This is JSON as hash, we should quote it as string!
+          return db_quote_literal(JSON.stringify(arg))
+        }
         return db_quote_literal(arg)
       } 
     }

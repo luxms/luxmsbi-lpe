@@ -7227,8 +7227,9 @@ function init_udf_args_context(_cube, _vars, _target_database, _cfg) {
 
 
   _ctx["koob_filters"] = function () {
-    __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log(JSON.stringify(_vars));
-    return JSON.stringify(_vars);
+    //console.log(JSON.stringify(_vars))
+    //return JSON.stringify(_vars)
+    return _vars;
   };
 
   _ctx["udf_args"] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* makeSF */])(function (ast, ctx) {
@@ -7317,6 +7318,11 @@ function init_udf_args_context(_cube, _vars, _target_database, _cfg) {
     } else {
       if (arg !== undefined) {
         //console.log(`QUOT FOR ${arg}`)
+        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(arg)) {
+          // This is JSON as hash, we should quote it as string!
+          return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_21__utils_utils__["a" /* db_quote_literal */])(JSON.stringify(arg));
+        }
+
         return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_21__utils_utils__["a" /* db_quote_literal */])(arg);
       }
     }
