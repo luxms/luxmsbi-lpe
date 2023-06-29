@@ -1661,7 +1661,12 @@ function get_parallel_hierarchy_filters(_cfg, columns, _filters) {
       // если есть значение по умолчанию, и не было явно указано фильтров, то ставим значение по умолчанию
 
       if (el.config.defaultValue !== undefined && !isArray(_filters[el.id])){
-        _filters[el.id] = ["=",el.config.defaultValue]
+        if (isArray(el.config.defaultValue)) {
+          // This is parsed lpe AST
+          _filters[el.id] = el.config.defaultValue
+        } else {
+          _filters[el.id] = ["=",el.config.defaultValue]
+        }
       }
     }
   })

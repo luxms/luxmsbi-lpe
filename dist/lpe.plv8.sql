@@ -8513,7 +8513,12 @@ function get_parallel_hierarchy_filters(_cfg, columns, _filters) {
       // НА САМОМ ДЕЛЕ ЭТО sharedDimension ???? conflicting
       // если есть значение по умолчанию, и не было явно указано фильтров, то ставим значение по умолчанию
       if (el.config.defaultValue !== undefined && !__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(_filters[el.id])) {
-        _filters[el.id] = ["=", el.config.defaultValue];
+        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(el.config.defaultValue)) {
+          // This is parsed lpe AST
+          _filters[el.id] = el.config.defaultValue;
+        } else {
+          _filters[el.id] = ["=", el.config.defaultValue];
+        }
       }
     }
   });
