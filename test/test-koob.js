@@ -387,6 +387,27 @@ ORDER BY perda, lead DESC LIMIT 100 OFFSET 10`
             );
    });
 
+   it('should eval KOOB filters with equality', function() {
+      assert.equal( lpe.generate_koob_sql(
+         {"columns":[
+                     "toString(v_rel_pp):v_rel_pp",
+                     "sum(group_pay_name)",
+                     'hcode_name'
+                  ],
+         "filters":{"hcode_name": ["=", '-', "2020-03-01"]},
+         "sort":["perda","-lead"],
+         "limit": 100,
+         "offset": 10,
+         "with":"ch.fot_out"},
+               {"_target_database": "clickhouse"}),
+   `SELECT toString(v_rel_pp) as v_rel_pp, sum(group_pay_name) as group_pay_name, hcode_name as hcode_name
+FROM fot_out AS fot_out
+WHERE (hcode_name IN ('-', '2020-03-01')) AND (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
+GROUP BY toString(v_rel_pp), hcode_name
+ORDER BY perda, lead DESC LIMIT 100 OFFSET 10`
+            );
+   });
+
 
    it('should eval KOOB partial filters', function() {
    assert.equal( lpe.generate_koob_sql(

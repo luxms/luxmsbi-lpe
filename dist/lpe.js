@@ -7543,6 +7543,14 @@ function init_koob_context(_vars, default_ds, default_cube) {
     }
 
     return lit;
+  };
+  /* если нужно, берёт в кавычки, но не делает eval для первого аргумента! */
+
+  /* Считается, что первый аргумент - строка или числоб но не ast */
+
+
+  var evalQuoteLiteral = function evalQuoteLiteral(lit) {
+    return lit === null ? null : __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_21__utils_utils__["a" /* db_quote_literal */])(lit);
   }; // функция, которая резолвит имена столбцов для случаев, когда имя функции не определено в явном виде в _vars/_context
   // а также пытается зарезолвить коэффициенты
 
@@ -8440,7 +8448,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     // a = [null, 1,2] как a in (1,2) or a is null
     // ["=",["column","vNetwork.cluster"],SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]
     // var a = Array.prototype.slice.call(arguments)
-    //console.log(JSON.stringify(ast))
+    // console.log(JSON.stringify(ast))
     var col = ast[0];
     /* FIXME !!! AGHTUNG !!!!
     было var c = eval_lisp(col, _context) и сложные выражения типа if ( sum(v_rel_pp)=0, 0, sum(pay_code)/sum(v_rel_pp)):d
@@ -8451,8 +8459,10 @@ function init_koob_context(_vars, default_ds, default_cube) {
     var c = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _ctx);
 
     var resolveValue = function resolveValue(v) {
-      if (shouldQuote(col, v)) v = quoteLiteral(v);
-      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(v, _context);
+      if (shouldQuote(col, v)) v = evalQuoteLiteral(v, _context);
+      return v; // [["ignore(me)",["column","ch.fot_out.hcode_name"]],"-","2020-03-01"]
+      // если делать eval, то - будет читаться как функция!!!
+      //return eval_lisp(v,_context)
     };
 
     if (ast.length === 1) {
@@ -8916,7 +8926,7 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
       var wh = ["and"].concat(pw); // console.log("WHERE", JSON.stringify(wh))
       // возможно, тут нужен спец. контекст с правильной обработкой or/and  функций.
       // ибо первым аргументом мы тут всегда ставим столбец!!! 
-      //console.log('*****: ' + JSON.stringify(wh))
+      // console.log('*****: ' + JSON.stringify(wh))
 
       part_where = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(JSON.parse(JSON.stringify(wh)), context); //console.log('.....: ' + JSON.stringify(filters_array))
     } else {
