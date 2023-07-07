@@ -570,6 +570,31 @@ WHERE (hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND ("My version" = '9.
 GROUP BY (round(v_main,2)), group_pay_name, hcode_name, "My version"
 ORDER BY "My version"`
          );
+      });
+
+         it('Should eval func name as const in filters', function() {
+            assert.equal( lpe.generate_koob_sql(
+               {"columns":[
+                  "sum(Val):sum_Val",
+                  "if(max(group_pay_name)='Руб./рабочее место',sum(fackt)/sum(Val),100):v",
+                  "fackt",
+                  "group_pay_name", 
+                  'hcode_name',
+                  'My version'
+               ],
+      "filters":{"hcode_name": ["=", "-", "'"],
+      "My version":["=","9.0"]
+   
+   },
+      "sort":["+My version"],
+      "with":"ch.fot_out"},
+            {"_target_database": "postgresql"}),
+`SELECT sum("Val") as "sum_Val", CASE WHEN max(group_pay_name) = 'Руб./рабочее место' THEN sum((round(v_main,2))) / sum("Val") ELSE 100 END as v, (round(v_main,2)) as fackt, group_pay_name as group_pay_name, hcode_name as hcode_name, "My version" as "My version"
+FROM fot_out AS fot_out
+WHERE (hcode_name IN ('-', '''')) AND ("My version" = '9.0') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
+GROUP BY (round(v_main,2)), group_pay_name, hcode_name, "My version"
+ORDER BY "My version"`
+         );
 
   });
 });
