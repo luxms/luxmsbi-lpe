@@ -8448,7 +8448,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     // a = [null, 1,2] как a in (1,2) or a is null
     // ["=",["column","vNetwork.cluster"],SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]
     // var a = Array.prototype.slice.call(arguments)
-    // console.log(JSON.stringify(ast))
+    // console.log("=========" + JSON.stringify(ast))
     var col = ast[0];
     /* FIXME !!! AGHTUNG !!!!
     было var c = eval_lisp(col, _context) и сложные выражения типа if ( sum(v_rel_pp)=0, 0, sum(pay_code)/sum(v_rel_pp)):d
@@ -8468,12 +8468,19 @@ function init_koob_context(_vars, default_ds, default_cube) {
     if (ast.length === 1) {
       return '1=0';
     } else if (ast.length === 2) {
-      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(ast[1]) && ast[1][0] === "[") {
-        var a = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(ast[1], _context);
-        ast = [c].concat(a);
+      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(ast[1])) {
+        if (ast[1][0] === "[") {
+          var a = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(ast[1], _context);
+          ast = [c].concat(a);
+        } else {
+          // assuming if (ast[1][0] === "'")
+          var v = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(ast[1], _context);
+          return v === null ? "".concat(c, " IS NULL") : "".concat(c, " = ").concat(v);
+        }
       } else {
-        var v = resolveValue(ast[1]);
-        return v === null ? "".concat(c, " IS NULL") : "".concat(c, " = ").concat(v);
+        var _v = resolveValue(ast[1]);
+
+        return _v === null ? "".concat(c, " IS NULL") : "".concat(c, " = ").concat(_v);
       }
     } // check if we have null in the array of values...
 

@@ -1422,7 +1422,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
     // ["=",["column","vNetwork.cluster"],SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]
     // var a = Array.prototype.slice.call(arguments)
-    // console.log(JSON.stringify(ast))
+    // console.log("=========" + JSON.stringify(ast))
     var col = ast[0]
 
     /* FIXME !!! AGHTUNG !!!!
@@ -1442,11 +1442,19 @@ function init_koob_context(_vars, default_ds, default_cube) {
     if (ast.length === 1) {
       return '1=0'
     } else if (ast.length === 2) {
-      if (isArray(ast[1]) && ast[1][0] === "[") {
-        var a = eval_lisp(ast[1], _context)
-        ast = [c].concat(a)
+      if (isArray(ast[1])) {
+        if (ast[1][0] === "["){
+          var a = eval_lisp(ast[1], _context)
+          ast = [c].concat(a)
+        } else {
+          // assuming if (ast[1][0] === "'")
+          let v = eval_lisp(ast[1], _context)
+          return v === null 
+          ? `${c} IS NULL` 
+          : `${c} = ${v}`
+        }
       } else {
-        var v = resolveValue(ast[1])
+        let v = resolveValue(ast[1])
         return v === null 
         ? `${c} IS NULL` 
         : `${c} = ${v}`
