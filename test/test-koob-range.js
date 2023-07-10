@@ -1,6 +1,7 @@
 var assert = require('assert');
 var lpe = require('../dist/lpe');
 
+
 globalThis.MOCKcubeColumns =  [
 {"id":"bi.cube.filters","sql_query":"filters","type":"STRING","config":{"possible_aggregations": []}},
 {"id":"bi.cube.id","sql_query":"id","type":"NUMBER","config":{"possible_aggregations": []}},                                     
@@ -67,7 +68,7 @@ ORDER BY org_shortname_nm LIMIT 5 OFFSET 10`
          "offset": 10,
          "with":"bi.cube"},
                {"_target_database": "postgresql"}),
-   `SELECT sum(dt) as "АХТУНГ", CASE WHEN GROUPING(org_fullname_nm)=0 THEN org_fullname_nm ELSE NULL END as org_fullname_nm, CASE WHEN GROUPING(koob__range__)=0 THEN koob__range__ ELSE NULL END as rng
+   `SELECT sum(dt) as "АХТУНГ", org_fullname_nm as org_fullname_nm, koob__range__ as rng, GROUPING(org_fullname_nm) AS "∑org_fullname_nm", GROUPING(koob__range__) AS "∑rng"
 FROM (SELECT filters, id, dt, org_fullname_nm, org_shortname_nm from cube) AS tbl,generate_series(0, 2-1) as koob__range__
 WHERE (org_shortname_nm IS NOT NULL)
 GROUP BY GROUPING SETS ((org_fullname_nm, koob__range__),
@@ -76,6 +77,19 @@ GROUP BY GROUPING SETS ((org_fullname_nm, koob__range__),
 ORDER BY org_shortname_nm LIMIT 5 OFFSET 10`
             );
    });
+
+/* FIXME:
+
+      + expected - actual
+
+       SELECT sum(dt) as "АХТУНГ", org_fullname_nm as org_fullname_nm, koob__range__ as rng, GROUPING(org_fullname_nm) AS "∑org_fullname_nm", GROUPING(koob__range__) AS "∑rng"
+       FROM (SELECT filters, id, dt, org_fullname_nm, org_shortname_nm from cube) AS tbl,generate_series(0, 2-1) as koob__range__
+       WHERE (org_shortname_nm IS NOT NULL)
+       GROUP BY GROUPING SETS ((org_fullname_nm, koob__range__),
+      -                        (koob__range__,org_fullname_nm)
+      +                        (koob__range__)
+
+*/
 
 
 

@@ -17,7 +17,7 @@ describe('Oracle KOOB tests', function() {
          "with":"ch.fot_out"},
                {"_target_database": "oracle"}),
    `SELECT * FROM (SELECT koob__inner__select__.*, ROWNUM AS "koob__row__num__" FROM (SELECT sum(v_rel_pp) as "АХТУНГ", hcode_name as "hcode_name"
-FROM fot_out AS fot_out
+FROM fot_out fot_out
 WHERE (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
 GROUP BY hcode_name
 ORDER BY "hcode_name") koob__inner__select__) koob__top__level__select__
@@ -37,7 +37,7 @@ WHERE "koob__row__num__" <= 10`
          "with":"ch.fot_out"},
                {"_target_database": "oracle"}),
    `SELECT * FROM (SELECT koob__inner__select__.*, ROWNUM AS "koob__row__num__" FROM (SELECT sum(v_rel_pp) as "АХТУНГ", hcode_name as "hcode_name"
-FROM fot_out AS fot_out
+FROM fot_out fot_out
 WHERE (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
 GROUP BY hcode_name
 ORDER BY "hcode_name") koob__inner__select__) koob__top__level__select__
@@ -59,7 +59,7 @@ WHERE "koob__row__num__" > 10`
          "with":"ch.fot_out"},
                {"_target_database": "oracle"}),
    `SELECT * FROM (SELECT koob__inner__select__.*, ROWNUM AS "koob__row__num__" FROM (SELECT sum(v_rel_pp) as "АХТУНГ", hcode_name as "hcode_name"
-FROM fot_out AS fot_out
+FROM fot_out fot_out
 WHERE (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
 GROUP BY hcode_name
 ORDER BY "hcode_name") koob__inner__select__) koob__top__level__select__
@@ -81,7 +81,7 @@ WHERE "koob__row__num__" > 10 AND "koob__row__num__" <= (10 + 5)`
          "with":"ch.fot_out"},
                {"_target_database": "oracle"}),
    `SELECT * FROM (SELECT koob__inner__select__.*, ROWNUM AS "koob__row__num__" FROM (SELECT sum(v_rel_pp) as "АХТУНГ", hcode_name as "hcode_name", koob__range__ as "rng"
-FROM fot_out AS fot_out,(
+FROM fot_out fot_out,(
       select LEVEL-1 AS koob__range__ from dual
       where LEVEL between 0+1 and 2
       connect by LEVEL <= 2
@@ -108,7 +108,7 @@ WHERE "koob__row__num__" > 10 AND "koob__row__num__" <= (10 + 5)`
          "with":"ch.fot_out"},
                {"_target_database": "oracle"}),
    `SELECT * FROM (SELECT koob__inner__select__.*, ROWNUM AS "koob__row__num__" FROM (SELECT sum(v_rel_pp) as "АХТУНГ", hcode_name as "hcode_name", koob__range__ as "rng"
-FROM fot_out AS fot_out,(
+FROM fot_out fot_out,(
       select LEVEL-1 AS koob__range__ from dual
       where LEVEL between 1+1 and 10 and MOD(LEVEL, 2) = 0
       connect by LEVEL <= 10
@@ -138,7 +138,7 @@ it('should eval KOOB ILIKE', function() {
       "with":"ch.fot_out"},
             {"_target_database": "oracle"}),
    `SELECT sum(v_rel_pp) as "v_rel_pp", group_pay_name as "group_pay_name", hcode_name as "hcode_name", CASE WHEN sum(v_rel_pp) = 0 THEN 0 ELSE sum(pay_code) / sum(v_rel_pp) END as "d"
-FROM fot_out AS fot_out
+FROM fot_out fot_out
 WHERE (hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND (1=0) AND (1=1) AND ((1=1) OR (UPPER(pay_code) LIKE UPPER('Муж'))) AND (sex_code IS NULL)
 GROUP BY group_pay_name, hcode_name
 ORDER BY "perda", "lead" DESC, dbms_random.value() DESC, dbms_random.value()`
@@ -162,7 +162,7 @@ ORDER BY "perda", "lead" DESC, dbms_random.value() DESC, dbms_random.value()`
             "with":"ch.fot_out"},
                   {"_target_database": "oracle","_access_filters":["expr",["=","REG_NAME",["'","кв. Маяковского - В. Посад"]]]}),
    `SELECT * FROM (SELECT koob__inner__select__.*, ROWNUM AS "koob__row__num__" FROM (SELECT sum(v_rel_pp) as "АХТУНГ", hcode_name as "hcode_name", koob__range__ as "rng"
-FROM fot_out AS fot_out,(
+FROM fot_out fot_out,(
       select LEVEL-1 AS koob__range__ from dual
       where LEVEL between 0+1 and 2
       connect by LEVEL <= 2
