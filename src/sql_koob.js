@@ -30,7 +30,8 @@ import {
   reports_get_columns,
   reports_get_table_sql, 
   get_data_source_info,
-  db_quote_literal
+  db_quote_literal,
+  db_quote_ident
 } from './utils/utils';
 
 import { isObject } from 'core-js/fn/object';
@@ -658,6 +659,12 @@ function init_koob_context(_vars, default_ds, default_cube) {
     }
   ) // end of _ctx.push()
 
+  _context["corr"] = function(c1, c2) {
+    _context["_result"]["agg"] = true
+    return `corr(${c1}, ${c2})`
+    //throw Error(`mode() is not implemented for ${_context._target_database} yet`)
+  }
+
   _context["median"] = function(col) {
     _context["_result"]["agg"] = true
     if (_context._target_database === 'clickhouse') {
@@ -823,6 +830,9 @@ function init_koob_context(_vars, default_ds, default_cube) {
     //console.log("COL FAIL", col)
     // возможно кто-то вызовет нас с коротким именем - нужно знать дефолт куб!!!
     //if (_context["_columns"][default_ds][default_cube][key]) return `${default_cube}.${key}`;
+    // на самом деле нас ещё вызывают из фильтров, и там могут быть алиасы на столбцы не в кубе,
+    // а вообще в другой таблице, пробуем просто квотировать по ходу пьессы.
+    
     return col;
   }
 
@@ -1812,9 +1822,42 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
   var comparator = function(k) {
     return k !== ""
   }
+  /*  required_columns может содержать не вычисленные значения: 
+    ["id","'dt':'date'"] (кавычки, двоеточия)
+    нужно их аккуратно вычислить, но пока неясно, в каком контексте...
+  */
+  let aliases = {}
+
+  let ignore_quot = function (ast){
+    if (isArray(ast)){
+      return ast[1]
+    } else {
+      return ast
+    }
+  }
 
   if (isArray(required_columns) && required_columns.length > 0) {
-    required_columns = required_columns.map(el => cube + '.' + el)
+    required_columns = required_columns.map(el => {
+      let ast = parse(el)
+      let colname, aliasname
+      //console.log('> ' + JSON.stringify(ast))
+      if (isArray(ast)) {
+        //[":",["'","dt"],["'","date"]]
+        // FIXME: не будем делать context & eval, но надо бы
+        if (ast[0] === ':') {
+          colname = ignore_quot(ast[1])
+          aliasname = ignore_quot(ast[2])
+        } else {
+          colname = ignore_quot(ast)
+          aliasname = colname
+        }
+      } else {
+        colname = el
+        aliasname = el
+      }
+      colname = cube + '.' + colname
+      aliases[colname] = aliasname
+      return colname})
     if (negate) {
       comparator = function(k) {
         return (k !== "") && !required_columns.includes(k)
@@ -1833,7 +1876,17 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
                     // специальная функция `ignore(me)` = которая ничего не делает, но является меткой для
                     // and or not
                     const [op, ...args] = _filters[key];
-                    return [op, ["ignore(me)", ["column",key]], ...args];
+
+                    let colname = aliases[key]
+                    if (isString(colname)){
+                      if (should_quote_alias(colname)) {
+                        // FIXME: double check that lisp is ok with quoted string
+                        colname = db_quote_ident(colname)
+                      }
+                    } else {
+                      colname = ["column", key]
+                    }
+                    return [op, ["ignore(me)", colname], ...args];
                     
                     /*
                     let el = _filters[key].slice(0)
@@ -2295,6 +2348,7 @@ export function generate_koob_sql(_cfg, _vars) {
       //console.log("COL FAIL", col)
       // возможно кто-то вызовет нас с коротким именем - нужно знать дефолт куб!!!
       //if (_context["_columns"][default_ds][default_cube][key]) return `${default_cube}.${key}`;
+      
       return col;
     }
   }  

@@ -7670,6 +7670,11 @@ function init_koob_context(_vars, default_ds, default_cube) {
   }); // end of _ctx.push()
 
 
+  _context["corr"] = function (c1, c2) {
+    _context["_result"]["agg"] = true;
+    return "corr(".concat(c1, ", ").concat(c2, ")"); //throw Error(`mode() is not implemented for ${_context._target_database} yet`)
+  };
+
   _context["median"] = function (col) {
     _context["_result"]["agg"] = true;
 
@@ -7829,6 +7834,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
     } //console.log("COL FAIL", col)
     // возможно кто-то вызовет нас с коротким именем - нужно знать дефолт куб!!!
     //if (_context["_columns"][default_ds][default_cube][key]) return `${default_cube}.${key}`;
+    // на самом деле нас ещё вызывают из фильтров, и там могут быть алиасы на столбцы не в кубе,
+    // а вообще в другой таблице, пробуем просто квотировать по ходу пьессы.
 
 
     return col;
@@ -8882,10 +8889,45 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
   var comparator = function comparator(k) {
     return k !== "";
   };
+  /*  required_columns может содержать не вычисленные значения: 
+    ["id","'dt':'date'"] (кавычки, двоеточия)
+    нужно их аккуратно вычислить, но пока неясно, в каком контексте...
+  */
+
+
+  var aliases = {};
+
+  var ignore_quot = function ignore_quot(ast) {
+    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(ast)) {
+      return ast[1];
+    } else {
+      return ast;
+    }
+  };
 
   if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(required_columns) && required_columns.length > 0) {
     required_columns = required_columns.map(function (el) {
-      return cube + '.' + el;
+      var ast = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_20__lpep__["a" /* parse */])(el);
+      var colname, aliasname; //console.log('> ' + JSON.stringify(ast))
+
+      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(ast)) {
+        //[":",["'","dt"],["'","date"]]
+        // FIXME: не будем делать context & eval, но надо бы
+        if (ast[0] === ':') {
+          colname = ignore_quot(ast[1]);
+          aliasname = ignore_quot(ast[2]);
+        } else {
+          colname = ignore_quot(ast);
+          aliasname = colname;
+        }
+      } else {
+        colname = el;
+        aliasname = el;
+      }
+
+      colname = cube + '.' + colname;
+      aliases[colname] = aliasname;
+      return colname;
     });
 
     if (negate) {
@@ -8910,7 +8952,18 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
           op = _filters$key[0],
           args = _filters$key.slice(1);
 
-      return [op, ["ignore(me)", ["column", key]]].concat(_toConsumableArray(args));
+      var colname = aliases[key];
+
+      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["e" /* isString */])(colname)) {
+        if (should_quote_alias(colname)) {
+          // FIXME: double check that lisp is ok with quoted string
+          colname = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_21__utils_utils__["b" /* db_quote_ident */])(colname);
+        }
+      } else {
+        colname = ["column", key];
+      }
+
+      return [op, ["ignore(me)", colname]].concat(_toConsumableArray(args));
       /*
       let el = _filters[key].slice(0)
       el.splice(1,0,["ignore(me)",["column",key]])

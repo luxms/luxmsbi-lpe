@@ -54,6 +54,29 @@ WHERE ((NOW() - INERVAL '1 DAY') = '2020-03') AND (pay_code != 'Не задан�
 GROUP BY pay_code, pay_name`
                         );
 
+
+                  assert.equal( lpe.generate_koob_sql(
+                     {"columns":["corr(v_main, v_rel_pp)","sum(v_rel_pp)","sum(v_rel_pp_i)","pay_code","pay_name"],
+                     "distinct":[],
+                     "filters":{
+                        "dt":["=","2020-03"],
+                        "pay_code":["\u0021=","Не задано"],
+                        "area_name":["=","Не задано"],
+                        "hcode_name":["=","ФЗП"],
+                        "type_oe_bi":["=","РЖД"],
+                        "region_name":["=","Не задано"],
+                        "category_name":["=","Не задано"],
+                        "municipal_name":["=","Не задано"],
+                        "prod_group_name":["=","Не задано"],
+                        "profession_name":["=","Не задано"]},
+                        "with":"ch.fot_out"},
+                           {"key":null}),
+`SELECT DISTINCT corr(v_main, v_rel_pp), sum(v_rel_pp) as v_rel_pp, sum(v_rel_pp_i), pay_code as pay_code, pay_name as pay_name
+FROM fot_out AS fot_out
+WHERE ((NOW() - INERVAL '1 DAY') = '2020-03') AND (pay_code != 'Не задано') AND (area_name = 'Не задано') AND (hcode_name = 'ФЗП') AND (type_oe_bi = 'РЖД') AND (region_name = 'Не задано') AND (category_name = 'Не задано') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (sex_code IS NULL)
+GROUP BY pay_code, pay_name`
+                        );
+
                assert.equal( lpe.generate_koob_sql(
                            {"columns":["sum(v_main)","sum(v_rel_pp)","sum(v_rel_pp_i)","pay_code","pay_name"],
                            "filters":[{

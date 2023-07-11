@@ -130,31 +130,66 @@ where (id = 23000035)
 
 
 // FIXME: ->(user,sys_config,ext_groups) MUST BE FIXED
-            it('should filter()', function() {
-                        globalThis.MOCKCubeSQL = {
-                           "clickhouse-bi.cube":{
-                              "query": `SELECT 1 from cube where \${filter(a = $(user.sys_config.external) or b = var_samp(regions) or a = [1,2,3] 
-                                 or b = user.sys_config.ext_groups 
-                                 or b = $(user.sys_config.ext_groups)
-                                 or b in ($(user.sys_config.ext_groups))
-                                 and cond(col in ($(user.sys_config.ext_groups)), ['col is null']) )}`,
-                              "config": {"is_template": 1,"skip_where": 1}}}
-                        
-                        assert.equal( lpe.generate_koob_sql(
-                           {"columns":[
-                                       "regions"
-                                    ],
-                           "filters":{
-                              "dt":["between",2019,2022],
-                              "id":["=",23000035],
-                              "regions":["=","Moscow","piter","tumen"]
-                           },
-                           "with":"bi.cube"},
-                                 {"_target_database": "clickhouse", "_user_info": {"username":"vasya","sys_config":{"external":true, "ext_groups":["a","b","c"]}}}),
-                        `SELECT regions as regions
+   it('should filter()', function() {
+               globalThis.MOCKCubeSQL = {
+                  "clickhouse-bi.cube":{
+                     "query": `SELECT 1 from cube where \${filter(a = $(user.sys_config.external) or b = var_samp(regions) or a = [1,2,3] 
+                        or b = user.sys_config.ext_groups 
+                        or b = $(user.sys_config.ext_groups)
+                        or b in ($(user.sys_config.ext_groups))
+                        and cond(col in ($(user.sys_config.ext_groups)), ['col is null']) )}`,
+                     "config": {"is_template": 1,"skip_where": 1}}}
+               
+               assert.equal( lpe.generate_koob_sql(
+                  {"columns":[
+                              "regions"
+                           ],
+                  "filters":{
+                     "dt":["between",2019,2022],
+                     "id":["=",23000035],
+                     "regions":["=","Moscow","piter","tumen"]
+                  },
+                  "with":"bi.cube"},
+                        {"_target_database": "clickhouse", "_user_info": {"username":"vasya","sys_config":{"external":true, "ext_groups":["a","b","c"]}}}),
+               `SELECT regions as regions
 FROM SELECT 1 from cube where a = true or b = var_samp(regions) or a IN (1,2,3) or b = ->(user,sys_config,ext_groups) or b IN (a,b,c) or b in ('a','b','c') and col in ('a','b','c')`
-                                          );
-                                 });
+                                 );
+                        });
+
+   it('should eval ilike', function() {
+   
+      globalThis.MOCKCubeSQL = {
+         "clickhouse-bi.cube":{
+            "query": `(SELECT 1 from cube where
+\${filters()}
+or \${filters(except(vpz_nm))}
+or \${filters("id",'dt':'date space')})`, 
+            "config": {"is_template": 1,"skip_where": 1}}}
+
+      
+         assert.equal( lpe.generate_koob_sql(
+            {"columns":[
+                        "sum(id):'АХТУНГ'",
+                        'id'
+                     ],
+            "filters":{
+               "regions":["ilike","%N%"],
+               "id":["=",123],
+               "dt":["and",["ilike","%А%"],["=","2022-01-02","2022-10-10","2020-09-09"]]
+            },
+            "sort": ["id"],
+            "limit": 10,
+            "with":"bi.cube"},
+                  {"_target_database": "clickhouse"}),
+   `SELECT sum(id) as "АХТУНГ", id as id
+FROM (SELECT 1 from cube where
+(toString(regions) ILIKE '%N%') AND (id = 123) AND ((toString(dt) ILIKE '%А%') AND (dt IN ('2022-01-02', '2022-10-10', '2020-09-09')))
+or (toString(regions) ILIKE '%N%') AND (id = 123) AND ((toString(dt) ILIKE '%А%') AND (dt IN ('2022-01-02', '2022-10-10', '2020-09-09')))
+or (id = 123) AND ((toString("date space") ILIKE '%А%') AND ("date space" IN ('2022-01-02', '2022-10-10', '2020-09-09'))))
+GROUP BY id
+ORDER BY id LIMIT 10`
+               );
+   });
 });
 
 
