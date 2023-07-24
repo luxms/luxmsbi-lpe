@@ -187,8 +187,6 @@ describe('LISP tests', function () {
   });
 
   it('complex', function () {
-
-
     assert.deepEqual(lpe.eval_lisp(lpe.parse('begin(assoc_in(db, ["adm","users","sys_config","groups"], get_in(http, [ "resp", "body", "groups"])), ctx(db))'), 
     { "db":{},"http":{"resp":{"body":{"sub": "0fa6f0f5-b3e9-4579-a759-daf4159b717e", "name": "Dima Dorofeev", "email": "dima@yasp.ru", "groups": ["/corp-wifi", "/ipausers", "/openshift", "/harbor", "/awx-dev", "/inventory-writers"], "given_name": "Dima", "family_name": "Dorofeev", "userPrincipalName": "ddorofeev@SPB.LUXMS.COM", "preferred_username": "ddorofeev"}}}}),
     {
@@ -203,6 +201,24 @@ describe('LISP tests', function () {
                 "/harbor",
                 "/awx-dev",
                 "/inventory-writers"
+              ]
+            }
+          }
+        }
+      }
+  })
+  });
+
+  it('complex', function () {
+    assert.deepEqual(lpe.eval_lisp(lpe.parse('begin(assoc_in(db, ["adm","users","sys_config","groups"],  [ "my-grp" ]), ctx(db))'), 
+    { "db":{},"http":{"resp":{"body":{"sub": "0fa6f0f5-b3e9-4579-a759-daf4159b717e", "name": "Dima Dorofeev", "email": "dima@yasp.ru", "groups": ["/corp-wifi", "/ipausers", "/openshift", "/harbor", "/awx-dev", "/inventory-writers"], "given_name": "Dima", "family_name": "Dorofeev", "userPrincipalName": "ddorofeev@SPB.LUXMS.COM", "preferred_username": "ddorofeev"}}}}),
+    {
+      "db": {
+        "adm": {
+          "users": {
+            "sys_config": {
+              "groups": [
+                "my-grp"
               ]
             }
           }

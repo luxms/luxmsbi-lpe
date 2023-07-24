@@ -7518,6 +7518,18 @@ function init_koob_context(_vars, default_ds, default_cube) {
   _context["corr"] = function (c1, c2) {
     _context["_result"]["agg"] = true;
     return "corr(".concat(c1, ", ").concat(c2, ")"); //throw Error(`mode() is not implemented for ${_context._target_database} yet`)
+  }; // COUNT(CASE WHEN A = 42 THEN 1 END)
+
+
+  _context["countIf"] = function (cond) {
+    _context["_result"]["agg"] = true;
+
+    if (_context._target_database === 'clickhouse') {
+      return "countIf(".concat(cond, ")");
+    } else {
+      return "COUNT(CASE WHEN ".concat(cond, " THEN 1 END)");
+    } //throw Error(`mode() is not implemented for ${_context._target_database} yet`)
+
   };
 
   _context["median"] = function (col) {

@@ -8,7 +8,7 @@ describe('LPE tests', function() {
     it('should eval KOOB queries', function() {
 
             assert.equal( lpe.generate_koob_sql(
-               {"columns":["sum(v_main):v_main","sum(v_rel_pp)","sum(v_rel_fzp)","sum(v_rel_pp_i)","group_pay_name"],
+               {"columns":["countIf(v_main>1 and v_main <100):v_main","sum(v_rel_pp)","sum(v_rel_fzp)","sum(v_rel_pp_i)","group_pay_name"],
                "distinct":[],
                "filters":{"dt":["!=","2020-03","2020-04"],
                "pay_name":["!=","Не задано"],
@@ -24,7 +24,7 @@ describe('LPE tests', function() {
                "sort":["group_pay_name","v_main"],
                "with":"ch.fot_out"},
                      {"key":null}),
-`SELECT DISTINCT sum(v_main) as v_main, sum(v_rel_pp) as v_rel_pp, sum(v_rel_fzp) as v_rel_fzp, sum(v_rel_pp_i), group_pay_name as group_pay_name
+`SELECT DISTINCT COUNT(CASE WHEN (v_main > 1) AND (v_main < 100) THEN 1 END) as v_main, sum(v_rel_pp) as v_rel_pp, sum(v_rel_fzp) as v_rel_fzp, sum(v_rel_pp_i), group_pay_name as group_pay_name
 FROM fot_out AS fot_out
 WHERE ((NOW() - INERVAL '1 DAY') NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано') AND (area_name = 'Не задано') AND (hcode_name = 'ФЗП') AND (type_oe_bi = 'РЖД') AND (region_name = 'Не задано') AND (category_name = 'Не задано') AND (group_pay_name != 'Не задано') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (pay_code != 'Не задано') AND (sex_code IS NULL)
 GROUP BY group_pay_name
