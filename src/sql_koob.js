@@ -703,7 +703,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     }
   }
 
-  _context["var_pop"] = function(col) {
+  _context["varPop"] = function(col) {
     _context["_result"]["agg"] = true
     if (_context._target_database === 'clickhouse') {
       return `varPop(${col})`
@@ -721,7 +721,10 @@ function init_koob_context(_vars, default_ds, default_cube) {
     }
   }
 
-  _context["var_samp"] = function(col) {
+  // deprecated REMOVE in v.11
+  _context["var_pop"] = _context["varPop"]
+
+  _context["varSamp"] = function(col) {
     _context["_result"]["agg"] = true
     if (_context._target_database === 'clickhouse') {
       return `varSamp(${col})`
@@ -739,7 +742,10 @@ function init_koob_context(_vars, default_ds, default_cube) {
     }
   }
 
-  _context["stddev_samp"] = function(col) {
+  // deprecated REMOVE in v.11
+  _context["var_samp"] = _context["varSamp"]
+
+  _context["stddevSamp"] = function(col) {
     _context["_result"]["agg"] = true
     if (_context._target_database === 'clickhouse') {
       return `stddevSamp(${col})`
@@ -756,8 +762,11 @@ function init_koob_context(_vars, default_ds, default_cube) {
       throw Error(`var_samp() is not implemented for ${_context._target_database} yet`)
     }
   }
+
+  // deprecated REMOVE in v.11
+  _context["stddev_samp"] = _context["stddevSamp"];
  
-  _context["stddev_pop"] = function(col) {
+  _context["stddevPop"] = function(col) {
     _context["_result"]["agg"] = true
     if (_context._target_database === 'clickhouse') {
       return `stddevPop(${col})`
@@ -774,6 +783,10 @@ function init_koob_context(_vars, default_ds, default_cube) {
       throw Error(`var_samp() is not implemented for ${_context._target_database} yet`)
     }
   }
+
+  // deprecated REMOVE in v.11
+  _context["stddev_pop"] = _context["stddevPop"]
+
 
   _context["_sequence"] = 0; // magic sequence number for uniq names generation
   

@@ -114,14 +114,14 @@ GROUP BY pay_code, pay_name`
 
 
         assert.equal( lpe.generate_koob_sql(
-         {"columns":["sum(v_main)","sum(v_rel_pp)","sum(v_rel_fzp)","id","sum(v_rel_pp_i)","sum(v_main_i)","tlg","hcode_name"],
+         {"columns":["varPop(v_main)","varSamp(v_rel_pp)","stddevSamp(v_rel_fzp)","id","stddevPop(v_rel_pp_i)","sum(v_main_i)","tlg","hcode_name"],
          "distinct":[],
          "filters":[
             {"dt":["=","2020-03"],"area_name":["=","Не задано"],"type_oe_bi":["=","Дороги"],"region_name":["=","Не задано"],"group_pay_id":["!=","Не задано"],"group_pay_name":["=","Поощрения"],"municipal_name":["=","Не задано"],"prod_group_name":["=","Не задано"],"profession_name":["=","Не задано"]},
             {"dt":["=","2020-03"],"hcode_name":["=","CCЧ"],"type_oe_bi":["=","Дороги"]}],
             "with":"ch.fot_out"},
                  {"key":null}),
-            `SELECT DISTINCT sum(v_main) as v_main, sum(v_rel_pp) as v_rel_pp, sum(v_rel_fzp) as v_rel_fzp, id, sum(v_rel_pp_i), sum(v_main_i), tlg as tlg, hcode_name as hcode_name
+            `SELECT DISTINCT var_pop(v_main) as v_main, var_samp(v_rel_pp) as v_rel_pp, stddev_samp(v_rel_fzp) as v_rel_fzp, id, stddev_pop(v_rel_pp_i), sum(v_main_i), tlg as tlg, hcode_name as hcode_name
 FROM fot_out AS fot_out
 WHERE (((NOW() - INERVAL '1 DAY') = '2020-03') AND (area_name = 'Не задано') AND (type_oe_bi = 'Дороги') AND (region_name = 'Не задано') AND (group_pay_id != 'Не задано') AND (group_pay_name = 'Поощрения') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL))
    OR (((NOW() - INERVAL '1 DAY') = '2020-03') AND (hcode_name = 'CCЧ') AND (type_oe_bi = 'Дороги') AND (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL))

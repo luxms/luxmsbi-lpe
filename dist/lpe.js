@@ -7715,7 +7715,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     }
   };
 
-  _context["var_pop"] = function (col) {
+  _context["varPop"] = function (col) {
     _context["_result"]["agg"] = true;
 
     if (_context._target_database === 'clickhouse') {
@@ -7727,9 +7727,12 @@ function init_koob_context(_vars, default_ds, default_cube) {
     } else {
       throw Error("var_pop() is not implemented for ".concat(_context._target_database, " yet"));
     }
-  };
+  }; // deprecated REMOVE in v.11
 
-  _context["var_samp"] = function (col) {
+
+  _context["var_pop"] = _context["varPop"];
+
+  _context["varSamp"] = function (col) {
     _context["_result"]["agg"] = true;
 
     if (_context._target_database === 'clickhouse') {
@@ -7741,9 +7744,12 @@ function init_koob_context(_vars, default_ds, default_cube) {
     } else {
       throw Error("var_samp() is not implemented for ".concat(_context._target_database, " yet"));
     }
-  };
+  }; // deprecated REMOVE in v.11
 
-  _context["stddev_samp"] = function (col) {
+
+  _context["var_samp"] = _context["varSamp"];
+
+  _context["stddevSamp"] = function (col) {
     _context["_result"]["agg"] = true;
 
     if (_context._target_database === 'clickhouse') {
@@ -7755,9 +7761,12 @@ function init_koob_context(_vars, default_ds, default_cube) {
     } else {
       throw Error("var_samp() is not implemented for ".concat(_context._target_database, " yet"));
     }
-  };
+  }; // deprecated REMOVE in v.11
 
-  _context["stddev_pop"] = function (col) {
+
+  _context["stddev_samp"] = _context["stddevSamp"];
+
+  _context["stddevPop"] = function (col) {
     _context["_result"]["agg"] = true;
 
     if (_context._target_database === 'clickhouse') {
@@ -7769,8 +7778,10 @@ function init_koob_context(_vars, default_ds, default_cube) {
     } else {
       throw Error("var_samp() is not implemented for ".concat(_context._target_database, " yet"));
     }
-  };
+  }; // deprecated REMOVE in v.11
 
+
+  _context["stddev_pop"] = _context["stddevPop"];
   _context["_sequence"] = 0; // magic sequence number for uniq names generation
 
   _context["column"] = function (col) {
