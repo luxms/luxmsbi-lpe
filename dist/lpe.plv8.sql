@@ -6814,10 +6814,6 @@ function generate_report_sql(_cfg, _vars) {
 
 
 
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
 function _toArray(arr) { return _arrayWithHoles(arr) || _iterableToArray(arr) || _nonIterableRest(); }
 
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
@@ -6831,6 +6827,10 @@ function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread n
 function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
 
 function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 /**
     Copyright (c) 2019 Luxms Inc.
@@ -7349,7 +7349,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
   var _ctx = []; // это контекст где будет сначала список переменных, включая _columns, и функции
 
   if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(_vars)) {
-    _ctx = [_vars];
+    _ctx = [_objectSpread({}, _vars)];
   }
 
   var _context = _ctx[0]; // пытается определить тип аргумента, если это похоже на столбец, то ищет про него инфу в кэше и определяет тип,
@@ -8317,7 +8317,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
     return "lpe_subtotal_".concat(seq, "()"); // ${ast[0]}, ${ast[1]}
   });
-  _context['='] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* makeSF */])(function (ast, ctx) {
+  _context['='] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* makeSF */])(function (ast, ctx, rs) {
     // понимаем a = [null] как a is null
     // a = [] просто пропускаем, А кстати почему собственно???
     // a = [null, 1,2] как a in (1,2) or a is null
@@ -8331,7 +8331,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     Видимо, надо везде переходить на _ctx !!!!
     */
 
-    var c = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _ctx);
+    var c = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, ctx, rs);
 
     var resolveValue = function resolveValue(v) {
       if (shouldQuote(col, v)) v = evalQuoteLiteral(v, _context);
@@ -8345,11 +8345,11 @@ function init_koob_context(_vars, default_ds, default_cube) {
     } else if (ast.length === 2) {
       if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(ast[1])) {
         if (ast[1][0] === "[") {
-          var a = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(ast[1], _context);
+          var a = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(ast[1], ctx, rs);
           ast = [c].concat(a);
         } else {
           // assuming if (ast[1][0] === "'")
-          var v = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(ast[1], _context);
+          var v = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(ast[1], ctx, rs);
           return v === null ? "".concat(c, " IS NULL") : "".concat(c, " = ").concat(v);
         }
       } else {
@@ -8370,26 +8370,35 @@ function init_koob_context(_vars, default_ds, default_cube) {
     if (hasNull) ret = "".concat(ret, " OR ").concat(c, " IS NULL");
     return ret;
   });
-  _context['!='] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* makeSF */])(function (ast, ctx) {
+
+  _context["["] = function () {
+    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+
+    return args;
+  };
+
+  _context['!='] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* makeSF */])(function (ast, ctx, rs) {
     // понимаем a != [null] как a is not null
     // a != [] просто пропускаем, А кстати почему собственно???
     // a != [null, 1,2] как a not in (1,2) and a is not null
     // ["!=",["column","vNetwork.cluster"],SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]
     // var a = Array.prototype.slice.call(arguments)
-    //console.log(JSON.stringify(ast))
+    // console.log("!=!=!=" , JSON.stringify(ast))
     var col = ast[0];
-    var c = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context);
+    var c = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, ctx, rs);
 
     var resolveValue = function resolveValue(v) {
       if (shouldQuote(col, v)) v = quoteLiteral(v);
-      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(v, _context);
+      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(v, ctx, rs);
     };
 
     if (ast.length === 1) {
       return '1=1';
     } else if (ast.length === 2) {
       if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(ast[1]) && ast[1][0] === "[") {
-        var a = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(ast[1], _context);
+        var a = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(ast[1], ctx, rs);
         ast = [c].concat(a);
       } else {
         var v = resolveValue(ast[1]);
@@ -8407,7 +8416,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     var ret = "".concat(c, " NOT IN (").concat(resolvedV.join(', '), ")");
     if (hasNull) ret = "".concat(ret, " AND ").concat(c, " IS NOT NULL");
     return ret;
-  }); //console.log('CONTEXT!', _context['()'])
+  }); //console.log('CONTEXT RETURN!', _ctx[0]['()']);
 
   return _ctx;
 }
@@ -9035,7 +9044,7 @@ _vars["_cube"] содержит уже выбранную запись из ба
 
 
 function generate_koob_sql(_cfg, _vars) {
-  var _context = _vars;
+  var _context = _objectSpread({}, _vars);
 
   if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(_cfg["coefficients"])) {
     _context["_coefficients"] = _cfg["coefficients"];
@@ -9105,7 +9114,8 @@ function generate_koob_sql(_cfg, _vars) {
     throw new Error("Empty columns in the request. Can not create SQL.");
   }
 
-  _context = init_koob_context(_context, _cfg["ds"], _cfg["cube"]); //console.log("NORMALIZED CONFIG FILTERS: ", JSON.stringify(_cfg))
+  _context = init_koob_context(_context, _cfg["ds"], _cfg["cube"]); //console.log("PRE %%%%: " + _context[0]['()'])
+  //console.log("NORMALIZED CONFIG FILTERS: ", JSON.stringify(_cfg))
   //console.log("NORMALIZED CONFIG COLUMNS: ", JSON.stringify(_cfg["columns"]))
 
   /*
@@ -9136,9 +9146,12 @@ function generate_koob_sql(_cfg, _vars) {
     // eval should fill in _context[0]["_result"] object
     // hackers way to get results!!!!
     _context[0]["_result"] = {
-      "columns": []
+      "columns": [] //console.log("PRE EVAL: " + JSON.stringify(el))
+      //console.log("PRE  CTX: " + _context[0]['()'])
+
     };
-    var r = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(el, _context);
+    var r = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(el, _context); //console.log("POST EVAL: " + JSON.stringify(el))
+
     var col = _context[0]["_result"];
 
     if (col["only1"] === true) {
@@ -10062,7 +10075,8 @@ function generate_koob_sql(_cfg, _vars) {
       } else {
         final_sql = "".concat(select, "\nFROM ").concat(from).concat(where).concat(group_by).concat(order_by).concat(limit_offset).concat(ending);
       }
-    }
+    } //console.log("FINAL: " + final_sql)
+
 
     if (_cfg["return"] === "count") {
       if (_context[0]["_target_database"] === 'clickhouse') {

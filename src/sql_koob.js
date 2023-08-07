@@ -493,11 +493,11 @@ function init_udf_args_context(_cube, _vars, _target_database, _cfg) {
  */
 
 function init_koob_context(_vars, default_ds, default_cube) {
-  var _ctx = [] // это контекст где будет сначала список переменных, включая _columns, и функции
+  let _ctx = [] // это контекст где будет сначала список переменных, включая _columns, и функции
   if (isHash(_vars)){
-    _ctx = [_vars]
+    _ctx = [{..._vars}]
   }
-  var _context = _ctx[0];
+  let _context = _ctx[0];
 
   // пытается определить тип аргумента, если это похоже на столбец, то ищет про него инфу в кэше и определяет тип,
   // а по типу можно уже думать, квотировать значения или нет.
@@ -1218,6 +1218,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     return `CASE WHEN ${cond} THEN ${truthy} ELSE ${falsy} END`
   }
 
+
   _context['tuple'] = function(first, second) {
     if (_context._target_database === 'clickhouse'){
       return `tuple(${first},${second})`
@@ -1231,7 +1232,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     return a
   }
 
-  var partial_filter = function(a) {
+    var partial_filter = function(a) {
     if (isArray(a[0]) && a[0][0] === "ignore(me)") {
       var ignoreme = a.shift()
       a = a.map(el => {if (isArray(el)) {
@@ -1449,7 +1450,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     return `lpe_subtotal_${seq}()` // ${ast[0]}, ${ast[1]}
   });
 
-  _context['='] = makeSF( (ast,ctx) => {
+  _context['='] = makeSF( (ast,ctx,rs) => {
     // понимаем a = [null] как a is null
     // a = [] просто пропускаем, А кстати почему собственно???
     // a = [null, 1,2] как a in (1,2) or a is null
@@ -1464,7 +1465,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     не резолвились, так как функции sum,avg,min и т.д. сделаны в общем виде!!!
     Видимо, надо везде переходить на _ctx !!!!
     */
-    var c = eval_lisp(col, _ctx)
+    var c = eval_lisp(col, ctx, rs)
     var resolveValue = function(v) {
 
       if (shouldQuote(col, v)) v = evalQuoteLiteral(v, _context)
@@ -1478,11 +1479,11 @@ function init_koob_context(_vars, default_ds, default_cube) {
     } else if (ast.length === 2) {
       if (isArray(ast[1])) {
         if (ast[1][0] === "["){
-          var a = eval_lisp(ast[1], _context)
+          var a = eval_lisp(ast[1], ctx, rs)
           ast = [c].concat(a)
         } else {
           // assuming if (ast[1][0] === "'")
-          let v = eval_lisp(ast[1], _context)
+          let v = eval_lisp(ast[1], ctx, rs)
           return v === null 
           ? `${c} IS NULL` 
           : `${c} = ${v}`
@@ -1503,21 +1504,22 @@ function init_koob_context(_vars, default_ds, default_cube) {
       return ret
   })
 
+  _context["["] = (...args) => args;
 
-  _context['!='] = makeSF( (ast,ctx) => {
+  _context['!='] = makeSF( (ast,ctx,rs) => {
     // понимаем a != [null] как a is not null
     // a != [] просто пропускаем, А кстати почему собственно???
     // a != [null, 1,2] как a not in (1,2) and a is not null
 
     // ["!=",["column","vNetwork.cluster"],SPB99-DMZ02","SPB99-ESXCL02","SPB99-ESXCL04","SPB99-ESXCLMAIL"]
     // var a = Array.prototype.slice.call(arguments)
-    //console.log(JSON.stringify(ast))
+    // console.log("!=!=!=" , JSON.stringify(ast))
     var col = ast[0]
-    var c = eval_lisp(col,_context)
+    var c = eval_lisp(col,ctx,rs)
     var resolveValue = function(v) {
 
       if (shouldQuote(col, v)) v = quoteLiteral(v)
-      return eval_lisp(v,_context)
+      return eval_lisp(v,ctx,rs)
     }
 
     if (ast.length === 1) {
@@ -1525,7 +1527,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     } else if (ast.length === 2) {
       
       if (isArray(ast[1]) && ast[1][0] === "[") {
-        var a = eval_lisp(ast[1], _context)
+        var a = eval_lisp(ast[1], ctx, rs)
         ast = [c].concat(a)
       } else {
         var v = resolveValue(ast[1])
@@ -1545,7 +1547,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
   })
 
-  //console.log('CONTEXT!', _context['()'])
+  //console.log('CONTEXT RETURN!', _ctx[0]['()']);
   return _ctx;
 } 
 
@@ -1651,7 +1653,7 @@ function extend_context_for_order_by(_context, _cfg) {
     ... _context
   ]
 
-  var _ctx = {}
+  let _ctx = {}
   _ctx["+"] = makeSF( (ast) => {
     return eval_lisp(ast[0], aliasContext)
   })
@@ -2094,7 +2096,7 @@ _vars["_cube"] содержит уже выбранную запись из ба
 */
 
 export function generate_koob_sql(_cfg, _vars) {
-  var _context = _vars;
+  let _context = {... _vars};
   if (isHash(_cfg["coefficients"])){
     _context["_coefficients"] = _cfg["coefficients"]
   }
@@ -2162,7 +2164,7 @@ export function generate_koob_sql(_cfg, _vars) {
   }
 
   _context = init_koob_context(_context, _cfg["ds"], _cfg["cube"])
-  
+  //console.log("PRE %%%%: " + _context[0]['()'])
   //console.log("NORMALIZED CONFIG FILTERS: ", JSON.stringify(_cfg))
   //console.log("NORMALIZED CONFIG COLUMNS: ", JSON.stringify(_cfg["columns"]))
   /*
@@ -2194,7 +2196,10 @@ export function generate_koob_sql(_cfg, _vars) {
                                       // eval should fill in _context[0]["_result"] object
                                       // hackers way to get results!!!!
                                       _context[0]["_result"] = {"columns":[]}
+                                      //console.log("PRE EVAL: " + JSON.stringify(el))
+                                      //console.log("PRE  CTX: " + _context[0]['()'])
                                       var r = eval_lisp(el, _context)
+                                      //console.log("POST EVAL: " + JSON.stringify(el))
                                       var col = _context[0]["_result"]
                                       if (col["only1"] === true){
                                         global_only1 = true;
@@ -3029,7 +3034,7 @@ export function generate_koob_sql(_cfg, _vars) {
       }
     }
 
-
+//console.log("FINAL: " + final_sql)
 
     if (_cfg["return"] === "count") {
       if (_context[0]["_target_database"] === 'clickhouse'){
