@@ -9111,8 +9111,14 @@ function genereate_subtotals_group_by(cfg, group_by_list) {
         }
       }
     }
-  }; // {"options": ["CrossSubtotals"] }
+  }; // check existance of range() column, we should include it as first column in every grouping set!
 
+
+  var range_cols = group_by_list.filter(function (el) {
+    return el.is_range_column === true;
+  });
+  var range_col = range_cols[0];
+  var accum_val = range_col ? [range_col.expr] : []; // {"options": ["CrossSubtotals"] }
 
   var cross_subtotals_combinations = function cross_subtotals_combinations() {
     return subtotals.map(function (col) {
@@ -9127,12 +9133,6 @@ function genereate_subtotals_group_by(cfg, group_by_list) {
   };
 
   var hier_subtotals_combinations = function hier_subtotals_combinations() {
-    // check existance of range() column, we should include it as first column in every grouping set!
-    var range_cols = group_by_list.filter(function (el) {
-      return el.is_range_column === true;
-    });
-    var range_col = range_cols[0];
-    var accum_val = range_col ? [range_col.expr] : [];
     var res = subtotals.reduce(function (accum, col) {
       check_column_existence(col); //console.log(`accum: ${JSON.stringify(accum)} + col: ${col} + first: ${JSON.stringify(accum.slice(-1).pop())}`)
 
@@ -9153,7 +9153,14 @@ function genereate_subtotals_group_by(cfg, group_by_list) {
 
   var conf = cfg["config"] || {};
   var subtotals_combinations = conf["subtotalsMode"] == "AllButOneInterleaved" ? cross_subtotals_combinations : hier_subtotals_combinations;
-  ret.group_by = "\nGROUP BY GROUPING SETS ((".concat(group_by_sql, '),', "\n                        (".concat(subtotals_combinations().join("),\n                        ("), ')'), "\n                       )"); // делать дедупликацию пока что сложно, поэтому временно сделаем distinct
+  var uberTotal = ''; // #756 не надо добавлять () если есть range()
+
+  if (conf["subtotalsTotal"] && !range_col) {
+    // нужно добавить (), но это должно работать вместе с range() и не ломать ответ
+    uberTotal = ",\n                        ()";
+  }
+
+  ret.group_by = "\nGROUP BY GROUPING SETS ((".concat(group_by_sql, '),', "\n                        (".concat(subtotals_combinations().join("),\n                        ("), ')'), uberTotal, "\n                       )"); // делать дедупликацию пока что сложно, поэтому временно сделаем distinct
   // FIXME
 
   if (conf["subtotalsMode"] != "AllButOneInterleaved") {

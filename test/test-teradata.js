@@ -132,7 +132,7 @@ QUALIFY koob__row__num__ BETWEEN 11 AND 15`
       assert.equal( lpe.generate_koob_sql(
          {"columns":["dt", "type_oe_bi", "region_name", "pay_name", "avg(v_rel_fzp)","sum(v_rel_pp_i)"],
          "subtotals": ["dt", "type_oe_bi", "region_name", "pay_name"],
-         "config": {"subtotalsMode":"!AllButOneInterleaved"},
+         "config": {"subtotalsMode":"!AllButOneInterleaved", "subtotalsTotal":true},
          "filters":{"dt":["!=","2020-03","2020-04"],
          "pay_name":["!=","Не задано"]},
          "sort":["group_pay_name","v_main"],
@@ -145,7 +145,8 @@ GROUP BY GROUPING SETS (((NOW() - INERVAL '1 DAY'), type_oe_bi, region_name, pay
                         ((NOW() - INERVAL '1 DAY')),
                         ((NOW() - INERVAL '1 DAY'),type_oe_bi),
                         ((NOW() - INERVAL '1 DAY'),type_oe_bi,region_name),
-                        ((NOW() - INERVAL '1 DAY'),type_oe_bi,region_name,pay_name)
+                        ((NOW() - INERVAL '1 DAY'),type_oe_bi,region_name,pay_name),
+                        ()
                        )
 ORDER BY "group_pay_name", "v_main"`
             );
@@ -159,7 +160,7 @@ ORDER BY "group_pay_name", "v_main"`
          assert.equal( lpe.generate_koob_sql(
             {"columns":["range(2):rng", "dt", "type_oe_bi", "region_name", "pay_name", "avg(v_rel_fzp)","sum(v_rel_pp_i)"],
             "subtotals": ["dt", "type_oe_bi", "region_name", "pay_name"],
-            "config": {"subtotalsMode":"!AllButOneInterleaved"},
+            "config": {"subtotalsMode":"!AllButOneInterleaved", "subtotalsTotal":true},
             "filters":{"dt":["!=","2020-03","2020-04"],
             "pay_name":["!=","Не задано"]},
             "sort":["group_pay_name","v_main"],

@@ -2016,6 +2016,11 @@ function genereate_subtotals_group_by(cfg, group_by_list){
     }
   }
 
+  // check existance of range() column, we should include it as first column in every grouping set!
+  let range_cols = group_by_list.filter(el => el.is_range_column === true)
+  let range_col = range_cols[0]
+  let accum_val = range_col ? [range_col.expr] : []
+
   // {"options": ["CrossSubtotals"] }
   let cross_subtotals_combinations = function() {
     return subtotals.map(col => {
@@ -2026,11 +2031,6 @@ function genereate_subtotals_group_by(cfg, group_by_list){
   }
 
   let hier_subtotals_combinations = function() {
-    // check existance of range() column, we should include it as first column in every grouping set!
-    let range_cols = group_by_list.filter(el => el.is_range_column === true)
-    let range_col = range_cols[0]
-    let accum_val = range_col ? [range_col.expr] : []
-
           let res = subtotals.reduce((accum, col) => {
             check_column_existence(col)
             //console.log(`accum: ${JSON.stringify(accum)} + col: ${col} + first: ${JSON.stringify(accum.slice(-1).pop())}`)
@@ -2050,10 +2050,18 @@ function genereate_subtotals_group_by(cfg, group_by_list){
   let subtotals_combinations = conf["subtotalsMode"] == "AllButOneInterleaved"
                               ? cross_subtotals_combinations
                               : hier_subtotals_combinations;
+  let uberTotal = ''
+
+  // #756 не надо добавлять () если есть range()
+  if (conf["subtotalsTotal"] && !range_col) {
+    // нужно добавить (), но это должно работать вместе с range() и не ломать ответ
+    uberTotal = ",\n                        ()"
+  }
 
   ret.group_by = "\nGROUP BY GROUPING SETS ((".concat(group_by_sql, '),',
          "\n                        (".concat(subtotals_combinations().join(
        "),\n                        ("),')'),
+          uberTotal,
          "\n                       )")
 
   // делать дедупликацию пока что сложно, поэтому временно сделаем distinct
