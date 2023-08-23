@@ -495,7 +495,8 @@ function init_udf_args_context(_cube, _vars, _target_database, _cfg) {
 function init_koob_context(_vars, default_ds, default_cube) {
   let _ctx = [] // это контекст где будет сначала список переменных, включая _columns, и функции
   if (isHash(_vars)){
-    _ctx = [{..._vars}]
+    //_ctx = [{..._vars}]
+    _ctx = [_vars]
   }
   let _context = _ctx[0];
 
@@ -658,6 +659,17 @@ function init_koob_context(_vars, default_ds, default_cube) {
       return key
     }
   ) // end of _ctx.push()
+
+
+  _context["::"] = function(col, type) {
+    if (_context._target_database === 'postgresql' ||
+    _context._target_database === 'clickhouse'
+    ) {
+      return `${col}::${type}`
+    } else {
+      return `CAST(${col} AS ${type})`
+    }
+  }
 
   _context["corr"] = function(c1, c2) {
     _context["_result"]["agg"] = true
@@ -1216,6 +1228,83 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
   _context['if'] = function(cond, truthy, falsy) {
     return `CASE WHEN ${cond} THEN ${truthy} ELSE ${falsy} END`
+  }
+
+  _context['ifs'] = function() {
+    let a = Array.prototype.slice.call(arguments)
+    if (a.length < 2) {
+      throw Error(`ifs() requires some arguments (at least 2)`)
+    }
+    let expr = ''
+    let diff;
+    if (a.length % 2 === 0) {
+      expr = `CASE WHEN ${a[a.length-2]} THEN ${a[a.length-1]} END`
+      diff = 4
+    } else {
+      expr = `${a[a.length-1]}`
+      diff = 3
+    }
+    for (let i = a.length - diff; i >= 0; i = i - 2 ) {
+      // i = cond, i+1 = action
+      expr = `CASE WHEN ${a[i]} THEN ${a[i+1]} ELSE ${expr} END`
+    }
+
+    return expr
+  }
+
+
+  _context['concatWithSeparator'] = function() {
+    let a = Array.prototype.slice.call(arguments)
+    let head = 'concat_ws'
+    if (_context._target_database === 'clickhouse'){
+      head = `concatWithSeparator(`
+    } else if (_context._target_database === 'postgresql') {
+      head = `concat_ws(`
+    } else {
+      throw Error(`No concatWithSeparator() function support for flavor: ${_context._target_database}`)
+    }
+    head = head.concat(a.join(',')).concat(')');
+    return head;
+  }
+
+  _context['substring'] = function(str, offset, len) {
+    if (_context._target_database === 'clickhouse'){
+      return `substringUTF8(${str}, ${offset}, ${len})`
+    } else {
+      return `substring(${str}, ${offset}, ${len})`
+    }
+  }
+
+  _context['initcap'] = function(str) {
+    if (_context._target_database === 'clickhouse'){
+      return `initcapUTF8(${str})`
+    } else {
+      return `initcap(${str})`
+    }
+  }
+
+  _context['length'] = function(str) {
+    if (_context._target_database === 'clickhouse'){
+      return `lengthUTF8(${str})`
+    } else {
+      return `length(${str})`
+    }
+  }
+
+  _context['left'] = function(str, len) {
+    if (_context._target_database === 'clickhouse'){
+      return `leftUTF8(${str}, ${len})`
+    } else {
+      return `left(${str}, ${len})`
+    }
+  }
+
+  _context['right'] = function(str, len) {
+    if (_context._target_database === 'clickhouse'){
+      return `rightUTF8(${str}, ${len})`
+    } else {
+      return `right(${str}, ${len})`
+    }
   }
 
 
@@ -2104,7 +2193,8 @@ _vars["_cube"] содержит уже выбранную запись из ба
 */
 
 export function generate_koob_sql(_cfg, _vars) {
-  let _context = {... _vars};
+  //let _context = {... _vars};
+  let _context = _vars
   if (isHash(_cfg["coefficients"])){
     _context["_coefficients"] = _cfg["coefficients"]
   }

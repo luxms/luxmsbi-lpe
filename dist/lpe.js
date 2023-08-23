@@ -6969,6 +6969,10 @@ function generate_report_sql(_cfg, _vars) {
 
 
 
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 function _toArray(arr) { return _arrayWithHoles(arr) || _iterableToArray(arr) || _nonIterableRest(); }
 
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
@@ -6982,10 +6986,6 @@ function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread n
 function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
 
 function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
-
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 /**
     Copyright (c) 2019 Luxms Inc.
@@ -7504,7 +7504,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
   var _ctx = []; // это контекст где будет сначала список переменных, включая _columns, и функции
 
   if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(_vars)) {
-    _ctx = [_objectSpread({}, _vars)];
+    //_ctx = [{..._vars}]
+    _ctx = [_vars];
   }
 
   var _context = _ctx[0]; // пытается определить тип аргумента, если это похоже на столбец, то ищет про него инфу в кэше и определяет тип,
@@ -7669,6 +7670,14 @@ function init_koob_context(_vars, default_ds, default_cube) {
     return key;
   }); // end of _ctx.push()
 
+
+  _context["::"] = function (col, type) {
+    if (_context._target_database === 'postgresql' || _context._target_database === 'clickhouse') {
+      return "".concat(col, "::").concat(type);
+    } else {
+      return "CAST(".concat(col, " AS ").concat(type, ")");
+    }
+  };
 
   _context["corr"] = function (c1, c2) {
     _context["_result"]["agg"] = true;
@@ -8226,6 +8235,88 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
   _context['if'] = function (cond, truthy, falsy) {
     return "CASE WHEN ".concat(cond, " THEN ").concat(truthy, " ELSE ").concat(falsy, " END");
+  };
+
+  _context['ifs'] = function () {
+    var a = Array.prototype.slice.call(arguments);
+
+    if (a.length < 2) {
+      throw Error("ifs() requires some arguments (at least 2)");
+    }
+
+    var expr = '';
+    var diff;
+
+    if (a.length % 2 === 0) {
+      expr = "CASE WHEN ".concat(a[a.length - 2], " THEN ").concat(a[a.length - 1], " END");
+      diff = 4;
+    } else {
+      expr = "".concat(a[a.length - 1]);
+      diff = 3;
+    }
+
+    for (var i = a.length - diff; i >= 0; i = i - 2) {
+      // i = cond, i+1 = action
+      expr = "CASE WHEN ".concat(a[i], " THEN ").concat(a[i + 1], " ELSE ").concat(expr, " END");
+    }
+
+    return expr;
+  };
+
+  _context['concatWithSeparator'] = function () {
+    var a = Array.prototype.slice.call(arguments);
+    var head = 'concat_ws';
+
+    if (_context._target_database === 'clickhouse') {
+      head = "concatWithSeparator(";
+    } else if (_context._target_database === 'postgresql') {
+      head = "concat_ws(";
+    } else {
+      throw Error("No concatWithSeparator() function support for flavor: ".concat(_context._target_database));
+    }
+
+    head = head.concat(a.join(',')).concat(')');
+    return head;
+  };
+
+  _context['substring'] = function (str, offset, len) {
+    if (_context._target_database === 'clickhouse') {
+      return "substringUTF8(".concat(str, ", ").concat(offset, ", ").concat(len, ")");
+    } else {
+      return "substring(".concat(str, ", ").concat(offset, ", ").concat(len, ")");
+    }
+  };
+
+  _context['initcap'] = function (str) {
+    if (_context._target_database === 'clickhouse') {
+      return "initcapUTF8(".concat(str, ")");
+    } else {
+      return "initcap(".concat(str, ")");
+    }
+  };
+
+  _context['length'] = function (str) {
+    if (_context._target_database === 'clickhouse') {
+      return "lengthUTF8(".concat(str, ")");
+    } else {
+      return "length(".concat(str, ")");
+    }
+  };
+
+  _context['left'] = function (str, len) {
+    if (_context._target_database === 'clickhouse') {
+      return "leftUTF8(".concat(str, ", ").concat(len, ")");
+    } else {
+      return "left(".concat(str, ", ").concat(len, ")");
+    }
+  };
+
+  _context['right'] = function (str, len) {
+    if (_context._target_database === 'clickhouse') {
+      return "rightUTF8(".concat(str, ", ").concat(len, ")");
+    } else {
+      return "right(".concat(str, ", ").concat(len, ")");
+    }
   };
 
   _context['tuple'] = function (first, second) {
@@ -9206,7 +9297,8 @@ _vars["_cube"] содержит уже выбранную запись из ба
 
 
 function generate_koob_sql(_cfg, _vars) {
-  var _context = _objectSpread({}, _vars);
+  //let _context = {... _vars};
+  var _context = _vars;
 
   if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(_cfg["coefficients"])) {
     _context["_coefficients"] = _cfg["coefficients"];

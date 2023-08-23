@@ -599,6 +599,33 @@ ORDER BY "My version"`
          );
       });
 
+      it('Should eval ::', function() {
+         assert.equal( lpe.generate_koob_sql(
+            {"columns":[
+               "sum(Val::float/Val::float)::'double precision':sum_Val",
+               "if(max(group_pay_name::float)::int='Руб./рабочее место',sum(fackt::float)/sum(Val::float),100):v",
+               "fackt",
+               "concatWithSeparator('-', group_pay_name, 'END')", 
+               'concat(hcode_name,1,2,3)',
+               'ifs(Val>0, 100, Val<0, 10, true, -20):cond',
+               'ifs(Val>0, 100, Val<0, 10, -20):cond2',
+               'My version'
+            ],
+   "filters":{"hcode_name": ["between", "2019-01-01", "2020-03-01"],
+   "My version":["=","9.0"]
+
+},
+   "sort":["+My version"],
+   "with":"ch.fot_out"},
+         {"_target_database": "postgresql"}),
+`SELECT sum("Val"::float / "Val"::float)::'double precision' as "sum_Val", CASE WHEN max(group_pay_name::float)::int = 'Руб./рабочее место' THEN sum((round(v_main,2))::float) / sum("Val"::float) ELSE 100 END as v, (round(v_main,2)) as fackt, concat_ws('-',group_pay_name,'END') as group_pay_name, concat(hcode_name,1,2,3) as hcode_name, CASE WHEN "Val" > 0 THEN 100 ELSE CASE WHEN "Val" < 0 THEN 10 ELSE CASE WHEN true THEN -20 END END END as cond, CASE WHEN "Val" > 0 THEN 100 ELSE CASE WHEN "Val" < 0 THEN 10 ELSE -20 END END as cond2, "My version" as "My version"
+FROM fot_out AS fot_out
+WHERE (hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND ("My version" = '9.0') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
+GROUP BY (round(v_main,2)), concat_ws('-',group_pay_name,'END'), concat(hcode_name,1,2,3), CASE WHEN "Val" > 0 THEN 100 ELSE CASE WHEN "Val" < 0 THEN 10 ELSE CASE WHEN true THEN -20 END END END, CASE WHEN "Val" > 0 THEN 100 ELSE CASE WHEN "Val" < 0 THEN 10 ELSE -20 END END, "My version"
+ORDER BY "My version"`
+      );
+   });
+
          it('Should eval func name as const in filters', function() {
             assert.equal( lpe.generate_koob_sql(
                {"columns":[
