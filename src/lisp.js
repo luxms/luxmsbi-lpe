@@ -287,7 +287,7 @@ const STDLIB = {
   'string?': isString,
   'list?': isArray,
   'contains?': (a, b) =>  a.hasOwnProperty(b),
-  'str': (...args) => args.map(x => isString(x) ? x : JSON.stringify(x)).join(''),
+  'str': (...args) => args.map(x => isString(x) ? x : isFunction(x) ? x.lpeName : JSON.stringify(x)).join(''),
   'get': (a, b) => a.hasOwnProperty(b) ? a[b] : undefined,
   'nth': (a, b) => a.hasOwnProperty(b) ? a[b] : undefined,
   'set': (a, b, c) => (a[b] = c, a),
@@ -386,8 +386,14 @@ const STDLIB = {
 
   // system functions & objects
   // 'js': eval,
+
   eval: (a) => EVAL(a, STDLIB),
 };
+
+
+for (const [key, val] of Object.entries(STDLIB)) {
+  if (isFunction(val)) {val.lpeName = key}
+}
 
 
 function macroexpand(ast, ctx, resolveString = true) {

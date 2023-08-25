@@ -276,7 +276,7 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
 
 
 function init_udf_args_context(_cube, _vars, _target_database, _cfg) {
-  // ожидаем на вход хэш с фильтрами прямо из нашего запроса koob...
+  // ожидаем на вход хэш с фильтрами _vars прямо из нашего запроса koob...
   // _context._target_database === 'postgresql'
   /*
    {"dt":["between",2019,2022],"id":["=",23000035],"regions":["=","Moscow","piter","tumen"]}
@@ -415,7 +415,12 @@ function init_udf_args_context(_cube, _vars, _target_database, _cfg) {
         if (index % 2 === 0) {
           let name = source[index];
           let filter_ast = source[index+1];
+          //console.log(`SRC: ${name}` + JSON.stringify(source));
           name = eval_lisp(name, _ctx); // should eval to itself !
+          //console.log(`filtername: ${name} filters AST ` + JSON.stringify(filter_ast))
+          // FIXME!! тут нужен собственный резолвер ИМЁН, который понимает wantCallable
+          // и ищет имена в _vars как запасной вариант!!!
+
           let filters = eval_lisp(filter_ast, ctx, {"resolveString":false}); // включая _vars !
           //console.log('filters evaled to ' + JSON.stringify(filters))
           if (filters !== undefined) {
@@ -451,6 +456,7 @@ function init_udf_args_context(_cube, _vars, _target_database, _cfg) {
   });
 
   _ctx["ql"] = function(arg) {
+    //console.log(`QL: ${arg}`  + JSON.stringify(arg))
     if (isArray(arg)){
       //console.log('QL:'  + JSON.stringify(arg))
       let vallist = eval_filters_expr(arg)
@@ -473,13 +479,19 @@ function init_udf_args_context(_cube, _vars, _target_database, _cfg) {
     return undefined
   }
 
-  return [_ctx,   
+  return [ 
+    _ctx,
     // функция, которая резолвит имена столбцов для случаев, когда имя функции не определено в явном виде в _vars/_context
     // а также пытается зарезолвить коэффициенты
     (key, val, resolveOptions) => {
+      //console.log("RESOLVER : " + key + " " + JSON.stringify(resolveOptions))
+      if (resolveOptions && resolveOptions.wantCallable) {
+        return undefined // try standard context in _ctx
+      }
       let fullname = `${_cube}.${key}`
+      //console.log("RESOLVER2:" + `CUBE: ${_cube} FULLNAME: ${fullname}  _vars: ${JSON.stringify(_vars)}` + _vars[fullname])
       return _vars[fullname]
-    }
+    }    
 ];
 
 }
@@ -1226,11 +1238,13 @@ function init_koob_context(_vars, default_ds, default_cube) {
     return `(${a})`
   }
 
+/*
   _context['if'] = function(cond, truthy, falsy) {
     return `CASE WHEN ${cond} THEN ${truthy} ELSE ${falsy} END`
   }
+*/
 
-  _context['ifs'] = function() {
+  _context['if'] = function() {
     let a = Array.prototype.slice.call(arguments)
     if (a.length < 2) {
       throw Error(`ifs() requires some arguments (at least 2)`)
@@ -1382,10 +1396,13 @@ function init_koob_context(_vars, default_ds, default_cube) {
   _context['true'] = 'true'
   _context['false'] = 'false'
 
+  // FIXME: в каких-то случаях вызывается эта версия ql, а есть ещё одна !!!
+  // _ctx.ql
   _context["ql"] = function(el) {
     // NULL values should not be quoted
     // plv8 version of db_quote_literal returns E'\\d\\d' for '\d\d' which is not supported in ClickHose :-()
     // so we created our own version...
+    // console.log("QL: " + el)
     return el === null ? null : db_quote_literal(el)
   }
 

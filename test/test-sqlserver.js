@@ -250,7 +250,9 @@ GROUP BY group_pay_name, hcode_name) koob__count__src__`
       it('should eval udf_args()', function() {
          globalThis.MOCKcubeColumns =  [
             {"id":"bi.cube.filters","sql_query":"filters","type":"STRING","config":{"possible_aggregations": []}},
-            {"id":"bi.cube.id","sql_query":"id","type":"NUMBER","config":{"possible_aggregations": []}},                                     
+            {"id":"bi.cube.id","sql_query":"id","type":"NUMBER","config":{"possible_aggregations": []}},
+            {"id":"bi.cube.type","sql_query":"type","type":"STRING","config":{"possible_aggregations": []}},                             
+            {"id":"bi.cube.if","sql_query":"if","type":"STRING","config":{"possible_aggregations": []}},                             
             {"id":"bi.cube.org_fullname_nm","sql_query":"org_fullname_nm","type":"STRING","config":{"possible_aggregations": []}},           
             {"id":"bi.cube.org_shortname_nm","sql_query":"org_shortname_nm","type":"STRING","config":{"possible_aggregations": []}},         
             {"id":"bi.cube.contracts_by_year","sql_query":"contracts_by_year","type":"STRING","config":{"possible_aggregations": []}},       
@@ -354,6 +356,7 @@ where \${udf_args(dir, regions.1, id, ql(id), dt, dt)}`,
                "filters":{
                   "dt":["=",2019,2022],
                   "id":["=",23000035],
+                  "type":["=",23000035],
                   "regions":["=","Moscow","piter","tumen"]
                },
                "with":"bi.cube"},
@@ -366,6 +369,26 @@ where 'PLACEHOLDER' = ('$$dir$$', 'Moscow'), 'PLACEHOLDER' = ('$$id$$', '2300003
 where 'PLACEHOLDER' = ('$$dir$$', 'Moscow,piter,tumen'), 'PLACEHOLDER' = ('$$id$$', '23000035'), 'PLACEHOLDER' = ('$$dt$$', '''2019'',''2022''')
 where 'PLACEHOLDER' = ('$$dir$$', Moscow), 'PLACEHOLDER' = ('$$id$$', '23000035'), 'PLACEHOLDER' = ('$$dt$$', '2019,2022')`
                               );
+
+                              globalThis.MOCKCubeSQL = {
+                                 "postgresql-bi.cube":{
+                                    "query": `(SELECT 1 from cube1
+where \${udf_args('', ql(if(type,type,0)))}`,
+                                    "config": {"is_template": 1,"skip_where": 1}}}
+
+               assert.equal( lpe.generate_koob_sql(
+                  {"columns":[
+                              "regions"
+                           ],
+                  "filters":{
+                     "type":["=",123],
+                     "if":["=",-1]
+                  },
+                  "with":"bi.cube"},
+                        {"_target_database": "postgresql"}),
+               `SELECT regions as regions
+FROM (SELECT 1 from cube1
+where '123'`                     );
                      });
 
 });
