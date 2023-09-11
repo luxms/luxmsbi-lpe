@@ -30,6 +30,7 @@ let postgresql_typemap = {
   'INT': ['INT', 'utils.safe_convert_to_int'],
   'FLOAT': ['FLOAT','utils.safe_convert_to_float8'],
   'DOUBLE': ['FLOAT', 'utils.safe_convert_to_float8'],
+  'STRING' : ['TEXT', 'utils.safe_convert_to_text'],
   'DATE': ['DATE', 'utils.safe_convert_to_date'],
   'DATETIME': ['TIMESTAMP','utils.safe_convert_to_timestamp'],
 }
@@ -83,9 +84,9 @@ function sql_macros_context(_vars) {
 
   _context["to_datetime"] = function(first, second) {
     if (second === undefined){
-      return `to_timestamp(${db_quote_ident(global_current_column)}, ${db_quote_literal(first)})`
+      return `to_timestamp(${db_quote_ident(global_current_column)}, ${db_quote_literal(first)})::TIMESTAMP`
     } else {
-      return `to_timestamp(${first}, ${db_quote_literal(second)})`
+      return `to_timestamp(${first}, ${db_quote_literal(second)})::TIMESTAMP`
     }
   }
 
@@ -125,7 +126,7 @@ function sql_macros_context(_vars) {
     }
 
     if ((dbType[0] === 'DATE' && ast[2][0] === 'to_date') ||
-    (dbType[0] === 'DATETIME' && ast[2][0] === 'to_datetime')
+    (dbType[0] === 'TIMESTAMP' && ast[2][0] === 'to_datetime')
     ) {
       // делаем быстрый хэк 
       let arg = eval_lisp(ast[2][1],ctx)
