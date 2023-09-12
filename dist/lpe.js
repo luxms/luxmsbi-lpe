@@ -10429,6 +10429,7 @@ var postgresql_typemap = {
   'INT': ['INT', 'utils.safe_convert_to_int'],
   'FLOAT': ['FLOAT', 'utils.safe_convert_to_float8'],
   'DOUBLE': ['FLOAT', 'utils.safe_convert_to_float8'],
+  'STRING': ['TEXT', 'utils.safe_convert_to_text'],
   'DATE': ['DATE', 'utils.safe_convert_to_date'],
   'DATETIME': ['TIMESTAMP', 'utils.safe_convert_to_timestamp']
 };
@@ -10482,9 +10483,9 @@ function sql_macros_context(_vars) {
 
   _context["to_datetime"] = function (first, second) {
     if (second === undefined) {
-      return "to_timestamp(".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__utils_utils__["b" /* db_quote_ident */])(global_current_column), ", ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__utils_utils__["a" /* db_quote_literal */])(first), ")");
+      return "to_timestamp(".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__utils_utils__["b" /* db_quote_ident */])(global_current_column), ", ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__utils_utils__["a" /* db_quote_literal */])(first), ")::TIMESTAMP");
     } else {
-      return "to_timestamp(".concat(first, ", ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__utils_utils__["a" /* db_quote_literal */])(second), ")");
+      return "to_timestamp(".concat(first, ", ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_2__utils_utils__["a" /* db_quote_literal */])(second), ")::TIMESTAMP");
     }
   };
 
@@ -10523,7 +10524,7 @@ function sql_macros_context(_vars) {
       }
     }
 
-    if (dbType[0] === 'DATE' && ast[2][0] === 'to_date' || dbType[0] === 'DATETIME' && ast[2][0] === 'to_datetime') {
+    if (dbType[0] === 'DATE' && ast[2][0] === 'to_date' || dbType[0] === 'TIMESTAMP' && ast[2][0] === 'to_datetime') {
       // делаем быстрый хэк 
       var arg = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_3__lisp__["a" /* eval_lisp */])(ast[2][1], ctx);
 
