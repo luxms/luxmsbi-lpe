@@ -7183,6 +7183,16 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
       ret["filters"][expand_column(key)] = _cfg["filters"][key];
     });
     ret["filters"][""] = _cfg["filters"][""];
+  } // для having заменяем ключи на полные имена
+
+
+  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(_cfg["having"])) {
+    Object.keys(_cfg["having"]).filter(function (k) {
+      return k !== "";
+    }).map(function (key) {
+      ret["having"][expand_column(key)] = _cfg["having"][key];
+    });
+    ret["having"][""] = _cfg["having"][""];
   } // для фильтров заменяем ключи на полные имена, но у нас может быть массив [{},{}]
 
 
@@ -7904,7 +7914,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
         return "(".concat(c.sql_query, ")");
       }
-    } //console.log("COL FAIL", col)
+    } // console.log("COL FAIL", col)
     // возможно кто-то вызовет нас с коротким именем - нужно знать дефолт куб!!!
     //if (_context["_columns"][default_ds][default_cube][key]) return `${default_cube}.${key}`;
     // на самом деле нас ещё вызывают из фильтров, и там могут быть алиасы на столбцы не в кубе,
@@ -8591,7 +8601,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
       if (!__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(_context["_result"]["lpe_subtotals"])) {
         _context["_result"]["lpe_subtotals"] = {};
       } //console.log("AST: ", ast)
-      // FIXME: pleaqse check that we have agg func in the AST, overwise we will get SQL errors from the DB
+      // FIXME: please check that we have agg func in the AST, overwise we will get SQL errors from the DB
       //AST:  [ [ 'sum', 'v_rel_pp' ] ]
       //AST:  [ [ '+', [ 'avg', 'v_rel_pp' ], 99 ] ]
 
@@ -9046,12 +9056,14 @@ function get_all_member_filters(_cfg, columns, _filters) {
 /* возвращает все или некоторые фильтры в виде массива
 если указаны required_columns и negate == falsy, то возвращает фильтры, соответсвующие required_columns
 если указаны required_columns и negate == trufy, то возвращает все, кроме указанных в required_columns фильтров
-Это спец. функционал для апробации
+
+Sep 2023: так как это для части SQL WHERE, то мы никогда не возвращаем столбцы, у которых стоит признак agg
 */
 
 
 function get_filters_array(context, filters_array, cube, required_columns, negate) {
   //console.log("get_filters_array " + JSON.stringify(filters_array))
+  // [{"ch.fot_out.hcode_name":[">","2019-01-01"],"ch.fot_out.pay_title":["=","2019-01-01","2020-03-01"],"ch.fot_out.group_pay_name":["=","Не задано"],"ch.fot_out.pay_code":["=","Не задано"],"ch.fot_out.pay_name":["=","Не задано"],"ch.fot_out.sex_code":["=",null]}]
   //console.log(`get_filters_array ${negate} required_columns: ` + JSON.stringify(required_columns))
   //console.log("======")
   var comparator = function comparator(k) {
@@ -9678,17 +9690,60 @@ function generate_koob_sql(_cfg, _vars) {
       return col;
     };
   }
+  /* У нас к этому моменту должны быть заполнены в _cfg["having"] и _cfg["filters"]
+  при этом в массиве filters могут быть в том числе и столбцы, отмеченные как agg, а их нельзя пихать в where!
+  поэтому, мы должны качественно отработать массивы:
+  
+  - _cfg[filters] для where (пропуская agg)
+  - _cfg[filters] (включая agg) и _cfg[havig] для having
+  
+  */
+
 
   var where = '';
   var part_where = '1=1';
+  var havingSQL = '';
+  var part_having = '1=1';
   var filters_array = _cfg["filters"];
 
   if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(filters_array)) {
-    filters_array = [filters_array];
-  } //_context[0]["column"] - это функция для резолва столбца в его текстовое представление
+    var cols = _context[0]["_columns"];
+    Object.keys(filters_array).map(function (col) {
+      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(cols[col])) {
+        if (cols[col]["type"] === 'AGGFN') {
+          // Move col to the having hashmap ???
+          if (_cfg["having"][col]) {
+            Error("\"having\" hashmap contains same column as derived column from AGGFN dimension: ".concat(col));
+          }
+
+          _cfg["having"][col] = filters_array[col];
+          delete filters_array[col]; // console.log("AGGFN:" + JSON.stringify(_cfg["having"]))
+        }
+      }
+    });
+    filters_array = [filters_array]; // делаем общий код на все варианты входных форматов {}/[]
+  }
+  /* здесь надо пройти по массиву filters_array, и вычислить AGGFN столбцы, и перенести их в having
+  До того, как мы начнём генерить условия WHERE
+  
+  Пока что делаем только для простого случая, когда filters_array = hash, и нет никаких сложных
+  склеек OR
+  
+  */
+  //_context[0]["column"] - это функция для резолва столбца в его текстовое представление
 
 
-  filters_array = get_filters_array(_context, filters_array, ''); // access filters
+  filters_array = get_filters_array(_context, filters_array, ''); // это теперь массив из уже готового SQL WHERE!
+
+  havingSQL = get_filters_array(_context, [_cfg["having"]], ''); // ["((NOW() - INERVAL '1 DAY') > '2020-01-01') AND ((max(sum(v_main))) > 100)"]
+  // console.log("AGGFN:" + JSON.stringify(havingSQL))
+
+  if (havingSQL.length === 1 && _cfg["_group_by"].length > 0) {
+    havingSQL = "\nHAVING ".concat(havingSQL[0]);
+  } else {
+    havingSQL = '';
+  } // access filters
+
 
   var filters = _context[0]["_access_filters"];
   var ast = []; //console.log("WHERE access filters: ", JSON.stringify(filters))
@@ -10357,9 +10412,9 @@ function generate_koob_sql(_cfg, _vars) {
 
       if (_context[0]["_target_database"] === 'teradata') {
         // FIXME: В терадате используется WINDOW  OVER (ORDER BY) для наших типов запросов, так что должно быть норм. 
-        final_sql = "".concat(top_level_select, " FROM (").concat(select, "\nFROM ").concat(from).concat(where).concat(group_by, ") koob__top__level__select__").concat(top_level_where).concat(order_by).concat(limit_offset).concat(ending);
+        final_sql = "".concat(top_level_select, " FROM (").concat(select, "\nFROM ").concat(from).concat(where).concat(group_by).concat(havingSQL, ") koob__top__level__select__").concat(top_level_where).concat(order_by).concat(limit_offset).concat(ending);
       } else {
-        final_sql = "".concat(top_level_select, " FROM (").concat(select, "\nFROM ").concat(from).concat(where).concat(group_by).concat(order_by, ") koob__top__level__select__").concat(top_level_where).concat(limit_offset).concat(ending);
+        final_sql = "".concat(top_level_select, " FROM (").concat(select, "\nFROM ").concat(from).concat(where).concat(group_by).concat(havingSQL).concat(order_by, ") koob__top__level__select__").concat(top_level_where).concat(limit_offset).concat(ending);
       }
     } else {
       if (global_only1 === true) {
@@ -10370,9 +10425,9 @@ function generate_koob_sql(_cfg, _vars) {
 
       if (_context[0]["_target_database"] === 'oracle' && global_generate_3_level_sql === true) {
         // В оракле приходится 3-х этажный селект делать
-        final_sql = "SELECT * FROM (SELECT koob__inner__select__.*, ROWNUM AS \"koob__row__num__\" FROM (".concat(select, "\nFROM ").concat(from).concat(where).concat(group_by).concat(order_by, ") koob__inner__select__) koob__top__level__select__").concat(top_level_where).concat(ending);
+        final_sql = "SELECT * FROM (SELECT koob__inner__select__.*, ROWNUM AS \"koob__row__num__\" FROM (".concat(select, "\nFROM ").concat(from).concat(where).concat(group_by).concat(havingSQL).concat(order_by, ") koob__inner__select__) koob__top__level__select__").concat(top_level_where).concat(ending);
       } else {
-        final_sql = "".concat(select, "\nFROM ").concat(from).concat(where).concat(group_by).concat(order_by).concat(limit_offset).concat(ending);
+        final_sql = "".concat(select, "\nFROM ").concat(from).concat(where).concat(group_by).concat(havingSQL).concat(order_by).concat(limit_offset).concat(ending);
       }
     } //console.log("FINAL: " + final_sql)
 

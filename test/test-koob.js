@@ -135,7 +135,9 @@ GROUP BY id, tlg, hcode_name`
    assert.equal( lpe.generate_koob_sql(
       {"columns":["sum(v_main):v_main","sum(v_rel_pp)","sum(v_rel_fzp)","sum(v_rel_pp_i)","group_pay_name", 'v_agg'],
       "distinct":[],
+      "having":{"dt":[">","2020-01-01"]},
       "filters":{"dt":["BetWEEn","2020-12-07","2021-01-13"],
+      "v_agg": [">", 100],
       "pay_name":["!=","Не задано"],
       "area_name":["=","Не задано"],
       "hcode_name":["=","ФЗП"],
@@ -153,6 +155,7 @@ GROUP BY id, tlg, hcode_name`
 FROM fot_out AS fot_out
 WHERE ((NOW() - INERVAL '1 DAY') BETWEEN '2020-12-07' AND '2021-01-13') AND (pay_name != 'Не задано') AND (area_name = 'Не задано') AND (hcode_name = 'ФЗП') AND (type_oe_bi = 'РЖД') AND (region_name = 'Не задано') AND (category_name = 'Не задано') AND (group_pay_name != 'Не задано') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (pay_code != 'Не задано') AND (sex_code IS NULL)
 GROUP BY group_pay_name
+HAVING ((NOW() - INERVAL '1 DAY') > '2020-01-01') AND ((max(sum(v_main))) > 100)
 ORDER BY group_pay_name, v_main, v_agg`
          );
   });
