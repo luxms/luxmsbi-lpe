@@ -232,7 +232,7 @@ GROUP BY v_rel_pp_i / (100 * (v_main + 1))`
                      "offset": 10,
                      "with":"ch.fot_out"},
                            {"_target_database": "clickhouse"}),
-`SELECT concat(toString(v_rel_pp),'*',v_rel_pp,hcode_name) as v_rel_pp, toString(group_pay_name), hcode_name as hcode_name
+`SELECT concat(toString(v_rel_pp),'*',v_rel_pp,hcode_name) as v_rel_pp, toString(group_pay_name) as group_pay_name, hcode_name as hcode_name
 FROM fot_out AS fot_out
 WHERE (hcode_name BETWEEN '2019-01-01' AND '2020-03-01')
 ORDER BY perda, lead DESC LIMIT 100 OFFSET 10`

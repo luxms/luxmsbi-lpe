@@ -559,7 +559,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
   }
 
   /* если нужно, берёт в кавычки, но не делает eval для первого аргумента! */
-  /* Считается, что первый аргумент - строка или числоб но не ast */
+  /* Считается, что первый аргумент - строка или число но не ast */
   var evalQuoteLiteral = function(lit) {
       return lit === null ? null : db_quote_literal(lit)
   }
@@ -1003,7 +1003,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     // we need to use makeSF, as normal LISP context will not evaluate column names ???
     //console.log(JSON.stringify(ast))
     var col = ast[0]
-    var s = eval_lisp(col,_context)
+    var s = eval_lisp(col,_ctx)
     if (_context._target_database === 'clickhouse'){
       return `toString(${s})`
     } else if (_context._target_database === 'postgresql'){
@@ -1198,9 +1198,9 @@ function init_koob_context(_vars, default_ds, default_cube) {
     // [["tuple","lat","lng"],["[",["tuple",0,0],["tuple",0,1],["tuple",1,0],["tuple",1,1]]]
     var point = ast[0]
 
-    var pnt = eval_lisp(point,_context) // point as first argument
+    var pnt = eval_lisp(point,_ctx) // point as first argument
     
-    var poly = eval_lisp(ast[1],_context)
+    var poly = eval_lisp(ast[1],_ctx)
     if (_context._target_database === 'clickhouse'){
       return `pointInPolygon(${pnt}, [${poly}])`
     } else if (_context._target_database === 'postgresql'){
@@ -1433,8 +1433,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
     if (shouldQuote(col,var1)) var1 = quoteLiteral(var1)
     if (shouldQuote(col,var2)) var2 = quoteLiteral(var2)
 
-    var l = eval_lisp(var1,_context);
-    var r = eval_lisp(var2,_context);
+    var l = eval_lisp(var1, _ctx); // if we use _context -> we have now unknown function names passing to SQL level
+    var r = eval_lisp(var2, _ctx);
 
     if (l === null || (isString(l) && (l.length === 0 || l === "''"))) {
       if (r === null || (isString(r) && (r.length === 0 || r === "''"))) {
@@ -1443,15 +1443,15 @@ function init_koob_context(_vars, default_ds, default_cube) {
         return '1=1'
       } else {
         // l is null, r is real
-        return `${eval_lisp(col,_context)} <= ${r}`
+        return `${eval_lisp(col,_ctx)} <= ${r}`
       }
     } else {
       if (r === null || (isString(r) && (r.length === 0 || r === "''"))) {
         // l is real, r is null
-        return `${eval_lisp(col,_context)} >= ${l}`
+        return `${eval_lisp(col,_ctx)} >= ${l}`
       } else {
         // both l and r is real
-        return `${eval_lisp(col,_context)} BETWEEN ${l} AND ${r}`
+        return `${eval_lisp(col,_ctx)} BETWEEN ${l} AND ${r}`
       }
     }
     
@@ -1462,14 +1462,14 @@ function init_koob_context(_vars, default_ds, default_cube) {
     if (shouldQuote(col,tmpl)) tmpl = quoteLiteral(tmpl)
     // в каждой базе свои regexp
     if (_vars["_target_database"] === 'oracle') {
-      return `REGEXP_LIKE( ${eval_lisp(col,_context)} , ${eval_lisp(tmpl,_context)} )` 
+      return `REGEXP_LIKE( ${eval_lisp(col,_ctx)} , ${eval_lisp(tmpl,_ctx)} )` 
     } else if (_vars["_target_database"] === 'mysql') {
-      return `${eval_lisp(col,_context)} REGEXP ${eval_lisp(tmpl,_context)}` 
+      return `${eval_lisp(col,_ctx)} REGEXP ${eval_lisp(tmpl,_ctx)}` 
     } else if (_vars["_target_database"] === 'clickhouse') {
       // case is important !!!
-      return `match( ${eval_lisp(col,_context)} , ${eval_lisp(tmpl,_context)} )` 
+      return `match( ${eval_lisp(col,_ctx)} , ${eval_lisp(tmpl,_ctx)} )` 
     } else {
-      return `${eval_lisp(col,_context)} ~ ${eval_lisp(tmpl,_context)}`
+      return `${eval_lisp(col,_ctx)} ~ ${eval_lisp(tmpl,_ctx)}`
     }
   }
   _context['~'].ast = [[],{},[],1]; // mark as macro
@@ -1479,16 +1479,16 @@ function init_koob_context(_vars, default_ds, default_cube) {
     if (shouldQuote(col,tmpl)) tmpl = quoteLiteral(tmpl)
     // в каждой базе свои regexp
     if (_vars["_target_database"] === 'oracle') {
-      return `REGEXP_LIKE( ${eval_lisp(col,_context)} , ${eval_lisp(tmpl,_context)}, 'i')` 
+      return `REGEXP_LIKE( ${eval_lisp(col,_ctx)} , ${eval_lisp(tmpl,_ctx)}, 'i')` 
     } else if (_vars["_target_database"] === 'mysql') {
-      return `REGEXP_LIKE( ${eval_lisp(col,_context)}, ${eval_lisp(tmpl,_context)}, 'i')` 
+      return `REGEXP_LIKE( ${eval_lisp(col,_ctx)}, ${eval_lisp(tmpl,_ctx)}, 'i')` 
     } else if (_vars["_target_database"] === 'clickhouse') {
       // case is not important !!!
-      var pattern = eval_lisp(tmpl,_context); // should be in quotes! 'ddff'
+      var pattern = eval_lisp(tmpl,_ctx); // should be in quotes! 'ddff'
       pattern = `(?i:${pattern.slice(1,-1)})` 
-      return `match( ${eval_lisp(col,_context)} , '${pattern}' )` 
+      return `match( ${eval_lisp(col,_ctx)} , '${pattern}' )` 
     } else {
-      return `${eval_lisp(col,_context)} ~* ${eval_lisp(tmpl,_context)}`
+      return `${eval_lisp(col,_ctx)} ~* ${eval_lisp(tmpl,_ctx)}`
     }
   }
   _context['~*'].ast = [[],{},[],1]; // mark as macro
@@ -1505,7 +1505,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
   _context['like'] = function(col, tmpl) {
     if (shouldQuote(col,tmpl)) tmpl = quoteLiteral(tmpl)
-    return `${eval_lisp(col,_context)} LIKE ${eval_lisp(tmpl,_context)}` 
+    return `${eval_lisp(col,_ctx)} LIKE ${eval_lisp(tmpl,_ctx)}` 
   }
   _context['like'].ast = [[],{},[],1]; // mark as macro
 
@@ -1513,18 +1513,18 @@ function init_koob_context(_vars, default_ds, default_cube) {
     if (shouldQuote(col,tmpl)) tmpl = quoteLiteral(tmpl)
     if (_vars["_target_database"] === 'clickhouse') {
       // FIXME: detect column type !!!
-      return `toString(${eval_lisp(col,_context)}) ILIKE ${eval_lisp(tmpl,_context)}`
+      return `toString(${eval_lisp(col,_ctx)}) ILIKE ${eval_lisp(tmpl,_ctx)}`
     } else if (_vars["_target_database"] === 'oracle' ||
                _vars["_target_database"] === 'sqlserver') 
     {
       // FIXME! Oracle has something similar to ilike in v12 only :-()
       // FIXME: use regexp
-      return `UPPER(${eval_lisp(col,_context)}) LIKE UPPER(${eval_lisp(tmpl,_context)})`
+      return `UPPER(${eval_lisp(col,_ctx)}) LIKE UPPER(${eval_lisp(tmpl,_ctx)})`
     } else if (_vars["_target_database"] === 'mysql') {
       // https://www.oreilly.com/library/view/mysql-cookbook/0596001452/ch04s11.html
-      return `${eval_lisp(col,_context)} LIKE ${eval_lisp(tmpl,_context)}`
+      return `${eval_lisp(col,_ctx)} LIKE ${eval_lisp(tmpl,_ctx)}`
     } else {
-      return `${eval_lisp(col,_context)} ILIKE ${eval_lisp(tmpl,_context)}`
+      return `${eval_lisp(col,_ctx)} ILIKE ${eval_lisp(tmpl,_ctx)}`
     } 
   }
   _context['ilike'].ast = [[],{},[],1]; // mark as macro
@@ -1581,7 +1581,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
     var c = eval_lisp(col, ctx, rs)
     var resolveValue = function(v) {
 
-      if (shouldQuote(col, v)) v = evalQuoteLiteral(v, _context)
+      // FIXME, возможно уже нужно перейти на quoteLiteral() ???
+      if (shouldQuote(col, v)) v = evalQuoteLiteral(v)
       return v
       // [["ignore(me)",["column","ch.fot_out.hcode_name"]],"-","2020-03-01"]
       // если делать eval, то - будет читаться как функция!!!
@@ -1831,7 +1832,12 @@ function get_parallel_hierarchy_filters(_cfg, columns, _filters) {
           // This is parsed lpe AST
           _filters[el.id] = el.config.defaultValue
         } else {
-          _filters[el.id] = ["=",el.config.defaultValue]
+          if (el.config.defaultValue.startsWith('lpe:')) {
+            let expr = el.config.defaultValue.substr(4)
+            _filters[el.id] = parse(expr)
+          } else {
+            _filters[el.id] = ["=",el.config.defaultValue]
+          }
         }
       }
     }

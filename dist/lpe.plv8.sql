@@ -7443,7 +7443,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
   };
   /* если нужно, берёт в кавычки, но не делает eval для первого аргумента! */
 
-  /* Считается, что первый аргумент - строка или числоб но не ast */
+  /* Считается, что первый аргумент - строка или число но не ast */
 
 
   var evalQuoteLiteral = function evalQuoteLiteral(lit) {
@@ -7889,7 +7889,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     // we need to use makeSF, as normal LISP context will not evaluate column names ???
     //console.log(JSON.stringify(ast))
     var col = ast[0];
-    var s = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context);
+    var s = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _ctx);
 
     if (_context._target_database === 'clickhouse') {
       return "toString(".concat(s, ")");
@@ -8076,9 +8076,9 @@ function init_koob_context(_vars, default_ds, default_cube) {
     //console.log(JSON.stringify(ast))
     // [["tuple","lat","lng"],["[",["tuple",0,0],["tuple",0,1],["tuple",1,0],["tuple",1,1]]]
     var point = ast[0];
-    var pnt = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(point, _context); // point as first argument
+    var pnt = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(point, _ctx); // point as first argument
 
-    var poly = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(ast[1], _context);
+    var poly = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(ast[1], _ctx);
 
     if (_context._target_database === 'clickhouse') {
       return "pointInPolygon(".concat(pnt, ", [").concat(poly, "])");
@@ -8331,8 +8331,9 @@ function init_koob_context(_vars, default_ds, default_cube) {
   _context['between'] = function (col, var1, var2) {
     if (shouldQuote(col, var1)) var1 = quoteLiteral(var1);
     if (shouldQuote(col, var2)) var2 = quoteLiteral(var2);
-    var l = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(var1, _context);
-    var r = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(var2, _context);
+    var l = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(var1, _ctx); // if we use _context -> we have now unknown function names passing to SQL level
+
+    var r = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(var2, _ctx);
 
     if (l === null || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["e" /* isString */])(l) && (l.length === 0 || l === "''")) {
       if (r === null || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["e" /* isString */])(r) && (r.length === 0 || r === "''")) {
@@ -8341,15 +8342,15 @@ function init_koob_context(_vars, default_ds, default_cube) {
         return '1=1';
       } else {
         // l is null, r is real
-        return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), " <= ").concat(r);
+        return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _ctx), " <= ").concat(r);
       }
     } else {
       if (r === null || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["e" /* isString */])(r) && (r.length === 0 || r === "''")) {
         // l is real, r is null
-        return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), " >= ").concat(l);
+        return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _ctx), " >= ").concat(l);
       } else {
         // both l and r is real
-        return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), " BETWEEN ").concat(l, " AND ").concat(r);
+        return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _ctx), " BETWEEN ").concat(l, " AND ").concat(r);
       }
     }
   };
@@ -8360,14 +8361,14 @@ function init_koob_context(_vars, default_ds, default_cube) {
     if (shouldQuote(col, tmpl)) tmpl = quoteLiteral(tmpl); // в каждой базе свои regexp
 
     if (_vars["_target_database"] === 'oracle') {
-      return "REGEXP_LIKE( ".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), " , ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _context), " )");
+      return "REGEXP_LIKE( ".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _ctx), " , ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _ctx), " )");
     } else if (_vars["_target_database"] === 'mysql') {
-      return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), " REGEXP ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _context));
+      return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _ctx), " REGEXP ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _ctx));
     } else if (_vars["_target_database"] === 'clickhouse') {
       // case is important !!!
-      return "match( ".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), " , ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _context), " )");
+      return "match( ".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _ctx), " , ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _ctx), " )");
     } else {
-      return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), " ~ ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _context));
+      return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _ctx), " ~ ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _ctx));
     }
   };
 
@@ -8377,17 +8378,17 @@ function init_koob_context(_vars, default_ds, default_cube) {
     if (shouldQuote(col, tmpl)) tmpl = quoteLiteral(tmpl); // в каждой базе свои regexp
 
     if (_vars["_target_database"] === 'oracle') {
-      return "REGEXP_LIKE( ".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), " , ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _context), ", 'i')");
+      return "REGEXP_LIKE( ".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _ctx), " , ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _ctx), ", 'i')");
     } else if (_vars["_target_database"] === 'mysql') {
-      return "REGEXP_LIKE( ".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), ", ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _context), ", 'i')");
+      return "REGEXP_LIKE( ".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _ctx), ", ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _ctx), ", 'i')");
     } else if (_vars["_target_database"] === 'clickhouse') {
       // case is not important !!!
-      var pattern = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _context); // should be in quotes! 'ddff'
+      var pattern = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _ctx); // should be in quotes! 'ddff'
 
       pattern = "(?i:".concat(pattern.slice(1, -1), ")");
-      return "match( ".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), " , '").concat(pattern, "' )");
+      return "match( ".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _ctx), " , '").concat(pattern, "' )");
     } else {
-      return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), " ~* ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _context));
+      return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _ctx), " ~* ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _ctx));
     }
   };
 
@@ -8402,7 +8403,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
   _context['like'] = function (col, tmpl) {
     if (shouldQuote(col, tmpl)) tmpl = quoteLiteral(tmpl);
-    return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), " LIKE ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _context));
+    return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _ctx), " LIKE ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _ctx));
   };
 
   _context['like'].ast = [[], {}, [], 1]; // mark as macro
@@ -8412,16 +8413,16 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
     if (_vars["_target_database"] === 'clickhouse') {
       // FIXME: detect column type !!!
-      return "toString(".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), ") ILIKE ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _context));
+      return "toString(".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _ctx), ") ILIKE ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _ctx));
     } else if (_vars["_target_database"] === 'oracle' || _vars["_target_database"] === 'sqlserver') {
       // FIXME! Oracle has something similar to ilike in v12 only :-()
       // FIXME: use regexp
-      return "UPPER(".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), ") LIKE UPPER(").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _context), ")");
+      return "UPPER(".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _ctx), ") LIKE UPPER(").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _ctx), ")");
     } else if (_vars["_target_database"] === 'mysql') {
       // https://www.oreilly.com/library/view/mysql-cookbook/0596001452/ch04s11.html
-      return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), " LIKE ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _context));
+      return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _ctx), " LIKE ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _ctx));
     } else {
-      return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _context), " ILIKE ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _context));
+      return "".concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _ctx), " ILIKE ").concat(__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(tmpl, _ctx));
     }
   };
 
@@ -8480,7 +8481,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
     var c = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, ctx, rs);
 
     var resolveValue = function resolveValue(v) {
-      if (shouldQuote(col, v)) v = evalQuoteLiteral(v, _context);
+      // FIXME, возможно уже нужно перейти на quoteLiteral() ???
+      if (shouldQuote(col, v)) v = evalQuoteLiteral(v);
       return v; // [["ignore(me)",["column","ch.fot_out.hcode_name"]],"-","2020-03-01"]
       // если делать eval, то - будет читаться как функция!!!
       //return eval_lisp(v,_context)
@@ -8719,7 +8721,12 @@ function get_parallel_hierarchy_filters(_cfg, columns, _filters) {
           // This is parsed lpe AST
           _filters[el.id] = el.config.defaultValue;
         } else {
-          _filters[el.id] = ["=", el.config.defaultValue];
+          if (el.config.defaultValue.startsWith('lpe:')) {
+            var expr = el.config.defaultValue.substr(4);
+            _filters[el.id] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_20__lpep__["a" /* parse */])(expr);
+          } else {
+            _filters[el.id] = ["=", el.config.defaultValue];
+          }
         }
       }
     }
