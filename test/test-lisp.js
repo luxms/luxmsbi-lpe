@@ -51,6 +51,7 @@ describe('LISP tests', function () {
     assert.deepEqual(lpe.eval_lisp(["if", true, 1, 2]), 1);
     assert.deepEqual(lpe.eval_lisp(["if", false, 1, 2]), 2);
     assert.deepEqual(lpe.eval_lisp(["if", "a", 1, 2], { a: true }), 1);
+    assert.deepEqual(lpe.eval_lisp( lpe.parse('if(c=null, 1, false)')  , { a: true , b: true}), 1);
     assert.deepEqual(lpe.eval_lisp(["if", "a", 1, 2], {}), 2);
     assert.deepEqual(lpe.eval_lisp(["if", ["=", "a", ["'", "a"]], 1, 2], { a: "a" }), 1);
   });

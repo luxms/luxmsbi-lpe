@@ -774,8 +774,19 @@ var SPECIAL_FORMS = {
     return result;
   }),
   'get_in': makeSF(function (ast, ctx, rs) {
-    var array = eval_lisp(ast[1], ctx, rs); // но вообще-то вот так ещё круче ["->","a",3,1]
+    var array = [];
+
+    if (isArray(ast[1]) && ast[1][0] === "[") {
+      // второй аргумент - это массив как в Clojure get_in()
+      array = eval_lisp(ast[1], ctx, rs);
+    } else {
+      // просто список ключей в виде аргументов
+      var _ast = _toArray(ast);
+
+      array = _ast.slice(1);
+    } // но вообще-то вот так ещё круче ["->","a",3,1]
     // const m = ["->"].concat( array.slice(1).reduce((a, b) => {a.push([".-",b]); return a}, [[".-", ast[0], array[0]]]) );
+
 
     var m = ["->", ast[0]].concat(array); //console.log('get_in', JSON.stringify(m))
 
@@ -1345,10 +1356,10 @@ function EVAL(ast, ctx, resolveOptions) {
     if (ast.length === 0) return null; // TODO: [] => empty list (or, maybe return vector [])
     //console.log("EVAL1: ", JSON.stringify(resolveOptions),  JSON.stringify(ast))
 
-    var _ast = ast,
-        _ast2 = _toArray(_ast),
-        opAst = _ast2[0],
-        argsAst = _ast2.slice(1);
+    var _ast2 = ast,
+        _ast3 = _toArray(_ast2),
+        opAst = _ast3[0],
+        argsAst = _ast3.slice(1);
 
     var op = EVAL(opAst, ctx, _objectSpread({}, resolveOptions, {
       wantCallable: true
@@ -6848,19 +6859,19 @@ function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { va
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-function _toArray(arr) { return _arrayWithHoles(arr) || _iterableToArray(arr) || _nonIterableRest(); }
-
-function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
-
-function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
-
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
 
 function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
 
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
+
+function _toArray(arr) { return _arrayWithHoles(arr) || _iterableToArray(arr) || _nonIterableRest(); }
+
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
+
 function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
 
-function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
+function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
 /**
     Copyright (c) 2019 Luxms Inc.
@@ -7242,7 +7253,7 @@ function init_udf_args_context(_cube, _vars, _target_database, _cfg) {
       return v;
     }
   };
-  /* we may need to query datbase to generate val list
+  /* we may need to query database to generate val list
   for example: ["between", '2001-01-01','2002-02-01'] should generate list of dates...
   for now this part is buggy and very limited...
   basically it either return one value, or list value
@@ -7401,16 +7412,17 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
   if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(_vars)) {
     //_ctx = [{..._vars}]
-    _ctx = [_vars];
+    _ctx = [{}, _vars];
   }
 
-  var _context = _ctx[0]; // пытается определить тип аргумента, если это похоже на столбец, то ищет про него инфу в кэше и определяет тип,
+  var _context = _ctx[0];
+  var _variables = _ctx[1]; // пытается определить тип аргумента, если это похоже на столбец, то ищет про него инфу в кэше и определяет тип,
   // а по типу можно уже думать, квотировать значения или нет.
 
   var shouldQuote = function shouldQuote(col, v) {
     if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(col) && col[0] === 'column') {
       //try to detect column type
-      var c = _context["_columns"][col[1]];
+      var c = _variables["_columns"][col[1]];
 
       if (c) {
         return c.type !== 'NUMBER';
@@ -7422,7 +7434,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     // но сначала проверим, вдруг это alias???
 
 
-    if (_context["_aliases"][v]) {
+    if (_variables["_aliases"][v]) {
       return false;
     } // left and right side looks like a column names, don't quote
 
@@ -7453,38 +7465,39 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
 
   _ctx.push(function (key, val, resolveOptions) {
-    // console.log(`WANT to resolve ${key} ${val}`, JSON.stringify(resolveOptions));
+    //console.log(`WANT to resolve ${key} ${val}`, JSON.stringify(resolveOptions));
+    //console.log(`COLUMN: `, JSON.stringify(_variables["_columns"][key]));
     // вызываем функцию column(ПолноеИмяСтолбца) если нашли столбец в дефолтном кубе
-    if (_context["_columns"][key]) return _context["column"](key);
-    if (_context["_columns"][default_ds][default_cube][key]) return _context["column"]("".concat(default_ds, ".").concat(default_cube, ".").concat(key)); // reference to alias!
-    //console.log("DO WE HAVE SUCH ALIAS?" , JSON.stringify(_context["_aliases"]))
+    if (_variables["_columns"][key]) return _context["column"](key);
+    if (_variables["_columns"][default_ds][default_cube][key]) return _context["column"]("".concat(default_ds, ".").concat(default_cube, ".").concat(key)); // reference to alias!
+    //console.log("DO WE HAVE SUCH ALIAS?" , JSON.stringify(_variables["_aliases"]))
 
-    if (_context["_aliases"][key]) {
+    if (_variables["_aliases"][key]) {
       if (!__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(_context["_result"]["columns"])) {
-        _context["_result"]["columns"] = [];
+        _variables["_result"]["columns"] = [];
       } // remeber reference to alias as column name!
 
 
-      _context["_result"]["columns"].push(key); // mark our expression same as target
+      _variables["_result"]["columns"].push(key); // mark our expression same as target
       // FIXME: setting window will result in BUGS
-      //_context["_result"]["window"] = _context["_aliases"][key]["window"]
+      //_variables["_result"]["window"] = _variables["_aliases"][key]["window"]
 
 
-      _context["_result"]["agg"] = _context["_aliases"][key]["agg"]; // Mark agg function to display expr as is
+      _variables["_result"]["agg"] = _variables["_aliases"][key]["agg"]; // Mark agg function to display expr as is
 
-      _context["_result"]["outerVerbatim"] = true;
+      _variables["_result"]["outerVerbatim"] = true;
       return key;
     }
 
     if (resolveOptions && resolveOptions.wantCallable) {
       if (key.match(/^\w+$/)) {
-        if (_context["_result"]) {
+        if (_variables["_result"]) {
           //console.log("HUY!! " + JSON.stringify(key))
           // в этом списке только стандартные вещи, которые во всех базах одинаково пишутся
           if (['sum', 'avg', 'min', 'max', 'count'].find(function (el) {
             return el === key;
           })) {
-            _context["_result"]["agg"] = true;
+            _variables["_result"]["agg"] = true;
           }
         }
 
@@ -7498,7 +7511,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
           }
 
           if (key === 'count') {
-            if (_context._target_database == 'clickhouse') {
+            if (_variables._target_database == 'clickhouse') {
               // console.log('COUNT:' + JSON.stringify(a))
               // у нас всегда должен быть один аргумент и он уже прошёл eval !!!
               // Это БАГ в тыкдоме v21 = отдаёт текстом значения, если count делать :-()
@@ -7509,7 +7522,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
           if (key === 'only1' || key === 'on1y') {
             // особый режим выполнения SQL.
             // ставим флаг, потом будем оптимизировать запрос!
-            _context["_result"]["only1"] = true;
+            _variables["_result"]["only1"] = true;
             return a[0];
           }
 
@@ -7545,7 +7558,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
     if (key.startsWith('$')) {
       // возможно, это коэффициент?
-      var _val = _context["_coefficients"][key];
+      var _val = _variables["_coefficients"][key];
 
       if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["f" /* isNumber */])(_val)) {
         return _val;
@@ -7553,13 +7566,13 @@ function init_koob_context(_vars, default_ds, default_cube) {
     } // We may have references to yet unresolved aliases....
 
 
-    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(_context["_result"])) {
+    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(_variables["_result"])) {
       if (key.match(/^[A-Za-z_]+\w*$/)) {
-        if (!__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(_context["_result"]["unresolved_aliases"])) {
-          _context["_result"]["unresolved_aliases"] = [];
+        if (!__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(_variables["_result"]["unresolved_aliases"])) {
+          _variables["_result"]["unresolved_aliases"] = [];
         }
 
-        _context["_result"]["unresolved_aliases"].push(key);
+        _variables["_result"]["unresolved_aliases"].push(key);
       }
     }
 
@@ -7568,7 +7581,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
 
   _context["::"] = function (col, type) {
-    if (_context._target_database === 'postgresql' || _context._target_database === 'clickhouse') {
+    if (_variables._target_database === 'postgresql' || _variables._target_database === 'clickhouse') {
       return "".concat(col, "::").concat(type);
     } else {
       return "CAST(".concat(col, " AS ").concat(type, ")");
@@ -7576,15 +7589,15 @@ function init_koob_context(_vars, default_ds, default_cube) {
   };
 
   _context["corr"] = function (c1, c2) {
-    _context["_result"]["agg"] = true;
+    _variables["_result"]["agg"] = true;
     return "corr(".concat(c1, ", ").concat(c2, ")"); //throw Error(`mode() is not implemented for ${_context._target_database} yet`)
   }; // COUNT(CASE WHEN A = 42 THEN 1 END)
 
 
   _context["countIf"] = function (cond) {
-    _context["_result"]["agg"] = true;
+    _variables["_result"]["agg"] = true;
 
-    if (_context._target_database === 'clickhouse') {
+    if (_variables._target_database === 'clickhouse') {
       return "countIf(".concat(cond, ")");
     } else {
       return "COUNT(CASE WHEN ".concat(cond, " THEN 1 END)");
@@ -7593,44 +7606,44 @@ function init_koob_context(_vars, default_ds, default_cube) {
   };
 
   _context["median"] = function (col) {
-    _context["_result"]["agg"] = true;
+    _variables["_result"]["agg"] = true;
 
-    if (_context._target_database === 'clickhouse') {
+    if (_variables._target_database === 'clickhouse') {
       return "quantile(0.5)(".concat(col, ")");
-    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle') {
+    } else if (_variables._target_database === 'postgresql' || _variables._target_database === 'oracle') {
       return "percentile_cont(0.5) WITHIN GROUP (ORDER BY ".concat(col, " DESC)");
-    } else if (_context._target_database === 'teradata' || _context._target_database === 'sap') {
+    } else if (_variables._target_database === 'teradata' || _variables._target_database === 'sap') {
       return "median(".concat(col, ")");
     } else {
-      throw Error("median() is not implemented for ".concat(_context._target_database, " yet"));
+      throw Error("median() is not implemented for ".concat(_variables._target_database, " yet"));
     }
   };
 
   _context["mode"] = function (col) {
-    _context["_result"]["agg"] = true;
+    _variables["_result"]["agg"] = true;
 
-    if (_context._target_database === 'clickhouse') {
+    if (_variables._target_database === 'clickhouse') {
       return "arrayElement(topK(1)(".concat(col, "),1)");
-    } else if (_context._target_database === 'postgresql') {
+    } else if (_variables._target_database === 'postgresql') {
       return "mode() WITHIN GROUP (ORDER BY ".concat(col, ")");
-    } else if (_context._target_database === 'oracle') {
+    } else if (_variables._target_database === 'oracle') {
       return "STATS_MODE(".concat(col, ")");
     } else {
-      throw Error("mode() is not implemented for ".concat(_context._target_database, " yet"));
+      throw Error("mode() is not implemented for ".concat(_variables._target_database, " yet"));
     }
   };
 
   _context["varPop"] = function (col) {
-    _context["_result"]["agg"] = true;
+    _variables["_result"]["agg"] = true;
 
-    if (_context._target_database === 'clickhouse') {
+    if (_variables._target_database === 'clickhouse') {
       return "varPop(".concat(col, ")");
-    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle' || _context._target_database === 'teradata' || _context._target_database === 'vertica' || _context._target_database === 'sap') {
+    } else if (_variables._target_database === 'postgresql' || _variables._target_database === 'oracle' || _variables._target_database === 'teradata' || _variables._target_database === 'vertica' || _variables._target_database === 'sap') {
       return "var_pop(".concat(col, ")");
-    } else if (_context._target_database === 'sqlserver') {
+    } else if (_variables._target_database === 'sqlserver') {
       return "VarP(".concat(col, ")");
     } else {
-      throw Error("var_pop() is not implemented for ".concat(_context._target_database, " yet"));
+      throw Error("var_pop() is not implemented for ".concat(_variables._target_database, " yet"));
     }
   }; // deprecated REMOVE in v.11
 
@@ -7638,16 +7651,16 @@ function init_koob_context(_vars, default_ds, default_cube) {
   _context["var_pop"] = _context["varPop"];
 
   _context["varSamp"] = function (col) {
-    _context["_result"]["agg"] = true;
+    _variables["_result"]["agg"] = true;
 
-    if (_context._target_database === 'clickhouse') {
+    if (_variables._target_database === 'clickhouse') {
       return "varSamp(".concat(col, ")");
-    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle' || _context._target_database === 'teradata' || _context._target_database === 'vertica' || _context._target_database === 'sap') {
+    } else if (_variables._target_database === 'postgresql' || _variables._target_database === 'oracle' || _variables._target_database === 'teradata' || _variables._target_database === 'vertica' || _variables._target_database === 'sap') {
       return "var_samp(".concat(col, ")");
-    } else if (_context._target_database === 'sqlserver') {
+    } else if (_variables._target_database === 'sqlserver') {
       return "Var(".concat(col, ")");
     } else {
-      throw Error("var_samp() is not implemented for ".concat(_context._target_database, " yet"));
+      throw Error("var_samp() is not implemented for ".concat(_variables._target_database, " yet"));
     }
   }; // deprecated REMOVE in v.11
 
@@ -7655,16 +7668,16 @@ function init_koob_context(_vars, default_ds, default_cube) {
   _context["var_samp"] = _context["varSamp"];
 
   _context["stddevSamp"] = function (col) {
-    _context["_result"]["agg"] = true;
+    _variables["_result"]["agg"] = true;
 
-    if (_context._target_database === 'clickhouse') {
+    if (_variables._target_database === 'clickhouse') {
       return "stddevSamp(".concat(col, ")");
-    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle' || _context._target_database === 'teradata' || _context._target_database === 'vertica' || _context._target_database === 'sap') {
+    } else if (_variables._target_database === 'postgresql' || _variables._target_database === 'oracle' || _variables._target_database === 'teradata' || _variables._target_database === 'vertica' || _variables._target_database === 'sap') {
       return "stddev_samp(".concat(col, ")");
-    } else if (_context._target_database === 'sqlserver') {
+    } else if (_variables._target_database === 'sqlserver') {
       return "Stdev(".concat(col, ")");
     } else {
-      throw Error("var_samp() is not implemented for ".concat(_context._target_database, " yet"));
+      throw Error("var_samp() is not implemented for ".concat(_variables._target_database, " yet"));
     }
   }; // deprecated REMOVE in v.11
 
@@ -7672,16 +7685,16 @@ function init_koob_context(_vars, default_ds, default_cube) {
   _context["stddev_samp"] = _context["stddevSamp"];
 
   _context["stddevPop"] = function (col) {
-    _context["_result"]["agg"] = true;
+    _variables["_result"]["agg"] = true;
 
-    if (_context._target_database === 'clickhouse') {
+    if (_variables._target_database === 'clickhouse') {
       return "stddevPop(".concat(col, ")");
-    } else if (_context._target_database === 'postgresql' || _context._target_database === 'oracle' || _context._target_database === 'teradata' || _context._target_database === 'vertica' || _context._target_database === 'sap') {
+    } else if (_variables._target_database === 'postgresql' || _variables._target_database === 'oracle' || _variables._target_database === 'teradata' || _variables._target_database === 'vertica' || _variables._target_database === 'sap') {
       return "stddev_pop(".concat(col, ")");
-    } else if (_context._target_database === 'sqlserver') {
+    } else if (_variables._target_database === 'sqlserver') {
       return "StdevP(".concat(col, ")");
     } else {
-      throw Error("var_samp() is not implemented for ".concat(_context._target_database, " yet"));
+      throw Error("var_samp() is not implemented for ".concat(_variables._target_database, " yet"));
     }
   }; // deprecated REMOVE in v.11
 
@@ -7691,15 +7704,15 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
   _context["column"] = function (col) {
     // считаем, что сюда приходят только полностью резолвенные имена с двумя точками...
-    var c = _context["_columns"][col];
+    var c = _variables["_columns"][col];
 
     if (c) {
       // side-effect to return structure (one per call)
-      if (_context["_result"]) {
-        _context["_result"]["columns"].push(col);
+      if (_variables["_result"]) {
+        _variables["_result"]["columns"].push(col);
 
         if (c["type"] === "AGGFN") {
-          _context["_result"]["agg"] = true;
+          _variables["_result"]["agg"] = true;
         }
       }
 
@@ -7719,13 +7732,13 @@ function init_koob_context(_vars, default_ds, default_cube) {
         // FIXME: WE JUST TRY TO match getDict, if ANY. there should be a better way!!!
         // dictGet('gpn.group_pay_dict', some_real_field, tuple(pay_code))
         //console.log(`OPANKI: ${c.sql_query}`, JSON.stringify(_context))
-        if (_context._target_database == 'clickhouse') {
+        if (_variables._target_database == 'clickhouse') {
           // for the SELECT part make sure we produce different things for INNER and OUTER SQL
-          // SELECT part is denoted by _context["_result"]
-          if (_context["_result"] && c.sql_query.match(/dictGet\(/)) {
+          // SELECT part is denoted by _variables["_result"]
+          if (_variables["_result"] && c.sql_query.match(/dictGet\(/)) {
             //console.log(`OPANKI1: ${c.sql_query}`)
-            _context["_result"]["outer_expr"] = c.sql_query;
-            _context["_result"]["outer_alias"] = parts[2];
+            _variables["_result"]["outer_expr"] = c.sql_query;
+            _variables["_result"]["outer_alias"] = parts[2];
             var m = c.sql_query.match(/,[^,]+,(.*)/);
 
             if (m) {
@@ -7736,13 +7749,13 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
               if (t) {
                 //console.log(`OPANKI22: ${c.sql_query}  ${t[1]}`)
-                _context["_result"]["alias"] = t[1];
+                _variables["_result"]["alias"] = t[1];
                 return t[1];
               } else {
                 t = m.match(/(\w+)/);
 
                 if (t) {
-                  _context["_result"]["alias"] = t[1];
+                  _variables["_result"]["alias"] = t[1];
                   return t[1];
                 }
               }
@@ -7750,11 +7763,11 @@ function init_koob_context(_vars, default_ds, default_cube) {
           }
         }
 
-        if (_context["_result"]) {
+        if (_variables["_result"]) {
           // make alias for calculated columns
           var _parts = col.split('.');
 
-          if (_parts.length === 3) _context["_result"]["alias"] = _parts[2];
+          if (_parts.length === 3) _variables["_result"]["alias"] = _parts[2];
         }
 
         return "(".concat(c.sql_query, ")");
@@ -7777,6 +7790,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
      outer_expr: "runningAccumulate(mnt, (comp_code,gl_account)) as col1",
      outer_alias: 'col1'
   */
+
+  /* DEPRECATED!!!! */
 
 
   _context["running"] = function () {
@@ -7843,8 +7858,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
   // сюда должны попадать только хитрые варианты вызова функций с указанием схемы типа utils.smap()
 
   _context["->"] = function () {
-    var a = Array.prototype.slice.call(arguments); //console.log("-> !" , JSON.stringify(a))
-
+    var a = Array.prototype.slice.call(arguments);
+    __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log("-> !", JSON.stringify(a));
     return a.map(function (el) {
       return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(el) ? __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(el, _ctx) : el;
     }).join('.');
@@ -7866,21 +7881,21 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
     var otext = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(o, _ctx);
 
-    if (_context["_result"]) {
+    if (_variables["_result"]) {
       // мы кидаем значение alias в _result, это подходит для столбцов
       // для TABLE as alias не надо вызывать _result
       // также есть outer_alias для оконных функций, мы его поменяем!!!
-      if (_context["_result"]["outer_alias"]) {
-        _context["_result"]["alias"] = _context["_result"]["outer_alias"];
-        _context["_result"]["outer_alias"] = al;
+      if (_variables["_result"]["outer_alias"]) {
+        _variables["_result"]["alias"] = _variables["_result"]["outer_alias"];
+        _variables["_result"]["outer_alias"] = al;
       } else {
-        _context["_result"]["alias"] = al;
+        _variables["_result"]["alias"] = al;
       }
 
       return otext;
     }
 
-    return quot_as_expression(_context["_target_database"], otext, n);
+    return quot_as_expression(_variables["_target_database"], otext, n);
   };
 
   _context[':'].ast = [[], {}, [], 1]; // mark as macro
@@ -7891,9 +7906,9 @@ function init_koob_context(_vars, default_ds, default_cube) {
     var col = ast[0];
     var s = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(col, _ctx);
 
-    if (_context._target_database === 'clickhouse') {
+    if (_variables._target_database === 'clickhouse') {
       return "toString(".concat(s, ")");
-    } else if (_context._target_database === 'postgresql') {
+    } else if (_variables._target_database === 'postgresql') {
       return "".concat(s, "::TEXT");
     } else {
       return "cast(".concat(s, " AS VARCHAR)");
@@ -7904,7 +7919,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
   // either 1 or 3 args !!!
 
   _context['range'] = function (from, to, step) {
-    if (_context._target_database === 'clickhouse') {
+    if (_variables._target_database === 'clickhouse') {
       if (to === undefined) {
         return "arrayJoin(range(".concat(from, "))");
       } else {
@@ -7914,7 +7929,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
           return "arrayJoin(range(".concat(from, ",").concat(to, ", ").concat(step, "))");
         }
       }
-    } else if (_context._target_database === 'postgresql') {
+    } else if (_variables._target_database === 'postgresql') {
       var s = '';
 
       if (to === undefined) {
@@ -7927,16 +7942,16 @@ function init_koob_context(_vars, default_ds, default_cube) {
         }
       }
 
-      _context["_result"]["is_range_column"] = true;
-      _context["_result"]["expr"] = 'koob__range__';
-      _context["_result"]["columns"] = ["koob__range__"];
-      _context["_result"]["join"] = {
+      _variables["_result"]["is_range_column"] = true;
+      _variables["_result"]["expr"] = 'koob__range__';
+      _variables["_result"]["columns"] = ["koob__range__"];
+      _variables["_result"]["join"] = {
         "type": "inner",
         "alias": "koob__range__",
         "expr": "".concat(s)
       };
       return 'koob__range__';
-    } else if (_context._target_database === 'teradata') {
+    } else if (_variables._target_database === 'teradata') {
       // возвращаем здесь просто имя столбца, но потом нужно будет сгенерить
       // JOIN и WHERE!!!
       // select  _koob__range__table__.day_of_calendar, procurement_subject 
@@ -7944,7 +7959,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
       // where purch_id = 8585 and day_of_calendar BETWEEN 1 AND 10;
       // max count is limited to 73414
       if (step !== undefined) {
-        throw Error("range(with step argument) is not supported for ".concat(_context._target_database));
+        throw Error("range(with step argument) is not supported for ".concat(_variables._target_database));
       }
 
       var f;
@@ -7955,11 +7970,11 @@ function init_koob_context(_vars, default_ds, default_cube) {
         f = ['between', from + 1, to];
       }
 
-      _context["_result"]["is_range_column"] = true;
-      _context["_result"]["expr"] = 'koob__range__table__.day_of_calendar - 1';
-      _context["_result"]["columns"] = ["day_of_calendar"];
-      _context["_result"]["alias"] = 'koob__range__';
-      _context["_result"]["join"] = {
+      _variables["_result"]["is_range_column"] = true;
+      _variables["_result"]["expr"] = 'koob__range__table__.day_of_calendar - 1';
+      _variables["_result"]["columns"] = ["day_of_calendar"];
+      _variables["_result"]["alias"] = 'koob__range__';
+      _variables["_result"]["join"] = {
         "type": "inner",
         "table": "sys_calendar.CALENDAR",
         "alias": "koob__range__table__",
@@ -7968,7 +7983,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
         }
       };
       return 'koob__range__table__.day_of_calendar - 1'; // FIXME: это попадает в GROUP BY !!!
-    } else if (_context._target_database === 'oracle') {
+    } else if (_variables._target_database === 'oracle') {
       // возвращаем здесь просто имя столбца, но потом нужно будет сгенерить
       // JOIN и WHERE!!!
       // ONLY FOR Oracle 10g and above!
@@ -7983,15 +7998,15 @@ function init_koob_context(_vars, default_ds, default_cube) {
         from = 0;
       }
 
-      _context["_result"]["is_range_column"] = true;
-      _context["_result"]["expr"] = 'koob__range__';
-      _context["_result"]["columns"] = ["koob__range__"];
-      _context["_result"]["join"] = {
+      _variables["_result"]["is_range_column"] = true;
+      _variables["_result"]["expr"] = 'koob__range__';
+      _variables["_result"]["columns"] = ["koob__range__"];
+      _variables["_result"]["join"] = {
         "type": "inner",
         "expr": "(\n      select LEVEL-1 AS koob__range__ from dual\n      where LEVEL between ".concat(from, "+1 and ").concat(to).concat(step, "\n      connect by LEVEL <= ").concat(to, "\n      )")
       };
       return 'koob__range__'; // FIXME: это автоматически попадает в GROUP BY !!!
-    } else if (_context._target_database === 'sqlserver') {
+    } else if (_variables._target_database === 'sqlserver') {
       // возвращаем здесь просто имя столбца, но потом нужно будет сгенерить
       // только JOIN 
       // 
@@ -8010,17 +8025,17 @@ function init_koob_context(_vars, default_ds, default_cube) {
         numbers.push("(".concat(i, ")"));
       }
 
-      _context["_result"]["is_range_column"] = true;
-      _context["_result"]["expr"] = 'koob__range__';
-      _context["_result"]["columns"] = ["koob__range__"];
-      _context["_result"]["join"] = {
+      _variables["_result"]["is_range_column"] = true;
+      _variables["_result"]["expr"] = 'koob__range__';
+      _variables["_result"]["columns"] = ["koob__range__"];
+      _variables["_result"]["join"] = {
         "type": "inner",
         "alias": "koob__range__table__",
         "expr": "(\n      select koob__range__ FROM (VALUES ".concat(numbers.join(", "), ") vals(koob__range__)\n      )") // (select n FROM (VALUES (0), (1), (2)) v1(n)) as t
 
       };
       return 'koob__range__'; // FIXME: это автоматически попадает в GROUP BY !!!
-    } else if (_context._target_database === 'vertica') {
+    } else if (_variables._target_database === 'vertica') {
       // возвращаем здесь просто имя столбца, но потом нужно будет сгенерить
       // только JOIN 
       // 
@@ -8037,16 +8052,16 @@ function init_koob_context(_vars, default_ds, default_cube) {
         to = to - 1;
       }
 
-      _context["_result"]["is_range_column"] = true;
-      _context["_result"]["expr"] = 'koob__range__';
-      _context["_result"]["columns"] = ["koob__range__"];
-      _context["_result"]["join"] = {
+      _variables["_result"]["is_range_column"] = true;
+      _variables["_result"]["expr"] = 'koob__range__';
+      _variables["_result"]["columns"] = ["koob__range__"];
+      _variables["_result"]["join"] = {
         "type": "inner",
         "alias": "koob__range__table__",
         "expr": "(\n          WITH koob__range__table__seq AS (\n            SELECT ROW_NUMBER() OVER() - 1 AS koob__range__ FROM (\n                SELECT 1 FROM (\n                    SELECT date(0) + INTERVAL '".concat(from, " second' AS se UNION ALL\n                    SELECT date(0) + INTERVAL '").concat(to, " seconds' AS se ) a\n                TIMESERIES tm AS '1 second' OVER(ORDER BY se)\n            ) b  \n        )\n        SELECT koob__range__ FROM koob__range__table__seq").concat(step, ")")
       };
       return 'koob__range__'; // FIXME: это автоматически попадает в GROUP BY !!!
-    } else if (_context._target_database === 'sap') {
+    } else if (_variables._target_database === 'sap') {
       // SAP HANA
       if (step === undefined) {
         step = '1';
@@ -8059,16 +8074,16 @@ function init_koob_context(_vars, default_ds, default_cube) {
         from = 0;
       }
 
-      _context["_result"]["is_range_column"] = true;
-      _context["_result"]["expr"] = 'koob__range__';
-      _context["_result"]["columns"] = ["koob__range__"];
-      _context["_result"]["join"] = {
+      _variables["_result"]["is_range_column"] = true;
+      _variables["_result"]["expr"] = 'koob__range__';
+      _variables["_result"]["columns"] = ["koob__range__"];
+      _variables["_result"]["join"] = {
         "type": "inner",
         "expr": "(\n      select GENERATED_PERIOD_START AS koob__range__ from SERIES_GENERATE_INTEGER(".concat(step, ", ").concat(from, ", ").concat(to, ")\n      )")
       };
       return 'koob__range__'; // FIXME: это автоматически попадает в GROUP BY !!!
     } else {
-      throw Error("range() is not supported in ".concat(_context._target_database));
+      throw Error("range() is not supported in ".concat(_variables._target_database));
     }
   };
 
@@ -8080,19 +8095,19 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
     var poly = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(ast[1], _ctx);
 
-    if (_context._target_database === 'clickhouse') {
+    if (_variables._target_database === 'clickhouse') {
       return "pointInPolygon(".concat(pnt, ", [").concat(poly, "])");
-    } else if (_context._target_database === 'postgresql') {
+    } else if (_variables._target_database === 'postgresql') {
       // circle '((0,0),2)' @> point '(1,1)'        	polygon '((0,0),(1,1))'
       return "polygon '(".concat(poly, ")' @> point").concat(pnt);
     } else {
-      throw Error("pointInPolygon is not supported in ".concat(_context._target_database));
+      throw Error("pointInPolygon is not supported in ".concat(_variables._target_database));
     }
   });
 
   _context['pointInEllipses'] = function () {
-    if (_context._target_database !== 'clickhouse') {
-      throw Error("pointInEllipses is not supported in ".concat(_context._target_database));
+    if (_variables._target_database !== 'clickhouse') {
+      throw Error("pointInEllipses is not supported in ".concat(_variables._target_database));
     }
 
     var a = Array.prototype.slice.call(arguments);
@@ -8118,10 +8133,10 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
     if (_context._target_database === 'clickhouse') {
       return "pointInEllipses(".concat(x, ",").concat(y, ",").concat(cx, ",").concat(cy, ",").concat(R, ",").concat(R, ")");
-    } else if (_context._target_database === 'postgresql') {
+    } else if (_variables._target_database === 'postgresql') {
       return "circle(point(".concat(cx, ",").concat(cy, "),").concat(R, ") @> point(").concat(x, ",").concat(y, ")");
     } else {
-      throw Error("pointInPolygon is not supported in ".concat(_context._target_database));
+      throw Error("pointInPolygon is not supported in ".concat(_variables._target_database));
     }
   });
 
@@ -8165,12 +8180,12 @@ function init_koob_context(_vars, default_ds, default_cube) {
     var a = Array.prototype.slice.call(arguments);
     var head = 'concat_ws';
 
-    if (_context._target_database === 'clickhouse') {
+    if (_variables._target_database === 'clickhouse') {
       head = "concatWithSeparator(";
-    } else if (_context._target_database === 'postgresql') {
+    } else if (_variables._target_database === 'postgresql') {
       head = "concat_ws(";
     } else {
-      throw Error("No concatWithSeparator() function support for flavor: ".concat(_context._target_database));
+      throw Error("No concatWithSeparator() function support for flavor: ".concat(_variables._target_database));
     }
 
     head = head.concat(a.join(',')).concat(')');
@@ -8178,7 +8193,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
   };
 
   _context['substring'] = function (str, offset, len) {
-    if (_context._target_database === 'clickhouse') {
+    if (_variables._target_database === 'clickhouse') {
       return "substringUTF8(".concat(str, ", ").concat(offset, ", ").concat(len, ")");
     } else {
       return "substring(".concat(str, ", ").concat(offset, ", ").concat(len, ")");
@@ -8186,7 +8201,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
   };
 
   _context['initcap'] = function (str) {
-    if (_context._target_database === 'clickhouse') {
+    if (_variables._target_database === 'clickhouse') {
       return "initcapUTF8(".concat(str, ")");
     } else {
       return "initcap(".concat(str, ")");
@@ -8194,7 +8209,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
   };
 
   _context['length'] = function (str) {
-    if (_context._target_database === 'clickhouse') {
+    if (_variables._target_database === 'clickhouse') {
       return "lengthUTF8(".concat(str, ")");
     } else {
       return "length(".concat(str, ")");
@@ -8202,7 +8217,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
   };
 
   _context['left'] = function (str, len) {
-    if (_context._target_database === 'clickhouse') {
+    if (_variables._target_database === 'clickhouse') {
       return "leftUTF8(".concat(str, ", ").concat(len, ")");
     } else {
       return "left(".concat(str, ", ").concat(len, ")");
@@ -8210,7 +8225,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
   };
 
   _context['right'] = function (str, len) {
-    if (_context._target_database === 'clickhouse') {
+    if (_variables._target_database === 'clickhouse') {
       return "rightUTF8(".concat(str, ", ").concat(len, ")");
     } else {
       return "right(".concat(str, ", ").concat(len, ")");
@@ -8218,7 +8233,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
   };
 
   _context['tuple'] = function (first, second) {
-    if (_context._target_database === 'clickhouse') {
+    if (_variables._target_database === 'clickhouse') {
       return "tuple(".concat(first, ",").concat(second, ")");
     } else {
       return "(".concat(first, ",").concat(second, ")");
@@ -8229,6 +8244,38 @@ function init_koob_context(_vars, default_ds, default_cube) {
     // Just placeholder for logical expressions, which should keep ()
     return a;
   };
+
+  _context['get_in'] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* makeSF */])(function (ast, ctx, rs) {
+    // возвращаем переменные, которые в нашем контексте, вызывая стандартный get_in
+    return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(["get_in"].concat(ast), _variables, rs);
+    var array, m;
+    var hash = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(ast[0], ctx, rs);
+
+    if (ast.length > 1) {
+      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(ast[1]) && ast[1][0] === "[") {
+        // второй аргумент - это массив как в Clojure get_in()
+        array = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(ast[1], ctx, rs);
+      } else {
+        // нам надо в цикле прочитать все аргументы, попытаться их вычислить???
+        // сделать из них массив и присвоить в array
+        // кажется вычислять их не надо, пусть вызывают get_in явно ????
+        var _ast = _toArray(ast);
+
+        array = _ast.slice(1);
+      }
+
+      m = ["->", ast[0]].concat(array);
+    } else {
+      // один аргумент всего, значит просто резолвим переменную по имени
+      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(hash, _variables, rs);
+    } // но вообще-то вот так ещё круче ["->","a",3,1]
+    // const m = ["->"].concat( array.slice(1).reduce((a, b) => {a.push([".-",b]); return a}, [[".-", ast[0], array[0]]]) );
+
+
+    __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log('get_in===============', JSON.stringify(m));
+    __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log(_vars["->"]);
+    return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(m, _variables, rs);
+  });
 
   var partial_filter = function partial_filter(a) {
     if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(a[0]) && a[0][0] === "ignore(me)") {
@@ -8272,7 +8319,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
   _context['and'] = function () {
     var a = Array.prototype.slice.call(arguments);
-    a = partial_filter(a);
+    a = partial_filter(a); //console.log('AND:' + JSON.stringify(a))
 
     if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(a)) {
       if (a.length > 0) {
@@ -8439,6 +8486,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
   if (_context["_result"]){
    */
 
+  /* DEPRECATED!!! */
+
 
   _context['lpe_subtotal'] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* makeSF */])(function (ast, ctx) {
     if (_context["_result"]) {
@@ -8590,7 +8639,7 @@ function extend_context_for_order_by(_context, _cfg) {
         DB2:        order by rand()
         */
       if (col[0] === 'rand()') {
-        var tdb = _context[0]._target_database;
+        var tdb = _context[1]._target_database;
 
         if (tdb === 'postgresql') {
           return 'random()';
@@ -8604,7 +8653,7 @@ function extend_context_for_order_by(_context, _cfg) {
       }
 
       if (col[0] in _cfg["_aliases"]) {
-        if (upper_by_default(_context[0]._target_database) || should_quote_alias(col[0])) {
+        if (upper_by_default(_context[1]._target_database) || should_quote_alias(col[0])) {
           return "\"".concat(col[0], "\"");
         } else {
           return col[0];
@@ -8616,7 +8665,7 @@ function extend_context_for_order_by(_context, _cfg) {
       if (parts.length === 3) {
         return "".concat(parts[1], ".").concat(parts[2]); //return parts[2]
       } else {
-        if (upper_by_default(_context[0]._target_database) || should_quote_alias(col[0])) {
+        if (upper_by_default(_context[1]._target_database) || should_quote_alias(col[0])) {
           // пытаемся полечить проблему Oracle UPPER CASE имён
           //console.log(`HOPP ${JSON.stringify(_cfg["_aliases"])}`)
           // в алиасах у нас нет такого столбца
@@ -8626,8 +8675,8 @@ function extend_context_for_order_by(_context, _cfg) {
 
       return col[0];
       /*
-      if (_context[0]["_columns"][key]) return _context["column"](key)
-      if (_context[0]["_columns"][default_ds][default_cube][key]) return _context["column"](`${default_ds}.${default_cube}.${key}`)
+      if (_context[1]["_columns"][key]) return _context["column"](key)
+      if (_context[1]["_columns"][default_ds][default_cube][key]) return _context["column"](`${default_ds}.${default_cube}.${key}`)
       
       return col*/
     }),
@@ -8640,7 +8689,7 @@ function extend_context_for_order_by(_context, _cfg) {
         ЛИБО объявить тут функцию как МАКРОС и тогда уже правильно отработать column
         NEW COL: ["ch.fot_out.dor1"]
         console.log("NEW COL", col)
-         _context[0]["_columns"] содержит описания из БД
+         _context[1]["_columns"] содержит описания из БД
       */
       var parts = col[0].split('.');
 
@@ -8650,8 +8699,8 @@ function extend_context_for_order_by(_context, _cfg) {
         return col[0];
       }
       /*
-      if (_context[0]["_columns"][key]) return _context["column"](key)
-      if (_context[0]["_columns"][default_ds][default_cube][key]) return _context["column"](`${default_ds}.${default_cube}.${key}`)
+      if (_context[1]["_columns"][key]) return _context["column"](key)
+      if (_context[1]["_columns"][default_ds][default_cube][key]) return _context["column"](`${default_ds}.${default_cube}.${key}`)
       
       return col*/
 
@@ -9015,7 +9064,7 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
     }
 
     if (pw.length > 0) {
-      var wh = ["and"].concat(pw); // console.log("WHERE", JSON.stringify(wh))
+      var wh = ["and"].concat(pw); //console.log("WHERE", JSON.stringify(wh))
       // возможно, тут нужен спец. контекст с правильной обработкой or/and  функций.
       // ибо первым аргументом мы тут всегда ставим столбец!!! 
       // console.log('*****: ' + JSON.stringify(wh))
@@ -9277,7 +9326,7 @@ function generate_koob_sql(_cfg, _vars) {
     throw new Error("Empty columns in the request. Can not create SQL.");
   }
 
-  _context = init_koob_context(_context, _cfg["ds"], _cfg["cube"]); //console.log("PRE %%%%: " + _context[0]['()'])
+  _context = init_koob_context(_context, _cfg["ds"], _cfg["cube"]); //console.log("PRE %%%%: " + _context[1]['()'])
   //console.log("NORMALIZED CONFIG FILTERS: ", JSON.stringify(_cfg))
   //console.log("NORMALIZED CONFIG COLUMNS: ", JSON.stringify(_cfg["columns"]))
 
@@ -9306,16 +9355,16 @@ function generate_koob_sql(_cfg, _vars) {
   var global_joins = [];
 
   var columns = _cfg["columns"].map(function (el) {
-    // eval should fill in _context[0]["_result"] object
+    // eval should fill in _context[1]["_result"] object
     // hackers way to get results!!!!
-    _context[0]["_result"] = {
+    _context[1]["_result"] = {
       "columns": [] //console.log("PRE EVAL: " + JSON.stringify(el))
-      //console.log("PRE  CTX: " + _context[0]['()'])
+      //console.log("PRE  CTX: " + _context[1]['()'])
 
     };
     var r = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(el, _context); //console.log("POST EVAL: " + JSON.stringify(el))
 
-    var col = _context[0]["_result"];
+    var col = _context[1]["_result"];
 
     if (col["only1"] === true) {
       global_only1 = true;
@@ -9324,7 +9373,7 @@ function generate_koob_sql(_cfg, _vars) {
     columns_s.push(col);
 
     if (col["alias"]) {
-      _context[0]["_aliases"][col["alias"]] = col;
+      _context[1]["_aliases"][col["alias"]] = col;
     }
 
     if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(col["join"])) {
@@ -9351,14 +9400,14 @@ function generate_koob_sql(_cfg, _vars) {
 
 
     if (col["outer_alias"]) {
-      _context[0]["_aliases"][col["outer_alias"]] = col;
+      _context[1]["_aliases"][col["outer_alias"]] = col;
     }
 
     return r;
   });
 
-  _context[0]["_result"] = null;
-  _cfg["_aliases"] = _context[0]["_aliases"]; //console.log("ALIASES" + JSON.stringify(_cfg["_aliases"]))
+  _context[1]["_result"] = null;
+  _cfg["_aliases"] = _context[1]["_aliases"]; //console.log("ALIASES" + JSON.stringify(_cfg["_aliases"]))
 
   var has_window = null;
 
@@ -9476,11 +9525,11 @@ function generate_koob_sql(_cfg, _vars) {
   /* Если есть хотя бы один явный столбец group_by, а иначе, если просто считаем агрегаты по всей таблице без группировки по столбцам */
 
   if (_cfg["options"].includes('!MemberALL') === false && (_cfg["_group_by"].length > 0 || _cfg["_measures"].length > 0)) {
-    _cfg = inject_all_member_filters(_cfg, _context[0]["_columns"]);
+    _cfg = inject_all_member_filters(_cfg, _context[1]["_columns"]);
   }
 
   if (_cfg["options"].includes('!ParallelHierarchyFilters') === false) {
-    _cfg = inject_parallel_hierarchy_filters(_cfg, _context[0]["_columns"]);
+    _cfg = inject_parallel_hierarchy_filters(_cfg, _context[1]["_columns"]);
   } // at this point we will have something like this:
 
   /*
@@ -9514,14 +9563,14 @@ function generate_koob_sql(_cfg, _vars) {
 
 
   if (has_window) {
-    if (_context[0]["_target_database"] != 'clickhouse') {
-      throw Error("No Window functions support for flavor: ".concat(_context[0]["_target_database"]));
+    if (_context[1]["_target_database"] != 'clickhouse') {
+      throw Error("No Window functions support for flavor: ".concat(_context[1]["_target_database"]));
     } // Try to replace column func to return short names!
 
 
-    _context[0]["column"] = function (col) {
+    _context[1]["column"] = function (col) {
       // считаем, что сюда приходят только полностью резолвенные имена с двумя точками...
-      var c = _context[0]["_columns"][col];
+      var c = _context[1]["_columns"][col];
 
       if (c) {
         var parts = col.split('.');
@@ -9559,7 +9608,7 @@ function generate_koob_sql(_cfg, _vars) {
   var filters_array = _cfg["filters"];
 
   if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(filters_array)) {
-    var cols = _context[0]["_columns"];
+    var cols = _context[1]["_columns"];
     Object.keys(filters_array).map(function (col) {
       if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(cols[col])) {
         if (cols[col]["type"] === 'AGGFN') {
@@ -9582,22 +9631,26 @@ function generate_koob_sql(_cfg, _vars) {
   склеек OR
   
   */
-  //_context[0]["column"] - это функция для резолва столбца в его текстовое представление
+  //_context[1]["column"] - это функция для резолва столбца в его текстовое представление
 
 
   filters_array = get_filters_array(_context, filters_array, ''); // это теперь массив из уже готового SQL WHERE!
 
   havingSQL = get_filters_array(_context, [_cfg["having"]], ''); // ["((NOW() - INERVAL '1 DAY') > '2020-01-01') AND ((max(sum(v_main))) > 100)"]
   // console.log("AGGFN:" + JSON.stringify(havingSQL))
+  // AGGFN условия в любом случае должны попадать в HAVING, иначе SQL не работает.
+  // Проверка на наличие агрегатов не позволяет делать запрос по всей совокупности данных
 
-  if (havingSQL.length === 1 && _cfg["_group_by"].length > 0) {
-    havingSQL = "\nHAVING ".concat(havingSQL[0]);
-  } else {
+  if (havingSQL.length === 1
+  /*&& _cfg["_group_by"].length > 0*/
+  ) {
+      havingSQL = "\nHAVING ".concat(havingSQL[0]);
+    } else {
     havingSQL = '';
   } // access filters
 
 
-  var filters = _context[0]["_access_filters"];
+  var filters = _context[1]["_access_filters"];
   var ast = []; //console.log("WHERE access filters: ", JSON.stringify(filters))
 
   if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["e" /* isString */])(filters) && filters.length > 0) {
@@ -9678,7 +9731,7 @@ function generate_koob_sql(_cfg, _vars) {
   var offset = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["f" /* isNumber */])(_cfg["offset"]) ? " OFFSET ".concat(_cfg["offset"]) : '';
   var limit_offset = '';
 
-  if (_context[0]["_target_database"] === 'oracle') {
+  if (_context[1]["_target_database"] === 'oracle') {
     //AHTUNG!! это же условие для WHERE FILTERS !!!
     var _w;
 
@@ -9701,7 +9754,7 @@ function generate_koob_sql(_cfg, _vars) {
         top_level_where = "\nWHERE ".concat(_w);
       }
     }
-  } else if (_context[0]["_target_database"] === 'sqlserver') {
+  } else if (_context[1]["_target_database"] === 'sqlserver') {
     if (limit) {
       if (offset) {
         limit_offset = "\nOFFSET ".concat(parseInt(_cfg["offset"]), " ROWS FETCH NEXT ").concat(parseInt(_cfg["limit"]), " ROWS ONLY");
@@ -9717,7 +9770,7 @@ function generate_koob_sql(_cfg, _vars) {
     if (limit_offset.length > 1 && order_by.length === 0) {
       order_by = ["1"];
     }
-  } else if (_context[0]["_target_database"] === 'teradata' && (limit || offset)) {
+  } else if (_context[1]["_target_database"] === 'teradata' && (limit || offset)) {
     // Здесь нужно иметь под рукой сотрировку! если её нет, то надо свою выбрать
     var window_order_by;
 
@@ -9779,7 +9832,7 @@ function generate_koob_sql(_cfg, _vars) {
   //        Если в кубе нет настроек, то настройки из JDBC connect string сами применятся,
   //        на уровне драйвера !!! Нужна функция по получению инфы про куб (а у нас может быть несколько таблиц!!!)
   // if (isHash(_vars["_data_source"]) && isString(_vars["_data_source"]["url"]) ) {
-  //if (_context[0]["_target_database"] === 'clickhouse'){
+  //if (_context[1]["_target_database"] === 'clickhouse'){
   // config->'_connection'->'options'->'max_threads'
   // ending = "\nSETTINGS max_threads = 1"
   //}
@@ -9909,11 +9962,11 @@ function generate_koob_sql(_cfg, _vars) {
           }
         }
 
-        return quot_as_expression(_context[0]["_target_database"], el.expr, el.alias);
+        return quot_as_expression(_context[1]["_target_database"], el.expr, el.alias);
       } else {
         if (el.columns.length === 1) {
           var parts = el.columns[0].split('.');
-          return quot_as_expression(_context[0]["_target_database"], el.expr, parts[2]);
+          return quot_as_expression(_context[1]["_target_database"], el.expr, parts[2]);
         }
 
         return el.expr;
@@ -9924,11 +9977,11 @@ function generate_koob_sql(_cfg, _vars) {
 
     var expand_column = function expand_column(col) {
       var cube_prefix = "".concat(_cfg["ds"], ".").concat(_cfg["cube"]);
-      return col.match(/("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)/) === null ? _context[0]._columns["".concat(cube_prefix, ".").concat(col)] ? "".concat(_cfg["cube"], ".").concat(col) : col : col;
+      return col.match(/("[^"]+"|[^\.]+)\.("[^"]+"|[^\.]+)/) === null ? _context[1]._columns["".concat(cube_prefix, ".").concat(col)] ? "".concat(_cfg["cube"], ".").concat(col) : col : col;
     };
 
     var excl_col = expand_column(has_window); //console.log(`${_cfg["ds"]}.${_cfg["cube"]}` + " EXPANDING " + has_window + " to " + excl_col)
-    //console.log(JSON.stringify(_context[0]["_columns"]))
+    //console.log(JSON.stringify(_context[1]["_columns"]))
     // Put excl_col to the last position, so running window will accumulate data over it!
 
     var inner_order_by = [];
@@ -9949,15 +10002,15 @@ function generate_koob_sql(_cfg, _vars) {
     select = select.concat(_cfg["_columns"].map(function (el) {
       //console.log('outer1: ' + JSON.stringify(el) + " alias:" + el.alias)
       if (el.outer_alias) {
-        return quot_as_expression(_context[0]["_target_database"], get_outer_expr(el), el.outer_alias);
+        return quot_as_expression(_context[1]["_target_database"], get_outer_expr(el), el.outer_alias);
       } else if (el.alias) {
-        return quot_as_expression(_context[0]["_target_database"], get_outer_expr(el), el.alias);
+        return quot_as_expression(_context[1]["_target_database"], get_outer_expr(el), el.alias);
       } else {
         if (el.columns.length === 1) {
           var parts = el.columns[0].match(/^("[^"]+"|[A-Za-z_][\w]*)\.("[^"]+"|[A-Za-z_][\w]*)\.("[^"]+"|[A-Za-z_][\w]*)$/); //console.log(`outer2: ${get_outer_expr(el)}` + JSON.stringify(parts))
 
           if (parts) {
-            return quot_as_expression(_context[0]["_target_database"], get_outer_expr(el), parts[3]);
+            return quot_as_expression(_context[1]["_target_database"], get_outer_expr(el), parts[3]);
           }
 
           return "".concat(get_outer_expr(el));
@@ -9994,7 +10047,7 @@ function generate_koob_sql(_cfg, _vars) {
       };
 
       if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(_cfg["subtotals"])) {
-        if (_context[0]["_target_database"] === 'clickhouse') {
+        if (_context[1]["_target_database"] === 'clickhouse') {
           generate_grouping = function generate_grouping(arg) {
             var expanded = expand_outer_expr(arg);
 
@@ -10009,9 +10062,9 @@ function generate_koob_sql(_cfg, _vars) {
               return expanded;
             }
           };
-        } else if (_context[0]["_target_database"] === 'postgresql' ||
-        /* есть проблема с генерацией SQL _context[0]["_target_database"]==='oracle' || */
-        _context[0]["_target_database"] === 'teradata' || _context[0]["_target_database"] === 'sqlserver' || _context[0]["_target_database"] === 'vertica') {
+        } else if (_context[1]["_target_database"] === 'postgresql' ||
+        /* есть проблема с генерацией SQL _context[1]["_target_database"]==='oracle' || */
+        _context[1]["_target_database"] === 'teradata' || _context[1]["_target_database"] === 'sqlserver' || _context[1]["_target_database"] === 'vertica') {
           generate_grouping = function generate_grouping(arg) {
             var expanded = expand_outer_expr(arg);
 
@@ -10025,7 +10078,7 @@ function generate_koob_sql(_cfg, _vars) {
       }
 
       if (el.alias) {
-        return quot_as_expression(_context[0]["_target_database"], expand_outer_expr(el), el.alias);
+        return quot_as_expression(_context[1]["_target_database"], expand_outer_expr(el), el.alias);
       } else {
         if (el.columns.length === 1) {
           var parts = el.columns[0].split('.'); // We may have auto-generated columns, which has no dots in name!
@@ -10033,7 +10086,7 @@ function generate_koob_sql(_cfg, _vars) {
           // COLUMN: {"columns":["koob__range__"],"is_range_column":true,"expr":"koob__range__","join":{
 
           if (parts.length === 3) {
-            return quot_as_expression(_context[0]["_target_database"], expand_outer_expr(el), parts[2]);
+            return quot_as_expression(_context[1]["_target_database"], expand_outer_expr(el), parts[2]);
           } else {
             return expand_outer_expr(el);
           }
@@ -10050,7 +10103,7 @@ function generate_koob_sql(_cfg, _vars) {
       group_by = '';
     } else {
       if (_cfg["subtotals"] === 'cube') {
-        if (_context[0]["_target_database"] === 'clickhouse') {
+        if (_context[1]["_target_database"] === 'clickhouse') {
           group_by = "\nGROUP BY ".concat(group_by.join(', '), " WITH CUBE");
         } else {
           // postgresql
@@ -10058,12 +10111,12 @@ function generate_koob_sql(_cfg, _vars) {
         }
       } else if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(_cfg["subtotals"])) {
         // FIXME: кажется только mysql не алё
-        if (_context[0]["_target_database"] === 'postgresql' || _context[0]["_target_database"] === 'oracle' || _context[0]["_target_database"] === 'teradata' || _context[0]["_target_database"] === 'clickhouse' || _context[0]["_target_database"] === 'sqlserver' || _context[0]["_target_database"] === 'vertica') {
+        if (_context[1]["_target_database"] === 'postgresql' || _context[1]["_target_database"] === 'oracle' || _context[1]["_target_database"] === 'teradata' || _context[1]["_target_database"] === 'clickhouse' || _context[1]["_target_database"] === 'sqlserver' || _context[1]["_target_database"] === 'vertica') {
           var subtotals = genereate_subtotals_group_by(_cfg, _cfg["_group_by"]);
           group_by = subtotals.group_by;
           select_tail = "".concat(select_tail, ", ").concat(subtotals.select.join(', ')); // We need to add extra columns to the select as well
         } else {
-          throw new Error("named subtotals are not yet supported for ".concat(_context[0]["_target_database"]));
+          throw new Error("named subtotals are not yet supported for ".concat(_context[1]["_target_database"]));
         }
       } else {
         group_by = "\nGROUP BY ".concat(group_by.join(', '));
@@ -10167,7 +10220,7 @@ function generate_koob_sql(_cfg, _vars) {
       // ищем ${udf_args(column , title, name1, filter1, ....)}
 
       re = /\$\{udf_args\(([^\}]+)\)\}/gi;
-      var c = init_udf_args_context("".concat(_cfg.ds, ".").concat(_cfg.cube), _cfg["filters"], _context[0]["_target_database"]);
+      var c = init_udf_args_context("".concat(_cfg.ds, ".").concat(_cfg.cube), _cfg["filters"], _context[1]["_target_database"]);
       processed_from = processed_from.replace(re, udf_args_replacer); // функция filter из table lookup, но тут своя реализация... пробуем
 
       re = /\$\{filter\(([^\}]+)\)\}/gi; // FIXME: надо инитить глобальный контекст, и подкидывать переменные про юзера.
@@ -10212,11 +10265,11 @@ function generate_koob_sql(_cfg, _vars) {
 
 
         if (el.alias) {
-          return quot_as_expression(_context[0]["_target_database"], expand_outer_expr(el), el.alias);
+          return quot_as_expression(_context[1]["_target_database"], expand_outer_expr(el), el.alias);
         } else {
           if (el.columns.length === 1) {
             var parts = el.columns[0].split('.');
-            return quot_as_expression(_context[0]["_target_database"], expand_outer_expr(el), parts[2]);
+            return quot_as_expression(_context[1]["_target_database"], expand_outer_expr(el), parts[2]);
           }
 
           return expand_outer_expr(el);
@@ -10241,11 +10294,11 @@ function generate_koob_sql(_cfg, _vars) {
 
         if (el.alias) {
           // FIXME: делаем принудительную квотацию для терадаты!!!
-          //return quot_as_expression(_context[0]["_target_database"], expand_outer_expr(el), el.alias)
+          //return quot_as_expression(_context[1]["_target_database"], expand_outer_expr(el), el.alias)
           return "\"".concat(el.alias, "\"");
         } else {
           if (el.columns.length === 1) {
-            var parts = el.columns[0].split('.'); //return quot_as_expression(_context[0]["_target_database"], expand_outer_expr(el), parts[2])
+            var parts = el.columns[0].split('.'); //return quot_as_expression(_context[1]["_target_database"], expand_outer_expr(el), parts[2])
 
             return "\"".concat(parts[2], "\"");
           }
@@ -10262,7 +10315,7 @@ function generate_koob_sql(_cfg, _vars) {
       // Teradata: [TeraJDBC 16.20.00.13] [Error 3706] [SQLState 42000] Syntax error: ORDER BY is not allowed in subqueries.
 
 
-      if (_context[0]["_target_database"] === 'teradata') {
+      if (_context[1]["_target_database"] === 'teradata') {
         // FIXME: В терадате используется WINDOW  OVER (ORDER BY) для наших типов запросов, так что должно быть норм. 
         final_sql = "".concat(top_level_select, " FROM (").concat(select, "\nFROM ").concat(from).concat(where).concat(group_by).concat(havingSQL, ") koob__top__level__select__").concat(top_level_where).concat(order_by).concat(limit_offset).concat(ending);
       } else {
@@ -10275,7 +10328,7 @@ function generate_koob_sql(_cfg, _vars) {
         select = "/*ON1Y*/".concat(select);
       }
 
-      if (_context[0]["_target_database"] === 'oracle' && global_generate_3_level_sql === true) {
+      if (_context[1]["_target_database"] === 'oracle' && global_generate_3_level_sql === true) {
         // В оракле приходится 3-х этажный селект делать
         final_sql = "SELECT * FROM (SELECT koob__inner__select__.*, ROWNUM AS \"koob__row__num__\" FROM (".concat(select, "\nFROM ").concat(from).concat(where).concat(group_by).concat(havingSQL).concat(order_by, ") koob__inner__select__) koob__top__level__select__").concat(top_level_where).concat(ending);
       } else {
@@ -10285,7 +10338,7 @@ function generate_koob_sql(_cfg, _vars) {
 
 
     if (_cfg["return"] === "count") {
-      if (_context[0]["_target_database"] === 'clickhouse') {
+      if (_context[1]["_target_database"] === 'clickhouse') {
         final_sql = "select toUInt32(count(300)) as count from (".concat(final_sql, ")");
       } else {
         // use quotes to interact with our Web client in all cases (prevent upper case)

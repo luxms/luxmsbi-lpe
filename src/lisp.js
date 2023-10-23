@@ -184,7 +184,14 @@ const SPECIAL_FORMS = {                                                         
     return result;
   }),
   'get_in': makeSF((ast, ctx, rs) => {
-    const array = eval_lisp(ast[1], ctx, rs);
+    let array = [];
+    if (isArray(ast[1]) && ast[1][0] === "[") {
+      // второй аргумент - это массив как в Clojure get_in()
+      array = eval_lisp(ast[1], ctx, rs);
+    } else {
+      // просто список ключей в виде аргументов
+      [,...array] = ast
+    }
     // но вообще-то вот так ещё круче ["->","a",3,1]
     // const m = ["->"].concat( array.slice(1).reduce((a, b) => {a.push([".-",b]); return a}, [[".-", ast[0], array[0]]]) );
     const m = ["->", ast[0]].concat( array );

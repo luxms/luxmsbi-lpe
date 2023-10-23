@@ -807,8 +807,19 @@ var SPECIAL_FORMS = {
     return result;
   }),
   'get_in': makeSF(function (ast, ctx, rs) {
-    var array = eval_lisp(ast[1], ctx, rs); // но вообще-то вот так ещё круче ["->","a",3,1]
+    var array = [];
+
+    if (isArray(ast[1]) && ast[1][0] === "[") {
+      // второй аргумент - это массив как в Clojure get_in()
+      array = eval_lisp(ast[1], ctx, rs);
+    } else {
+      // просто список ключей в виде аргументов
+      var _ast = _toArray(ast);
+
+      array = _ast.slice(1);
+    } // но вообще-то вот так ещё круче ["->","a",3,1]
     // const m = ["->"].concat( array.slice(1).reduce((a, b) => {a.push([".-",b]); return a}, [[".-", ast[0], array[0]]]) );
+
 
     var m = ["->", ast[0]].concat(array); //console.log('get_in', JSON.stringify(m))
 
@@ -1378,10 +1389,10 @@ function EVAL(ast, ctx, resolveOptions) {
     if (ast.length === 0) return null; // TODO: [] => empty list (or, maybe return vector [])
     //console.log("EVAL1: ", JSON.stringify(resolveOptions),  JSON.stringify(ast))
 
-    var _ast = ast,
-        _ast2 = _toArray(_ast),
-        opAst = _ast2[0],
-        argsAst = _ast2.slice(1);
+    var _ast2 = ast,
+        _ast3 = _toArray(_ast2),
+        opAst = _ast3[0],
+        argsAst = _ast3.slice(1);
 
     var op = EVAL(opAst, ctx, _objectSpread({}, resolveOptions, {
       wantCallable: true

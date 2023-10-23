@@ -434,6 +434,30 @@ ORDER BY perda, lead DESC LIMIT 100 OFFSET 10`
             );
    });
 
+   it('should eval KOOB filters with context vars', function() {
+      assert.equal( lpe.generate_koob_sql(
+         {"columns":[
+                     "toString(v_rel_pp):v_rel_pp",
+                     "sum(group_pay_name)",
+                     'ql(get_in(_user_info, username)):uname'
+                  ],
+         "filters":{"hcode_name": ["=",  ['get_in', "_user_info", "t","a"]],
+         "group_pay_name": ["=", ['ql', ['get_in', "_user_info", ["[","t","a"]]]],
+         "v_rel_pp" : ["=", ["column", "group_pay_name"]]
+      },
+         "sort":["perda","-lead"],
+         "limit": 100,
+         "offset": 10,
+         "with":"ch.fot_out"},
+               {"_target_database": "clickhouse","_user_info":{"username":"biuser","t":{"a":444}}}),
+   `SELECT toString(v_rel_pp) as v_rel_pp, sum(group_pay_name) as group_pay_name, hcode_name as hcode_name
+FROM fot_out AS fot_out
+WHERE (hcode_name = 444) AND (group_pay_name = '444') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
+GROUP BY toString(v_rel_pp), hcode_name
+ORDER BY perda, lead DESC LIMIT 100 OFFSET 10`
+            );
+   });
+
 
    it('should eval KOOB partial filters', function() {
    assert.equal( lpe.generate_koob_sql(
