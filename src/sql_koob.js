@@ -1331,6 +1331,14 @@ function init_koob_context(_vars, default_ds, default_cube) {
     }
   }
 
+  _context['/'] = function(l, r) {
+    if (_variables._target_database === 'clickhouse'){
+      return `CAST(${l} AS Float64) / ${r}`
+    } else {
+      return `CAST(${l} AS FLOAT) / ${r}`
+    }
+  }
+
 
   _context['tuple'] = function(first, second) {
     if (_variables._target_database === 'clickhouse'){
@@ -1348,32 +1356,9 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
   _context['get_in'] = makeSF((ast, ctx, rs) => {
     // возвращаем переменные, которые в нашем контексте, вызывая стандартный get_in
-    return eval_lisp(["get_in"].concat(ast), _variables, rs);
-    let array, m;
-    const hash = eval_lisp(ast[0], ctx, rs);
-    if (ast.length > 1) {
-      if (isArray(ast[1]) && ast[1][0] === "[") {
-        // второй аргумент - это массив как в Clojure get_in()
-        array = eval_lisp(ast[1], ctx, rs);
-      } else {
-        // нам надо в цикле прочитать все аргументы, попытаться их вычислить???
-        // сделать из них массив и присвоить в array
-        // кажется вычислять их не надо, пусть вызывают get_in явно ????
-        [,...array] = ast
-      }
-      
-      m = ["->", ast[0]].concat( array );
-    } else {
-      // один аргумент всего, значит просто резолвим переменную по имени
-      return eval_lisp(hash, _variables, rs);
-    }
-    
-    // но вообще-то вот так ещё круче ["->","a",3,1]
-    // const m = ["->"].concat( array.slice(1).reduce((a, b) => {a.push([".-",b]); return a}, [[".-", ast[0], array[0]]]) );
-    
-    console.log('get_in===============', JSON.stringify(m))
-    console.log(_vars["->"])
-    return eval_lisp(m, _variables, rs);
+    // при этом наши переменные фильтруем!!пока что есть только _user_info
+    let _v = {"user": _variables["_user_info"]};
+    return eval_lisp(["get_in"].concat(ast), _v, rs);
   });
 
     var partial_filter = function(a) {

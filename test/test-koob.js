@@ -166,12 +166,12 @@ ORDER BY group_pay_name, v_main, v_agg`
       {"columns":["v_rel_pp_i / (100 * (v_main + 1))", "sum((v_main+v_rel_pp_i)/100)"],
       "with":"ch.fot_out"},
             {"_access_filters":"v_main > 1 and (v_rel_pp_i < 0 or v_rel_pp_i = 0) and v_main = [1,2,3] and v_main != [1,2,3]"}),
-`SELECT v_rel_pp_i / (100 * (v_main + 1)) as v_main, sum((v_main + v_rel_pp_i) / 100) as v_main
+`SELECT CAST(v_rel_pp_i AS FLOAT) / (100 * (v_main + 1)) as v_main, sum(CAST((v_main + v_rel_pp_i) AS FLOAT) / 100) as v_main
 FROM fot_out AS fot_out
 WHERE ((group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL))
    AND
    ((v_main > 1) AND ((((v_rel_pp_i < 0) OR (v_rel_pp_i = 0))) AND ((v_main IN (1, 2, 3)) AND (v_main NOT IN (1, 2, 3)))))
-GROUP BY v_rel_pp_i / (100 * (v_main + 1))`
+GROUP BY CAST(v_rel_pp_i AS FLOAT) / (100 * (v_main + 1))`
          );
    })
 
@@ -180,12 +180,12 @@ it('KOOB access filters LPE', function() {
           {"columns":["v_rel_pp_i / (100 * (v_main + 1))", "sum((v_main+v_rel_pp_i)/100)"],
           "with":"ch.fot_out"},
                 {"_access_filters":["and",[">","v_main",1],["()",["or",["<","v_rel_pp_i",0],["=","v_rel_pp_i",0]]]]}),
-    `SELECT v_rel_pp_i / (100 * (v_main + 1)) as v_main, sum((v_main + v_rel_pp_i) / 100) as v_main
+    `SELECT CAST(v_rel_pp_i AS FLOAT) / (100 * (v_main + 1)) as v_main, sum(CAST((v_main + v_rel_pp_i) AS FLOAT) / 100) as v_main
 FROM fot_out AS fot_out
 WHERE ((group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL))
    AND
    ((v_main > 1) AND (((v_rel_pp_i < 0) OR (v_rel_pp_i = 0))))
-GROUP BY v_rel_pp_i / (100 * (v_main + 1))`
+GROUP BY CAST(v_rel_pp_i AS FLOAT) / (100 * (v_main + 1))`
              );
        })
 
@@ -194,12 +194,12 @@ it('KOOB access filters LPE with expr', function() {
            {"columns":["v_rel_pp_i / (100 * (v_main + 1))", "sum((v_main+v_rel_pp_i)/100)"],
            "with":"ch.fot_out"},
                    {"_access_filters":["expr", ["and",[">","v_main",1],["()",["or",["<","v_rel_pp_i",0],["=","v_rel_pp_i",0]]]]]}),
-       `SELECT v_rel_pp_i / (100 * (v_main + 1)) as v_main, sum((v_main + v_rel_pp_i) / 100) as v_main
+       `SELECT CAST(v_rel_pp_i AS FLOAT) / (100 * (v_main + 1)) as v_main, sum(CAST((v_main + v_rel_pp_i) AS FLOAT) / 100) as v_main
 FROM fot_out AS fot_out
 WHERE ((group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL))
    AND
    ((v_main > 1) AND (((v_rel_pp_i < 0) OR (v_rel_pp_i = 0))))
-GROUP BY v_rel_pp_i / (100 * (v_main + 1))`
+GROUP BY CAST(v_rel_pp_i AS FLOAT) / (100 * (v_main + 1))`
                );
            })
 
@@ -209,12 +209,12 @@ it('KOOB access filters LPE with quoted string expr', function() {
                 {"columns":["v_rel_pp_i / (100 * (v_main + 1))", "sum((v_main+v_rel_pp_i)/100)"],
                 "with":"ch.fot_out"},
                         {"_access_filters":["expr", [">","v_main",["'","quoted string"]]]}),
-            `SELECT v_rel_pp_i / (100 * (v_main + 1)) as v_main, sum((v_main + v_rel_pp_i) / 100) as v_main
+            `SELECT CAST(v_rel_pp_i AS FLOAT) / (100 * (v_main + 1)) as v_main, sum(CAST((v_main + v_rel_pp_i) AS FLOAT) / 100) as v_main
 FROM fot_out AS fot_out
 WHERE ((group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL))
    AND
    (v_main > 'quoted string')
-GROUP BY v_rel_pp_i / (100 * (v_main + 1))`
+GROUP BY CAST(v_rel_pp_i AS FLOAT) / (100 * (v_main + 1))`
                     );
                 })
 
@@ -439,10 +439,10 @@ ORDER BY perda, lead DESC LIMIT 100 OFFSET 10`
          {"columns":[
                      "toString(v_rel_pp):v_rel_pp",
                      "sum(group_pay_name)",
-                     'ql(get_in(_user_info, username)):uname'
+                     'ql(get_in(user, username)):uname'
                   ],
-         "filters":{"hcode_name": ["=",  ['get_in', "_user_info", "t","a"]],
-         "group_pay_name": ["=", ['ql', ['get_in', "_user_info", ["[","t","a"]]]],
+         "filters":{"hcode_name": ["=",  ['get_in', "user", "t","a"]],
+         "group_pay_name": ["=", ['ql', ['get_in', "user", ["[","t","a"]]]],
          "v_rel_pp" : ["=", ["column", "group_pay_name"]]
       },
          "sort":["perda","-lead"],
@@ -450,10 +450,10 @@ ORDER BY perda, lead DESC LIMIT 100 OFFSET 10`
          "offset": 10,
          "with":"ch.fot_out"},
                {"_target_database": "clickhouse","_user_info":{"username":"biuser","t":{"a":444}}}),
-   `SELECT toString(v_rel_pp) as v_rel_pp, sum(group_pay_name) as group_pay_name, hcode_name as hcode_name
+   `SELECT toString(v_rel_pp) as v_rel_pp, sum(group_pay_name) as group_pay_name, 'biuser' as uname
 FROM fot_out AS fot_out
-WHERE (hcode_name = 444) AND (group_pay_name = '444') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
-GROUP BY toString(v_rel_pp), hcode_name
+WHERE (hcode_name = 444) AND (group_pay_name = '444') AND (v_rel_pp = group_pay_name) AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
+GROUP BY toString(v_rel_pp), 'biuser'
 ORDER BY perda, lead DESC LIMIT 100 OFFSET 10`
             );
    });
@@ -481,7 +481,7 @@ ORDER BY perda, lead DESC LIMIT 100 OFFSET 10`
       "offset": 10,
       "with":"ch.fot_out"},
             {"_target_database": "postgresql"}),
- `SELECT sum(v_rel_pp) as v_rel_pp, group_pay_name as group_pay_name, hcode_name as hcode_name, CASE WHEN sum(v_rel_pp) != 0 THEN (sum(v_rel_pp) / count(pay_code) * 50) + (sum(v_rel_pp) / sum(group_pay_name) * 50) ELSE 0 END as koeff, CASE WHEN sum(v_rel_pp) = 0 THEN 0 ELSE sum(pay_code) / sum(v_rel_pp) END as d, CASE WHEN v_rel_pp IN (0, 1, 2) OR v_rel_pp IS NULL THEN 0 ELSE sum(pay_code) / sum(v_rel_pp) END as d, CASE WHEN v_rel_pp NOT IN (0, 1, 2) AND v_rel_pp IS NOT NULL THEN 0 ELSE sum(pay_code) / sum(v_rel_pp) END as d, CASE WHEN (v_rel_pp <= 0) AND ((v_rel_pp > -2) AND (NOT v_rel_pp IS NULL)) THEN 0 ELSE sum(pay_code) / sum(v_rel_pp) END as d
+ `SELECT sum(v_rel_pp) as v_rel_pp, group_pay_name as group_pay_name, hcode_name as hcode_name, CASE WHEN sum(v_rel_pp) != 0 THEN (CAST(sum(v_rel_pp) AS FLOAT) / count(pay_code) * 50) + (CAST(sum(v_rel_pp) AS FLOAT) / sum(group_pay_name) * 50) ELSE 0 END as koeff, CASE WHEN sum(v_rel_pp) = 0 THEN 0 ELSE CAST(sum(pay_code) AS FLOAT) / sum(v_rel_pp) END as d, CASE WHEN v_rel_pp IN (0, 1, 2) OR v_rel_pp IS NULL THEN 0 ELSE CAST(sum(pay_code) AS FLOAT) / sum(v_rel_pp) END as d, CASE WHEN v_rel_pp NOT IN (0, 1, 2) AND v_rel_pp IS NOT NULL THEN 0 ELSE CAST(sum(pay_code) AS FLOAT) / sum(v_rel_pp) END as d, CASE WHEN (v_rel_pp <= 0) AND ((v_rel_pp > -2) AND (NOT v_rel_pp IS NULL)) THEN 0 ELSE CAST(sum(pay_code) AS FLOAT) / sum(v_rel_pp) END as d
 FROM fot_out AS fot_out
 WHERE (hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND (1=0) AND (1=1) AND ((1=1) OR (pay_code ILIKE 'Муж')) AND (sex_code IS NULL)
 GROUP BY group_pay_name, hcode_name
@@ -618,7 +618,7 @@ ORDER BY "My version"`
       "sort":["+My version"],
       "with":"ch.fot_out"},
             {"_target_database": "postgresql"}),
-`SELECT sum("Val") as "sum_Val", CASE WHEN max(group_pay_name) = 'Руб./рабочее место' THEN sum((round(v_main,2))) / sum("Val") ELSE 100 END as v, (round(v_main,2)) as fackt, group_pay_name as group_pay_name, hcode_name as hcode_name, "My version" as "My version"
+`SELECT sum("Val") as "sum_Val", CASE WHEN max(group_pay_name) = 'Руб./рабочее место' THEN CAST(sum((round(v_main,2))) AS FLOAT) / sum("Val") ELSE 100 END as v, (round(v_main,2)) as fackt, group_pay_name as group_pay_name, hcode_name as hcode_name, "My version" as "My version"
 FROM fot_out AS fot_out
 WHERE (hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND ("My version" = '9.0') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
 GROUP BY (round(v_main,2)), group_pay_name, hcode_name, "My version"
@@ -646,7 +646,7 @@ ORDER BY "My version"`
    "sort":["+My version"],
    "with":"ch.fot_out"},
          {"_target_database": "postgresql"}),
-`SELECT sum("Val"::float / "Val"::float)::'double precision' as "sum_Val", CASE WHEN max(group_pay_name::float)::int = 'Руб./рабочее место' THEN sum((round(v_main,2))::float) / sum("Val"::float) ELSE 100 END as v, (round(v_main,2)) as fackt, concat_ws('-',group_pay_name,'END') as group_pay_name, concat(hcode_name,1,2,3) as hcode_name, CASE WHEN "Val" > 0 THEN 100 ELSE CASE WHEN "Val" < 0 THEN 10 ELSE CASE WHEN true THEN -20 END END END as cond, CASE WHEN "Val" > 0 THEN 100 ELSE CASE WHEN "Val" < 0 THEN 10 ELSE -20 END END as cond2, CASE WHEN "Val" > 0 THEN 100 END as cond3, "My version" as "My version"
+`SELECT sum(CAST("Val"::float AS FLOAT) / "Val"::float)::'double precision' as "sum_Val", CASE WHEN max(group_pay_name::float)::int = 'Руб./рабочее место' THEN CAST(sum((round(v_main,2))::float) AS FLOAT) / sum("Val"::float) ELSE 100 END as v, (round(v_main,2)) as fackt, concat_ws('-',group_pay_name,'END') as group_pay_name, concat(hcode_name,1,2,3) as hcode_name, CASE WHEN "Val" > 0 THEN 100 ELSE CASE WHEN "Val" < 0 THEN 10 ELSE CASE WHEN true THEN -20 END END END as cond, CASE WHEN "Val" > 0 THEN 100 ELSE CASE WHEN "Val" < 0 THEN 10 ELSE -20 END END as cond2, CASE WHEN "Val" > 0 THEN 100 END as cond3, "My version" as "My version"
 FROM fot_out AS fot_out
 WHERE (hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND ("My version" = '9.0') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
 GROUP BY (round(v_main,2)), concat_ws('-',group_pay_name,'END'), concat(hcode_name,1,2,3), CASE WHEN "Val" > 0 THEN 100 ELSE CASE WHEN "Val" < 0 THEN 10 ELSE CASE WHEN true THEN -20 END END END, CASE WHEN "Val" > 0 THEN 100 ELSE CASE WHEN "Val" < 0 THEN 10 ELSE -20 END END, CASE WHEN "Val" > 0 THEN 100 END, "My version"
@@ -671,7 +671,7 @@ ORDER BY "My version"`
       "sort":["+My version"],
       "with":"ch.fot_out"},
             {"_target_database": "postgresql"}),
-`SELECT sum("Val") as "sum_Val", CASE WHEN max(group_pay_name) = 'Руб./рабочее место' THEN sum((round(v_main,2))) / sum("Val") ELSE 100 END as v, (round(v_main,2)) as fackt, group_pay_name as group_pay_name, hcode_name as hcode_name, "My version" as "My version"
+`SELECT sum("Val") as "sum_Val", CASE WHEN max(group_pay_name) = 'Руб./рабочее место' THEN CAST(sum((round(v_main,2))) AS FLOAT) / sum("Val") ELSE 100 END as v, (round(v_main,2)) as fackt, group_pay_name as group_pay_name, hcode_name as hcode_name, "My version" as "My version"
 FROM fot_out AS fot_out
 WHERE (hcode_name IN ('-', '''')) AND ("My version" = '9.0') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
 GROUP BY (round(v_main,2)), group_pay_name, hcode_name, "My version"

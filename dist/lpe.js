@@ -7014,19 +7014,19 @@ function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { va
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
-
-function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
-
-function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
-
 function _toArray(arr) { return _arrayWithHoles(arr) || _iterableToArray(arr) || _nonIterableRest(); }
 
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
 
+function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
+
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
+
 function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
 
-function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
 
 /**
     Copyright (c) 2019 Luxms Inc.
@@ -8387,6 +8387,14 @@ function init_koob_context(_vars, default_ds, default_cube) {
     }
   };
 
+  _context['/'] = function (l, r) {
+    if (_variables._target_database === 'clickhouse') {
+      return "CAST(".concat(l, " AS Float64) / ").concat(r);
+    } else {
+      return "CAST(".concat(l, " AS FLOAT) / ").concat(r);
+    }
+  };
+
   _context['tuple'] = function (first, second) {
     if (_variables._target_database === 'clickhouse') {
       return "tuple(".concat(first, ",").concat(second, ")");
@@ -8402,34 +8410,11 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
   _context['get_in'] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* makeSF */])(function (ast, ctx, rs) {
     // возвращаем переменные, которые в нашем контексте, вызывая стандартный get_in
-    return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(["get_in"].concat(ast), _variables, rs);
-    var array, m;
-    var hash = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(ast[0], ctx, rs);
-
-    if (ast.length > 1) {
-      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(ast[1]) && ast[1][0] === "[") {
-        // второй аргумент - это массив как в Clojure get_in()
-        array = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(ast[1], ctx, rs);
-      } else {
-        // нам надо в цикле прочитать все аргументы, попытаться их вычислить???
-        // сделать из них массив и присвоить в array
-        // кажется вычислять их не надо, пусть вызывают get_in явно ????
-        var _ast = _toArray(ast);
-
-        array = _ast.slice(1);
-      }
-
-      m = ["->", ast[0]].concat(array);
-    } else {
-      // один аргумент всего, значит просто резолвим переменную по имени
-      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(hash, _variables, rs);
-    } // но вообще-то вот так ещё круче ["->","a",3,1]
-    // const m = ["->"].concat( array.slice(1).reduce((a, b) => {a.push([".-",b]); return a}, [[".-", ast[0], array[0]]]) );
-
-
-    __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log('get_in===============', JSON.stringify(m));
-    __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log(_vars["->"]);
-    return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(m, _variables, rs);
+    // при этом наши переменные фильтруем!!пока что есть только _user_info
+    var _v = {
+      "user": _variables["_user_info"]
+    };
+    return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["a" /* eval_lisp */])(["get_in"].concat(ast), _v, rs);
   });
 
   var partial_filter = function partial_filter(a) {
@@ -8705,9 +8690,9 @@ function init_koob_context(_vars, default_ds, default_cube) {
           return v === null ? "".concat(c, " IS NULL") : "".concat(c, " = ").concat(v);
         }
       } else {
-        var _v = resolveValue(ast[1]);
+        var _v2 = resolveValue(ast[1]);
 
-        return _v === null ? "".concat(c, " IS NULL") : "".concat(c, " = ").concat(_v);
+        return _v2 === null ? "".concat(c, " IS NULL") : "".concat(c, " = ").concat(_v2);
       }
     } // check if we have null in the array of values...
 

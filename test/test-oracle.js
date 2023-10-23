@@ -137,7 +137,7 @@ it('should eval KOOB ILIKE', function() {
       "sort":["perda","-lead","-rand()","rand()"],
       "with":"ch.fot_out"},
             {"_target_database": "oracle"}),
-   `SELECT sum(v_rel_pp) as "v_rel_pp", group_pay_name as "group_pay_name", hcode_name as "hcode_name", CASE WHEN sum(v_rel_pp) = 0 THEN 0 ELSE sum(pay_code) / sum(v_rel_pp) END as "d"
+   `SELECT sum(v_rel_pp) as "v_rel_pp", group_pay_name as "group_pay_name", hcode_name as "hcode_name", CASE WHEN sum(v_rel_pp) = 0 THEN 0 ELSE CAST(sum(pay_code) AS FLOAT) / sum(v_rel_pp) END as "d"
 FROM fot_out fot_out
 WHERE (hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND (1=0) AND (1=1) AND ((1=1) OR (UPPER(pay_code) LIKE UPPER('Муж'))) AND (sex_code IS NULL)
 GROUP BY group_pay_name, hcode_name
