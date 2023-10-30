@@ -54,6 +54,13 @@ describe('LISP tests', function () {
     assert.deepEqual(lpe.eval_lisp( lpe.parse('if(c=null, 1, false)')  , { a: true , b: true}), 1);
     assert.deepEqual(lpe.eval_lisp(["if", "a", 1, 2], {}), 2);
     assert.deepEqual(lpe.eval_lisp(["if", ["=", "a", ["'", "a"]], 1, 2], { a: "a" }), 1);
+    assert.deepEqual(lpe.eval_lisp(["if", true, 1], {}), 1);
+    assert.deepEqual(lpe.eval_lisp(["if", false, 1], {}), undefined);
+    assert.deepEqual(lpe.eval_lisp(["if", false, 1, true, 2], {}), 2);                                    // if (false) 1; else if (true) 2; else undefined;
+    assert.deepEqual(lpe.eval_lisp(["if", false, 1, false, 2], {}), undefined);                           // if (false) 1; else if (false) 2; else undefined;
+    assert.deepEqual(lpe.eval_lisp(["if", undefined, undefined, undefined, undefined, 2], {}), 2);        // if (undefined) undefined; else if (undefined) undefined; else 2;
+    assert.deepEqual(lpe.eval_lisp(["if", true, 1, false, 2, 3], {}), 1);                                 // if (true) 1; else if (false) 2; else 3;
+    assert.deepEqual(lpe.eval_lisp(["if", false, 1, false, 2, true, 3, 4], {}), 3);                       // if (false) 1; else if (false) 2; else if (true) 3; else 4
   });
 
   it('arrays', function () {
@@ -188,7 +195,7 @@ describe('LISP tests', function () {
   });
 
   it('complex', function () {
-    assert.deepEqual(lpe.eval_lisp(lpe.parse('begin(assoc_in(db, ["adm","users","sys_config","groups"], get_in(http, [ "resp", "body", "groups"])), ctx(db))'), 
+    assert.deepEqual(lpe.eval_lisp(lpe.parse('begin(assoc_in(db, ["adm","users","sys_config","groups"], get_in(http, [ "resp", "body", "groups"])), ctx(db))'),
     { "db":{},"http":{"resp":{"body":{"sub": "0fa6f0f5-b3e9-4579-a759-daf4159b717e", "name": "Dima Dorofeev", "email": "dima@yasp.ru", "groups": ["/corp-wifi", "/ipausers", "/openshift", "/harbor", "/awx-dev", "/inventory-writers"], "given_name": "Dima", "family_name": "Dorofeev", "userPrincipalName": "ddorofeev@SPB.LUXMS.COM", "preferred_username": "ddorofeev"}}}}),
     {
       "db": {
@@ -211,7 +218,7 @@ describe('LISP tests', function () {
   });
 
   it('complex', function () {
-    assert.deepEqual(lpe.eval_lisp(lpe.parse('begin(assoc_in(db, ["adm","users","sys_config","groups"],  [ "my-grp" ]), ctx(db))'), 
+    assert.deepEqual(lpe.eval_lisp(lpe.parse('begin(assoc_in(db, ["adm","users","sys_config","groups"],  [ "my-grp" ]), ctx(db))'),
     { "db":{},"http":{"resp":{"body":{"sub": "0fa6f0f5-b3e9-4579-a759-daf4159b717e", "name": "Dima Dorofeev", "email": "dima@yasp.ru", "groups": ["/corp-wifi", "/ipausers", "/openshift", "/harbor", "/awx-dev", "/inventory-writers"], "given_name": "Dima", "family_name": "Dorofeev", "userPrincipalName": "ddorofeev@SPB.LUXMS.COM", "preferred_username": "ddorofeev"}}}}),
     {
       "db": {
