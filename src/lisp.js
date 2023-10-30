@@ -3,7 +3,7 @@
  *  Copyright (C) 2014 Joel Martin
  *  Licensed under MPL 2.0
  *  https://github.com/kanaka/mal
- * 
+ *
  */
 /**
  *  The code has been reworked to suite LuxmsBI needs
@@ -11,7 +11,6 @@
  *  2017-2019
  */
 
-import { split } from 'core-js/fn/symbol';
 import console from './console/console';
 import {parse, LPESyntaxError} from './lpep';
 
@@ -26,7 +25,7 @@ export const isFunction = (arg) => (typeof arg === 'function');
 
 /**
  * Get or Set variable in context
- * @param {*} ctx - array, hashmap or function that stores variables 
+ * @param {*} ctx - array, hashmap or function that stores variables
  * @param {*} varName - the name of variable
  * @param {*} value - optional value to set (undefined if get)
  * @param {*} resolveOptions - options on how to resolve
@@ -43,7 +42,7 @@ function $var$(ctx, varName, value, resolveOptions) {
     if (ctx.length) $var$(ctx[0], varName, value, resolveOptions);              // set => set variable to HEAD context
     return undefined;                                                           // ??? ctx.length = 0
   }
-  
+
   if (isFunction(ctx)) {
     return ctx(varName, value, resolveOptions);
   }
@@ -117,7 +116,14 @@ const SPECIAL_FORMS = {                                                         
   'macroexpand': makeSF(macroexpand),
   'begin': makeSF((ast, ctx, rs) => ast.reduce((acc, astItem) => EVAL(astItem, ctx, rs), null)),
   'do': makeSF((ast, ctx) => { throw new Error('DO not implemented') }),
-  'if': makeSF((ast, ctx, ro) => EVAL(ast[0], ctx, {...ro, resolveString: false}) ? EVAL(ast[1], ctx, ro) : EVAL(ast[2], ctx, ro)),
+  'if': makeSF((ast, ctx, ro) => {
+    for (let i = 0; i < ast.length; i += 2) {
+      if (i === ast.length - 1) return EVAL(ast[i], ctx, ro);                                       // last odd operand means "else"
+      let cond = EVAL(ast[i], ctx, {...ro, resolveString: false});
+      if (cond) return EVAL(ast[i + 1], ctx, ro);
+    }
+    return undefined;
+  }),
   '~': makeSF((ast, ctx, rs) => {                                               // mark as macro
     const f = EVAL(ast[0], ctx, rs);                                            // eval regular function
     f.ast.push(1); // mark as macro
@@ -160,7 +166,7 @@ const SPECIAL_FORMS = {                                                         
     const result = $var$(ctx, ast[0], value);
     return result;
   }),
-  'resolve': makeSF((ast, ctx, rs) => {                                             
+  'resolve': makeSF((ast, ctx, rs) => {
     const result = $var$(ctx, ast[0]);
     return result;
   }),
@@ -343,10 +349,10 @@ const STDLIB = {
         arr = [".-", acc, arr[1]];
       } else {
         arr = arr.slice(0);                                                     // must copy array before modify
-        arr.splice(1, 0, acc);  
-        //console.log("AST !!!!" + JSON.stringify(arr))     
+        arr.splice(1, 0, acc);
+        //console.log("AST !!!!" + JSON.stringify(arr))
         // AST[["filterit",[">",1,0]]]
-        // AST !!!!["filterit","locations",[">",1,0]]                                  
+        // AST !!!!["filterit","locations",[">",1,0]]
         // подставляем "вычисленное" ранее значение в качестве первого аргумента... классика thread first
       }
       acc = arr;
@@ -409,7 +415,7 @@ function macroexpand(ast, ctx, resolveString = true) {
     if (!isArray(ast)) break;
     if (!isString(ast[0])) break;
     const v = $var$(ctx, ast[0]);
-    //const v = $var$(ctx, ast[0], undefined, {"resolveString": resolveString}); возможно надо так 
+    //const v = $var$(ctx, ast[0], undefined, {"resolveString": resolveString}); возможно надо так
     if (!isFunction(v)) break;
 
     if (!isMacro(v)) break;
@@ -446,7 +452,7 @@ function env_bind(ast, ctx, exprs) {
 
 
 function EVAL(ast, ctx, resolveOptions) {
-  
+
   while (true) {
     //ast = macroexpand(ast, ctx);
     //ast = macroexpand(ast, ctx, resolveOptions && resolveOptions.resolveString ? true: false);
@@ -485,13 +491,13 @@ function EVAL(ast, ctx, resolveOptions) {
 
     //console.log("EVAL NOT SF evaluated args 11111: ", op.name, JSON.stringify(argsAst))
     const args = argsAst.map(a => EVAL(a, ctx, resolveOptions));                 // evaluate arguments
-    //console.log("EVAL NOT SF evaluated args: ", JSON.stringify(args)) 
+    //console.log("EVAL NOT SF evaluated args: ", JSON.stringify(args))
     if (op.ast) {
-      console.log("EVAL NOT SF evaluated args AST: ", JSON.stringify(ast)) 
+      console.log("EVAL NOT SF evaluated args AST: ", JSON.stringify(ast))
       ast = op.ast[0];
       ctx = env_bind(op.ast[2], op.ast[1], args);                               // TCO
     } else {
-      //console.log("EVAL NOT SF evaluated args APPLY: ", op.name, ' ', JSON.stringify(args)) 
+      //console.log("EVAL NOT SF evaluated args APPLY: ", op.name, ' ', JSON.stringify(args))
       /*
         toString.apply(toString, ['aa'])
         '[object Function]'
