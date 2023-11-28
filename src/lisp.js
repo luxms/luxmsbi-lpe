@@ -191,16 +191,27 @@ const SPECIAL_FORMS = {                                                         
   }),
   'get_in': makeSF((ast, ctx, rs) => {
     let array = [];
-    if (isArray(ast[1]) && ast[1][0] === "[") {
-      // второй аргумент - это массив как в Clojure get_in()
-      array = eval_lisp(ast[1], ctx, rs);
+    let hashname;
+    //console.log(JSON.stringify(ast))
+    if (isArray(ast[0])) {
+      hashname = eval_lisp(ast[0], ctx, rs);
+    } else {
+      hashname = ast[0]
+    }
+
+    if (isArray(ast[1]) && ast[1][0] === '[') {
+        // массив аргументов, ка в классическом get_in в Clojure
+        array = eval_lisp(ast[1], ctx, rs);
     } else {
       // просто список ключей в виде аргументов
       [,...array] = ast
+      const a = ["["].concat( array );
+      array = eval_lisp(a, ctx, rs);
     }
+
     // но вообще-то вот так ещё круче ["->","a",3,1]
     // const m = ["->"].concat( array.slice(1).reduce((a, b) => {a.push([".-",b]); return a}, [[".-", ast[0], array[0]]]) );
-    const m = ["->", ast[0]].concat( array );
+    const m = ["->", hashname].concat( array );
     //console.log('get_in', JSON.stringify(m))
     return eval_lisp(m, ctx, rs);
   }),

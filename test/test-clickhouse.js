@@ -35,6 +35,34 @@ or \${filters(id,dt)})`,
 //             "pay_code":["and",["ilike","%А%"],["=","2022-01-02","2022-10-10","2020-09-09"]]
 describe('KOOB templates', function() {
 
+
+   it('should eval to_char', function() {
+      assert.equal( lpe.generate_koob_sql(
+         {"columns":[
+                     "to_char(dt, 'YYYY'):dt",
+                     "to_char(dt,'YYYY-\"Q\"Q'):dt_period",
+                     "to_char(dt,'YYYY-\"W\"WW'):dt_w",
+                     "to_char(dt,'YYYY-\"Q\"Q'):dt_q",
+                     'sum(id)'
+                  ],
+         "filters":{
+         },
+         "sort": ["id"],
+         "limit": 10,
+         "with":"bi.cube"},
+               {"_target_database": "clickhouse"}),
+   `SELECT leftPad(toString(toYear(dt)), 4, '0') as dt, format('{}-Q{}', leftPad(toString(toYear(dt)), 4, '0'), toString(toQuarter(dt))) as dt_period, format('{}-W{}', leftPad(toString(toYear(dt)), 4, '0'), leftPad(toString(toISOWeek(dt)), 2, '0')) as dt_w, format('{}-Q{}', leftPad(toString(toYear(dt)), 4, '0'), toString(toQuarter(dt))) as dt_q, sum(id) as id
+FROM (SELECT 1 from cube where
+1=1
+or 1=1
+or 1=1)
+GROUP BY dt, dt_period, dt_w, dt_q
+ORDER BY id LIMIT 10`
+            );
+   });
+
+
+
    it('should eval ilike', function() {
       assert.equal( lpe.generate_koob_sql(
          {"columns":[
@@ -133,11 +161,9 @@ where (id = 23000035)
    it('should filter()', function() {
                globalThis.MOCKCubeSQL = {
                   "clickhouse-bi.cube":{
-                     "query": `SELECT 1 from cube where \${filter(a = $(user.sys_config.external) or b = var_samp(regions) or a = [1,2,3] 
-                        or b = user.sys_config.ext_groups 
-                        or b = $(user.sys_config.ext_groups)
-                        or b in ($(user.sys_config.ext_groups))
-                        and cond(col in ($(user.sys_config.ext_groups)), ['col is null']) )}`,
+                     "query": `SELECT 1 from cube where \${filter(a = get_in(user,sys_config,external) or b = var_samp(regions) or a = [1,2,3] 
+                        or b = get_in(user,sys_config,ext_groups) 
+                        and cond(col in (get_in(user,sys_config,ext_groups)), ['col is null']) )}`,
                      "config": {"is_template": 1,"skip_where": 1}}}
                
                assert.equal( lpe.generate_koob_sql(
@@ -190,6 +216,54 @@ GROUP BY id
 ORDER BY id LIMIT 10`
                );
    });
+
+
+   it('should eval KOOB SUBTOTALS ONE PLAIN ROW', function() {
+
+      assert.equal( lpe.generate_koob_sql(
+         {"columns":["type_oe_bi", "avg(v_rel_fzp)","sum(v_rel_pp_i)"],
+         "subtotals": ["type_oe_bi"],
+         "config": {"subtotalsMode":"!AllButOneInterleaved", "subtotalsTotal":false},
+         "filters":{"dt":["!=","2020-03","2020-04"],
+         "pay_name":["!=","Не задано"]},
+         "sort":["group_pay_name","v_main"],
+         "with":"ch.fot_out"},
+               {"_target_database": "clickhouse"}),
+`SELECT type_oe_bi, avg(v_rel_fzp), sum(v_rel_pp_i), GROUPING(type_oe_bi) AS "∑type_oe_bi"
+FROM fot_out AS fot_out
+WHERE (ch.fot_out.dt NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано')
+GROUP BY GROUPING SETS ((type_oe_bi)
+                       )
+ORDER BY group_pay_name, v_main`
+            );
+      });
+
+
+   it('should eval KOOB SUBTOTALS', function() {
+
+      assert.equal( lpe.generate_koob_sql(
+         {"columns":["dt", "all_contracts", "regions", "tru", "avg(v_rel_fzp)","sum(v_rel_pp_i)"],
+         "subtotals": ["dt", "all_contracts", "regions", "tru"],
+         "config": {"subtotalsMode":"!AllButOneInterleaved", "subtotalsTotal":true},
+         "filters":{"dt":["!=","2020-03","2020-04"],
+         "pay_name":["!=","Не задано"]},
+         "sort":["all_contracts", "regions"],
+         "with":"bi.cube"},
+               {"_target_database": "clickhouse"}),
+`SELECT DISTINCT (NOW() - INERVAL '1 DAY') as "dt", type_oe_bi as "type_oe_bi", region_name as "region_name", pay_name as "pay_name", avg(v_rel_fzp) as "v_rel_fzp", sum(v_rel_pp_i), GROUPING((NOW() - INERVAL '1 DAY')) AS "∑dt", GROUPING(type_oe_bi) AS "∑type_oe_bi", GROUPING(region_name) AS "∑region_name", GROUPING(pay_name) AS "∑pay_name"
+FROM fot_out AS fot_out
+WHERE ((NOW() - INERVAL '1 DAY') NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано') AND (pay_code != 'Не задано') AND (sex_code IS NULL)
+GROUP BY GROUPING SETS (((NOW() - INERVAL '1 DAY'), type_oe_bi, region_name, pay_name),
+                        ((NOW() - INERVAL '1 DAY')),
+                        ((NOW() - INERVAL '1 DAY'),type_oe_bi),
+                        ((NOW() - INERVAL '1 DAY'),type_oe_bi,region_name),
+                        ((NOW() - INERVAL '1 DAY'),type_oe_bi,region_name,pay_name),
+                        ()
+                       )
+ORDER BY "group_pay_name", "v_main"`
+            );
+      });
+
 });
 
 

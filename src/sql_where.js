@@ -374,7 +374,8 @@ export function sql_where_context(_vars) {
                 ar[0] === "lpe_pg_tstz_at_time_zone" ||
                 ar[0] === "column" ||
                 ar[0] === "cond" ||
-                ar[0] === "includes"
+                ar[0] === "includes" ||
+                ar[0] === "get_in"
                 ) {
             return eval_lisp(ar, ctx);
           } else {
@@ -451,6 +452,13 @@ export function sql_where_context(_vars) {
             return ar;
         }
       };
+
+      ctx['get_in'] = makeSF((ast, ctx, rs) => {
+        // возвращаем переменные, которые в нашем контексте, вызывая стандартный get_in
+        // при этом наши переменные фильтруем!!пока что есть только _user_info
+        let _v = {"user": _context["user"]};
+        return eval_lisp(["get_in"].concat(ast), _v, rs);
+      });
 
       ctx['cond'] = function(expr, ifnull) {
         //console.log('COND MACRO expr: ' + JSON.stringify(expr));

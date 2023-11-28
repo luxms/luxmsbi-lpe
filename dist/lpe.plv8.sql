@@ -779,20 +779,29 @@ var SPECIAL_FORMS = {
   }),
   'get_in': makeSF(function (ast, ctx, rs) {
     var array = [];
+    var hashname; //console.log(JSON.stringify(ast))
 
-    if (isArray(ast[1]) && ast[1][0] === "[") {
-      // второй аргумент - это массив как в Clojure get_in()
+    if (isArray(ast[0])) {
+      hashname = eval_lisp(ast[0], ctx, rs);
+    } else {
+      hashname = ast[0];
+    }
+
+    if (isArray(ast[1]) && ast[1][0] === '[') {
+      // массив аргументов, ка в классическом get_in в Clojure
       array = eval_lisp(ast[1], ctx, rs);
     } else {
       // просто список ключей в виде аргументов
       var _ast = _toArray(ast);
 
       array = _ast.slice(1);
+      var a = ["["].concat(array);
+      array = eval_lisp(a, ctx, rs);
     } // но вообще-то вот так ещё круче ["->","a",3,1]
     // const m = ["->"].concat( array.slice(1).reduce((a, b) => {a.push([".-",b]); return a}, [[".-", ast[0], array[0]]]) );
 
 
-    var m = ["->", ast[0]].concat(array); //console.log('get_in', JSON.stringify(m))
+    var m = ["->", hashname].concat(array); //console.log('get_in', JSON.stringify(m))
 
     return eval_lisp(m, ctx, rs);
   }),
@@ -4262,7 +4271,7 @@ function sql_where_context(_vars) {
     var prnt = function prnt(ar) {
       //console.log("PRNT:" + JSON.stringify(ar))
       if (ar instanceof Array) {
-        if (ar[0] === '$' || ar[0] === '"' || ar[0] === "'" || ar[0] === "str" || ar[0] === "[" || ar[0] === 'parse_kv' || ar[0] === 'parse_cond' || ar[0] === "=" || ar[0] === "!=" || ar[0] === "ql" || ar[0] === "pg_interval" || ar[0] === "lpe_pg_tstz_at_time_zone" || ar[0] === "column" || ar[0] === "cond" || ar[0] === "includes") {
+        if (ar[0] === '$' || ar[0] === '"' || ar[0] === "'" || ar[0] === "str" || ar[0] === "[" || ar[0] === 'parse_kv' || ar[0] === 'parse_cond' || ar[0] === "=" || ar[0] === "!=" || ar[0] === "ql" || ar[0] === "pg_interval" || ar[0] === "lpe_pg_tstz_at_time_zone" || ar[0] === "column" || ar[0] === "cond" || ar[0] === "includes" || ar[0] === "get_in") {
           return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(ar, ctx);
         } else {
           if (ar.length == 2) {
@@ -4330,6 +4339,15 @@ function sql_where_context(_vars) {
         return ar;
       }
     };
+
+    ctx['get_in'] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["c" /* makeSF */])(function (ast, ctx, rs) {
+      // возвращаем переменные, которые в нашем контексте, вызывая стандартный get_in
+      // при этом наши переменные фильтруем!!пока что есть только _user_info
+      var _v = {
+        "user": _context["user"]
+      };
+      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(["get_in"].concat(ast), _v, rs);
+    });
 
     ctx['cond'] = function (expr, ifnull) {
       //console.log('COND MACRO expr: ' + JSON.stringify(expr));
@@ -7453,14 +7471,14 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
   _ctx.push(function (key, val, resolveOptions) {
     //console.log(`WANT to resolve ${key} ${val}`, JSON.stringify(resolveOptions));
-    //console.log(`COLUMN: `, JSON.stringify(_variables["_columns"][key]));
+    // console.log(`COLUMN: `, JSON.stringify(_variables["_columns"][key]));
     // вызываем функцию column(ПолноеИмяСтолбца) если нашли столбец в дефолтном кубе
     if (_variables["_columns"][key]) return _context["column"](key);
     if (_variables["_columns"][default_ds][default_cube][key]) return _context["column"]("".concat(default_ds, ".").concat(default_cube, ".").concat(key)); // reference to alias!
     //console.log("DO WE HAVE SUCH ALIAS?" , JSON.stringify(_variables["_aliases"]))
 
     if (_variables["_aliases"][key]) {
-      if (!__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(_context["_result"]["columns"])) {
+      if (!__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(_variables["_result"]["columns"])) {
         _variables["_result"]["columns"] = [];
       } // remeber reference to alias as column name!
 
@@ -7572,6 +7590,22 @@ function init_koob_context(_vars, default_ds, default_cube) {
       return "".concat(col, "::").concat(type);
     } else {
       return "CAST(".concat(col, " AS ").concat(type, ")");
+    }
+  };
+
+  _context["to_char"] = function (col, fmt) {
+    if (_variables._target_database === 'clickhouse') {
+      if (fmt === "'YYYY'") {
+        return "leftPad(toString(toYear(".concat(col, ")), 4, '0')");
+      } else if (fmt === "'YYYY-\"Q\"Q'") {
+        return "format('{}-Q{}', leftPad(toString(toYear(".concat(col, ")), 4, '0'), toString(toQuarter(").concat(col, ")))");
+      } else if (fmt === "'YYYY-MM'") {
+        return "format('{}-{}', leftPad(toString(toYear(".concat(col, ")), 4, '0'), leftPad(toString(toMonth(").concat(col, ")), 2, '0'))");
+      } else if (fmt === "'YYYY-\"W\"WW'") {
+        return "format('{}-W{}', leftPad(toString(toYear(".concat(col, ")), 4, '0'), leftPad(toString(toISOWeek(").concat(col, ")), 2, '0'))");
+      }
+    } else {
+      return "to_char(".concat(col, ", ").concat(fmt, ")");
     }
   };
 
@@ -7689,7 +7723,11 @@ function init_koob_context(_vars, default_ds, default_cube) {
   _context["stddev_pop"] = _context["stddevPop"];
   _context["_sequence"] = 0; // magic sequence number for uniq names generation
 
-  _context["column"] = function (col) {
+  /* добавляем можификатор=второй аргумент, который показывает в каком месте SQL используется столбец:
+  where, having, group, template_where
+  */
+
+  _context["column"] = function (col, sql_context) {
     // считаем, что сюда приходят только полностью резолвенные имена с двумя точками...
     var c = _variables["_columns"][col];
 
@@ -7712,8 +7750,19 @@ function init_koob_context(_vars, default_ds, default_cube) {
         sensitivity: 'accent'
       }) === 0) {
         // we have just column name, prepend table alias !
-        return "".concat(c.sql_query); // temporarily disabled by DIMA FIXME
+        if (_variables._target_database == 'clickhouse') {
+          if (sql_context == 'where') {
+            // disable table prefixing for now 
+            return "".concat(parts[1], ".").concat(c.sql_query);
+          } else {
+            return "".concat(c.sql_query);
+          }
+        } else {
+          return "".concat(c.sql_query);
+        } // temporarily disabled by DIMA FIXME, but at least clickhouse need reference to table name !
+        // without it clickhouse uses alias!
         //return `${parts[1]}.${c.sql_query}`
+
       } else {
         //console.log(`OPANKI: ${c.sql_query}`)
         // FIXME: WE JUST TRY TO match getDict, if ANY. there should be a better way!!!
@@ -7754,7 +7803,9 @@ function init_koob_context(_vars, default_ds, default_cube) {
           // make alias for calculated columns
           var _parts = col.split('.');
 
-          if (_parts.length === 3) _variables["_result"]["alias"] = _parts[2];
+          if (_parts.length === 3) {
+            _variables["_result"]["alias"] = _parts[2];
+          }
         }
 
         return "(".concat(c.sql_query, ")");
@@ -8315,6 +8366,10 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
   _context["'"] = function (a) {
     return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_21__utils_utils__["a" /* db_quote_literal */])(a);
+  };
+
+  _context['"'] = function (a) {
+    return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_21__utils_utils__["b" /* db_quote_ident */])(a);
   }; // overwrite STDLIB! or we will treat (a = 'null') as (a = null) which is wrong in SQL !
 
 
@@ -8742,9 +8797,15 @@ function get_parallel_hierarchy_filters(_cfg, columns, _filters) {
           // This is parsed lpe AST
           _filters[el.id] = el.config.defaultValue;
         } else {
-          if (el.config.defaultValue.startsWith('lpe:')) {
+          if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["e" /* isString */])(el.config.defaultValue) && el.config.defaultValue.startsWith('lpe:')) {
             var expr = el.config.defaultValue.substr(4);
-            _filters[el.id] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_20__lpep__["a" /* parse */])(expr);
+            var evaled = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_20__lpep__["a" /* parse */])(expr);
+
+            if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(evaled) && evaled[0] != '"' && evaled[0] != "'") {
+              _filters[el.id] = evaled;
+            } else {
+              _filters[el.id] = ["=", evaled];
+            }
           } else {
             _filters[el.id] = ["=", el.config.defaultValue];
           }
@@ -8933,8 +8994,11 @@ function get_all_member_filters(_cfg, columns, _filters) {
 Sep 2023: так как это для части SQL WHERE, то мы никогда не возвращаем столбцы, у которых стоит признак agg
 */
 
+/* sql_context нужен для передачи в функцию `columns` = для принятия решения, используем ли мы имя таблицы
+в clickhouse или нет*/
 
-function get_filters_array(context, filters_array, cube, required_columns, negate) {
+
+function get_filters_array(context, filters_array, cube, required_columns, negate, sql_context) {
   //console.log("get_filters_array " + JSON.stringify(filters_array))
   // [{"ch.fot_out.hcode_name":[">","2019-01-01"],"ch.fot_out.pay_title":["=","2019-01-01","2020-03-01"],"ch.fot_out.group_pay_name":["=","Не задано"],"ch.fot_out.pay_code":["=","Не задано"],"ch.fot_out.pay_name":["=","Не задано"],"ch.fot_out.sex_code":["=",null]}]
   //console.log(`get_filters_array ${negate} required_columns: ` + JSON.stringify(required_columns))
@@ -9013,7 +9077,7 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
           colname = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_21__utils_utils__["b" /* db_quote_ident */])(colname);
         }
       } else {
-        colname = ["column", key];
+        colname = ["column", key, sql_context];
       }
 
       return [op, ["ignore(me)", colname]].concat(_toConsumableArray(args));
@@ -9089,21 +9153,25 @@ function cache_alias_keys(_cfg) {
 } //  но возможно для teradata и oracle мы захотим брать в двойные кавычки...
 
 
-function genereate_subtotals_group_by(cfg, group_by_list) {
+function genereate_subtotals_group_by(cfg, group_by_list, target_database) {
   var subtotals = cfg["subtotals"];
   var ret = {
     'group_by': '',
-    'select': [] //console.log(`GROUP BY: ${JSON.stringify(subtotals)} ${JSON.stringify(group_by_list)}`)
+    'select': [] //console.log(`CFG ${JSON.stringify(cfg)}`)
+    // {"ds":"ch","cube":"fot_out",
 
   };
+  __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log("GROUP BY: ".concat(JSON.stringify(subtotals), " ").concat(JSON.stringify(group_by_list)));
 
   if (group_by_list.length === 0) {
     return ret;
   } //cfg["_group_by"].map(el => console.log(JSON.stringify(el)))
-  //subtotals.map(el => console.log(JSON.stringify(el)))
+  //subtotals.map(el => console.log(JSON.strisngify(el)))
 
 
-  var group_by_exprs = group_by_list.map(function (el) {
+  var group_by_exprs = target_database === 'clickhouse' ? group_by_list.map(function (el) {
+    return el.alias ? el.alias : el.expr;
+  }) : group_by_list.map(function (el) {
     return el.expr;
   });
   var group_by_aliases = group_by_list.map(function (el) {
@@ -9111,6 +9179,7 @@ function genereate_subtotals_group_by(cfg, group_by_list) {
   }).filter(function (el) {
     return el !== undefined;
   });
+  var group_by_columns = null;
   var group_by_sql = group_by_exprs.join(', ');
 
   var check_column_existence = function check_column_existence(col) {
@@ -9126,20 +9195,38 @@ function genereate_subtotals_group_by(cfg, group_by_list) {
           i = group_by_aliases.indexOf("\"".concat(col, "\"")); //FIXME - не уверен что в алиасы попадут заквотированные имена!
 
           if (i === -1) {
-            //console.log(`GROUP BY for ${col} : ${JSON.stringify(group_by_list)}`)
-            throw Error("looking for column ".concat(col, " listed in subtotals, but can not find in group_by"));
+            if (group_by_columns === null) {
+              group_by_columns = group_by_list.map(function (el) {
+                return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["e" /* isString */])(el.columns[0]) ? el.columns[0].split('.')[2] : undefined;
+              }).filter(function (el) {
+                return el !== undefined;
+              });
+              __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log(JSON.stringify(group_by_columns));
+            }
+
+            var i = group_by_columns.indexOf(col);
+
+            if (i === -1) {
+              __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log("GROUP BY for ".concat(col, " : ").concat(JSON.stringify(group_by_list))); // GROUP BY: ["dt"] [{"columns":["ch.fot_out.dt"],"alias":"ddd","expr":"(NOW() - INERVAL '1 DAY')"}]
+
+              throw Error("looking for column ".concat(col, " listed in subtotals, but can not find in group_by"));
+            }
           }
         }
       }
     }
   }; // check existance of range() column, we should include it as first column in every grouping set!
+  // even if 
+  // but only if range is the first column!!!
 
 
   var range_cols = group_by_list.filter(function (el) {
     return el.is_range_column === true;
   });
-  var range_col = range_cols[0];
-  var accum_val = range_col ? [range_col.expr] : []; // {"options": ["CrossSubtotals"] }
+  var range_col = range_cols[0]; //let accum_val = (group_by_list[0] && group_by_list[0].is_range_column === true) ? [range_col.expr] : []
+
+  var accum_val = []; // {"options": ["AllButOneInterleaved"] }
+  // нужно сделать без учёта subtotals !!!
 
   var cross_subtotals_combinations = function cross_subtotals_combinations() {
     return subtotals.map(function (col) {
@@ -9158,7 +9245,7 @@ function genereate_subtotals_group_by(cfg, group_by_list) {
       check_column_existence(col); //console.log(`accum: ${JSON.stringify(accum)} + col: ${col} + first: ${JSON.stringify(accum.slice(-1).pop())}`)
 
       var match = group_by_list.filter(function (c) {
-        return c.expr == col || c.expr == "\"".concat(col, "\"") || c.alias == col || c.alias == "\"".concat(col, "\"");
+        return c.expr == col || c.expr == "\"".concat(col, "\"") || c.alias == col || c.alias == "\"".concat(col, "\"") || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(c.columns) && __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["e" /* isString */])(c.columns[0]) && c.columns[0].split('.')[2] == col;
       });
 
       if (match.length == 0) {
@@ -9166,34 +9253,97 @@ function genereate_subtotals_group_by(cfg, group_by_list) {
       } //console.log(`FOUND: ${JSON.stringify(match)} in ${JSON.stringify(group_by_list)}`)
 
 
-      return accum.concat([accum.slice(-1).pop().concat(match[0].expr)]);
+      var colexpr;
+
+      if (target_database === 'clickhouse') {
+        colexpr = match[0].alias ? match[0].alias : match[0].expr;
+      } else {
+        colexpr = match[0].expr;
+      }
+
+      return accum.concat([accum.slice(-1).pop().concat(colexpr)]);
     }, [accum_val]);
-    res.shift();
+    res.shift(); // remove GROUPING SETS () 
+
+    /*
+    
+              -GROUP BY GROUPING SETS ((koob__range__table__.day_of_calendar - 1, (NOW() - INERVAL '1 DAY'), v_main, group_pay_name)
+    we should rmove this useless item:,(koob__range__table__.day_of_calendar - 1),
+              -                        (koob__range__table__.day_of_calendar - 1,(NOW() - INERVAL '1 DAY')),
+              -                        (koob__range__table__.day_of_calendar - 1,(NOW() - INERVAL '1 DAY'),v_main)
+              -  
+    */
+
+    if (group_by_list[0].is_range_column && res.length > 1) {
+      res.shift();
+    }
+
     return res;
   };
 
   var conf = cfg["config"] || {};
   var subtotals_combinations = conf["subtotalsMode"] == "AllButOneInterleaved" ? cross_subtotals_combinations : hier_subtotals_combinations;
-  var uberTotal = ''; // #756 не надо добавлять () если есть range()
+  var uberTotal = '';
+  var subtotalsSQL = ''; // #756 не надо добавлять () даже если просили, если есть range()
 
   if (conf["subtotalsTotal"] && !range_col) {
-    // нужно добавить (), но это должно работать вместе с range() и не ломать ответ
+    // FIXME !!! нужно добавить (), но это должно работать вместе с range() и не ломать ответ
     uberTotal = ",\n                        ()";
-  }
-
-  ret.group_by = "\nGROUP BY GROUPING SETS ((".concat(group_by_sql, '),', "\n                        (".concat(subtotals_combinations().join("),\n                        ("), ')'), uberTotal, "\n                       )"); // делать дедупликацию пока что сложно, поэтому временно сделаем distinct
+  } // делать дедупликацию пока что сложно, поэтому временно сделаем distinct
   // FIXME
 
-  if (conf["subtotalsMode"] != "AllButOneInterleaved") {
-    if (group_by_list.length == subtotals.length) {
-      if (!__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(cfg["distinct"])) {
-        // ou! changing global hash :()
-        cfg["distinct"] = [];
-      }
-    }
-  } // This might be a hard problem:
-  // {"columns":["ch.fot_out.indicator_v","ch.fot_out.v_main"],"agg":true,"alias":"new","expr": "avg(fot_out.indicator_v + fot_out.v_main)"}
+  /*
+  GRPBY: {"columns":[],"unresolved_aliases":["type_oe_bi"],"expr":"type_oe_bi"}
+  SUBTOTAL: type_oe_bi
+  
+  GRPBY: {"columns":[],"expr":"ch.fot_out.dt"}
+  SUBTOTAL: dt
+  */
 
+
+  if (conf["subtotalsMode"] != "AllButOneInterleaved") {
+    if (group_by_list.length == subtotals.length // || 
+
+    /* есть range() и совпадает кол-во subtotals с group by */
+
+    /* (group_by_list.length - subtotals.length == 1 && range_col) */
+    ) {
+        var lastSubtotal = subtotals[subtotals.length - 1];
+        var lastGrp = group_by_list[group_by_list.length - 1];
+        __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log('LAST GRPBY: ' + JSON.stringify(lastGrp));
+        __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log('LAST SUBTOTAL: ' + lastSubtotal);
+        /* FIXME: double quotes!!! */
+
+        if (lastGrp.expr === lastSubtotal || lastGrp.alias === lastSubtotal || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(lastGrp.columns) && __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["e" /* isString */])(lastGrp.columns[0]) && lastGrp.columns[0].split('.')[2] == lastSubtotal) {
+          // we should remove it from subtotals, possibly we need check range()???
+          // Удаляем бессмысленную группировку, так как она и так учтена в GROUP BY
+          subtotals = subtotals.slice(0, -1);
+
+          if (range_col && subtotals.length === 1 && (subtotals[0] === group_by_list[0].alias || subtotals[0] === group_by_list[0].expr) && group_by_list[0].is_range_column) {
+            // after cleaning of the last column we have only range column = it is useless!
+            // console.log('FIRST GRPBY: ' + JSON.stringify(group_by_list[0]))
+            // console.log('FIRST SUBTOTAL: ' + subtotals[0])
+            subtotals = [];
+          }
+          /*
+          if (subtotals.length === 0){
+            // проверяем range()
+            if(range_col){
+              subtotals.push(range_col.expr)
+              accum_val = [] // sorry for this
+            }
+          }*/
+
+        }
+      }
+  }
+
+  if (subtotals.length > 0) {
+    subtotalsSQL = "\n                       ,(".concat(subtotals_combinations().join("),\n                        ("), ')');
+  }
+
+  ret.group_by = "\nGROUP BY GROUPING SETS ((".concat(group_by_sql, ')', subtotalsSQL, uberTotal, "\n                       )"); // This might be a hard problem:
+  // {"columns":["ch.fot_out.indicator_v","ch.fot_out.v_main"],"agg":true,"alias":"new","expr": "avg(fot_out.indicator_v + fot_out.v_main)"}
 
   var get_alias = function get_alias(el) {
     var r;
@@ -9573,10 +9723,12 @@ function generate_koob_sql(_cfg, _vars) {
   */
 
 
+  var SQLWhereNegate = _cfg["options"].includes('SQLWhereNegate');
+
   var where = '';
-  var part_where = '1=1';
+  var part_where = SQLWhereNegate ? '1=0' : '1=1';
   var havingSQL = '';
-  var part_having = '1=1';
+  var part_having = SQLWhereNegate ? '1=0' : '1=1';
   var filters_array = _cfg["filters"];
 
   if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(filters_array)) {
@@ -9616,8 +9768,14 @@ function generate_koob_sql(_cfg, _vars) {
   if (havingSQL.length === 1
   /*&& _cfg["_group_by"].length > 0*/
   ) {
-      havingSQL = "\nHAVING ".concat(havingSQL[0]);
+      if (SQLWhereNegate) {
+        havingSQL = "\nHAVING NOT (".concat(havingSQL[0], ")");
+      } else {
+        havingSQL = "\nHAVING ".concat(havingSQL[0]);
+      }
     } else {
+    // можно не учитывать SQLWhereNegate, так как его учтём в filters ??
+    // но может здесь и логичнее было бы
     havingSQL = '';
   } // access filters
 
@@ -9673,8 +9831,13 @@ function generate_koob_sql(_cfg, _vars) {
     }
   } else {
     if (fw.length > 0) {
-      where = "\nWHERE ".concat(fw);
-      part_where = fw;
+      if (SQLWhereNegate) {
+        where = "\nWHERE NOT (".concat(fw, ")");
+        part_where = "NOT (".concat(fw, ")");
+      } else {
+        where = "\nWHERE ".concat(fw);
+        part_where = fw;
+      }
     }
   } // для teradata limit/offset 
 
@@ -9684,9 +9847,17 @@ function generate_koob_sql(_cfg, _vars) {
   var global_generate_3_level_sql = false;
   var top_level_where = ''; // for oracle RANGE && LIMIT
 
-  var group_by = _cfg["_group_by"].map(function (el) {
-    return el.expr;
-  }); // нужно дополнить контекст для +,- и суметь сослатся на алиасы!
+  var group_by;
+
+  if (_context[1]["_target_database"] === 'clickhouse') {
+    group_by = _cfg["_group_by"].map(function (el) {
+      return el.alias ? el.alias : el.expr;
+    });
+  } else {
+    group_by = _cfg["_group_by"].map(function (el) {
+      return el.expr;
+    });
+  } // нужно дополнить контекст для +,- и суметь сослатся на алиасы!
 
 
   var order_by_context = extend_context_for_order_by(_context, _cfg); //console.log("SORT:", JSON.stringify(_cfg["sort"]))
@@ -10084,7 +10255,7 @@ function generate_koob_sql(_cfg, _vars) {
       } else if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(_cfg["subtotals"])) {
         // FIXME: кажется только mysql не алё
         if (_context[1]["_target_database"] === 'postgresql' || _context[1]["_target_database"] === 'oracle' || _context[1]["_target_database"] === 'teradata' || _context[1]["_target_database"] === 'clickhouse' || _context[1]["_target_database"] === 'sqlserver' || _context[1]["_target_database"] === 'vertica') {
-          var subtotals = genereate_subtotals_group_by(_cfg, _cfg["_group_by"]);
+          var subtotals = genereate_subtotals_group_by(_cfg, _cfg["_group_by"], _context[1]["_target_database"]);
           group_by = subtotals.group_by;
           select_tail = "".concat(select_tail, ", ").concat(subtotals.select.join(', ')); // We need to add extra columns to the select as well
         } else {
@@ -10101,17 +10272,21 @@ function generate_koob_sql(_cfg, _vars) {
 
     if (cube_query_template.config.is_template) {
       var except_replacer = function except_replacer(match, columns_text, offset, string) {
+        if (SQLWhereNegate) {
+          throw new Error("Can not process filters(except(...)) when option SQLWhereNegate is present. Sorry.");
+        }
+
         var columns = columns_text.split(',');
         var filters_array = _cfg["filters"];
 
         if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(filters_array)) {
           filters_array = [filters_array];
         } else {
-          throw new Error("Can not split OR SQL WHERE into template parts filters(except(...))). Sorry.");
+          throw new Error("Can not split OR SQL WHERE into template parts filters(except(...)). Sorry.");
         } //console.log(JSON.stringify(_cfg["filters"]))
 
 
-        var subst = get_filters_array(_context, filters_array, _cfg.ds + '.' + _cfg.cube, columns, true);
+        var subst = get_filters_array(_context, filters_array, _cfg.ds + '.' + _cfg.cube, columns, true, 'template_where');
 
         if (subst.length == 0) {
           return "1=1";
@@ -10121,6 +10296,10 @@ function generate_koob_sql(_cfg, _vars) {
       };
 
       var inclusive_replacer = function inclusive_replacer(match, columns_text, offset, string) {
+        if (SQLWhereNegate) {
+          throw new Error("Can not process filters(...) when option SQLWhereNegate is present. Sorry.");
+        }
+
         var columns = columns_text.split(',');
         var filters_array = _cfg["filters"];
 
@@ -10131,7 +10310,7 @@ function generate_koob_sql(_cfg, _vars) {
         } //console.log(JSON.stringify(_cfg["filters"]))
 
 
-        var subst = get_filters_array(_context, filters_array, _cfg.ds + '.' + _cfg.cube, columns, false);
+        var subst = get_filters_array(_context, filters_array, _cfg.ds + '.' + _cfg.cube, columns, false, 'template_where');
 
         if (subst.length == 0) {
           return "1=1";
@@ -10141,6 +10320,10 @@ function generate_koob_sql(_cfg, _vars) {
       };
 
       var udf_args_replacer = function udf_args_replacer(match, columns_text, offset, string) {
+        if (SQLWhereNegate) {
+          throw new Error("Can not process udf_args(...) when option SQLWhereNegate is present. Sorry.");
+        }
+
         var filters_array = _cfg["filters"];
 
         if (!__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(filters_array)) {
@@ -10173,14 +10356,16 @@ function generate_koob_sql(_cfg, _vars) {
 
       // надо подставить WHERE аккуратно, это уже посчитано, заменяем ${filters} и ${filters()}
       var re = /\$\{filters(?:\(\))?\}/gi;
-      var processed_from = from.replace(re, part_where); // access_filters
+      var processed_from = from.replace(re, part_where); //SQLWhereNegate уже учтено!
+      // access_filters
 
       if (access_where.length == 0) {
         access_where = '1=1';
       }
 
       var re = /\$\{access_filters(?:\(\))?\}/gi;
-      var processed_from = processed_from.replace(re, access_where); // ищем except()
+      var processed_from = processed_from.replace(re, access_where); //SQLWhereNegate нельзя применять!
+      // ищем except()
 
       re = /\$\{filters\(except\(([^\)]*)\)\)\}/gi;
       processed_from = processed_from.replace(re, except_replacer); // ищем filters(a,v,c)
@@ -10195,7 +10380,8 @@ function generate_koob_sql(_cfg, _vars) {
       var c = init_udf_args_context("".concat(_cfg.ds, ".").concat(_cfg.cube), _cfg["filters"], _context[1]["_target_database"]);
       processed_from = processed_from.replace(re, udf_args_replacer); // функция filter из table lookup, но тут своя реализация... пробуем
 
-      re = /\$\{filter\(([^\}]+)\)\}/gi; // FIXME: надо инитить глобальный контекст, и подкидывать переменные про юзера.
+      re = /\$\{filter\(([^\}]+)\)\}/gi; // SQLWhereNegate = кажется тут не нужно
+      // FIXME: надо инитить глобальный контекст, и подкидывать переменные про юзера.
       // let cc = [ {_target_database: "HOY"}, SQL_where_context ];
 
       var cc = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__sql_where__["a" /* sql_where_context */])({

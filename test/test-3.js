@@ -5,29 +5,91 @@ globalThis.MOCKCubeSQL = {};
 
 describe('LPE KOOB tests', function() {
 
+   it('should eval KOOB SUBTOTALS ONE COL and range()', function() {
 
-
-   it('should eval KOOB  if & sum', function() {
       assert.equal( lpe.generate_koob_sql(
-         {"columns":[
-                     'if( sum(v_rel_pp)!= 0, (sum(v_rel_pp)/count(pay_code)*50)+(sum(v_rel_pp)/sum(group_pay_name)*50), 0):koeff'
-                   ],
-         "filters":{"hcode_name": ["between", "2019-01-01", "2020-03-01"],
-                    "group_pay_name": ["="],
-                    "v_rel_pp": ["!="],
-                    "pay_code": ["or", ["!="], ["ilike", "Муж"]]
-          },
-         "sort":["perda","-lead","-rand()","rand()"],
-         "limit": 100,
-         "offset": 10,
+         {"columns":["range(2):rng", "dt", "avg(v_rel_fzp)","sum(v_rel_pp_i)"],
+         "subtotals": ["rng", "dt"],
+         "config": {"subtotalsMode":"!AllButOneInterleaved", "subtotalsTotal":false},
+         "filters":{"dt":["!=","2020-03","2020-04"],
+         "pay_name":["!=","Не задано"]},
+         "sort":["group_pay_name","v_main"],
          "with":"ch.fot_out"},
-               {"_target_database": "postgresql"}),
-    `SELECT sum(v_rel_pp) as v_rel_pp, group_pay_name as group_pay_name, hcode_name as hcode_name, CASE WHEN sum(v_rel_pp) = 0 THEN 0 ELSE sum(pay_code) / sum(v_rel_pp) END as d, CASE WHEN v_rel_pp IN (0, 1, 2) OR v_rel_pp IS NULL THEN 0 ELSE sum(pay_code) / sum(v_rel_pp) END as d, CASE WHEN v_rel_pp NOT IN (0, 1, 2) AND v_rel_pp IS NOT NULL THEN 0 ELSE sum(pay_code) / sum(v_rel_pp) END as d, CASE WHEN (v_rel_pp <= 0) AND ((v_rel_pp > -2) AND (NOT v_rel_pp IS NULL)) THEN 0 ELSE sum(pay_code) / sum(v_rel_pp) END as d
-   FROM fot_out AS fot_out
-   WHERE (hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND (1=0) AND (1=1) AND ((1=1) OR (pay_code ILIKE 'Муж')) AND (sex_code IS NULL)
-   GROUP BY group_pay_name, hcode_name
-   ORDER BY perda, lead DESC, random() DESC, random() LIMIT 100 OFFSET 10`
+               {"_target_database": "teradata"}),
+`SELECT koob__range__table__.day_of_calendar - 1 as "rng", (NOW() - INERVAL '1 DAY') as "dt", avg(v_rel_fzp) as "v_rel_fzp", sum(v_rel_pp_i), GROUPING(koob__range__table__.day_of_calendar - 1) AS "∑rng", GROUPING((NOW() - INERVAL '1 DAY')) AS "∑dt"
+FROM fot_out AS fot_out,sys_calendar.CALENDAR as koob__range__table__
+WHERE ((NOW() - INERVAL '1 DAY') NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано') AND (koob__range__table__.day_of_calendar <= 2) AND (pay_code != 'Не задано') AND (sex_code IS NULL)
+GROUP BY GROUPING SETS ((koob__range__table__.day_of_calendar - 1, (NOW() - INERVAL '1 DAY'))
+                       )
+ORDER BY "group_pay_name", "v_main"`
             );
-      
+      });
+
+
+      it('should eval KOOB SUBTOTALS range() in the middle', function() {
+
+         assert.equal( lpe.generate_koob_sql(
+            {"columns":["v_main", "range(2):rng", "dt", "avg(v_rel_fzp)","sum(v_rel_pp_i)"],
+            "subtotals": ["v_main","rng"],
+            "config": {"subtotalsMode":"!AllButOneInterleaved", "subtotalsTotal":false},
+            "filters":{"dt":["!=","2020-03","2020-04"],
+            "pay_name":["!=","Не задано"]},
+            "sort":["group_pay_name","v_main"],
+            "with":"ch.fot_out"},
+                  {"_target_database": "teradata"}),
+`SELECT v_main as "v_main", koob__range__table__.day_of_calendar - 1 as "rng", (NOW() - INERVAL '1 DAY') as "dt", avg(v_rel_fzp) as "v_rel_fzp", sum(v_rel_pp_i), GROUPING(v_main) AS "∑v_main", GROUPING(koob__range__table__.day_of_calendar - 1) AS "∑rng", GROUPING((NOW() - INERVAL '1 DAY')) AS "∑dt"
+FROM fot_out AS fot_out,sys_calendar.CALENDAR as koob__range__table__
+WHERE ((NOW() - INERVAL '1 DAY') NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано') AND (koob__range__table__.day_of_calendar <= 2) AND (pay_code != 'Не задано') AND (sex_code IS NULL)
+GROUP BY GROUPING SETS ((v_main, koob__range__table__.day_of_calendar - 1, (NOW() - INERVAL '1 DAY'))
+                       ,(v_main),
+                        (v_main,koob__range__table__.day_of_calendar - 1)
+                       )
+ORDER BY "group_pay_name", "v_main"`
+               );
          });
+
+         it('should eval KOOB SUBTOTALS range() in the middle', function() {
+
+            assert.equal( lpe.generate_koob_sql(
+               {"columns":["v_main", "range(2):rng", "dt", "avg(v_rel_fzp)","sum(v_rel_pp_i)"],
+               "subtotals": ["v_main","rng","dt"],
+               "config": {"subtotalsMode":"!AllButOneInterleaved", "subtotalsTotal":false},
+               "filters":{"dt":["!=","2020-03","2020-04"],
+               "pay_name":["!=","Не задано"]},
+               "sort":["group_pay_name","v_main"],
+               "with":"ch.fot_out"},
+                     {"_target_database": "teradata"}),
+`SELECT v_main as "v_main", koob__range__table__.day_of_calendar - 1 as "rng", (NOW() - INERVAL '1 DAY') as "dt", avg(v_rel_fzp) as "v_rel_fzp", sum(v_rel_pp_i), GROUPING(v_main) AS "∑v_main", GROUPING(koob__range__table__.day_of_calendar - 1) AS "∑rng", GROUPING((NOW() - INERVAL '1 DAY')) AS "∑dt"
+FROM fot_out AS fot_out,sys_calendar.CALENDAR as koob__range__table__
+WHERE ((NOW() - INERVAL '1 DAY') NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано') AND (koob__range__table__.day_of_calendar <= 2) AND (pay_code != 'Не задано') AND (sex_code IS NULL)
+GROUP BY GROUPING SETS ((v_main, koob__range__table__.day_of_calendar - 1, (NOW() - INERVAL '1 DAY'))
+                       ,(v_main),
+                        (v_main,koob__range__table__.day_of_calendar - 1)
+                       )
+ORDER BY "group_pay_name", "v_main"`
+                  );
+            });
+
+            it('should eval KOOB SUBTOTALS ONE COL and range()', function() {
+
+               assert.equal( lpe.generate_koob_sql(
+                  {"columns":["range(2):rng", "dt","v_main", "group_pay_name", "avg(v_rel_fzp)","sum(v_rel_pp_i)"],
+                  "subtotals": ["rng", "dt", "v_main"],
+                  "config": {"subtotalsMode":"!AllButOneInterleaved", "subtotalsTotal":false},
+                  "filters":{"dt":["!=","2020-03","2020-04"],
+                  "pay_name":["!=","Не задано"]},
+                  "sort":["group_pay_name","v_main"],
+                  "with":"ch.fot_out"},
+                        {"_target_database": "teradata"}),
+`SELECT koob__range__table__.day_of_calendar - 1 as "rng", (NOW() - INERVAL '1 DAY') as "dt", v_main as "v_main", group_pay_name as "group_pay_name", avg(v_rel_fzp) as "v_rel_fzp", sum(v_rel_pp_i), GROUPING(koob__range__table__.day_of_calendar - 1) AS "∑rng", GROUPING((NOW() - INERVAL '1 DAY')) AS "∑dt", GROUPING(v_main) AS "∑v_main", GROUPING(group_pay_name) AS "∑group_pay_name"
+FROM fot_out AS fot_out,sys_calendar.CALENDAR as koob__range__table__
+WHERE ((NOW() - INERVAL '1 DAY') NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано') AND (koob__range__table__.day_of_calendar <= 2) AND (pay_code != 'Не задано') AND (sex_code IS NULL)
+GROUP BY GROUPING SETS ((koob__range__table__.day_of_calendar - 1, (NOW() - INERVAL '1 DAY'), v_main, group_pay_name)
+                       ,(koob__range__table__.day_of_calendar - 1,(NOW() - INERVAL '1 DAY')),
+                        (koob__range__table__.day_of_calendar - 1,(NOW() - INERVAL '1 DAY'),v_main)
+                       )
+ORDER BY "group_pay_name", "v_main"`
+                     );
+               });
+
 })

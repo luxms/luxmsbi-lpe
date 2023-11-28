@@ -432,13 +432,13 @@ module.exports = function (key) {
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return isArray; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "d", function() { return isString; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "c", function() { return isNumber; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "e", function() { return isString; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "d", function() { return isNumber; });
 /* unused harmony export isBoolean */
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "e", function() { return isHash; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "f", function() { return isHash; });
 /* unused harmony export isFunction */
 /* unused harmony export makeMacro */
-/* unused harmony export makeSF */
+/* harmony export (immutable) */ __webpack_exports__["c"] = makeSF;
 /* harmony export (immutable) */ __webpack_exports__["a"] = eval_lisp;
 /* unused harmony export init_lisp */
 /* unused harmony export evaluate */
@@ -812,20 +812,29 @@ var SPECIAL_FORMS = {
   }),
   'get_in': makeSF(function (ast, ctx, rs) {
     var array = [];
+    var hashname; //console.log(JSON.stringify(ast))
 
-    if (isArray(ast[1]) && ast[1][0] === "[") {
-      // второй аргумент - это массив как в Clojure get_in()
+    if (isArray(ast[0])) {
+      hashname = eval_lisp(ast[0], ctx, rs);
+    } else {
+      hashname = ast[0];
+    }
+
+    if (isArray(ast[1]) && ast[1][0] === '[') {
+      // массив аргументов, ка в классическом get_in в Clojure
       array = eval_lisp(ast[1], ctx, rs);
     } else {
       // просто список ключей в виде аргументов
       var _ast = _toArray(ast);
 
       array = _ast.slice(1);
+      var a = ["["].concat(array);
+      array = eval_lisp(a, ctx, rs);
     } // но вообще-то вот так ещё круче ["->","a",3,1]
     // const m = ["->"].concat( array.slice(1).reduce((a, b) => {a.push([".-",b]); return a}, [[".-", ast[0], array[0]]]) );
 
 
-    var m = ["->", ast[0]].concat(array); //console.log('get_in', JSON.stringify(m))
+    var m = ["->", hashname].concat(array); //console.log('get_in', JSON.stringify(m))
 
     return eval_lisp(m, ctx, rs);
   }),
@@ -4274,7 +4283,7 @@ function sql_where_context(_vars) {
     var prnt = function prnt(ar) {
       //console.log("PRNT:" + JSON.stringify(ar))
       if (ar instanceof Array) {
-        if (ar[0] === '$' || ar[0] === '"' || ar[0] === "'" || ar[0] === "str" || ar[0] === "[" || ar[0] === 'parse_kv' || ar[0] === 'parse_cond' || ar[0] === "=" || ar[0] === "!=" || ar[0] === "ql" || ar[0] === "pg_interval" || ar[0] === "lpe_pg_tstz_at_time_zone" || ar[0] === "column" || ar[0] === "cond" || ar[0] === "includes") {
+        if (ar[0] === '$' || ar[0] === '"' || ar[0] === "'" || ar[0] === "str" || ar[0] === "[" || ar[0] === 'parse_kv' || ar[0] === 'parse_cond' || ar[0] === "=" || ar[0] === "!=" || ar[0] === "ql" || ar[0] === "pg_interval" || ar[0] === "lpe_pg_tstz_at_time_zone" || ar[0] === "column" || ar[0] === "cond" || ar[0] === "includes" || ar[0] === "get_in") {
           return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(ar, ctx);
         } else {
           if (ar.length == 2) {
@@ -4343,6 +4352,15 @@ function sql_where_context(_vars) {
       }
     };
 
+    ctx['get_in'] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["c" /* makeSF */])(function (ast, ctx, rs) {
+      // возвращаем переменные, которые в нашем контексте, вызывая стандартный get_in
+      // при этом наши переменные фильтруем!!пока что есть только _user_info
+      var _v = {
+        "user": _context["user"]
+      };
+      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(["get_in"].concat(ast), _v, rs);
+    });
+
     ctx['cond'] = function (expr, ifnull) {
       //console.log('COND MACRO expr: ' + JSON.stringify(expr));
       //console.log('COND MACRO ifnull: ' + JSON.stringify(ifnull));
@@ -4352,7 +4370,7 @@ function sql_where_context(_vars) {
       //Мы будем использовать спец флаг, были ли внутри этого cond доступы к переменным,
       // которые дали undefined. через глобальную переменную !!!
 
-      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["c" /* isNumber */])(ifnull) || ifnull === null || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["b" /* isArray */])(ifnull) && ifnull.length === 2 && (ifnull[0] === '"' || ifnull[0] === "'")) {
+      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["d" /* isNumber */])(ifnull) || ifnull === null || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["b" /* isArray */])(ifnull) && ifnull.length === 2 && (ifnull[0] === '"' || ifnull[0] === "'")) {
         var val = prnt(ifnull);
         track_undefined_values_for_cond.unshift(val);
       } else {
@@ -4513,7 +4531,7 @@ function sql_where_context(_vars) {
       if (r === null || r === undefined) {
         var defVal = track_undefined_values_for_cond[0]; //console.log("$ CHECK " + defVal)
 
-        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["d" /* isString */])(defVal) || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["c" /* isNumber */])(defVal) || defVal === null) {
+        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["e" /* isString */])(defVal) || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["d" /* isNumber */])(defVal) || defVal === null) {
           return defVal;
         } else {
           // ставим метку, что был резолвинг неопределённого значения
@@ -4581,7 +4599,7 @@ function sql_where_context(_vars) {
         // значит по этому ключу нет элемента в _vars например !!!
         var defVal = track_undefined_values_for_cond[0]; //console.log("$ CHECK " + defVal)
 
-        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["d" /* isString */])(defVal) || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["c" /* isNumber */])(defVal) || defVal === null) {
+        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["e" /* isString */])(defVal) || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["d" /* isNumber */])(defVal) || defVal === null) {
           return defVal;
         } else {
           // ставим метку, что был резолвинг неопределённого значения
@@ -4775,7 +4793,7 @@ function eval_sql_where(_expr, _vars) {
   if (sexpr instanceof Array && (sexpr[0] === 'filter' && sexpr.length <= 2 || sexpr[0] === 'order_by' || sexpr[0] === 'if' || sexpr[0] === 'where' || sexpr[0] === 'pluck' || sexpr[0] === 'str' || sexpr[0] === 'prnt' || sexpr[0] === 'cond' || sexpr[0] === 'filters' || sexpr[0] === '->' // it is dot operator, FIXME: add correct function call check !
   )) {
     // ok
-    if (sexpr[0] === 'order_by' && __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["d" /* isString */])(_vars['sort']) && _vars['sort'].length > 0) {
+    if (sexpr[0] === 'order_by' && __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["e" /* isString */])(_vars['sort']) && _vars['sort'].length > 0) {
       // we should inject content of the sort key, which is coming from the GUI.
       // do it in a safe way
       var extra_srt_expr = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_15__lpep__["a" /* parse */])("order_by(".concat(_vars['sort'], ")")); //console.log('sql_where ORDER BY MIXED0: ', JSON.stringify(extra_srt_expr));
@@ -5321,7 +5339,9 @@ function reports_get_columns(cubeId, dims) {
       "type": "STRING",
       "title": "branch2",
       "sql_query": "branch2",
-      "config": {}
+      "config": {
+        "defaultValue---": "lpe:\"300\""
+      }
     }, {
       "id": "ch.fot_out.branch3",
       "type": "STRING",
@@ -5542,14 +5562,14 @@ function reports_get_column_info(srcId, col) {
 function reports_get_table_sql(target_db_type, tbl, cube) {
   var table_name = tbl.split('.')[1];
 
-  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_4__lisp__["e" /* isHash */])(cube)) {
+  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_4__lisp__["f" /* isHash */])(cube)) {
     console.log("Cube SQL provided as func arg");
     var sql = cube.sql_query;
     if (sql.match(/ /) !== null) sql = "(".concat(sql, ")"); // it's select ... FROM or something like this
 
     if (target_db_type === 'oracle') {
       return {
-        "query": "".concat(sql, " ").concat(tsable_name),
+        "query": "".concat(sql, " ").concat(table_name),
         "config": cube.config
       };
     }
@@ -5560,7 +5580,7 @@ function reports_get_table_sql(target_db_type, tbl, cube) {
     };
   }
 
-  if (globalThis.MOCKCubeSQL !== undefined && __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_4__lisp__["e" /* isHash */])(globalThis.MOCKCubeSQL["".concat(target_db_type, "-").concat(tbl)])) {
+  if (globalThis.MOCKCubeSQL !== undefined && __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_4__lisp__["f" /* isHash */])(globalThis.MOCKCubeSQL["".concat(target_db_type, "-").concat(tbl)])) {
     return globalThis.MOCKCubeSQL["".concat(target_db_type, "-").concat(tbl)];
   }
 

@@ -570,14 +570,14 @@ function init_koob_context(_vars, default_ds, default_cube) {
   _ctx.push(
     (key, val, resolveOptions) => {
       //console.log(`WANT to resolve ${key} ${val}`, JSON.stringify(resolveOptions));
-      //console.log(`COLUMN: `, JSON.stringify(_variables["_columns"][key]));
+      // console.log(`COLUMN: `, JSON.stringify(_variables["_columns"][key]));
       // вызываем функцию column(ПолноеИмяСтолбца) если нашли столбец в дефолтном кубе
       if (_variables["_columns"][key]) return _context["column"](key)
       if (_variables["_columns"][default_ds][default_cube][key]) return _context["column"](`${default_ds}.${default_cube}.${key}`)
       // reference to alias!
       //console.log("DO WE HAVE SUCH ALIAS?" , JSON.stringify(_variables["_aliases"]))
       if (_variables["_aliases"][key]) {
-        if (!isArray(_context["_result"]["columns"])){
+        if (!isArray(_variables["_result"]["columns"])){
           _variables["_result"]["columns"] = []
         }
         // remeber reference to alias as column name!
@@ -689,6 +689,22 @@ function init_koob_context(_vars, default_ds, default_cube) {
       return `${col}::${type}`
     } else {
       return `CAST(${col} AS ${type})`
+    }
+  }
+
+  _context["to_char"] = function(col, fmt) {
+    if (_variables._target_database  === 'clickhouse') {
+      if (fmt === "'YYYY'") {
+        return `leftPad(toString(toYear(${col})), 4, '0')`
+      } else if (fmt === "'YYYY-\"Q\"Q'" ) {
+        return `format('{}-Q{}', leftPad(toString(toYear(${col})), 4, '0'), toString(toQuarter(${col})))`
+      } else if (fmt === "'YYYY-MM'" ) {
+        return `format('{}-{}', leftPad(toString(toYear(${col})), 4, '0'), leftPad(toString(toMonth(${col})), 2, '0'))`
+      } else if (fmt === "'YYYY-\"W\"WW'" ) {
+        return `format('{}-W{}', leftPad(toString(toYear(${col})), 4, '0'), leftPad(toString(toISOWeek(${col})), 2, '0'))`
+      }
+    } else {
+      return `to_char(${col}, ${fmt})`
     }
   }
 
@@ -823,7 +839,10 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
   _context["_sequence"] = 0; // magic sequence number for uniq names generation
   
-  _context["column"] = function(col) {
+  /* добавляем можификатор=второй аргумент, который показывает в каком месте SQL используется столбец:
+  where, having, group, template_where
+  */
+  _context["column"] = function(col, sql_context) {
     // считаем, что сюда приходят только полностью резолвенные имена с двумя точками...
     var c = _variables["_columns"][col]
     if (c) {
@@ -840,8 +859,17 @@ function init_koob_context(_vars, default_ds, default_cube) {
       `"${colname}"`.localeCompare(c.sql_query, undefined, { sensitivity: 'accent' }) === 0 
       ) {
         // we have just column name, prepend table alias !
-        return `${c.sql_query}`
-        // temporarily disabled by DIMA FIXME
+        if (_variables._target_database == 'clickhouse') {
+          if (sql_context == 'where') { // disable table prefixing for now 
+            return `${parts[1]}.${c.sql_query}`
+          } else {
+            return `${c.sql_query}`
+          }
+        } else {
+          return `${c.sql_query}`
+        }
+        // temporarily disabled by DIMA FIXME, but at least clickhouse need reference to table name !
+        // without it clickhouse uses alias!
         //return `${parts[1]}.${c.sql_query}`
       } else {
         //console.log(`OPANKI: ${c.sql_query}`)
@@ -878,8 +906,9 @@ function init_koob_context(_vars, default_ds, default_cube) {
         if (_variables["_result"]) {
           // make alias for calculated columns
           let parts = col.split('.')
-          if (parts.length === 3)
-          _variables["_result"]["alias"] = parts[2]
+          if (parts.length === 3) {
+            _variables["_result"]["alias"] = parts[2]
+          }
         }
         return `(${c.sql_query})`
       }
@@ -993,6 +1022,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
         _variables["_result"]["outer_alias"] = al
       } else {
         _variables["_result"]["alias"] = al
+
       }
       return otext
     }
@@ -1418,6 +1448,10 @@ function init_koob_context(_vars, default_ds, default_cube) {
     return db_quote_literal(a)
   }
 
+  _context['"'] = function(a) {
+    return db_quote_ident(a)
+  }
+
   // overwrite STDLIB! or we will treat (a = 'null') as (a = null) which is wrong in SQL !
   _context['null'] = 'null'
   _context['true'] = 'true'
@@ -1620,6 +1654,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
         } else {
           // assuming if (ast[1][0] === "'")
           let v = eval_lisp(ast[1], ctx, rs)
+
           return v === null 
           ? `${c} IS NULL` 
           : `${c} = ${v}`
@@ -1854,14 +1889,21 @@ function get_parallel_hierarchy_filters(_cfg, columns, _filters) {
           // This is parsed lpe AST
           _filters[el.id] = el.config.defaultValue
         } else {
-          if (el.config.defaultValue.startsWith('lpe:')) {
+          if (isString(el.config.defaultValue) && el.config.defaultValue.startsWith('lpe:')) {
             let expr = el.config.defaultValue.substr(4)
-            _filters[el.id] = parse(expr)
+            let evaled = parse(expr)
+            
+            if (isArray(evaled) && evaled[0] != '"' && evaled[0] != "'") {
+              _filters[el.id] = evaled
+            } else {
+              _filters[el.id] = ["=", evaled]
+            }
           } else {
             _filters[el.id] = ["=",el.config.defaultValue]
           }
         }
       }
+      
     }
   })
   return _filters;
@@ -1982,7 +2024,10 @@ function get_all_member_filters(_cfg, columns, _filters) {
 
 Sep 2023: так как это для части SQL WHERE, то мы никогда не возвращаем столбцы, у которых стоит признак agg
 */
-function get_filters_array(context, filters_array, cube, required_columns, negate) {
+
+/* sql_context нужен для передачи в функцию `columns` = для принятия решения, используем ли мы имя таблицы
+в clickhouse или нет*/
+function get_filters_array(context, filters_array, cube, required_columns, negate, sql_context) {
 
 //console.log("get_filters_array " + JSON.stringify(filters_array))
 // [{"ch.fot_out.hcode_name":[">","2019-01-01"],"ch.fot_out.pay_title":["=","2019-01-01","2020-03-01"],"ch.fot_out.group_pay_name":["=","Не задано"],"ch.fot_out.pay_code":["=","Не задано"],"ch.fot_out.pay_name":["=","Не задано"],"ch.fot_out.sex_code":["=",null]}]
@@ -2027,6 +2072,7 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
       colname = cube + '.' + colname
       aliases[colname] = aliasname
       return colname})
+
     if (negate) {
       comparator = function(k) {
         return (k !== "") && !required_columns.includes(k)
@@ -2053,7 +2099,7 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
                         colname = db_quote_ident(colname)
                       }
                     } else {
-                      colname = ["column", key]
+                      colname = ["column", key, sql_context]
                     }
                     return [op, ["ignore(me)", colname], ...args];
                     
@@ -2127,18 +2173,25 @@ function cache_alias_keys(_cfg) {
 }
 
 //  но возможно для teradata и oracle мы захотим брать в двойные кавычки...
-function genereate_subtotals_group_by(cfg, group_by_list){
+function genereate_subtotals_group_by(cfg, group_by_list, target_database){
   let subtotals = cfg["subtotals"]
   let ret = {'group_by':'', 'select':[]}
-  //console.log(`GROUP BY: ${JSON.stringify(subtotals)} ${JSON.stringify(group_by_list)}`)
+  //console.log(`CFG ${JSON.stringify(cfg)}`)
+  // {"ds":"ch","cube":"fot_out",
+  console.log(`GROUP BY: ${JSON.stringify(subtotals)} ${JSON.stringify(group_by_list)}`)
   if (group_by_list.length === 0) {
     return ret
   }
   
   //cfg["_group_by"].map(el => console.log(JSON.stringify(el)))
-  //subtotals.map(el => console.log(JSON.stringify(el)))
-  let group_by_exprs = group_by_list.map(el => el.expr)
+  //subtotals.map(el => console.log(JSON.strisngify(el)))
+  let group_by_exprs = target_database === 'clickhouse'
+          ? group_by_list.map(el => el.alias ? el.alias : el.expr)
+          : group_by_list.map(el => el.expr)
+
   let group_by_aliases = group_by_list.map(el => el.alias).filter(el => el !== undefined)
+
+  let group_by_columns = null
 
   let group_by_sql = group_by_exprs.join(', ')
 
@@ -2151,8 +2204,16 @@ function genereate_subtotals_group_by(cfg, group_by_list){
         if (i===-1) {
           i = group_by_aliases.indexOf(`"${col}"`) //FIXME - не уверен что в алиасы попадут заквотированные имена!
           if (i===-1){
-            //console.log(`GROUP BY for ${col} : ${JSON.stringify(group_by_list)}`)
-            throw Error(`looking for column ${col} listed in subtotals, but can not find in group_by`)
+            if (group_by_columns === null){
+              group_by_columns = group_by_list.map(el => isString(el.columns[0]) ? el.columns[0].split('.')[2]:undefined).filter(el => el !== undefined)
+              console.log(JSON.stringify(group_by_columns));
+            }
+            var i = group_by_columns.indexOf(col)
+            if (i===-1){
+              console.log(`GROUP BY for ${col} : ${JSON.stringify(group_by_list)}`)
+              // GROUP BY: ["dt"] [{"columns":["ch.fot_out.dt"],"alias":"ddd","expr":"(NOW() - INERVAL '1 DAY')"}]
+              throw Error(`looking for column ${col} listed in subtotals, but can not find in group_by`)
+            }
           }
         }
       }
@@ -2160,16 +2221,31 @@ function genereate_subtotals_group_by(cfg, group_by_list){
   }
 
   // check existance of range() column, we should include it as first column in every grouping set!
+  // even if 
+  // but only if range is the first column!!!
   let range_cols = group_by_list.filter(el => el.is_range_column === true)
   let range_col = range_cols[0]
-  let accum_val = range_col ? [range_col.expr] : []
+  //let accum_val = (group_by_list[0] && group_by_list[0].is_range_column === true) ? [range_col.expr] : []
+  let accum_val = []
 
-  // {"options": ["CrossSubtotals"] }
+  // {"options": ["AllButOneInterleaved"] }
+  // нужно сделать без учёта subtotals !!!
   let cross_subtotals_combinations = function() {
     return subtotals.map(col => {
-    check_column_existence(col);
+    check_column_existence(col); 
     //console.log(JSON.stringify(group_by_list.filter(c => c !== col).join(', ')))
-    return group_by_list.filter(c => c.expr !== col && c.expr !== `"${col}"` && c.alias !== col && c.alias !== `"${col}"`).map(c => c.expr).join(', ')
+    /*
+        let r = []
+    for (let i=0; i < group_by_list.length; i++){
+      let line = group_by_list.slice(0, i).concat(group_by_list.slice(i+1))
+      r.push(line.map(c => c.expr).join(', '))
+    }
+    return r
+    */
+   // FIXME: range shoulf be handled smartly!!!!
+    return group_by_list.filter(c => c.expr !== col && c.expr !== `"${col}"` 
+                                 && c.alias !== col && c.alias !== `"${col}"`
+                                ).map(c => c.expr).join(', ')
     })
   }
 
@@ -2177,15 +2253,37 @@ function genereate_subtotals_group_by(cfg, group_by_list){
           let res = subtotals.reduce((accum, col) => {
             check_column_existence(col)
             //console.log(`accum: ${JSON.stringify(accum)} + col: ${col} + first: ${JSON.stringify(accum.slice(-1).pop())}`)
-            let match = group_by_list.filter(c => c.expr == col || c.expr == `"${col}"` || c.alias == col || c.alias == `"${col}"`)
+            let match = group_by_list.filter(c => c.expr == col || c.expr == `"${col}"` 
+                                              || c.alias == col || c.alias == `"${col}"`
+                                              || (isArray(c.columns) && isString(c.columns[0]) && c.columns[0].split('.')[2] == col)
+                                            )
             if (match.length == 0) {
               throw Error(`hier_subtotals_combinations: looking for column ${col} listed in subtotals, but can not find in group_by`)
             }
             //console.log(`FOUND: ${JSON.stringify(match)} in ${JSON.stringify(group_by_list)}`)
-            return accum.concat([accum.slice(-1).pop().concat(match[0].expr)])
+            let colexpr
+            if (target_database === 'clickhouse'){
+              colexpr = match[0].alias ? match[0].alias : match[0].expr
+            } else {
+              colexpr = match[0].expr
+            }
+            return accum.concat([accum.slice(-1).pop().concat(colexpr)])
           }, 
           [accum_val])
-          res.shift();
+          res.shift(); // remove GROUPING SETS () 
+
+/*
+
+          -GROUP BY GROUPING SETS ((koob__range__table__.day_of_calendar - 1, (NOW() - INERVAL '1 DAY'), v_main, group_pay_name)
+we should rmove this useless item:,(koob__range__table__.day_of_calendar - 1),
+          -                        (koob__range__table__.day_of_calendar - 1,(NOW() - INERVAL '1 DAY')),
+          -                        (koob__range__table__.day_of_calendar - 1,(NOW() - INERVAL '1 DAY'),v_main)
+          -  
+*/
+          if (group_by_list[0].is_range_column && res.length>1) {
+            res.shift();
+          }
+
           return res;
     }
   let conf = cfg["config"] || {};
@@ -2194,29 +2292,74 @@ function genereate_subtotals_group_by(cfg, group_by_list){
                               ? cross_subtotals_combinations
                               : hier_subtotals_combinations;
   let uberTotal = ''
+  let subtotalsSQL = '';
 
-  // #756 не надо добавлять () если есть range()
+  // #756 не надо добавлять () даже если просили, если есть range()
   if (conf["subtotalsTotal"] && !range_col) {
-    // нужно добавить (), но это должно работать вместе с range() и не ломать ответ
+    // FIXME !!! нужно добавить (), но это должно работать вместе с range() и не ломать ответ
     uberTotal = ",\n                        ()"
   }
 
-  ret.group_by = "\nGROUP BY GROUPING SETS ((".concat(group_by_sql, '),',
-         "\n                        (".concat(subtotals_combinations().join(
-       "),\n                        ("),')'),
-          uberTotal,
-         "\n                       )")
-
   // делать дедупликацию пока что сложно, поэтому временно сделаем distinct
   // FIXME
+/*
+GRPBY: {"columns":[],"unresolved_aliases":["type_oe_bi"],"expr":"type_oe_bi"}
+SUBTOTAL: type_oe_bi
+
+GRPBY: {"columns":[],"expr":"ch.fot_out.dt"}
+SUBTOTAL: dt
+*/
   if (conf["subtotalsMode"] != "AllButOneInterleaved") {
-    if (group_by_list.length == subtotals.length){
-      if (!isArray(cfg["distinct"])) {
-        // ou! changing global hash :()
-        cfg["distinct"] = [];
+
+    if (group_by_list.length == subtotals.length // || 
+      /* есть range() и совпадает кол-во subtotals с group by */ 
+      /* (group_by_list.length - subtotals.length == 1 && range_col) */
+    ){
+
+      let lastSubtotal = subtotals[subtotals.length-1]
+      let lastGrp = group_by_list[group_by_list.length-1]
+      console.log('LAST GRPBY: ' + JSON.stringify(lastGrp))
+      console.log('LAST SUBTOTAL: ' + lastSubtotal)
+
+      /* FIXME: double quotes!!! */
+      if (lastGrp.expr === lastSubtotal || lastGrp.alias === lastSubtotal
+        || (isArray(lastGrp.columns) && isString(lastGrp.columns[0]) && lastGrp.columns[0].split('.')[2] == lastSubtotal) 
+      ){
+        // we should remove it from subtotals, possibly we need check range()???
+        // Удаляем бессмысленную группировку, так как она и так учтена в GROUP BY
+        subtotals = subtotals.slice(0,-1)
+
+        if (range_col && subtotals.length === 1 && 
+          (subtotals[0] === group_by_list[0].alias || subtotals[0] === group_by_list[0].expr) &&
+          group_by_list[0].is_range_column
+         ) {
+          // after cleaning of the last column we have only range column = it is useless!
+          // console.log('FIRST GRPBY: ' + JSON.stringify(group_by_list[0]))
+          // console.log('FIRST SUBTOTAL: ' + subtotals[0])
+          subtotals = []
+        }
+        /*
+        if (subtotals.length === 0){
+          // проверяем range()
+          if(range_col){
+            subtotals.push(range_col.expr)
+            accum_val = [] // sorry for this
+          }
+        }*/
       }
     }
   }
+
+  if (subtotals.length > 0) {
+    subtotalsSQL = "\n                       ,(".concat(subtotals_combinations().join(
+      "),\n                        ("),')');
+  }
+
+  ret.group_by = "\nGROUP BY GROUPING SETS ((".concat(group_by_sql, ')',
+          subtotalsSQL,
+          uberTotal,
+         "\n                       )")
+
   // This might be a hard problem:
   // {"columns":["ch.fot_out.indicator_v","ch.fot_out.v_main"],"agg":true,"alias":"new","expr": "avg(fot_out.indicator_v + fot_out.v_main)"}
   let get_alias = function(el){
@@ -2542,11 +2685,12 @@ export function generate_koob_sql(_cfg, _vars) {
 - _cfg[filters] (включая agg) и _cfg[havig] для having
 
 */
+  let SQLWhereNegate = _cfg["options"].includes('SQLWhereNegate')
 
   var where = '';
-  var part_where = '1=1';
+  var part_where = SQLWhereNegate ? '1=0' : '1=1';
   let havingSQL = '';
-  let part_having = '1=1';
+  let part_having = SQLWhereNegate ? '1=0' : '1=1';
 
   var filters_array = _cfg["filters"];
   if (isHash(filters_array)) {
@@ -2588,9 +2732,15 @@ export function generate_koob_sql(_cfg, _vars) {
   // AGGFN условия в любом случае должны попадать в HAVING, иначе SQL не работает.
   // Проверка на наличие агрегатов не позволяет делать запрос по всей совокупности данных
   if (havingSQL.length === 1 /*&& _cfg["_group_by"].length > 0*/ ){
-    havingSQL = `\nHAVING ${havingSQL[0]}`
+    if (SQLWhereNegate) {
+      havingSQL = `\nHAVING NOT (${havingSQL[0]})`
+    } else {
+      havingSQL = `\nHAVING ${havingSQL[0]}`
+    }
   } else {
-    havingSQL = ''
+    // можно не учитывать SQLWhereNegate, так как его учтём в filters ??
+    // но может здесь и логичнее было бы
+    havingSQL = '';
   }
 
   // access filters
@@ -2643,8 +2793,14 @@ export function generate_koob_sql(_cfg, _vars) {
     }
   } else {
     if (fw.length > 0) {
-      where = `\nWHERE ${fw}`
-      part_where = fw
+      if (SQLWhereNegate) {
+        where = `\nWHERE NOT (${fw})`
+        part_where = `NOT (${fw})`
+      } else {
+        where = `\nWHERE ${fw}`
+        part_where = fw
+      }
+      
     }
   }
 
@@ -2653,7 +2809,13 @@ export function generate_koob_sql(_cfg, _vars) {
   // Для Oracle
   let global_generate_3_level_sql = false
   let top_level_where = '' // for oracle RANGE && LIMIT
-  var group_by = _cfg["_group_by"].map(el => el.expr)
+  let group_by;
+
+  if (_context[1]["_target_database"] === 'clickhouse') {
+    group_by = _cfg["_group_by"].map(el => el.alias ? el.alias : el.expr)
+  } else {
+    group_by = _cfg["_group_by"].map(el => el.expr)
+  }
 
   // нужно дополнить контекст для +,- и суметь сослатся на алиасы!
   var order_by_context = extend_context_for_order_by(_context, _cfg)
@@ -2789,37 +2951,37 @@ export function generate_koob_sql(_cfg, _vars) {
   }
 
   if (has_window) {
-    // assuming we are working for clickhouse only....
-    // we should generate correct order_by, even though each window func may require it's own order by
-    // FIXME: we use only ONE SUCH FUNC FOR NOW, IGNORING ALL OTHERS
+      // assuming we are working for clickhouse only....
+      // we should generate correct order_by, even though each window func may require it's own order by
+      // FIXME: we use only ONE SUCH FUNC FOR NOW, IGNORING ALL OTHERS
 
-    // skip all columns which are references to window funcs!
-    var innerSelect = "SELECT "
-    // могут быть ньюансы квотации столбцов, обозначения AS и т.д. поэтому каждый участок приводим к LPE и вызываем SQLPE функции с адаптацией под конкретные базы
-    innerSelect = innerSelect.concat(_cfg["_columns"].map(el => {
-      //console.log('1: ' + JSON.stringify(el) + " alias:" + el.alias)
-      if (el.expr === null) {
-        return null
-      }
-      if (el.alias){
-        for (var part of el.columns) {
-          //console.log('2 part:' + part)
-          // if we reference some known alias
-          var target = _cfg["_aliases"][part]
-          if (target && target.window) {
-            // if we reference window function, skip such column from inner select!
-            return null;
+      // skip all columns which are references to window funcs!
+      var innerSelect = "SELECT "
+      // могут быть ньюансы квотации столбцов, обозначения AS и т.д. поэтому каждый участок приводим к LPE и вызываем SQLPE функции с адаптацией под конкретные базы
+      innerSelect = innerSelect.concat(_cfg["_columns"].map(el => {
+        //console.log('1: ' + JSON.stringify(el) + " alias:" + el.alias)
+        if (el.expr === null) {
+          return null
+        }
+        if (el.alias){
+          for (var part of el.columns) {
+            //console.log('2 part:' + part)
+            // if we reference some known alias
+            var target = _cfg["_aliases"][part]
+            if (target && target.window) {
+              // if we reference window function, skip such column from inner select!
+              return null;
+            }
           }
-        }
-        return quot_as_expression(_context[1]["_target_database"], el.expr, el.alias)
-      } else {
-        if (el.columns.length === 1) {
-          var parts = el.columns[0].split('.')
-          return quot_as_expression(_context[1]["_target_database"], el.expr, parts[2])
-        }
-        return el.expr
-      } 
-    }).filter(el=> el !== null).join(', '))
+          return quot_as_expression(_context[1]["_target_database"], el.expr, el.alias)
+        } else {
+          if (el.columns.length === 1) {
+            var parts = el.columns[0].split('.')
+            return quot_as_expression(_context[1]["_target_database"], el.expr, parts[2])
+          }
+          return el.expr
+        } 
+      }).filter(el=> el !== null).join(', '))
 
     var expand_column = (col) => {
       var cube_prefix = `${_cfg["ds"]}.${_cfg["cube"]}`
@@ -3017,7 +3179,7 @@ export function generate_koob_sql(_cfg, _vars) {
             _context[1]["_target_database"]==='sqlserver' ||
             _context[1]["_target_database"]==='vertica'
             ) {
-          let subtotals = genereate_subtotals_group_by(_cfg, _cfg["_group_by"])
+          let subtotals = genereate_subtotals_group_by(_cfg, _cfg["_group_by"], _context[1]["_target_database"])
 
           group_by = subtotals.group_by
           select_tail = `${select_tail}, ${subtotals.select.join(', ')}`
@@ -3037,7 +3199,7 @@ export function generate_koob_sql(_cfg, _vars) {
     if (cube_query_template.config.is_template) {
       // надо подставить WHERE аккуратно, это уже посчитано, заменяем ${filters} и ${filters()}
       var re = /\$\{filters(?:\(\))?\}/gi;
-      var processed_from = from.replace(re, part_where);
+      var processed_from = from.replace(re, part_where); //SQLWhereNegate уже учтено!
 
 
       // access_filters
@@ -3045,21 +3207,24 @@ export function generate_koob_sql(_cfg, _vars) {
         access_where = '1=1'
       }
       var re = /\$\{access_filters(?:\(\))?\}/gi;
-      var processed_from = processed_from.replace(re, access_where);
+      var processed_from = processed_from.replace(re, access_where); //SQLWhereNegate нельзя применять!
 
       // ищем except()
       re = /\$\{filters\(except\(([^\)]*)\)\)\}/gi
       
       function except_replacer(match, columns_text, offset, string) {
+        if (SQLWhereNegate) {
+          throw new Error(`Can not process filters(except(...)) when option SQLWhereNegate is present. Sorry.`)
+        }
         var columns = columns_text.split(',')
         var filters_array = _cfg["filters"];
         if (isHash(filters_array)) {
           filters_array = [filters_array]
         } else {
-          throw new Error(`Can not split OR SQL WHERE into template parts filters(except(...))). Sorry.`)
+          throw new Error(`Can not split OR SQL WHERE into template parts filters(except(...)). Sorry.`)
         }
         //console.log(JSON.stringify(_cfg["filters"]))
-        var subst = get_filters_array(_context, filters_array, _cfg.ds + '.' + _cfg.cube, columns, true)
+        var subst = get_filters_array(_context, filters_array, _cfg.ds + '.' + _cfg.cube, columns, true, 'template_where')
         if (subst.length == 0) {
           return "1=1"
         }
@@ -3072,6 +3237,9 @@ export function generate_koob_sql(_cfg, _vars) {
       re = /\$\{filters\(([^\)]+)\)\}/gi
       
       function inclusive_replacer(match, columns_text, offset, string) {
+        if (SQLWhereNegate) {
+          throw new Error(`Can not process filters(...) when option SQLWhereNegate is present. Sorry.`)
+        }
         var columns = columns_text.split(',')
         var filters_array = _cfg["filters"];
         if (isHash(filters_array)) {
@@ -3080,7 +3248,7 @@ export function generate_koob_sql(_cfg, _vars) {
           throw new Error(`Can not split OR SQL WHERE into template parts filters(...). Sorry.`)
         }
         //console.log(JSON.stringify(_cfg["filters"]))
-        var subst = get_filters_array(_context, filters_array, _cfg.ds + '.' + _cfg.cube, columns, false)
+        var subst = get_filters_array(_context, filters_array, _cfg.ds + '.' + _cfg.cube, columns, false, 'template_where')
         if (subst.length == 0) {
           return "1=1"
         }
@@ -3096,7 +3264,9 @@ export function generate_koob_sql(_cfg, _vars) {
       let c = init_udf_args_context(`${_cfg.ds}.${_cfg.cube}`, _cfg["filters"], _context[1]["_target_database"]);
 
       function udf_args_replacer(match, columns_text, offset, string) {
-
+        if (SQLWhereNegate) {
+          throw new Error(`Can not process udf_args(...) when option SQLWhereNegate is present. Sorry.`)
+        }
         var filters_array = _cfg["filters"];
         if (!isHash(filters_array)) {
           throw new Error(`filters as array is not supported for udf_args(). Sorry.`)
@@ -3112,7 +3282,7 @@ export function generate_koob_sql(_cfg, _vars) {
       processed_from = processed_from.replace(re, udf_args_replacer);
 
       // функция filter из table lookup, но тут своя реализация... пробуем
-      re = /\$\{filter\(([^\}]+)\)\}/gi
+      re = /\$\{filter\(([^\}]+)\)\}/gi // SQLWhereNegate = кажется тут не нужно
 
       // FIXME: надо инитить глобальный контекст, и подкидывать переменные про юзера.
       // let cc = [ {_target_database: "HOY"}, SQL_where_context ];
