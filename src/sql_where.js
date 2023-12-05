@@ -375,7 +375,8 @@ export function sql_where_context(_vars) {
                 ar[0] === "column" ||
                 ar[0] === "cond" ||
                 ar[0] === "includes" ||
-                ar[0] === "get_in"
+                ar[0] === "get_in" ||
+                ar[0] === "map"
                 ) {
             return eval_lisp(ar, ctx);
           } else {
@@ -458,6 +459,13 @@ export function sql_where_context(_vars) {
         // при этом наши переменные фильтруем!!пока что есть только _user_info
         let _v = {"user": _context["user"]};
         return eval_lisp(["get_in"].concat(ast), _v, rs);
+      });
+
+      ctx['map'] = makeSF((ast, ctx, rs) => {
+        // вызываем стандартный map
+        // можно использовать array.map(ql)
+        let _v = {"user": _context["user"], "ql": _context["ql"]};
+        return eval_lisp(["map"].concat(ast), _v, rs);
       });
 
       ctx['cond'] = function(expr, ifnull) {

@@ -276,7 +276,7 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
     }
   })
 
-  //console.log(`COLUMNS: ${JSON.stringify(ret["sort"])}`)
+  //console.log(`COLUMNS: ${JSON.stringify(ret["filters"])}`)
 
   return ret;
 }
@@ -577,6 +577,9 @@ function init_koob_context(_vars, default_ds, default_cube) {
       // reference to alias!
       //console.log("DO WE HAVE SUCH ALIAS?" , JSON.stringify(_variables["_aliases"]))
       if (_variables["_aliases"][key]) {
+        if (!isHash(_variables["_result"])) {
+          _variables["_result"] = {}
+        }
         if (!isArray(_variables["_result"]["columns"])){
           _variables["_result"]["columns"] = []
         }
@@ -600,7 +603,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
             // в этом списке только стандартные вещи, которые во всех базах одинаково пишутся
             if (['sum','avg','min','max','count'].find(el => el === key)){
               _variables["_result"]["agg"] = true
-               }
+            }
           }
 
           return function() {
@@ -1385,11 +1388,14 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
 
   _context['get_in'] = makeSF((ast, ctx, rs) => {
+    // FIXME, кажется это вызывается из sql_where
     // возвращаем переменные, которые в нашем контексте, вызывая стандартный get_in
     // при этом наши переменные фильтруем!!пока что есть только _user_info
     let _v = {"user": _variables["_user_info"]};
     return eval_lisp(["get_in"].concat(ast), _v, rs);
   });
+
+
 
     var partial_filter = function(a) {
     if (isArray(a[0]) && a[0][0] === "ignore(me)") {
@@ -2027,6 +2033,10 @@ Sep 2023: так как это для части SQL WHERE, то мы никог
 
 /* sql_context нужен для передачи в функцию `columns` = для принятия решения, используем ли мы имя таблицы
 в clickhouse или нет*/
+
+/* FIXME: в context обычно в 1-м элементе массива идёт структура с _aliases и c _target_database
+   с помощью этого можно поискать по алиасам !!!
+*/
 function get_filters_array(context, filters_array, cube, required_columns, negate, sql_context) {
 
 //console.log("get_filters_array " + JSON.stringify(filters_array))
@@ -2084,6 +2094,8 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
     }
   }
 
+  let c = context[1]
+
   var ret = filters_array.map(_filters => {
       let part_where = null
       let pw = Object.keys(_filters).filter(k => comparator(k)).map( 
@@ -2092,6 +2104,9 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
                     // and or not
                     const [op, ...args] = _filters[key];
 
+                    if (key == "xxx") {
+                      console.log(`${key} ALIASES: ${JSON.stringify( context[1] )}`)
+                    }
                     let colname = aliases[key]
                     if (isString(colname)){
                       if (should_quote_alias(colname)) {
@@ -2099,7 +2114,13 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
                         colname = db_quote_ident(colname)
                       }
                     } else {
-                      colname = ["column", key, sql_context]
+                      // ищем варианты для фильтров по алиасам "xxx": ["=","знач"]
+                      // для clickhouse НУЖНО использовать ALIASES!!!
+                      if (c._target_database !== 'clickhouse' && isHash(c._aliases) && isHash(c._aliases[key]) && c._aliases[key].expr ) {
+                        colname = c._aliases[key].expr
+                      } else {
+                        colname = ["column", key, sql_context]
+                      }
                     }
                     return [op, ["ignore(me)", colname], ...args];
                     
@@ -2178,7 +2199,7 @@ function genereate_subtotals_group_by(cfg, group_by_list, target_database){
   let ret = {'group_by':'', 'select':[]}
   //console.log(`CFG ${JSON.stringify(cfg)}`)
   // {"ds":"ch","cube":"fot_out",
-  console.log(`GROUP BY: ${JSON.stringify(subtotals)} ${JSON.stringify(group_by_list)}`)
+  //console.log(`GROUP BY: ${JSON.stringify(subtotals)} ${JSON.stringify(group_by_list)}`)
   if (group_by_list.length === 0) {
     return ret
   }
@@ -2318,8 +2339,8 @@ SUBTOTAL: dt
 
       let lastSubtotal = subtotals[subtotals.length-1]
       let lastGrp = group_by_list[group_by_list.length-1]
-      console.log('LAST GRPBY: ' + JSON.stringify(lastGrp))
-      console.log('LAST SUBTOTAL: ' + lastSubtotal)
+      //console.log('LAST GRPBY: ' + JSON.stringify(lastGrp))
+      //console.log('LAST SUBTOTAL: ' + lastSubtotal)
 
       /* FIXME: double quotes!!! */
       if (lastGrp.expr === lastSubtotal || lastGrp.alias === lastSubtotal
@@ -2721,6 +2742,8 @@ export function generate_koob_sql(_cfg, _vars) {
 
 */
 
+
+
   //_context[1]["column"] - это функция для резолва столбца в его текстовое представление
   filters_array = get_filters_array(_context, filters_array, '');
 // это теперь массив из уже готового SQL WHERE!
@@ -2775,6 +2798,7 @@ export function generate_koob_sql(_cfg, _vars) {
     fw = `(${filters_array.join(")\n   OR (")})`
   }
 
+
   if (fw.length > 0) {
     if (access_where.length > 0) {
       fw = `(${fw})\n   AND\n   ${access_where}`
@@ -2803,6 +2827,7 @@ export function generate_koob_sql(_cfg, _vars) {
       
     }
   }
+
 
   // для teradata limit/offset 
   let global_extra_columns = []

@@ -162,7 +162,7 @@ where (id = 23000035)
                globalThis.MOCKCubeSQL = {
                   "clickhouse-bi.cube":{
                      "query": `SELECT 1 from cube where \${filter(a = get_in(user,sys_config,external) or b = var_samp(regions) or a = [1,2,3] 
-                        or b = get_in(user,sys_config,ext_groups) 
+                        or b = map(get_in(user,sys_config,ext_groups), ql)
                         and cond(col in (get_in(user,sys_config,ext_groups)), ['col is null']) )}`,
                      "config": {"is_template": 1,"skip_where": 1}}}
                
@@ -176,9 +176,9 @@ where (id = 23000035)
                      "regions":["=","Moscow","piter","tumen"]
                   },
                   "with":"bi.cube"},
-                        {"_target_database": "clickhouse", "_user_info": {"username":"vasya","sys_config":{"external":true, "ext_groups":["a","b","c"]}}}),
+                        {"_target_database": "clickhouse", "_user_info": {"username":"vasya","sys_config":{"external":true, "ext_groups":["g1","g2","g3"]}}}),
                `SELECT regions as regions
-FROM SELECT 1 from cube where a = true or b = var_samp(regions) or a IN (1,2,3) or b = ->(user,sys_config,ext_groups) or b IN (a,b,c) or b in ('a','b','c') and col in ('a','b','c')`
+FROM SELECT 1 from cube where a = true or b = var_samp(regions) or a IN (1,2,3) or b IN ('g1','g2','g3') and col in (g1,g2,g3)`
                                  );
                         });
 
@@ -241,8 +241,13 @@ ORDER BY group_pay_name, v_main`
 
    it('should eval KOOB SUBTOTALS', function() {
 
+      globalThis.MOCKCubeSQL = {
+         "clickhouse-bi.cube":{
+            "query": `SELECT * FROM tbl`, 
+            "config": {"is_template": 0,"skip_where": 0}}}
+
       assert.equal( lpe.generate_koob_sql(
-         {"columns":["dt", "all_contracts", "regions", "tru", "avg(v_rel_fzp)","sum(v_rel_pp_i)"],
+         {"columns":["dt", "all_contracts", "regions", "tru", "avg(ratio_paid_balance)","sum(v_rel_pp_i)"],
          "subtotals": ["dt", "all_contracts", "regions", "tru"],
          "config": {"subtotalsMode":"!AllButOneInterleaved", "subtotalsTotal":true},
          "filters":{"dt":["!=","2020-03","2020-04"],
@@ -250,20 +255,49 @@ ORDER BY group_pay_name, v_main`
          "sort":["all_contracts", "regions"],
          "with":"bi.cube"},
                {"_target_database": "clickhouse"}),
-`SELECT DISTINCT (NOW() - INERVAL '1 DAY') as "dt", type_oe_bi as "type_oe_bi", region_name as "region_name", pay_name as "pay_name", avg(v_rel_fzp) as "v_rel_fzp", sum(v_rel_pp_i), GROUPING((NOW() - INERVAL '1 DAY')) AS "∑dt", GROUPING(type_oe_bi) AS "∑type_oe_bi", GROUPING(region_name) AS "∑region_name", GROUPING(pay_name) AS "∑pay_name"
-FROM fot_out AS fot_out
-WHERE ((NOW() - INERVAL '1 DAY') NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано') AND (pay_code != 'Не задано') AND (sex_code IS NULL)
-GROUP BY GROUPING SETS (((NOW() - INERVAL '1 DAY'), type_oe_bi, region_name, pay_name),
-                        ((NOW() - INERVAL '1 DAY')),
-                        ((NOW() - INERVAL '1 DAY'),type_oe_bi),
-                        ((NOW() - INERVAL '1 DAY'),type_oe_bi,region_name),
-                        ((NOW() - INERVAL '1 DAY'),type_oe_bi,region_name,pay_name),
+`SELECT dt as dt, all_contracts as all_contracts, regions as regions, tru as tru, avg(ratio_paid_balance) as ratio_paid_balance, sum(v_rel_pp_i), GROUPING(dt) AS "∑dt", GROUPING(all_contracts) AS "∑all_contracts", GROUPING(regions) AS "∑regions", GROUPING(tru) AS "∑tru"
+FROM SELECT * FROM tbl
+WHERE (dt NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано')
+GROUP BY GROUPING SETS ((dt, all_contracts, regions, tru)
+                       ,(dt),
+                        (dt,all_contracts),
+                        (dt,all_contracts,regions),
                         ()
                        )
-ORDER BY "group_pay_name", "v_main"`
+ORDER BY all_contracts, regions`
             );
       });
 
+
+
+      it('should eval filter aliases', function() {
+
+         globalThis.MOCKCubeSQL = {
+            "clickhouse-bi.cube":{
+               "query": `SELECT * FROM tbl`, 
+               "config": {"is_template": 0,"skip_where": 0}}}
+   
+         assert.equal( lpe.generate_koob_sql(
+            {"columns":["dt:ddd", "all_contracts", "regions", "tru", "avg(ratio_paid_balance)","sum(v_rel_pp_i)"],
+            "subtotals": ["ddd", "all_contracts", "regions", "tru"],
+            "config": {"subtotalsMode":"!AllButOneInterleaved", "subtotalsTotal":true},
+            "filters":{"ddd":["!=","2020-03","2020-04"],
+            "pay_name":["!=","Не задано"]},
+            "sort":["all_contracts", "regions"],
+            "with":"bi.cube"},
+                  {"_target_database": "clickhouse"}),
+`SELECT dt as ddd, all_contracts as all_contracts, regions as regions, tru as tru, avg(ratio_paid_balance) as ratio_paid_balance, sum(v_rel_pp_i), GROUPING(dt) AS "∑ddd", GROUPING(all_contracts) AS "∑all_contracts", GROUPING(regions) AS "∑regions", GROUPING(tru) AS "∑tru"
+FROM SELECT * FROM tbl
+WHERE (ddd NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано')
+GROUP BY GROUPING SETS ((ddd, all_contracts, regions, tru)
+                       ,(ddd),
+                        (ddd,all_contracts),
+                        (ddd,all_contracts,regions),
+                        ()
+                       )
+ORDER BY all_contracts, regions`
+               );
+         });
 });
 
 

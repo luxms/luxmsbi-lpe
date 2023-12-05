@@ -73,11 +73,13 @@ ORDER BY "group_pay_name", "v_main"`
             it('should eval KOOB SUBTOTALS ONE COL and range()', function() {
 
                assert.equal( lpe.generate_koob_sql(
-                  {"columns":["range(2):rng", "dt","v_main", "group_pay_name", "avg(v_rel_fzp)","sum(v_rel_pp_i)"],
+                  {"columns":["range(2):rng", "dt","v_main:xxx", "group_pay_name", "avg(v_rel_fzp)","sum(v_rel_pp_i)"],
                   "subtotals": ["rng", "dt", "v_main"],
                   "config": {"subtotalsMode":"!AllButOneInterleaved", "subtotalsTotal":false},
                   "filters":{"dt":["!=","2020-03","2020-04"],
-                  "pay_name":["!=","Не задано"]},
+                  "pay_name":["!=","Не задано"],
+                  "xxx": ["=","yyy"]
+                  },
                   "sort":["group_pay_name","v_main"],
                   "with":"ch.fot_out"},
                         {"_target_database": "teradata"}),

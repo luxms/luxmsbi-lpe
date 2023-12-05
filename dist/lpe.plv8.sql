@@ -4271,7 +4271,7 @@ function sql_where_context(_vars) {
     var prnt = function prnt(ar) {
       //console.log("PRNT:" + JSON.stringify(ar))
       if (ar instanceof Array) {
-        if (ar[0] === '$' || ar[0] === '"' || ar[0] === "'" || ar[0] === "str" || ar[0] === "[" || ar[0] === 'parse_kv' || ar[0] === 'parse_cond' || ar[0] === "=" || ar[0] === "!=" || ar[0] === "ql" || ar[0] === "pg_interval" || ar[0] === "lpe_pg_tstz_at_time_zone" || ar[0] === "column" || ar[0] === "cond" || ar[0] === "includes" || ar[0] === "get_in") {
+        if (ar[0] === '$' || ar[0] === '"' || ar[0] === "'" || ar[0] === "str" || ar[0] === "[" || ar[0] === 'parse_kv' || ar[0] === 'parse_cond' || ar[0] === "=" || ar[0] === "!=" || ar[0] === "ql" || ar[0] === "pg_interval" || ar[0] === "lpe_pg_tstz_at_time_zone" || ar[0] === "column" || ar[0] === "cond" || ar[0] === "includes" || ar[0] === "get_in" || ar[0] === "map") {
           return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(ar, ctx);
         } else {
           if (ar.length == 2) {
@@ -4347,6 +4347,15 @@ function sql_where_context(_vars) {
         "user": _context["user"]
       };
       return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(["get_in"].concat(ast), _v, rs);
+    });
+    ctx['map'] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["c" /* makeSF */])(function (ast, ctx, rs) {
+      // вызываем стандартный map
+      // можно использовать array.map(ql)
+      var _v = {
+        "user": _context["user"],
+        "ql": _context["ql"]
+      };
+      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(["map"].concat(ast), _v, rs);
     });
 
     ctx['cond'] = function (expr, ifnull) {
@@ -7159,7 +7168,7 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
     } else {
       return expand_column_expression(el);
     }
-  }); //console.log(`COLUMNS: ${JSON.stringify(ret["sort"])}`)
+  }); //console.log(`COLUMNS: ${JSON.stringify(ret["filters"])}`)
 
   return ret;
 }
@@ -7478,6 +7487,10 @@ function init_koob_context(_vars, default_ds, default_cube) {
     //console.log("DO WE HAVE SUCH ALIAS?" , JSON.stringify(_variables["_aliases"]))
 
     if (_variables["_aliases"][key]) {
+      if (!__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(_variables["_result"])) {
+        _variables["_result"] = {};
+      }
+
       if (!__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(_variables["_result"]["columns"])) {
         _variables["_result"]["columns"] = [];
       } // remeber reference to alias as column name!
@@ -8292,6 +8305,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
   };
 
   _context['get_in'] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["c" /* makeSF */])(function (ast, ctx, rs) {
+    // FIXME, кажется это вызывается из sql_where
     // возвращаем переменные, которые в нашем контексте, вызывая стандартный get_in
     // при этом наши переменные фильтруем!!пока что есть только _user_info
     var _v = {
@@ -8997,6 +9011,10 @@ Sep 2023: так как это для части SQL WHERE, то мы никог
 /* sql_context нужен для передачи в функцию `columns` = для принятия решения, используем ли мы имя таблицы
 в clickhouse или нет*/
 
+/* FIXME: в context обычно в 1-м элементе массива идёт структура с _aliases и c _target_database
+   с помощью этого можно поискать по алиасам !!!
+*/
+
 
 function get_filters_array(context, filters_array, cube, required_columns, negate, sql_context) {
   //console.log("get_filters_array " + JSON.stringify(filters_array))
@@ -9058,6 +9076,7 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
     }
   }
 
+  var c = context[1];
   var ret = filters_array.map(function (_filters) {
     var part_where = null;
     var pw = Object.keys(_filters).filter(function (k) {
@@ -9069,6 +9088,10 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
           op = _filters$key[0],
           args = _filters$key.slice(1);
 
+      if (key == "xxx") {
+        __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log("".concat(key, " ALIASES: ").concat(JSON.stringify(context[1])));
+      }
+
       var colname = aliases[key];
 
       if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["e" /* isString */])(colname)) {
@@ -9077,7 +9100,13 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
           colname = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_21__utils_utils__["b" /* db_quote_ident */])(colname);
         }
       } else {
-        colname = ["column", key, sql_context];
+        // ищем варианты для фильтров по алиасам "xxx": ["=","знач"]
+        // для clickhouse НУЖНО использовать ALIASES!!!
+        if (c._target_database !== 'clickhouse' && __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(c._aliases) && __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["b" /* isHash */])(c._aliases[key]) && c._aliases[key].expr) {
+          colname = c._aliases[key].expr;
+        } else {
+          colname = ["column", key, sql_context];
+        }
       }
 
       return [op, ["ignore(me)", colname]].concat(_toConsumableArray(args));
@@ -9159,9 +9188,9 @@ function genereate_subtotals_group_by(cfg, group_by_list, target_database) {
     'group_by': '',
     'select': [] //console.log(`CFG ${JSON.stringify(cfg)}`)
     // {"ds":"ch","cube":"fot_out",
+    //console.log(`GROUP BY: ${JSON.stringify(subtotals)} ${JSON.stringify(group_by_list)}`)
 
   };
-  __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log("GROUP BY: ".concat(JSON.stringify(subtotals), " ").concat(JSON.stringify(group_by_list)));
 
   if (group_by_list.length === 0) {
     return ret;
@@ -9231,6 +9260,16 @@ function genereate_subtotals_group_by(cfg, group_by_list, target_database) {
   var cross_subtotals_combinations = function cross_subtotals_combinations() {
     return subtotals.map(function (col) {
       check_column_existence(col); //console.log(JSON.stringify(group_by_list.filter(c => c !== col).join(', ')))
+
+      /*
+          let r = []
+      for (let i=0; i < group_by_list.length; i++){
+        let line = group_by_list.slice(0, i).concat(group_by_list.slice(i+1))
+        r.push(line.map(c => c.expr).join(', '))
+      }
+      return r
+      */
+      // FIXME: range shoulf be handled smartly!!!!
 
       return group_by_list.filter(function (c) {
         return c.expr !== col && c.expr !== "\"".concat(col, "\"") && c.alias !== col && c.alias !== "\"".concat(col, "\"");
@@ -9309,9 +9348,9 @@ function genereate_subtotals_group_by(cfg, group_by_list, target_database) {
     /* (group_by_list.length - subtotals.length == 1 && range_col) */
     ) {
         var lastSubtotal = subtotals[subtotals.length - 1];
-        var lastGrp = group_by_list[group_by_list.length - 1];
-        __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log('LAST GRPBY: ' + JSON.stringify(lastGrp));
-        __WEBPACK_IMPORTED_MODULE_17__console_console__["a" /* default */].log('LAST SUBTOTAL: ' + lastSubtotal);
+        var lastGrp = group_by_list[group_by_list.length - 1]; //console.log('LAST GRPBY: ' + JSON.stringify(lastGrp))
+        //console.log('LAST SUBTOTAL: ' + lastSubtotal)
+
         /* FIXME: double quotes!!! */
 
         if (lastGrp.expr === lastSubtotal || lastGrp.alias === lastSubtotal || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["d" /* isArray */])(lastGrp.columns) && __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_18__lisp__["e" /* isString */])(lastGrp.columns[0]) && lastGrp.columns[0].split('.')[2] == lastSubtotal) {

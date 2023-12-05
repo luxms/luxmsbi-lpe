@@ -4283,7 +4283,7 @@ function sql_where_context(_vars) {
     var prnt = function prnt(ar) {
       //console.log("PRNT:" + JSON.stringify(ar))
       if (ar instanceof Array) {
-        if (ar[0] === '$' || ar[0] === '"' || ar[0] === "'" || ar[0] === "str" || ar[0] === "[" || ar[0] === 'parse_kv' || ar[0] === 'parse_cond' || ar[0] === "=" || ar[0] === "!=" || ar[0] === "ql" || ar[0] === "pg_interval" || ar[0] === "lpe_pg_tstz_at_time_zone" || ar[0] === "column" || ar[0] === "cond" || ar[0] === "includes" || ar[0] === "get_in") {
+        if (ar[0] === '$' || ar[0] === '"' || ar[0] === "'" || ar[0] === "str" || ar[0] === "[" || ar[0] === 'parse_kv' || ar[0] === 'parse_cond' || ar[0] === "=" || ar[0] === "!=" || ar[0] === "ql" || ar[0] === "pg_interval" || ar[0] === "lpe_pg_tstz_at_time_zone" || ar[0] === "column" || ar[0] === "cond" || ar[0] === "includes" || ar[0] === "get_in" || ar[0] === "map") {
           return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(ar, ctx);
         } else {
           if (ar.length == 2) {
@@ -4359,6 +4359,15 @@ function sql_where_context(_vars) {
         "user": _context["user"]
       };
       return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(["get_in"].concat(ast), _v, rs);
+    });
+    ctx['map'] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["c" /* makeSF */])(function (ast, ctx, rs) {
+      // вызываем стандартный map
+      // можно использовать array.map(ql)
+      var _v = {
+        "user": _context["user"],
+        "ql": _context["ql"]
+      };
+      return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["a" /* eval_lisp */])(["map"].concat(ast), _v, rs);
     });
 
     ctx['cond'] = function (expr, ifnull) {
