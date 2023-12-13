@@ -30,9 +30,18 @@ let postgresql_typemap = {
   'INT': ['INT', 'utils.safe_convert_to_int'],
   'FLOAT': ['FLOAT','utils.safe_convert_to_float8'],
   'DOUBLE': ['FLOAT', 'utils.safe_convert_to_float8'],
-  'STRING' : ['TEXT', 'utils.safe_convert_to_text'],
+  'STRING': ['TEXT', 'utils.safe_convert_to_text'],
   'DATE': ['DATE', 'utils.safe_convert_to_date'],
   'DATETIME': ['TIMESTAMP','utils.safe_convert_to_timestamp'],
+}
+
+let clickhouse_typemap = {
+    'INT': ['Int64'],
+    'FLOAT': ['Float64'],
+    'DOUBLE': ['Float64'],
+    'STRING': ['String'],
+    'DATE': ['Date'],
+    'DATETIME': ['DateTime'],
 }
 
 
@@ -43,30 +52,56 @@ function sql_macros_context(_vars) {
     _ctx = [_vars]
   }
   var _context = {}
-  
+
   // добавляем наш контекст, как имеющий более высокий приоритет над существующим
   _ctx.unshift(_context)
 
   _context["cast"] = function(column, typeTo, optional_default) {
     // utils.convert_softly('foo', /*new type*/ 'INT', /* default*/ NULL);
+    if (_vars === null || _vars === undefined) {
+        _vars = {"_target_database": 'postgresql'}
+    } else if (_vars["_target_database"] === undefined) {
+        _vars["_target_database"] = 'postgresql'
+    }
+
+    let dbType
     let def_val
-    let dbType = postgresql_typemap[typeTo]
+    switch(_vars["_target_database"]) {
+      case 'postgresql':
+        dbType = postgresql_typemap[typeTo];
+        if (optional_default === null ) {
+          def_val = `NULL::${dbType[0]}`;
+        } else {
+          def_val = optional_default === undefined ? `NULL::${dbType[0]}` : `${db_quote_literal(optional_default)}::${dbType[0]}`
+        }
+        break;
+      case 'clickhouse':
+        dbType = clickhouse_typemap[typeTo];
+        break;
+      default:
+        throw Error(`Conversion in ${_vars["_target_database"]} is not supported`);
+    }
 
     if (dbType === undefined) {
       throw Error(`Conversion to ${typeTo} is not supported`)
     }
-    if (optional_default === null ) {
-      def_val = `NULL::${dbType[0]}`
-    } else {
-      def_val = optional_default === undefined ? `NULL::${dbType[0]}` : `${db_quote_literal(optional_default)}::${dbType[0]}`
+
+    let sql
+    if (_vars["_target_database"] === 'postgresql') {
+      sql = `    ALTER COLUMN ${db_quote_ident(column)} SET DATA TYPE ${dbType[0]}
+    USING ${dbType[1]}(${db_quote_ident(column)}, ${def_val})`
+    } else if (_vars["_target_database"] === 'clickhouse') {
+      sql = `    MODIFY COLUMN ${db_quote_ident(column)} Nullable(${dbType[0]})`
     }
 
-    let sql = `    ALTER COLUMN ${db_quote_ident(column)} SET DATA TYPE ${dbType[0]}
-    USING ${dbType[1]}(${db_quote_ident(column)}, ${def_val})`
     return sql
   }
 
   _context["regexp"] = function(first, second) {
+    if (_vars["_target_database"] !== 'postgresql') {
+      throw Error(`Conversion using regexp in ${_vars["_target_database"]} not implemented`)
+    }
+
     if (second === undefined){
       return `(regexp_match(${db_quote_ident(global_current_column)}, '${first}'))[1]`
     } else {
@@ -75,6 +110,10 @@ function sql_macros_context(_vars) {
   }
 
   _context["to_date"] = function(first, second) {
+    if (_vars["_target_database"] !== 'postgresql') {
+      throw Error(`Conversion using to_date in ${_vars["_target_database"]} not implemented`)
+    }
+
     if (second === undefined){
       return `to_date(${db_quote_ident(global_current_column)}, ${db_quote_literal(first)})`
     } else {
@@ -83,6 +122,10 @@ function sql_macros_context(_vars) {
   }
 
   _context["to_datetime"] = function(first, second) {
+    if (_vars["_target_database"] !== 'postgresql') {
+      throw Error(`Conversion using to_datetime in ${_vars["_target_database"]} not implemented`)
+    }
+
     if (second === undefined){
       return `to_timestamp(${db_quote_ident(global_current_column)}, ${db_quote_literal(first)})::TIMESTAMP`
     } else {
@@ -91,6 +134,10 @@ function sql_macros_context(_vars) {
   }
 
   _context["left"] = function(first, second) {
+    if (_vars["_target_database"] !== 'postgresql') {
+      throw Error(`Conversion using left in ${_vars["_target_database"]} not implemented`)
+    }
+
     if (second === undefined){
       //console.log(`isNumber ${first}: ${isNumber(first)}`)
       return `left(${db_quote_ident(global_current_column)}, ${db_quote_literal(first)})`
@@ -101,6 +148,10 @@ function sql_macros_context(_vars) {
   }
 
   _context["castWithExpr"] = makeSF((ast,ctx) => {
+    if (_vars["_target_database"] !== 'postgresql') {
+      throw Error(`Conversion using castWithExpr in ${_vars["_target_database"]} not implemented`)
+    }
+
     // column, typeTo, expr, optional_default
     let column = eval_lisp(ast[0],ctx)
     let typeTo = eval_lisp(ast[1],ctx)
@@ -145,14 +196,13 @@ function sql_macros_context(_vars) {
   })
 
   return _ctx;
-
 }
 
 
 export function eval_sql_macros(_sexpr, _vars) {
   if (typeof _vars === 'string') _vars = JSON.parse(_vars);
 
-  //console.log('sql_where parse: ', JSON.stringify(sexpr));
+  // console.log('sql_where parse: ', JSON.stringify(sexpr));
 
   var _context = sql_macros_context(_vars);
 
