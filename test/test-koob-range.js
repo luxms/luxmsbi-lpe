@@ -71,8 +71,8 @@ ORDER BY org_shortname_nm LIMIT 5 OFFSET 10`
    `SELECT sum(dt) as "АХТУНГ", org_fullname_nm as org_fullname_nm, koob__range__ as rng, GROUPING(org_fullname_nm) AS "∑org_fullname_nm", GROUPING(koob__range__) AS "∑rng"
 FROM (SELECT filters, id, dt, org_fullname_nm, org_shortname_nm from cube) AS tbl,generate_series(0, 2-1) as koob__range__
 WHERE (org_shortname_nm IS NOT NULL)
-GROUP BY GROUPING SETS ((org_fullname_nm, koob__range__),
-                        (koob__range__)
+GROUP BY GROUPING SETS ((org_fullname_nm, koob__range__)
+                       ,(org_fullname_nm)
                        )
 ORDER BY org_shortname_nm LIMIT 5 OFFSET 10`
             );

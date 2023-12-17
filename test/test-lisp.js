@@ -72,7 +72,8 @@ describe('LISP tests', function () {
   it('get-in', function () {
     assert.deepEqual(lpe.eval_lisp(lpe.parse('begin(a . 3 . 1)'), { "a": { "3": [300, 600] } }), 600);
     assert.deepEqual(lpe.eval_lisp(lpe.parse('get_in(a, ["3",1])'), { "a": { "3": [300, 600] } }), 600);
-    assert.deepEqual(lpe.eval_lisp(lpe.parse('get_in("a", ["3",1])'), { "a": { "3": [300, 600] } }), undefined);
+    assert.deepEqual(lpe.eval_lisp(lpe.parse('get_in("a", ["3",1])'), { "a": { "3": [300, 600] } }), 600);
+    assert.deepEqual(lpe.eval_lisp(lpe.parse("get_in('a', ['3',1])"), { "a": { "3": [300, 600] } }), 600);
     assert.deepEqual(lpe.eval_lisp(lpe.parse('get_in(a, [3,1])'), { "a": { "3": [300, 600] } }), 600);
     assert.deepEqual(lpe.eval_lisp(lpe.parse('get_in(a, [3,1,0,"j"])'), { "a": { "3": [300, 600] } }), undefined);
   });

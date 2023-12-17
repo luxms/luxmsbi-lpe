@@ -79,7 +79,7 @@ ORDER BY id LIMIT 10`
                {"_target_database": "clickhouse"}),
    `SELECT sum(id) as "АХТУНГ", id as id
 FROM (SELECT 1 from cube where
-(toString(regions) ILIKE '%N%') AND ((toString(dt) ILIKE '%А%') AND (dt IN ('2022-01-02', '2022-10-10', '2020-09-09')))
+(toString(cube.regions) ILIKE '%N%') AND ((toString(cube.dt) ILIKE '%А%') AND (cube.dt IN ('2022-01-02', '2022-10-10', '2020-09-09')))
 or (toString(regions) ILIKE '%N%') AND ((toString(dt) ILIKE '%А%') AND (dt IN ('2022-01-02', '2022-10-10', '2020-09-09')))
 or ((toString(dt) ILIKE '%А%') AND (dt IN ('2022-01-02', '2022-10-10', '2020-09-09'))))
 GROUP BY id
@@ -142,7 +142,7 @@ where \${filters(id)}
                      {"_target_database": "clickhouse"}),
          `SELECT regions as regions
 FROM (SELECT 1 from cube where
-where (dt BETWEEN 2019 AND 2022) AND (id = 23000035)
+where (cube.dt BETWEEN 2019 AND 2022) AND (cube.id = 23000035)
 where (id = 23000035) and status_nm = 'Закрыт'
 where (dt BETWEEN 2019 AND 2022) AND (id = 23000035) and status_nm != 'Проект'
 where (dt BETWEEN 2019 AND 2022) AND (id = 23000035) and status_nm != 'Проект'
@@ -191,7 +191,10 @@ FROM SELECT 1 from cube where a = true or b = var_samp(regions) or a IN (1,2,3) 
 or \${filters(except(vpz_nm))}
 or \${filters("id",'dt':'date space')})`, 
             "config": {"is_template": 1,"skip_where": 1}}}
+/* FIXME:except  and usual filters тоже должны использоватьимя куба!!!
+но это должна быть опция, так как мы не знаем в каком месте SQL реально стоит filters()
 
+*/
       
          assert.equal( lpe.generate_koob_sql(
             {"columns":[
@@ -209,7 +212,7 @@ or \${filters("id",'dt':'date space')})`,
                   {"_target_database": "clickhouse"}),
    `SELECT sum(id) as "АХТУНГ", id as id
 FROM (SELECT 1 from cube where
-(toString(regions) ILIKE '%N%') AND (id = 123) AND ((toString(dt) ILIKE '%А%') AND (dt IN ('2022-01-02', '2022-10-10', '2020-09-09')))
+(toString(cube.regions) ILIKE '%N%') AND (cube.id = 123) AND ((toString(cube.dt) ILIKE '%А%') AND (cube.dt IN ('2022-01-02', '2022-10-10', '2020-09-09')))
 or (toString(regions) ILIKE '%N%') AND (id = 123) AND ((toString(dt) ILIKE '%А%') AND (dt IN ('2022-01-02', '2022-10-10', '2020-09-09')))
 or (id = 123) AND ((toString("date space") ILIKE '%А%') AND ("date space" IN ('2022-01-02', '2022-10-10', '2020-09-09'))))
 GROUP BY id
@@ -231,7 +234,7 @@ ORDER BY id LIMIT 10`
                {"_target_database": "clickhouse"}),
 `SELECT type_oe_bi, avg(v_rel_fzp), sum(v_rel_pp_i), GROUPING(type_oe_bi) AS "∑type_oe_bi"
 FROM fot_out AS fot_out
-WHERE (ch.fot_out.dt NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано')
+WHERE (dt NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано')
 GROUP BY GROUPING SETS ((type_oe_bi)
                        )
 ORDER BY group_pay_name, v_main`
@@ -257,7 +260,7 @@ ORDER BY group_pay_name, v_main`
                {"_target_database": "clickhouse"}),
 `SELECT dt as dt, all_contracts as all_contracts, regions as regions, tru as tru, avg(ratio_paid_balance) as ratio_paid_balance, sum(v_rel_pp_i), GROUPING(dt) AS "∑dt", GROUPING(all_contracts) AS "∑all_contracts", GROUPING(regions) AS "∑regions", GROUPING(tru) AS "∑tru"
 FROM SELECT * FROM tbl
-WHERE (dt NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано')
+WHERE (cube.dt NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано')
 GROUP BY GROUPING SETS ((dt, all_contracts, regions, tru)
                        ,(dt),
                         (dt,all_contracts),
@@ -288,7 +291,7 @@ ORDER BY all_contracts, regions`
                   {"_target_database": "clickhouse"}),
 `SELECT dt as ddd, all_contracts as all_contracts, regions as regions, tru as tru, avg(ratio_paid_balance) as ratio_paid_balance, sum(v_rel_pp_i), GROUPING(dt) AS "∑ddd", GROUPING(all_contracts) AS "∑all_contracts", GROUPING(regions) AS "∑regions", GROUPING(tru) AS "∑tru"
 FROM SELECT * FROM tbl
-WHERE (ddd NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано')
+WHERE (cube.dt NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано')
 GROUP BY GROUPING SETS ((ddd, all_contracts, regions, tru)
                        ,(ddd),
                         (ddd,all_contracts),

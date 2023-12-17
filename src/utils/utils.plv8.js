@@ -85,6 +85,8 @@ export function reports_get_table_sql(target_db_type, tbl, data) {
 
     var parts = tbl.split('.')
     var sql = cube.sql_query
+
+    // если это одна строка и там "schema"."table" либо варианты без кавычек
     if (sql.match(/ /) !== null) sql = `(${sql})` // it's select ... FROM or something like this
     if (target_db_type === 'oracle') {
         return {"query": `${sql} ${parts[1]}`, "config": cube.config  }

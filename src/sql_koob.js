@@ -37,6 +37,11 @@ import {
 import { isObject } from 'core-js/fn/object';
 import { has } from 'core-js/fn/dict';
 import { part } from 'core-js/core/function';
+import { forEach } from 'core-js/core/dict';
+
+//import { generate_agg_funcs } from './funcs/agg.js';
+
+//console.log( JSON.stringify(generate_agg_funcs.init({"a":"b"})) );
 
 //import util from 'license-report/lib/util';
 
@@ -103,6 +108,7 @@ function upper_by_default(db) {
 function quot_as_expression(db, src, alias) {
   // 1 определяем, нужно ли квотировать 
   let should_quote = false;
+
   if (upper_by_default(db)) {
     should_quote = true
     // `select col from dual` вернёт в JDBC `COL` заглавными буквами !!!
@@ -573,6 +579,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
       // console.log(`COLUMN: `, JSON.stringify(_variables["_columns"][key]));
       // вызываем функцию column(ПолноеИмяСтолбца) если нашли столбец в дефолтном кубе
       if (_variables["_columns"][key]) return _context["column"](key)
+      //console.log('NOT HERE?')
       if (_variables["_columns"][default_ds][default_cube][key]) return _context["column"](`${default_ds}.${default_cube}.${key}`)
       // reference to alias!
       //console.log("DO WE HAVE SUCH ALIAS?" , JSON.stringify(_variables["_aliases"]))
@@ -585,6 +592,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
         }
         // remeber reference to alias as column name!
         _variables["_result"]["columns"].push(key)
+
         // mark our expression same as target
         // FIXME: setting window will result in BUGS
         //_variables["_result"]["window"] = _variables["_aliases"][key]["window"]
@@ -842,26 +850,60 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
   _context["_sequence"] = 0; // magic sequence number for uniq names generation
   
-  /* добавляем можификатор=второй аргумент, который показывает в каком месте SQL используется столбец:
+  /* добавляем модификатор=второй аргумент, который показывает в каком месте SQL используется столбец:
   where, having, group, template_where
   */
-  _context["column"] = function(col, sql_context) {
+  _context["column"] = makeSF((ast, ctx, rs) => {
+    /* col = строка, которую не нужно eval!!!! иначе уйдём в резолвер по умолчанию
+    а он вызовет нас опять.
+    sql_context = строка 
+    на вход может приходить всякое
+COLUMN CALLED "ch.fot_out.v_rel_pp"
+COLUMN CALLED ["ch.fot_out.group_pay_name"]
+COLUMN CALLED ["sum","where"]
+    */
+    if (isString(ast)){
+      ast = [ast]
+    }
+    let col = ast[0]
+    let sql_context = ast[1]
+
+    //console.log(`COLUMN CALLED ${ JSON.stringify(ast) }`)
     // считаем, что сюда приходят только полностью резолвенные имена с двумя точками...
-    var c = _variables["_columns"][col]
+    let c = _variables["_columns"][col]
+
+    if (!isHash(c)) {
+      // пробуем добавить датасорс и куб и найти столбец по его полному id
+      // ну и такие вещи попадаются: 
+      //      LOOKING FOR: ch.fot_out.(round(v_main,2))
+      //      LOOKING FOR: ch.fot_out."My version"
+      let fullCol = `${_variables["_ds"]}.${_variables["_cube"]}.${col}`
+
+      c = _variables["_columns"][fullCol]
+      if (isHash(c)){
+        col = fullCol
+      }
+    }
+
+    //console.log(`[${sql_context}] column func: ${col} ${sql_context} resolved to ${JSON.stringify(c)}`)
     if (c) {
       // side-effect to return structure (one per call)
       if (_variables["_result"]){
         _variables["_result"]["columns"].push(col)
+        //console.log(`PUSH ${col}` + JSON.stringify(_variables["_result"]))
         if (c["type"] === "AGGFN") {
           _variables["_result"]["agg"] = true
         }
       }
       let parts = col.split('.')
       let colname = parts[2]
+      //console.log(`COMPARE ${colname} = ${JSON.stringify(c)}`)
       if (colname.localeCompare(c.sql_query, undefined, { sensitivity: 'accent' }) === 0 ||
-      `"${colname}"`.localeCompare(c.sql_query, undefined, { sensitivity: 'accent' }) === 0 
+      /*`"${colname}"`.localeCompare(c.sql_query, undefined, { sensitivity: 'accent' }) === 0 */
+      (c.sql_query.length>2 && /^"([^"]+|"{2})+"$/.test(c.sql_query))
+      //FIXME: handle "a"."b" as well?
       ) {
-        // we have just column name, prepend table alias !
+        // we have just column name or one column alias, prepend table alias !
         if (_variables._target_database == 'clickhouse') {
           if (sql_context == 'where') { // disable table prefixing for now 
             return `${parts[1]}.${c.sql_query}`
@@ -871,6 +913,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
         } else {
           return `${c.sql_query}`
         }
+        
         // temporarily disabled by DIMA FIXME, but at least clickhouse need reference to table name !
         // without it clickhouse uses alias!
         //return `${parts[1]}.${c.sql_query}`
@@ -915,15 +958,50 @@ function init_koob_context(_vars, default_ds, default_cube) {
         }
         return `(${c.sql_query})`
       }
+    } else {
+      // это был алиас, и его надо поискать, если это where
+      //console.log("NOT FOUND" + col)
+      if (sql_context == 'where') { 
+        // в фильтрах использовали алиасы или вообще ошиблись.
+        // если ключ в фильтрах совпал с именем столбца, то мы это отработали в if() выше
+        // нужно найти алиас
+        let c = _variables["_aliases"][col]
+        //console.log(`RESOLVED ALIAS: ${JSON.stringify(c)}`)
+        if (isHash(c)){
+          // если это просто переименование, то мы можем написать правильный WHERE
+          // иначе - это ошибка и нужно использовать HAVING!!!
+          // {"columns":["ch.fot_out.group_pay_name"],"unresolved_aliases":["sum"],"agg":true,"alias":"sum","expr":null,"outer_expr":"sum(group_pay_name)"}
+          //  {"columns":["ch.fot_out.group_pay_name"],"alias":"xxx","expr":"group_pay_name"}
+          if (c["columns"].length === 1){
+            let idName = c["columns"][0]
+            let parts = idName.split('.')
+            let colname = parts[2]
+            
+            if (colname.localeCompare(c.expr, undefined, { sensitivity: 'accent' }) === 0 ||
+            `"${colname}"`.localeCompare(c.expr, undefined, { sensitivity: 'accent' }) === 0 ) {
+              // это просто переименование
+              if (_variables._target_database == 'clickhouse') {
+                col = `${parts[1]}.${c.expr}`
+              } else {
+                col = c.expr
+              }
+            } else {
+              throw new Error(`Resolving key [${col}] for filters, but it resolved to complex expression [${c.expr?c.expr:c.outer_expr}] which can not be searched at row data level :-()`)
+            }
+          }
+        }
+      }
+      
+
     }
-    // console.log("COL FAIL", col)
+    //console.log("COL FAIL", col)
     // возможно кто-то вызовет нас с коротким именем - нужно знать дефолт куб!!!
     //if (_context["_columns"][default_ds][default_cube][key]) return `${default_cube}.${key}`;
     // на самом деле нас ещё вызывают из фильтров, и там могут быть алиасы на столбцы не в кубе,
     // а вообще в другой таблице, пробуем просто квотировать по ходу пьессы.
     
     return col;
-  }
+  })
 
   /*
      expr: "initializeAggregation('sumState',sum(s2.deb_cre_lc )) as mnt",
@@ -1450,13 +1528,47 @@ function init_koob_context(_vars, default_ds, default_cube) {
   }
   _context['not'].ast = [[],{},[],1]; // mark as macro
 
-  _context["'"] = function(a) {
-    return db_quote_literal(a)
-  }
+  _context["'"] = makeSF((ast, ctx, rs) => {
+    //console.log(`QUOT ${JSON.stringify(ast)} ${JSON.stringify(_variables["_result"])}`)
+    // try to check if it is a column?
+    let a = ast[0];
+    
+    //console.log(`QUOT ${JSON.stringify(ast)} ==${c}== ${JSON.stringify(_variables["_result"])}`)
+    //console.log(`CMP: ${c} !== ${a}\n ${JSON.stringify(_variables)}`)
+    // FIXME: нужно искать именно этот столбец!!! в _variables???
+    let resolvedColumn = _variables["_columns"]
+    
+    if (isHash(resolvedColumn)) {
+      resolvedColumn = resolvedColumn[_variables["_ds"]]
+      if (isHash(resolvedColumn)) {
+        resolvedColumn = resolvedColumn[_variables["_cube"]]
+        if (isHash(resolvedColumn)) {
+          resolvedColumn = resolvedColumn[a]
+        }
+      }
+    }
+    if (isHash(resolvedColumn)) {
+      // значит уже есть sql выражение, например ("рус яз")
+      let c = _context["column"](a)
+      return c
+    } else {
+      return db_quote_literal(a)
+    }
+  })
 
-  _context['"'] = function(a) {
-    return db_quote_ident(a)
-  }
+  _context['"'] = makeSF((ast, ctx, rs) => {
+    //console.log(`QUOT ${JSON.stringify(ast)} ${JSON.stringify(_variables["_result"])}`)
+    // try to check if it is a column?
+    let a = ast[0];
+    let c = _context["column"](a)
+    //console.log(`QUOT ${JSON.stringify(ast)} ==${c}== ${JSON.stringify(_variables["_result"])}`)
+    if (c != a) {
+      // значит уже есть sql выражение, например ("рус яз")
+      return c
+    } else {
+      return db_quote_ident(a)
+    }
+  })
 
   // overwrite STDLIB! or we will treat (a = 'null') as (a = null) which is wrong in SQL !
   _context['null'] = 'null'
@@ -1642,7 +1754,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     */
     var c = eval_lisp(col, ctx, rs)
     var resolveValue = function(v) {
-
+//console.log(`GGggggggg ${JSON.stringify(v)}`)
       // FIXME, возможно уже нужно перейти на quoteLiteral() ???
       if (shouldQuote(col, v)) v = evalQuoteLiteral(v)
       return v
@@ -1650,13 +1762,28 @@ function init_koob_context(_vars, default_ds, default_cube) {
       // если делать eval, то - будет читаться как функция!!!
       //return eval_lisp(v,_context)
     }
+    let already_quoted = false
     if (ast.length === 1) {
       return '1=0'
     } else if (ast.length === 2) {
       if (isArray(ast[1])) {
         if (ast[1][0] === "["){
+          // это массив значений, который мы превращаем в "col IN ()"
+          // это значит, что мы не должны квотировать элементы cпециально!!! Но для фильтров у нас уже готовый LPE, и там нет никаких функций '
+          // FIXME: мы должны пройти весь массив и индивидуально евалить каждый элемент.
+          // Если элемент - это ["'","txt"], то его не надо больше проверять ни на что, он уже заквотирован.
+          // Иначе, надо проверить...
+          // также надо проверить, что есть NULL прямо здесь!
+          let detect = ast[1].slice(1).find((element) => element !== null);
+
           var a = eval_lisp(ast[1], ctx, rs)
           ast = [c].concat(a)
+          if (detect !== undefined) {
+            if (isArray(detect) && detect[0] === "'"){
+              // есть как минимум одна кавычка, ожидаем, что eval всё закавычит !
+              already_quoted = true
+            }
+          }
         } else {
           // assuming if (ast[1][0] === "'")
           let v = eval_lisp(ast[1], ctx, rs)
@@ -1674,7 +1801,12 @@ function init_koob_context(_vars, default_ds, default_cube) {
     }
       // check if we have null in the array of values...
 
-      var resolvedV = ast.slice(1).map(el => resolveValue(el)).filter(el => el !== null)
+      let resolvedV;
+      if (already_quoted) {
+        resolvedV = ast.slice(1).filter(el => el !== null)
+      } else {
+        resolvedV = ast.slice(1).map(el => resolveValue(el)).filter(el => el !== null)
+      }
       const hasNull = resolvedV.length < ast.length - 1;
       var ret = `${c} IN (${resolvedV.join(', ')})`
       if(hasNull) ret = `${ret} OR ${c} IS NULL`
@@ -2043,7 +2175,33 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
 // [{"ch.fot_out.hcode_name":[">","2019-01-01"],"ch.fot_out.pay_title":["=","2019-01-01","2020-03-01"],"ch.fot_out.group_pay_name":["=","Не задано"],"ch.fot_out.pay_code":["=","Не задано"],"ch.fot_out.pay_name":["=","Не задано"],"ch.fot_out.sex_code":["=",null]}]
 //console.log(`get_filters_array ${negate} required_columns: ` + JSON.stringify(required_columns))
 //console.log("======")
-  var comparator = function(k) {
+
+/* нужно пройти по LPE и добавить второй аргумент ко всем вызовам column(), чтобы чётко указать
+что это контекст where или having */
+
+  let reformator = function(ar) {
+    if (isArray(ar)) {
+      if (ar[0] === "column") {
+        ar[2] = sql_context
+        return ar
+      } else {
+        return ar.map(el=>{if (isArray(el)) {return reformator(el)} else {return el}})
+      }
+    }
+    return ar 
+  }
+
+  filters_array = filters_array.map(el=>{
+      let h = {}
+      for (const [key, value] of Object.entries(el)) {
+        h[key] = reformator(value)
+      }
+      return h
+  })
+  
+  //console.log("get_filters_array <<<< " + JSON.stringify(filters_array))
+
+  let comparator = function(k) {
     return k !== ""
   }
   /*  required_columns может содержать не вычисленные значения: 
@@ -2104,10 +2262,7 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
                     // and or not
                     const [op, ...args] = _filters[key];
 
-                    if (key == "xxx") {
-                      console.log(`${key} ALIASES: ${JSON.stringify( context[1] )}`)
-                    }
-                    let colname = aliases[key]
+                    let colname = aliases[key] // это только при наличии required_columns
                     if (isString(colname)){
                       if (should_quote_alias(colname)) {
                         // FIXME: double check that lisp is ok with quoted string
@@ -2133,7 +2288,10 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
 
       // условия по пустому ключу "" подставляем только если у нас генерация полного условия WHERE,
       // а если это filter(col1,col2) то не надо
-      if (required_columns === undefined || negate === true) {
+      if (required_columns === undefined || 
+          (isArray(required_columns) && required_columns.length === 0) || 
+          negate === true) 
+      {
         if (isArray(_filters[""])) {
           if (isArray(pw)){
             pw.push(_filters[""])
@@ -2479,7 +2637,11 @@ export function generate_koob_sql(_cfg, _vars) {
     throw new Error(`Empty columns in the request. Can not create SQL.`)
   }
 
+  _context["_ds"] = _cfg["ds"];
+  _context["_cube"] = _cfg["cube"];
+
   _context = init_koob_context(_context, _cfg["ds"], _cfg["cube"])
+
   //console.log("PRE %%%%: " + _context[1]['()'])
   //console.log("NORMALIZED CONFIG FILTERS: ", JSON.stringify(_cfg))
   //console.log("NORMALIZED CONFIG COLUMNS: ", JSON.stringify(_cfg["columns"]))
@@ -2515,7 +2677,7 @@ export function generate_koob_sql(_cfg, _vars) {
                                       //console.log("PRE EVAL: " + JSON.stringify(el))
                                       //console.log("PRE  CTX: " + _context[1]['()'])
                                       var r = eval_lisp(el, _context)
-                                      //console.log("POST EVAL: " + JSON.stringify(el))
+                                      //console.log("POST EVAL: " + JSON.stringify(r))
                                       var col = _context[1]["_result"]
                                       if (col["only1"] === true){
                                         global_only1 = true;
@@ -2745,7 +2907,7 @@ export function generate_koob_sql(_cfg, _vars) {
 
 
   //_context[1]["column"] - это функция для резолва столбца в его текстовое представление
-  filters_array = get_filters_array(_context, filters_array, '');
+  filters_array = get_filters_array(_context, filters_array, '', undefined, false, 'where');
 // это теперь массив из уже готового SQL WHERE!
 
   havingSQL = get_filters_array(_context, [_cfg["having"]], '');
@@ -3178,6 +3340,7 @@ export function generate_koob_sql(_cfg, _vars) {
             return expand_outer_expr(el)
           }
         }
+        //console.log("--ONE ELEMENT NO ALIAS" + JSON.stringify(el))
         return expand_outer_expr(el)
       } 
     }).join(', ')

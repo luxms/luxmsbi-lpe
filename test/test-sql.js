@@ -225,10 +225,11 @@ describe('LPE tests', function() {
             "sort": ["-dor1","dt",["-","val2"],"-ch.fot_out.dor2", "summa"]
             },
           {"key":null}),
-         `SELECT (NOW() - INERVAL '1 DAY') as dt, branch4 as branch4, fot_out.ss1, sum((v_main + utils.func(v_rel_fzp)) / 100) as summa, obj_name as new1, sum(v_rel_pp) as v_rel_pp, avg(sum(v_rel_pp)) as v_rel_pp, avg(indicator_v + v_main) as new
+         `SELECT (NOW() - INERVAL '1 DAY') as dt, branch4 as branch4, fot_out.ss1, sum(CAST((v_main + utils.func(v_rel_fzp)) AS FLOAT) / 100) as summa, obj_name as new1, sum(v_rel_pp) as v_rel_pp, avg(sum(v_rel_pp)) as v_rel_pp, avg(indicator_v + v_main) as new
 FROM fot_out AS fot_out
 WHERE (dor1 = 'ГОРЬК') AND (dor2 IN ('ПОДГОРЬК', 'ХИМ', 'ПРОМ') OR dor2 IS NULL) AND (dor4 = '') AND (dor5 IS NULL) AND (dor3 = 'null') AND (ss1 > 5) AND (ss2 > '0') AND ((NOW() - INERVAL '1 DAY') BETWEEN '2020-01' AND '2020-12') AND (sex_name = 'Мужской') AND (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (col1 + col2 > 100)
 GROUP BY (NOW() - INERVAL '1 DAY'), branch4, fot_out.ss1, obj_name
+HAVING ((NOW() - INERVAL '1 DAY') > '2020-08')
 ORDER BY dor1 DESC, dt, val2 DESC, fot_out.dor2 DESC, summa`
       );
 

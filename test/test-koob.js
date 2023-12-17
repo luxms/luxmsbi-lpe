@@ -185,12 +185,12 @@ HAVING ((NOW() - INERVAL '1 DAY') > '2020-01-01')`
    assert.equal( lpe.generate_koob_sql(
       {"columns":["v_rel_pp_i / (100 * (v_main + 1))", "sum((v_main+v_rel_pp_i)/100)"],
       "with":"ch.fot_out"},
-            {"_access_filters":"v_main > 1 and (v_rel_pp_i < 0 or v_rel_pp_i = 0) and v_main = [1,2,3] and v_main != [1,2,3]"}),
+            {"_access_filters":"v_main > 1 and (v_rel_pp_i < 0 or v_rel_pp_i = 0) and v_main = [1,2,3] and v_main != [1,2,3] or v_main = ['a','b','c']"}),
 `SELECT CAST(v_rel_pp_i AS FLOAT) / (100 * (v_main + 1)) as v_main, sum(CAST((v_main + v_rel_pp_i) AS FLOAT) / 100) as v_main
 FROM fot_out AS fot_out
 WHERE ((group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL))
    AND
-   ((v_main > 1) AND ((((v_rel_pp_i < 0) OR (v_rel_pp_i = 0))) AND ((v_main IN (1, 2, 3)) AND (v_main NOT IN (1, 2, 3)))))
+   ((v_main > 1) AND ((((v_rel_pp_i < 0) OR (v_rel_pp_i = 0))) AND ((v_main IN (1, 2, 3)) AND ((v_main NOT IN (1, 2, 3)) OR (v_main IN ('a', 'b', 'c'))))))
 GROUP BY CAST(v_rel_pp_i AS FLOAT) / (100 * (v_main + 1))`
          );
    })
@@ -270,7 +270,7 @@ ORDER BY perda, lead DESC LIMIT 100 OFFSET 10`
                      "offset": 10,
                      "with":"ch.fot_out"},
                            {"_target_database": "clickhouse"}),
-`SELECT concat(toString(fot_out.v_rel_pp),'*',fot_out.v_rel_pp,fot_out.hcode_name) as v_rel_pp, toString(fot_out.group_pay_name) as group_pay_name, fot_out.hcode_name as hcode_name
+`SELECT concat(toString(v_rel_pp),'*',v_rel_pp,hcode_name) as v_rel_pp, toString(group_pay_name) as group_pay_name, hcode_name as hcode_name
 FROM fot_out AS fot_out
 WHERE (fot_out.hcode_name BETWEEN '2019-01-01' AND '2020-03-01')
 ORDER BY perda, lead DESC LIMIT 100 OFFSET 10`
@@ -444,19 +444,19 @@ GROUP BY (round(v_main,2)), group_pay_name, hcode_name`
          "offset": 10,
          "with":"ch.fot_out"},
                {"_target_database": "clickhouse"}),
-   `/*ON1Y*/SELECT toString(fot_out.v_rel_pp) as v_rel_pp, sum(fot_out.group_pay_name) as group_pay_name, v_rel_pp111, fot_out.hcode_name as hcode_name
+   `/*ON1Y*/SELECT toString(v_rel_pp) as v_rel_pp, sum(group_pay_name) as group_pay_name, v_rel_pp111, hcode_name as hcode_name
 FROM fot_out AS fot_out
 WHERE (fot_out.hcode_name BETWEEN '2019-01-01' AND '2020-03-01') AND (fot_out.group_pay_name = 'Не задано') AND (fot_out.pay_code = 'Не задано') AND (fot_out.pay_name = 'Не задано') AND (fot_out.sex_code IS NULL)
 ORDER BY perda, lead DESC LIMIT 100 OFFSET 10`
             );
    });
 
-   it('should eval KOOB filters with equality', function() {
+   it('should eval KOOB filters with equality clickhouse-group-by', function() {
       assert.equal( lpe.generate_koob_sql(
          {"columns":[
                      "toString(v_rel_pp):v_rel_pp",
                      "sum(group_pay_name)",
-                     'hcode_name'
+                     'hcode_name-100+branch1:formula'
                   ],
          "filters":{"hcode_name": ["=", '-', "2020-03-01"]},
          "sort":["perda","-lead"],
@@ -464,10 +464,31 @@ ORDER BY perda, lead DESC LIMIT 100 OFFSET 10`
          "offset": 10,
          "with":"ch.fot_out"},
                {"_target_database": "clickhouse"}),
-   `SELECT toString(fot_out.v_rel_pp) as v_rel_pp, sum(fot_out.group_pay_name) as group_pay_name, fot_out.hcode_name as hcode_name
+   `SELECT toString(v_rel_pp) as v_rel_pp, sum(group_pay_name) as group_pay_name, hcode_name - 100 + branch1 as formula
 FROM fot_out AS fot_out
 WHERE (fot_out.hcode_name IN ('-', '2020-03-01')) AND (fot_out.group_pay_name = 'Не задано') AND (fot_out.pay_code = 'Не задано') AND (fot_out.pay_name = 'Не задано') AND (fot_out.sex_code IS NULL)
-GROUP BY v_rel_pp, fot_out.hcode_name
+GROUP BY v_rel_pp, formula
+ORDER BY perda, lead DESC LIMIT 100 OFFSET 10`
+            );
+   });
+
+   it('should eval KOOB filters with equality postgresql-group-by', function() {
+      assert.equal( lpe.generate_koob_sql(
+         {"columns":[
+                     "toString(v_rel_pp):v_rel_pp",
+                     "sum(group_pay_name)",
+                     'hcode_name-100+branch1:formula'
+                  ],
+         "filters":{"hcode_name": ["=", '-', "2020-03-01"]},
+         "sort":["perda","-lead"],
+         "limit": 100,
+         "offset": 10,
+         "with":"ch.fot_out"},
+               {"_target_database": "postgresql"}),
+   `SELECT v_rel_pp::TEXT as v_rel_pp, sum(group_pay_name) as group_pay_name, hcode_name - 100 + branch1 as formula
+FROM fot_out AS fot_out
+WHERE (hcode_name IN ('-', '2020-03-01')) AND (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
+GROUP BY v_rel_pp::TEXT, hcode_name - 100 + branch1
 ORDER BY perda, lead DESC LIMIT 100 OFFSET 10`
             );
    });
@@ -488,7 +509,7 @@ ORDER BY perda, lead DESC LIMIT 100 OFFSET 10`
          "offset": 10,
          "with":"ch.fot_out"},
                {"_target_database": "clickhouse","_user_info":{"username":"biuser","t":{"a":444}}}),
-   `SELECT toString(fot_out.v_rel_pp) as v_rel_pp, sum(fot_out.group_pay_name) as group_pay_name, 'biuser' as uname
+   `SELECT toString(v_rel_pp) as v_rel_pp, sum(group_pay_name) as group_pay_name, 'biuser' as uname
 FROM fot_out AS fot_out
 WHERE (fot_out.hcode_name = 444) AND (fot_out.group_pay_name = '444') AND (fot_out.v_rel_pp = fot_out.group_pay_name) AND (fot_out.pay_code = 'Не задано') AND (fot_out.pay_name = 'Не задано') AND (fot_out.sex_code IS NULL)
 GROUP BY v_rel_pp, uname
@@ -504,7 +525,7 @@ ORDER BY perda, lead DESC LIMIT 100 OFFSET 10`
                      "sum(group_pay_name)",
                      'ql(get_in(user, username)):uname'
                   ],
-         "filters":{"hcode_name": ["=",  ['get_in', ["'","user"], ["'","t"],["'","a"]]],
+         "filters":{"hcode_name": ["=",  ['get_in', "user", ["'","t"],["'","a"]]],
          "group_pay_name": ["=", ['ql', ['get_in', ["'","user"], ["[",["'","t"],["'","a"]]]]],
          "v_rel_pp" : ["=", ["column", "group_pay_name"]]
       },
@@ -513,7 +534,7 @@ ORDER BY perda, lead DESC LIMIT 100 OFFSET 10`
          "offset": 10,
          "with":"ch.fot_out"},
                {"_target_database": "clickhouse","_user_info":{"username":"biuser","t":{"a":444}}}),
-   `SELECT toString(fot_out.v_rel_pp) as v_rel_pp, sum(fot_out.group_pay_name) as group_pay_name, 'biuser' as uname
+   `SELECT toString(v_rel_pp) as v_rel_pp, sum(group_pay_name) as group_pay_name, 'biuser' as uname
 FROM fot_out AS fot_out
 WHERE (fot_out.hcode_name = 444) AND (fot_out.group_pay_name = '444') AND (fot_out.v_rel_pp = fot_out.group_pay_name) AND (fot_out.pay_code = 'Не задано') AND (fot_out.pay_name = 'Не задано') AND (fot_out.sex_code IS NULL)
 GROUP BY v_rel_pp, uname
@@ -524,7 +545,7 @@ ORDER BY perda, lead DESC LIMIT 100 OFFSET 10`
    it('should eval KOOB partial filters', function() {
    assert.equal( lpe.generate_koob_sql(
       {"columns":[
-                  "sum(v_rel_pp):v_rel_pp",
+                  "sum('v_rel_pp'):v_rel_pp",
                   "group_pay_name", 
                   'hcode_name',
                   'if( sum(v_rel_pp)!= 0, (sum(v_rel_pp)/count(pay_code)*50)+(sum(v_rel_pp)/sum(group_pay_name)*50), 0):koeff',
@@ -727,9 +748,9 @@ ORDER BY "My version"`
                   'My version'
                ],
       "filters":{"hcode_name": ["=", "-", "'"],
-      "My version":["=","9.0"]
+                 "My version":["=","9.0"]
    
-   },
+      },
       "sort":["+My version"],
       "with":"ch.fot_out"},
             {"_target_database": "postgresql"}),
@@ -740,6 +761,75 @@ GROUP BY (round(v_main,2)), group_pay_name, hcode_name, "My version"
 ORDER BY "My version"`
          );
   });
+
+
+  it('should eval KOOB filters with aliases Clickhouse', function() {
+   assert.equal( lpe.generate_koob_sql(
+      {"columns":[
+                  "toString(v_rel_pp):v_rel_pp",
+          //        "sum(group_pay_name):sum", -- нельзя так!
+                  "group_pay_name:xxx",
+                  "group_pay_name"
+               ],
+      "filters":{"sum": ["=", '-', "2020-03-01"],
+                 "group_pay_name":["=","abc"],
+                 "v_rel_pp":["=","pjp"],
+                 "xxx":["=","123"]},
+      "sort":["perda","-lead"],
+      "limit": 100,
+      "offset": 10,
+      "with":"ch.fot_out"},
+            {"_target_database": "clickhouse"}),
+`SELECT toString(v_rel_pp) as v_rel_pp, group_pay_name as xxx, group_pay_name as group_pay_name
+FROM fot_out AS fot_out
+WHERE (sum IN ('-', '2020-03-01')) AND (fot_out.group_pay_name = 'abc') AND (fot_out.v_rel_pp = 'pjp') AND (fot_out.group_pay_name = '123')
+ORDER BY perda, lead DESC LIMIT 100 OFFSET 10`
+         );
+});
+
+it('should eval KOOB filters with aliases SQL92', function() {
+   assert.equal( lpe.generate_koob_sql(
+      {"columns":[
+                  "toString(v_rel_pp):v_rel_pp",
+                //  "sum(group_pay_name):sum", FIXME: если назвать sum1, то будет работать :-()
+                  "group_pay_name:xxx",
+                  "group_pay_name"
+               ],
+      "filters":{"sum": ["=", '-', "2020-03-01"],
+                 "group_pay_name":["=","abc"],
+                 "v_rel_pp":["=","pjp"],
+                 "xxx":["=","123"]},
+      "sort":["perda","-lead"],
+      "limit": 100,
+      "offset": 10,
+      "with":"ch.fot_out"},
+            {"_target_database": "postgresql"}),
+`SELECT v_rel_pp::TEXT as v_rel_pp, group_pay_name as xxx, group_pay_name as group_pay_name
+FROM fot_out AS fot_out
+WHERE (sum IN ('-', '2020-03-01')) AND (group_pay_name = 'abc') AND (v_rel_pp = 'pjp') AND (group_pay_name = '123')
+ORDER BY perda, lead DESC LIMIT 100 OFFSET 10`
+         );
+});
+
+it('Should eval quotes and arrays in filters', function() {
+   assert.equal( lpe.generate_koob_sql(
+      {"columns":[
+         "group_pay_name", 
+         'hcode_name'
+      ],
+"filters":{"hcode_name": ["=", "-", "'"],
+        "My version":["=","9.0"]
+
+},
+"sort":["+My version"],
+"with":"ch.fot_out"},
+   {"_target_database": "postgresql"}),
+`SELECT group_pay_name as group_pay_name, hcode_name as hcode_name
+FROM fot_out AS fot_out
+WHERE (hcode_name IN ('-', '''')) AND ("My version" = '9.0')
+ORDER BY "My version"`
+);
+});
 
 /*
   it('Should eval defaultValue', function() {

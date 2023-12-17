@@ -5382,6 +5382,12 @@ function reports_get_columns(cubeId, dims) {
       "sql_query": "ss1",
       "config": {}
     }, {
+      "id": "ch.fot_out.рус яз",
+      "type": "STRING",
+      "title": "рус яз",
+      "sql_query": "\"рус столб\"",
+      "config": {}
+    }, {
       "id": "ch.fot_out.ss2",
       "type": "STRING",
       "title": "ss2",
