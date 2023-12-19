@@ -39,7 +39,9 @@ import { has } from 'core-js/fn/dict';
 import { part } from 'core-js/core/function';
 import { forEach } from 'core-js/core/dict';
 
-//import { generate_agg_funcs } from './funcs/agg.js';
+
+import { generateAggContext } from './funcs/agg.js';
+
 
 //console.log( JSON.stringify(generate_agg_funcs.init({"a":"b"})) );
 
@@ -517,6 +519,8 @@ function init_udf_args_context(_cube, _vars, _target_database, _cfg) {
  * Cчитаем, что на входе может быть только хэш с уже прочитанными именами столбцов!!
  */
 
+
+
 function init_koob_context(_vars, default_ds, default_cube) {
   let _ctx = [] // это контекст где будет сначала список переменных, включая _columns, и функции
   if (isHash(_vars)){
@@ -525,6 +529,12 @@ function init_koob_context(_vars, default_ds, default_cube) {
   }
   let _context = _ctx[0];
   let _variables = _ctx[1];
+
+  let agg_funcs = generateAggContext(_variables)
+  
+  //_context["lpe_median"] = agg_funcs["lpe_median"]
+
+
 
   // пытается определить тип аргумента, если это похоже на столбец, то ищет про него инфу в кэше и определяет тип,
   // а по типу можно уже думать, квотировать значения или нет.
@@ -702,7 +712,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
       return `CAST(${col} AS ${type})`
     }
   }
-
+  
   _context["to_char"] = function(col, fmt) {
     if (_variables._target_database  === 'clickhouse') {
       if (fmt === "'YYYY'") {
@@ -736,114 +746,22 @@ function init_koob_context(_vars, default_ds, default_cube) {
     //throw Error(`mode() is not implemented for ${_context._target_database} yet`)
   }
 
-  _context["median"] = function(col) {
-    _variables["_result"]["agg"] = true
-    if (_variables._target_database === 'clickhouse') {
-      return `quantile(0.5)(${col})`
-    } else if (_variables._target_database === 'postgresql' || 
-               _variables._target_database === 'oracle') {
-      return `percentile_cont(0.5) WITHIN GROUP (ORDER BY ${col} DESC)`
-    } else if (_variables._target_database === 'teradata' || _variables._target_database === 'sap'){
-      return `median(${col})`
-    } else {
-      throw Error(`median() is not implemented for ${_variables._target_database} yet`)
-    }
-  }
-
-  _context["mode"] = function(col) {
-    _variables["_result"]["agg"] = true
-    if (_variables._target_database === 'clickhouse') {
-      return `arrayElement(topK(1)(${col}),1)`
-    } else if (_variables._target_database === 'postgresql') {
-      return `mode() WITHIN GROUP (ORDER BY ${col})`
-    } else if (_variables._target_database === 'oracle') {
-      return `STATS_MODE(${col})`
-    } else {
-      throw Error(`mode() is not implemented for ${_variables._target_database} yet`)
-    }
-  }
-
-  _context["varPop"] = function(col) {
-    _variables["_result"]["agg"] = true
-    if (_variables._target_database === 'clickhouse') {
-      return `varPop(${col})`
-    } else if (_variables._target_database === 'postgresql' || 
-               _variables._target_database === 'oracle' ||
-               _variables._target_database === 'teradata' ||
-               _variables._target_database === 'vertica' ||
-               _variables._target_database === 'sap'
-               ) {
-      return `var_pop(${col})`
-    } else if (_variables._target_database === 'sqlserver') {
-      return `VarP(${col})`
-    } else {
-      throw Error(`var_pop() is not implemented for ${_variables._target_database} yet`)
-    }
-  }
+  _context["median"] = agg_funcs["median"]
+  _context["mode"] = agg_funcs["mode"]
+  _context["varPop"] = agg_funcs["varPop"]
+  _context["stddevPop"] = agg_funcs["stddevPop"]
+  _context["varSamp"] = agg_funcs["varSamp"]
+  _context["stddevSamp"] = agg_funcs["stddevSamp"]
 
   // deprecated REMOVE in v.11
   _context["var_pop"] = _context["varPop"]
 
-  _context["varSamp"] = function(col) {
-    _variables["_result"]["agg"] = true
-    if (_variables._target_database === 'clickhouse') {
-      return `varSamp(${col})`
-    } else if (_variables._target_database === 'postgresql' || 
-               _variables._target_database === 'oracle' ||
-               _variables._target_database === 'teradata' ||
-               _variables._target_database === 'vertica' ||
-               _variables._target_database === 'sap'
-              ) {
-      return `var_samp(${col})`
-    } else if (_variables._target_database === 'sqlserver') {
-      return `Var(${col})`
-    } else {
-      throw Error(`var_samp() is not implemented for ${_variables._target_database} yet`)
-    }
-  }
-
   // deprecated REMOVE in v.11
   _context["var_samp"] = _context["varSamp"]
-
-  _context["stddevSamp"] = function(col) {
-    _variables["_result"]["agg"] = true
-    if (_variables._target_database === 'clickhouse') {
-      return `stddevSamp(${col})`
-    } else if (_variables._target_database === 'postgresql' || 
-               _variables._target_database === 'oracle' ||
-               _variables._target_database === 'teradata' ||
-               _variables._target_database === 'vertica' ||
-               _variables._target_database === 'sap'
-               ) {
-      return `stddev_samp(${col})`
-    } else if (_variables._target_database === 'sqlserver') {
-      return `Stdev(${col})`
-    } else {
-      throw Error(`var_samp() is not implemented for ${_variables._target_database} yet`)
-    }
-  }
 
   // deprecated REMOVE in v.11
   _context["stddev_samp"] = _context["stddevSamp"];
  
-  _context["stddevPop"] = function(col) {
-    _variables["_result"]["agg"] = true
-    if (_variables._target_database === 'clickhouse') {
-      return `stddevPop(${col})`
-    } else if (_variables._target_database === 'postgresql' || 
-               _variables._target_database === 'oracle' ||
-               _variables._target_database === 'teradata' ||
-               _variables._target_database === 'vertica' ||
-               _variables._target_database === 'sap'
-              ) {
-      return `stddev_pop(${col})`
-    } else if (_variables._target_database === 'sqlserver') {
-      return `StdevP(${col})`
-    } else {
-      throw Error(`var_samp() is not implemented for ${_variables._target_database} yet`)
-    }
-  }
-
   // deprecated REMOVE in v.11
   _context["stddev_pop"] = _context["stddevPop"]
 
@@ -2569,6 +2487,11 @@ _vars["_cube"] содержит уже выбранную запись из ба
 */
 
 export function generate_koob_sql(_cfg, _vars) {
+// так как мы потом меняем _vars, дописывая туда _ds и _cube для более удобного резолва
+// столбцов, то нужно ценнную иифу запомнить!
+
+  let _req_cube_info = _vars["_cube"]
+
   //let _context = {... _vars};
   let _context = _vars
   if (isHash(_cfg["coefficients"])){
@@ -2790,7 +2713,7 @@ export function generate_koob_sql(_cfg, _vars) {
   */
 
 
-  var cube_query_template = reports_get_table_sql(ds_info["flavor"], `${_cfg["ds"]}.${_cfg["cube"]}`, _vars["_cube"])
+  var cube_query_template = reports_get_table_sql(ds_info["flavor"], `${_cfg["ds"]}.${_cfg["cube"]}`, _req_cube_info)
 
   /* Если есть хотя бы один явный столбец group_by, а иначе, если просто считаем агрегаты по всей таблице без группировки по столбцам */
   
