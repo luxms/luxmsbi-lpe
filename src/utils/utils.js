@@ -19,7 +19,7 @@ export function reports_get_columns(cubeId, dims) {
      var r = [
      {"id":"ch.fot_out.Val","type":"NUMBER","title":"Val","sql_query":"\"Val\"","config":{}}, 
      {"id":"ch.fot_out.My version","type":"STRING","title":"My version","sql_query":"\"My version\"","config":{}}, 
-     {"id":"ch.fot_out.dt","type":"PERIOD","title":"dt","sql_query":"NOW() - INERVAL '1 DAY'","config":{}}, 
+     {"id":"ch.fot_out.dt","type":"PERIOD","title":"dt","sql_query":"NOW() - INTERVAL '1 DAY'","config":{}}, 
      {"id":"ch.fot_out.hcode_id","type":"NUMBER","title":"hcode_id","sql_query":"hcode_id",
      "config":{}}, 
      {"id":"ch.fot_out.hcode_name","type":"STRING","title":"hcode_name","sql_query":"hcode_name","config":{}}, 

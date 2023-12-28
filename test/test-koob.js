@@ -26,7 +26,7 @@ describe('LPE tests', function() {
                      {"key":null}),
 `SELECT DISTINCT COUNT(CASE WHEN (v_main > 1) AND (v_main < 100) THEN 1 END) as v_main, sum(v_rel_pp) as v_rel_pp, sum(v_rel_fzp) as v_rel_fzp, sum(v_rel_pp_i), group_pay_name as group_pay_name
 FROM fot_out AS fot_out
-WHERE ((NOW() - INERVAL '1 DAY') NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано') AND (area_name = 'Не задано') AND (hcode_name = 'ФЗП') AND (type_oe_bi = 'РЖД') AND (region_name = 'Не задано') AND (category_name = 'Не задано') AND (group_pay_name != 'Не задано') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (pay_code != 'Не задано') AND (sex_code IS NULL)
+WHERE ((NOW() - INTERVAL '1 DAY') NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано') AND (area_name = 'Не задано') AND (hcode_name = 'ФЗП') AND (type_oe_bi = 'РЖД') AND (region_name = 'Не задано') AND (category_name = 'Не задано') AND (group_pay_name != 'Не задано') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (pay_code != 'Не задано') AND (sex_code IS NULL)
 GROUP BY group_pay_name
 ORDER BY group_pay_name, v_main`
                   );
@@ -50,7 +50,7 @@ ORDER BY group_pay_name, v_main`
                            {"key":null}),
 `SELECT DISTINCT sum(v_main) as v_main, sum(v_rel_pp) as v_rel_pp, sum(v_rel_pp_i), pay_code as pay_code, pay_name as pay_name
 FROM fot_out AS fot_out
-WHERE ((NOW() - INERVAL '1 DAY') = '2020-03') AND (pay_code != 'Не задано') AND (area_name = 'Не задано') AND (hcode_name = 'ФЗП') AND (type_oe_bi = 'РЖД') AND (region_name = 'Не задано') AND (category_name = 'Не задано') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (sex_code IS NULL)
+WHERE ((NOW() - INTERVAL '1 DAY') = '2020-03') AND (pay_code != 'Не задано') AND (area_name = 'Не задано') AND (hcode_name = 'ФЗП') AND (type_oe_bi = 'РЖД') AND (region_name = 'Не задано') AND (category_name = 'Не задано') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (sex_code IS NULL)
 GROUP BY pay_code, pay_name`
                         );
 
@@ -73,7 +73,7 @@ GROUP BY pay_code, pay_name`
                            {"key":null}),
 `SELECT DISTINCT corr(v_main, v_rel_pp), sum(v_rel_pp) as v_rel_pp, sum(v_rel_pp_i), pay_code as pay_code, pay_name as pay_name
 FROM fot_out AS fot_out
-WHERE ((NOW() - INERVAL '1 DAY') = '2020-03') AND (pay_code != 'Не задано') AND (area_name = 'Не задано') AND (hcode_name = 'ФЗП') AND (type_oe_bi = 'РЖД') AND (region_name = 'Не задано') AND (category_name = 'Не задано') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (sex_code IS NULL)
+WHERE ((NOW() - INTERVAL '1 DAY') = '2020-03') AND (pay_code != 'Не задано') AND (area_name = 'Не задано') AND (hcode_name = 'ФЗП') AND (type_oe_bi = 'РЖД') AND (region_name = 'Не задано') AND (category_name = 'Не задано') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (sex_code IS NULL)
 GROUP BY pay_code, pay_name`
                         );
 
@@ -106,8 +106,8 @@ GROUP BY pay_code, pay_name`
                                  {"key":null}),
       `SELECT sum(v_main) as v_main, sum(v_rel_pp) as v_rel_pp, sum(v_rel_pp_i), pay_code as pay_code, pay_name as pay_name
 FROM fot_out AS fot_out
-WHERE (((NOW() - INERVAL '1 DAY') = '2020-03') AND (pay_code != 'Не задано') AND (area_name = 'Не задано') AND (hcode_name = 'ФЗП') AND (type_oe_bi = 'РЖД') AND (region_name = 'Не задано') AND (category_name = 'Не задано') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (sex_code IS NULL))
-   OR (((NOW() - INERVAL '1 DAY') = '2020-04') AND (pay_code = 'Не задано') AND (area_name = 'Не задано') AND (hcode_name = 'ФЗП') AND (type_oe_bi = 'РЖД') AND (region_name = 'Не задано') AND (category_name = 'Не задано') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (sex_code IS NULL))
+WHERE (((NOW() - INTERVAL '1 DAY') = '2020-03') AND (pay_code != 'Не задано') AND (area_name = 'Не задано') AND (hcode_name = 'ФЗП') AND (type_oe_bi = 'РЖД') AND (region_name = 'Не задано') AND (category_name = 'Не задано') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (sex_code IS NULL))
+   OR (((NOW() - INTERVAL '1 DAY') = '2020-04') AND (pay_code = 'Не задано') AND (area_name = 'Не задано') AND (hcode_name = 'ФЗП') AND (type_oe_bi = 'РЖД') AND (region_name = 'Не задано') AND (category_name = 'Не задано') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (sex_code IS NULL))
 GROUP BY pay_code, pay_name`
                               );
 
@@ -123,8 +123,8 @@ GROUP BY pay_code, pay_name`
                  {"key":null}),
             `SELECT DISTINCT var_pop(v_main) as v_main, var_samp(v_rel_pp) as v_rel_pp, stddev_samp(v_rel_fzp) as v_rel_fzp, id, stddev_pop(v_rel_pp_i), sum(v_main_i), tlg as tlg, hcode_name as hcode_name
 FROM fot_out AS fot_out
-WHERE (((NOW() - INERVAL '1 DAY') = '2020-03') AND (area_name = 'Не задано') AND (type_oe_bi = 'Дороги') AND (region_name = 'Не задано') AND (group_pay_id != 'Не задано') AND (group_pay_name = 'Поощрения') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL))
-   OR (((NOW() - INERVAL '1 DAY') = '2020-03') AND (hcode_name = 'CCЧ') AND (type_oe_bi = 'Дороги') AND (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL))
+WHERE (((NOW() - INTERVAL '1 DAY') = '2020-03') AND (area_name = 'Не задано') AND (type_oe_bi = 'Дороги') AND (region_name = 'Не задано') AND (group_pay_id != 'Не задано') AND (group_pay_name = 'Поощрения') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL))
+   OR (((NOW() - INTERVAL '1 DAY') = '2020-03') AND (hcode_name = 'CCЧ') AND (type_oe_bi = 'Дороги') AND (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL))
 GROUP BY id, tlg, hcode_name`
         );
 
@@ -153,9 +153,9 @@ GROUP BY id, tlg, hcode_name`
             {"key":null}),
 `SELECT DISTINCT sum(v_main) as v_main, sum(v_rel_pp) as v_rel_pp, sum(v_rel_fzp) as v_rel_fzp, sum(v_rel_pp_i), group_pay_name as group_pay_name, (max(sum(v_main))) as v_agg
 FROM fot_out AS fot_out
-WHERE ((NOW() - INERVAL '1 DAY') BETWEEN '2020-12-07' AND '2021-01-13') AND (pay_name != 'Не задано') AND (area_name = 'Не задано') AND (hcode_name = 'ФЗП') AND (type_oe_bi = 'РЖД') AND (region_name = 'Не задано') AND (category_name = 'Не задано') AND (group_pay_name != 'Не задано') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (pay_code != 'Не задано') AND (sex_code IS NULL)
+WHERE ((NOW() - INTERVAL '1 DAY') BETWEEN '2020-12-07' AND '2021-01-13') AND (pay_name != 'Не задано') AND (area_name = 'Не задано') AND (hcode_name = 'ФЗП') AND (type_oe_bi = 'РЖД') AND (region_name = 'Не задано') AND (category_name = 'Не задано') AND (group_pay_name != 'Не задано') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (pay_code != 'Не задано') AND (sex_code IS NULL)
 GROUP BY group_pay_name
-HAVING ((NOW() - INERVAL '1 DAY') > '2020-01-01') AND ((max(sum(v_main))) > 100)
+HAVING ((NOW() - INTERVAL '1 DAY') > '2020-01-01') AND ((max(sum(v_main))) > 100)
 ORDER BY group_pay_name, v_main, v_agg`
          );
       });
@@ -176,7 +176,7 @@ ORDER BY group_pay_name, v_main, v_agg`
       `SELECT DISTINCT (max(sum(v_main))) as bot, count(CASE WHEN 1 = 1 THEN sum(1) ELSE null END) as a, sum(1) - a as bbb
 FROM fot_out AS fot_out
 WHERE (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
-HAVING ((NOW() - INERVAL '1 DAY') > '2020-01-01')`
+HAVING ((NOW() - INTERVAL '1 DAY') > '2020-01-01')`
                );
   });
 
@@ -830,6 +830,24 @@ WHERE (hcode_name IN ('-', '''')) AND ("My version" = '9.0')
 ORDER BY "My version"`
 );
 });
+
+
+it('Should eval calendar', function() {
+   assert.equal( lpe.generate_koob_sql(
+      {"columns":[
+         "between(dt, dateShift(dt, -3, month).bound('q'))", 
+         "between(dt, bound(dateShift(dt, -3, month), 'y'))",
+         "between(dt, dateShift(dt, -3, month).bound('q').extend(9, m))",
+      ],
+"filters":{},
+"sort":[],
+"with":"ch.fot_out"},
+   {"_target_database": "postgresql"}),
+`SELECT (NOW() - INTERVAL '1 DAY') BETWEEN date_trunc('quarter', (NOW() - INTERVAL '1 DAY') + INTERVAL '-3 MONTH') AND date_trunc('quarter', (NOW() - INTERVAL '1 DAY') + INTERVAL '-3 MONTH') + INTERVAL '3 MONTH - 1 DAY' as dt, (NOW() - INTERVAL '1 DAY') BETWEEN date_trunc('year', (NOW() - INTERVAL '1 DAY') + INTERVAL '-3 MONTH') AND date_trunc('year', (NOW() - INTERVAL '1 DAY') + INTERVAL '-3 MONTH') + INTERVAL '1 YEAR - 1 DAY' as dt, (NOW() - INTERVAL '1 DAY') BETWEEN date_trunc('quarter', (NOW() - INTERVAL '1 DAY') + INTERVAL '-3 MONTH') AND date_trunc('quarter', (NOW() - INTERVAL '1 DAY') + INTERVAL '-3 MONTH') + INTERVAL '3 MONTH - 1 DAY' + INTERVAL '9 MONTH' as dt
+FROM fot_out AS fot_out`
+);
+});
+
 
 /*
   it('Should eval defaultValue', function() {

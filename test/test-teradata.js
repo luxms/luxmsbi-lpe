@@ -138,13 +138,13 @@ QUALIFY koob__row__num__ BETWEEN 11 AND 15`
          "sort":["group_pay_name","v_main"],
          "with":"ch.fot_out"},
                {"_target_database": "teradata"}),
-`SELECT (NOW() - INERVAL '1 DAY') as "dt", type_oe_bi as "type_oe_bi", region_name as "region_name", pay_name as "pay_name", avg(v_rel_fzp) as "v_rel_fzp", sum(v_rel_pp_i), GROUPING((NOW() - INERVAL '1 DAY')) AS "∑dt", GROUPING(type_oe_bi) AS "∑type_oe_bi", GROUPING(region_name) AS "∑region_name", GROUPING(pay_name) AS "∑pay_name"
+`SELECT (NOW() - INTERVAL '1 DAY') as "dt", type_oe_bi as "type_oe_bi", region_name as "region_name", pay_name as "pay_name", avg(v_rel_fzp) as "v_rel_fzp", sum(v_rel_pp_i), GROUPING((NOW() - INTERVAL '1 DAY')) AS "∑dt", GROUPING(type_oe_bi) AS "∑type_oe_bi", GROUPING(region_name) AS "∑region_name", GROUPING(pay_name) AS "∑pay_name"
 FROM fot_out AS fot_out
-WHERE ((NOW() - INERVAL '1 DAY') NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано') AND (pay_code != 'Не задано') AND (sex_code IS NULL)
-GROUP BY GROUPING SETS (((NOW() - INERVAL '1 DAY'), type_oe_bi, region_name, pay_name)
-                       ,((NOW() - INERVAL '1 DAY')),
-                        ((NOW() - INERVAL '1 DAY'),type_oe_bi),
-                        ((NOW() - INERVAL '1 DAY'),type_oe_bi,region_name),
+WHERE ((NOW() - INTERVAL '1 DAY') NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано') AND (pay_code != 'Не задано') AND (sex_code IS NULL)
+GROUP BY GROUPING SETS (((NOW() - INTERVAL '1 DAY'), type_oe_bi, region_name, pay_name)
+                       ,((NOW() - INTERVAL '1 DAY')),
+                        ((NOW() - INTERVAL '1 DAY'),type_oe_bi),
+                        ((NOW() - INTERVAL '1 DAY'),type_oe_bi,region_name),
                         ()
                        )
 ORDER BY "group_pay_name", "v_main"`
@@ -164,11 +164,11 @@ ORDER BY "group_pay_name", "v_main"`
             "sort":["group_pay_name","v_main"],
             "with":"ch.fot_out"},
                   {"_target_database": "teradata"}),
-`SELECT (NOW() - INERVAL '1 DAY') as "dt", type_oe_bi as "type_oe_bi", region_name as "region_name", pay_name as "pay_name", avg(v_rel_fzp) as "v_rel_fzp", sum(v_rel_pp_i), GROUPING((NOW() - INERVAL '1 DAY')) AS "∑dt", GROUPING(type_oe_bi) AS "∑type_oe_bi", GROUPING(region_name) AS "∑region_name", GROUPING(pay_name) AS "∑pay_name"
+`SELECT (NOW() - INTERVAL '1 DAY') as "dt", type_oe_bi as "type_oe_bi", region_name as "region_name", pay_name as "pay_name", avg(v_rel_fzp) as "v_rel_fzp", sum(v_rel_pp_i), GROUPING((NOW() - INTERVAL '1 DAY')) AS "∑dt", GROUPING(type_oe_bi) AS "∑type_oe_bi", GROUPING(region_name) AS "∑region_name", GROUPING(pay_name) AS "∑pay_name"
 FROM fot_out AS fot_out
-WHERE ((NOW() - INERVAL '1 DAY') NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано') AND (pay_code != 'Не задано') AND (sex_code IS NULL)
-GROUP BY GROUPING SETS (((NOW() - INERVAL '1 DAY'), type_oe_bi, region_name, pay_name)
-                       ,((NOW() - INERVAL '1 DAY'))
+WHERE ((NOW() - INTERVAL '1 DAY') NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано') AND (pay_code != 'Не задано') AND (sex_code IS NULL)
+GROUP BY GROUPING SETS (((NOW() - INTERVAL '1 DAY'), type_oe_bi, region_name, pay_name)
+                       ,((NOW() - INTERVAL '1 DAY'))
                        )
 ORDER BY "group_pay_name", "v_main"`
                );
@@ -184,10 +184,10 @@ ORDER BY "group_pay_name", "v_main"`
                "sort":["group_pay_name","v_main"],
                "with":"ch.fot_out"},
                      {"_target_database": "teradata"}),
-`SELECT (NOW() - INERVAL '1 DAY') as "dt", avg(v_rel_fzp) as "v_rel_fzp", sum(v_rel_pp_i), GROUPING((NOW() - INERVAL '1 DAY')) AS "∑dt"
+`SELECT (NOW() - INTERVAL '1 DAY') as "dt", avg(v_rel_fzp) as "v_rel_fzp", sum(v_rel_pp_i), GROUPING((NOW() - INTERVAL '1 DAY')) AS "∑dt"
 FROM fot_out AS fot_out
-WHERE ((NOW() - INERVAL '1 DAY') NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано') AND (pay_code != 'Не задано') AND (sex_code IS NULL)
-GROUP BY GROUPING SETS (((NOW() - INERVAL '1 DAY'))
+WHERE ((NOW() - INTERVAL '1 DAY') NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано') AND (pay_code != 'Не задано') AND (sex_code IS NULL)
+GROUP BY GROUPING SETS (((NOW() - INTERVAL '1 DAY'))
                        )
 ORDER BY "group_pay_name", "v_main"`
                   );
@@ -205,13 +205,13 @@ ORDER BY "group_pay_name", "v_main"`
             "sort":["group_pay_name","v_main"],
             "with":"ch.fot_out"},
                   {"_target_database": "teradata"}),
-   `SELECT koob__range__table__.day_of_calendar - 1 as "rng", (NOW() - INERVAL '1 DAY') as "dt", type_oe_bi as "type_oe_bi", region_name as "region_name", pay_name as "pay_name", avg(v_rel_fzp) as "v_rel_fzp", sum(v_rel_pp_i), GROUPING(koob__range__table__.day_of_calendar - 1) AS "∑rng", GROUPING((NOW() - INERVAL '1 DAY')) AS "∑dt", GROUPING(type_oe_bi) AS "∑type_oe_bi", GROUPING(region_name) AS "∑region_name", GROUPING(pay_name) AS "∑pay_name"
+   `SELECT koob__range__table__.day_of_calendar - 1 as "rng", (NOW() - INTERVAL '1 DAY') as "dt", type_oe_bi as "type_oe_bi", region_name as "region_name", pay_name as "pay_name", avg(v_rel_fzp) as "v_rel_fzp", sum(v_rel_pp_i), GROUPING(koob__range__table__.day_of_calendar - 1) AS "∑rng", GROUPING((NOW() - INTERVAL '1 DAY')) AS "∑dt", GROUPING(type_oe_bi) AS "∑type_oe_bi", GROUPING(region_name) AS "∑region_name", GROUPING(pay_name) AS "∑pay_name"
 FROM fot_out AS fot_out,sys_calendar.CALENDAR as koob__range__table__
-WHERE ((NOW() - INERVAL '1 DAY') NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано') AND (koob__range__table__.day_of_calendar <= 2) AND (pay_code != 'Не задано') AND (sex_code IS NULL)
-GROUP BY GROUPING SETS ((koob__range__table__.day_of_calendar - 1, (NOW() - INERVAL '1 DAY'), type_oe_bi, region_name, pay_name)
-                       ,(koob__range__table__.day_of_calendar - 1,(NOW() - INERVAL '1 DAY')),
-                        (koob__range__table__.day_of_calendar - 1,(NOW() - INERVAL '1 DAY'),type_oe_bi),
-                        (koob__range__table__.day_of_calendar - 1,(NOW() - INERVAL '1 DAY'),type_oe_bi,region_name)
+WHERE ((NOW() - INTERVAL '1 DAY') NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано') AND (koob__range__table__.day_of_calendar <= 2) AND (pay_code != 'Не задано') AND (sex_code IS NULL)
+GROUP BY GROUPING SETS ((koob__range__table__.day_of_calendar - 1, (NOW() - INTERVAL '1 DAY'), type_oe_bi, region_name, pay_name)
+                       ,(koob__range__table__.day_of_calendar - 1,(NOW() - INTERVAL '1 DAY')),
+                        (koob__range__table__.day_of_calendar - 1,(NOW() - INTERVAL '1 DAY'),type_oe_bi),
+                        (koob__range__table__.day_of_calendar - 1,(NOW() - INTERVAL '1 DAY'),type_oe_bi,region_name)
                        )
 ORDER BY "group_pay_name", "v_main"`
                );
@@ -230,10 +230,10 @@ ORDER BY "group_pay_name", "v_main"`
                "sort":["group_pay_name","v_main"],
                "with":"ch.fot_out"},
                      {"_target_database": "teradata"}),
-   `SELECT koob__range__table__.day_of_calendar - 1 as "rng", (NOW() - INERVAL '1 DAY') as "dt", avg(v_rel_fzp) as "v_rel_fzp", sum(v_rel_pp_i), GROUPING(koob__range__table__.day_of_calendar - 1) AS "∑rng", GROUPING((NOW() - INERVAL '1 DAY')) AS "∑dt"
+   `SELECT koob__range__table__.day_of_calendar - 1 as "rng", (NOW() - INTERVAL '1 DAY') as "dt", avg(v_rel_fzp) as "v_rel_fzp", sum(v_rel_pp_i), GROUPING(koob__range__table__.day_of_calendar - 1) AS "∑rng", GROUPING((NOW() - INTERVAL '1 DAY')) AS "∑dt"
 FROM fot_out AS fot_out,sys_calendar.CALENDAR as koob__range__table__
-WHERE ((NOW() - INERVAL '1 DAY') NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано') AND (koob__range__table__.day_of_calendar <= 2) AND (pay_code != 'Не задано') AND (sex_code IS NULL)
-GROUP BY GROUPING SETS ((koob__range__table__.day_of_calendar - 1, (NOW() - INERVAL '1 DAY'))
+WHERE ((NOW() - INTERVAL '1 DAY') NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано') AND (koob__range__table__.day_of_calendar <= 2) AND (pay_code != 'Не задано') AND (sex_code IS NULL)
+GROUP BY GROUPING SETS ((koob__range__table__.day_of_calendar - 1, (NOW() - INTERVAL '1 DAY'))
                        )
 ORDER BY "group_pay_name", "v_main"`
                   );
@@ -250,14 +250,14 @@ ORDER BY "group_pay_name", "v_main"`
             "sort":["group_pay_name","v_main"],
             "with":"ch.fot_out"},
                   {"_target_database": "teradata"}),
-   `SELECT koob__range__table__.day_of_calendar - 1 as "rng", (NOW() - INERVAL '1 DAY') as "dt", type_oe_bi as "type_oe_bi", region_name as "region_name", pay_name as "pay_name", avg(v_rel_fzp) as "v_rel_fzp", sum(v_rel_pp_i), GROUPING(koob__range__table__.day_of_calendar - 1) AS "∑rng", GROUPING((NOW() - INERVAL '1 DAY')) AS "∑dt", GROUPING(type_oe_bi) AS "∑type_oe_bi", GROUPING(region_name) AS "∑region_name", GROUPING(pay_name) AS "∑pay_name"
+   `SELECT koob__range__table__.day_of_calendar - 1 as "rng", (NOW() - INTERVAL '1 DAY') as "dt", type_oe_bi as "type_oe_bi", region_name as "region_name", pay_name as "pay_name", avg(v_rel_fzp) as "v_rel_fzp", sum(v_rel_pp_i), GROUPING(koob__range__table__.day_of_calendar - 1) AS "∑rng", GROUPING((NOW() - INTERVAL '1 DAY')) AS "∑dt", GROUPING(type_oe_bi) AS "∑type_oe_bi", GROUPING(region_name) AS "∑region_name", GROUPING(pay_name) AS "∑pay_name"
 FROM fot_out AS fot_out,sys_calendar.CALENDAR as koob__range__table__
-WHERE ((NOW() - INERVAL '1 DAY') NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано') AND (koob__range__table__.day_of_calendar <= 2) AND (pay_code != 'Не задано') AND (sex_code IS NULL)
-GROUP BY GROUPING SETS ((koob__range__table__.day_of_calendar - 1, (NOW() - INERVAL '1 DAY'), type_oe_bi, region_name, pay_name)
+WHERE ((NOW() - INTERVAL '1 DAY') NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано') AND (koob__range__table__.day_of_calendar <= 2) AND (pay_code != 'Не задано') AND (sex_code IS NULL)
+GROUP BY GROUPING SETS ((koob__range__table__.day_of_calendar - 1, (NOW() - INTERVAL '1 DAY'), type_oe_bi, region_name, pay_name)
                        ,(koob__range__table__.day_of_calendar - 1, type_oe_bi, region_name, pay_name),
-                        (koob__range__table__.day_of_calendar - 1, (NOW() - INERVAL '1 DAY'), region_name, pay_name),
-                        (koob__range__table__.day_of_calendar - 1, (NOW() - INERVAL '1 DAY'), type_oe_bi, pay_name),
-                        (koob__range__table__.day_of_calendar - 1, (NOW() - INERVAL '1 DAY'), type_oe_bi, region_name)
+                        (koob__range__table__.day_of_calendar - 1, (NOW() - INTERVAL '1 DAY'), region_name, pay_name),
+                        (koob__range__table__.day_of_calendar - 1, (NOW() - INTERVAL '1 DAY'), type_oe_bi, pay_name),
+                        (koob__range__table__.day_of_calendar - 1, (NOW() - INTERVAL '1 DAY'), type_oe_bi, region_name)
                        )
 ORDER BY "group_pay_name", "v_main"`
                );

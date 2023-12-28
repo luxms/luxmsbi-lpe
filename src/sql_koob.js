@@ -41,6 +41,7 @@ import { forEach } from 'core-js/core/dict';
 
 
 import { generateAggContext } from './funcs/agg.js';
+import { generateCalendarContext } from './funcs/calendar.js';
 
 
 //console.log( JSON.stringify(generate_agg_funcs.init({"a":"b"})) );
@@ -531,6 +532,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
   let _variables = _ctx[1];
 
   let agg_funcs = generateAggContext(_variables)
+  let cal_funcs = generateCalendarContext(_variables)
   
   //_context["lpe_median"] = agg_funcs["lpe_median"]
 
@@ -766,6 +768,14 @@ function init_koob_context(_vars, default_ds, default_cube) {
   _context["stddev_pop"] = _context["stddevPop"]
 
 
+  _context["dateShift"] = cal_funcs["dateShift"]
+  _context["today"] = cal_funcs["today"]
+  _context["now"] = cal_funcs["now"]
+  _context["bound"] = cal_funcs["bound"]
+  _context["extend"] = cal_funcs["extend"]
+  _context["toStart"] = cal_funcs["toStart"]
+  _context["toEnd"] = cal_funcs["toEnd"]
+
   _context["_sequence"] = 0; // magic sequence number for uniq names generation
   
   /* добавляем модификатор=второй аргумент, который показывает в каком месте SQL используется столбец:
@@ -991,10 +1001,39 @@ COLUMN CALLED ["sum","where"]
 
 
   // сюда должны попадать только хитрые варианты вызова функций с указанием схемы типа utils.smap()
+  // но нет, [["dateShift","dt",["-",3],"month"],["bound",["'","q"]]]
+  // можно сделать эвристику, если первый элемент литерал или функция ",что значит имя SQL
+  // то не делаем thread, а иначе делаем!!!
   _context["->"] = function() {
     var a = Array.prototype.slice.call(arguments);
-    console.log("-> !" , JSON.stringify(a))
-    return a.map(el => isArray(el) ? eval_lisp(el, _ctx) : el).join('.');
+
+    if ( (isArray(a[0]) && a[0][0] === '"') || !isArray(a[0])){ 
+      console.log("-> !" , JSON.stringify(a))
+      return a.map(el => isArray(el) ? eval_lisp(el, _ctx) : el).join('.');
+    } else {
+      // нужно сделать настоящий ->
+      let [acc, ...ast] = a
+      for (let arr of ast) {
+        if (!isArray(arr)) {
+          arr = [".-", acc, arr];                                                 // это может быть обращение к хэшу или массиву через индекс или ключ....
+        } else if (arr[0] === "()" && arr.length === 2 && (isString(arr[1]) || isNumber(arr[1]))) {
+          arr = [".-", acc, arr[1]];
+        } else {
+          arr = arr.slice(0);                                                     // must copy array before modify
+          arr.splice(1, 0, acc);
+          //console.log("AST !!!!" + JSON.stringify(arr))
+          // AST[["filterit",[">",1,0]]]
+          // AST !!!!["filterit","locations",[">",1,0]]
+          // подставляем "вычисленное" ранее значение в качестве первого аргумента... классика thread first
+        }
+        acc = arr;
+      }
+      //console.log("AST !!!!" + JSON.stringify(acc))
+      if (!isArray(acc)){
+        return ["resolve", acc]
+      }
+      return acc;
+    }
   }
   _context['->'].ast = [[],{},[],1]; // mark as macro
 
@@ -1523,8 +1562,14 @@ COLUMN CALLED ["sum","where"]
     if (shouldQuote(col,var1)) var1 = quoteLiteral(var1)
     if (shouldQuote(col,var2)) var2 = quoteLiteral(var2)
 
-    var l = eval_lisp(var1, _ctx); // if we use _context -> we have now unknown function names passing to SQL level
-    var r = eval_lisp(var2, _ctx);
+    let l = eval_lisp(var1, _ctx); // if we use _context -> we have now unknown function names passing to SQL level
+    let r
+    if (isArray(l)) {
+      r = l[1]
+      l = l[0]
+    } else {
+      r = eval_lisp(var2, _ctx);
+    }
 
     if (l === null || (isString(l) && (l.length === 0 || l === "''"))) {
       if (r === null || (isString(r) && (r.length === 0 || r === "''"))) {
@@ -2241,7 +2286,7 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
 /* Добавляем ключ "_aliases", чтобы можно было легко найти столбец по алиасу */
 function cache_alias_keys(_cfg) {
   /*
-  "_columns":[{"columns":["ch.fot_out.dt"],"expr":"(NOW() - INERVAL '1 DAY')"},
+  "_columns":[{"columns":["ch.fot_out.dt"],"expr":"(NOW() - INTERVAL '1 DAY')"},
    {"columns":["ch.fot_out.branch4"],"expr":"fot_out.branch4"},{"columns":[],"expr":"fot_out.ss1"},{"columns":
    ["ch.fot_out.v_main","ch.fot_out.v_rel_fzp"],"agg":true,"alias":"summa","expr":"sum((fot_out.v_main + utils.func(fot_out.v_rel_fzp)) / 100)"},
    {"columns":["ch.fot_out.obj_name"],"alias":"new","expr":"fot_out.obj_name"},{"columns":["ch.fot_out.v_rel_pp"],"agg":true,"expr":
@@ -2308,7 +2353,7 @@ function genereate_subtotals_group_by(cfg, group_by_list, target_database){
             var i = group_by_columns.indexOf(col)
             if (i===-1){
               console.log(`GROUP BY for ${col} : ${JSON.stringify(group_by_list)}`)
-              // GROUP BY: ["dt"] [{"columns":["ch.fot_out.dt"],"alias":"ddd","expr":"(NOW() - INERVAL '1 DAY')"}]
+              // GROUP BY: ["dt"] [{"columns":["ch.fot_out.dt"],"alias":"ddd","expr":"(NOW() - INTERVAL '1 DAY')"}]
               throw Error(`looking for column ${col} listed in subtotals, but can not find in group_by`)
             }
           }
@@ -2371,10 +2416,10 @@ function genereate_subtotals_group_by(cfg, group_by_list, target_database){
 
 /*
 
-          -GROUP BY GROUPING SETS ((koob__range__table__.day_of_calendar - 1, (NOW() - INERVAL '1 DAY'), v_main, group_pay_name)
+          -GROUP BY GROUPING SETS ((koob__range__table__.day_of_calendar - 1, (NOW() - INTERVAL '1 DAY'), v_main, group_pay_name)
 we should rmove this useless item:,(koob__range__table__.day_of_calendar - 1),
-          -                        (koob__range__table__.day_of_calendar - 1,(NOW() - INERVAL '1 DAY')),
-          -                        (koob__range__table__.day_of_calendar - 1,(NOW() - INERVAL '1 DAY'),v_main)
+          -                        (koob__range__table__.day_of_calendar - 1,(NOW() - INTERVAL '1 DAY')),
+          -                        (koob__range__table__.day_of_calendar - 1,(NOW() - INTERVAL '1 DAY'),v_main)
           -  
 */
           if (group_by_list[0].is_range_column && res.length>1) {
@@ -2738,13 +2783,13 @@ export function generate_koob_sql(_cfg, _vars) {
    ["column","ch.fot_out.obj_name"],"new"],["sum",["column","v_rel_pp"]],[":",["avg",["+",["column","ch.fot_out.indicator_v"],["column","v_main"]]],
    "new"]],"sort":[["-",["column","ch.fot_out.dor1"]],["+",["column","val1"]],["-",["column","val2"]],["-",["column","czt.fot.dor2"]],
    ["+",["column","summa"]]],
-   "_group_by":[{"columns":["ch.fot_out.dt"],"expr":"(NOW() - INERVAL '1 DAY')"},{"columns":["ch.fot_out.branch4"],
+   "_group_by":[{"columns":["ch.fot_out.dt"],"expr":"(NOW() - INTERVAL '1 DAY')"},{"columns":["ch.fot_out.branch4"],
    "expr":"fot_out.branch4"},{"columns":[],"expr":"fot_out.ss1"},{"columns":["ch.fot_out.obj_name"],"alias":"new","expr":"fot_out.obj_name"}],
    "_measures":[{"columns":["ch.fot_out.v_main","ch.fot_out.v_rel_fzp"],"agg":true,"alias":"summa","expr":
    "sum((fot_out.v_main + utils.func(fot_out.v_rel_fzp)) / 100)"},{"columns":["ch.fot_out.v_rel_pp"],"agg":true,"expr":
    "sum(fot_out.v_rel_pp)"},{"columns":["ch.fot_out.indicator_v","ch.fot_out.v_main"],"agg":true,"alias":"new","expr":
    "avg(fot_out.indicator_v + fot_out.v_main)"}],
-   "_columns":[{"columns":["ch.fot_out.dt"],"expr":"(NOW() - INERVAL '1 DAY')"},
+   "_columns":[{"columns":["ch.fot_out.dt"],"expr":"(NOW() - INTERVAL '1 DAY')"},
    {"columns":["ch.fot_out.branch4"],"expr":"fot_out.branch4"},{"columns":[],"expr":"fot_out.ss1"},{"columns":
    ["ch.fot_out.v_main","ch.fot_out.v_rel_fzp"],"agg":true,"alias":"summa","expr":"sum((fot_out.v_main + utils.func(fot_out.v_rel_fzp)) / 100)"},
    {"columns":["ch.fot_out.obj_name"],"alias":"new","expr":"fot_out.obj_name"},{"columns":["ch.fot_out.v_rel_pp"],"agg":true,"expr":
@@ -2834,7 +2879,7 @@ export function generate_koob_sql(_cfg, _vars) {
 // это теперь массив из уже готового SQL WHERE!
 
   havingSQL = get_filters_array(_context, [_cfg["having"]], '');
-  // ["((NOW() - INERVAL '1 DAY') > '2020-01-01') AND ((max(sum(v_main))) > 100)"]
+  // ["((NOW() - INTERVAL '1 DAY') > '2020-01-01') AND ((max(sum(v_main))) > 100)"]
   // console.log("AGGFN:" + JSON.stringify(havingSQL))
 
   // AGGFN условия в любом случае должны попадать в HAVING, иначе SQL не работает.

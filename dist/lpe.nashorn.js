@@ -5221,7 +5221,7 @@ function reports_get_columns(cubeId, dims) {
       "id": "ch.fot_out.dt",
       "type": "PERIOD",
       "title": "dt",
-      "sql_query": "NOW() - INERVAL '1 DAY'",
+      "sql_query": "NOW() - INTERVAL '1 DAY'",
       "config": {}
     }, {
       "id": "ch.fot_out.hcode_id",
