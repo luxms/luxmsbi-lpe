@@ -36,6 +36,7 @@
     "test-sqlserver": "mocha --reporter spec test/test-sqlserver.js",
     "test-clickhouse": "mocha --reporter spec test/test-clickhouse.js",
     "test-macros": "mocha --reporter spec test/test-macros.js",
+    "test-calendar": "mocha --reporter spec test/test-calendar.js",
     "cli": "node -e \"console.log(JSON.stringify(require('./dist/lpe').parse(require('fs').readFileSync('/dev/stdin').toString())))\"",
     "eval": "node -e \"var lpe=require('./dist/lpe');console.log(JSON.stringify(lpe.eval_lisp(lpe.parse(require('fs').readFileSync('/dev/stdin').toString()))))\"",
     "build": "webpack",

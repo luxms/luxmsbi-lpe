@@ -330,10 +330,10 @@ module.exports = Object.keys || function keys(O) {
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "d", function() { return isArray; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "e", function() { return isString; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "f", function() { return isNumber; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "g", function() { return isNumber; });
 /* unused harmony export isBoolean */
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return isHash; });
-/* unused harmony export isFunction */
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "f", function() { return isFunction; });
 /* unused harmony export makeMacro */
 /* harmony export (immutable) */ __webpack_exports__["c"] = makeSF;
 /* harmony export (immutable) */ __webpack_exports__["a"] = eval_lisp;
@@ -4530,7 +4530,7 @@ function sql_where_context(_vars) {
       //Мы будем использовать спец флаг, были ли внутри этого cond доступы к переменным,
       // которые дали undefined. через глобальную переменную !!!
 
-      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["f" /* isNumber */])(ifnull) || ifnull === null || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["d" /* isArray */])(ifnull) && ifnull.length === 2 && (ifnull[0] === '"' || ifnull[0] === "'")) {
+      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["g" /* isNumber */])(ifnull) || ifnull === null || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["d" /* isArray */])(ifnull) && ifnull.length === 2 && (ifnull[0] === '"' || ifnull[0] === "'")) {
         var val = prnt(ifnull);
         track_undefined_values_for_cond.unshift(val);
       } else {
@@ -4691,7 +4691,7 @@ function sql_where_context(_vars) {
       if (r === null || r === undefined) {
         var defVal = track_undefined_values_for_cond[0]; //console.log("$ CHECK " + defVal)
 
-        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["e" /* isString */])(defVal) || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["f" /* isNumber */])(defVal) || defVal === null) {
+        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["e" /* isString */])(defVal) || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["g" /* isNumber */])(defVal) || defVal === null) {
           return defVal;
         } else {
           // ставим метку, что был резолвинг неопределённого значения
@@ -4759,7 +4759,7 @@ function sql_where_context(_vars) {
         // значит по этому ключу нет элемента в _vars например !!!
         var defVal = track_undefined_values_for_cond[0]; //console.log("$ CHECK " + defVal)
 
-        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["e" /* isString */])(defVal) || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["f" /* isNumber */])(defVal) || defVal === null) {
+        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["e" /* isString */])(defVal) || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_17__lisp__["g" /* isNumber */])(defVal) || defVal === null) {
           return defVal;
         } else {
           // ставим метку, что был резолвинг неопределённого значения
@@ -7514,8 +7514,10 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
 
   return ret;
 }
+/* _c = контекст, откуда берём на выбор функции */
 
-function init_udf_args_context(_cube, _vars, _target_database, _cfg) {
+
+function init_udf_args_context(_cube, _vars, _target_database, _c) {
   // ожидаем на вход хэш с фильтрами _vars прямо из нашего запроса koob...
   // _context._target_database === 'postgresql'
 
@@ -7598,7 +7600,11 @@ function init_udf_args_context(_cube, _vars, _target_database, _cfg) {
     }
   };
 
-  var _ctx = {};
+  var _cctx = {};
+
+  if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["f" /* isFunction */])(_c["get_in"])) {
+    _cctx["get_in"] = _c["get_in"];
+  }
 
   var quote_array_literal = function quote_array_literal(v) {
     if (c.array_quot === "ql") {
@@ -7633,13 +7639,13 @@ function init_udf_args_context(_cube, _vars, _target_database, _cfg) {
   } // возвращает JSON запрос целиком! 
 
 
-  _ctx["koob_filters"] = function () {
+  _cctx["koob_filters"] = function () {
     //console.log(JSON.stringify(_vars))
     //return JSON.stringify(_vars)
     return _vars;
   };
 
-  _ctx["udf_args"] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["c" /* makeSF */])(function (ast, ctx) {
+  _cctx["udf_args"] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["c" /* makeSF */])(function (ast, ctx) {
     // аргументы = пары значениий, 
     //console.log(`udf_args: `, JSON.stringify(ast))
     if (udf_arg_cfg[_target_database] === undefined) {
@@ -7670,7 +7676,7 @@ function init_udf_args_context(_cube, _vars, _target_database, _cfg) {
         var name = source[index];
         var filter_ast = source[index + 1]; //console.log(`SRC: ${name}` + JSON.stringify(source));
 
-        name = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["a" /* eval_lisp */])(name, _ctx); // should eval to itself !
+        name = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["a" /* eval_lisp */])(name, _cctx); // should eval to itself !
         //console.log(`filtername: ${name} filters AST ` + JSON.stringify(filter_ast))
         // FIXME!! тут нужен собственный резолвер ИМЁН, который понимает wantCallable
         // и ищет имена в _vars как запасной вариант!!!
@@ -7714,7 +7720,7 @@ function init_udf_args_context(_cube, _vars, _target_database, _cfg) {
     return pairs.join(c.arg_sep);
   });
 
-  _ctx["ql"] = function (arg) {
+  _cctx["ql"] = function (arg) {
     //console.log(`QL: ${arg}`  + JSON.stringify(arg))
     if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["d" /* isArray */])(arg)) {
       //console.log('QL:'  + JSON.stringify(arg))
@@ -7742,12 +7748,12 @@ function init_udf_args_context(_cube, _vars, _target_database, _cfg) {
     return undefined;
   };
 
-  return [_ctx, // функция, которая резолвит имена столбцов для случаев, когда имя функции не определено в явном виде в _vars/_context
+  return [_cctx, // функция, которая резолвит имена столбцов для случаев, когда имя функции не определено в явном виде в _vars/_context
   // а также пытается зарезолвить коэффициенты
   function (key, val, resolveOptions) {
     //console.log("RESOLVER : " + key + " " + JSON.stringify(resolveOptions))
     if (resolveOptions && resolveOptions.wantCallable) {
-      return undefined; // try standard context in _ctx
+      return undefined; // try standard context in _cctx
     }
 
     var fullname = "".concat(_cube, ".").concat(key); //console.log("RESOLVER2:" + `CUBE: ${_cube} FULLNAME: ${fullname}  _vars: ${JSON.stringify(_vars)}` + _vars[fullname])
@@ -7806,7 +7812,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
   };
 
   var quoteLiteral = function quoteLiteral(lit) {
-    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["e" /* isString */])(lit) || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["f" /* isNumber */])(lit) || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["d" /* isArray */])(lit) && lit[0] !== "ql") {
+    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["e" /* isString */])(lit) || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["g" /* isNumber */])(lit) || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["d" /* isArray */])(lit) && lit[0] !== "ql") {
       return ["ql", lit];
     }
 
@@ -7924,7 +7930,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
       // возможно, это коэффициент?
       var _val = _variables["_coefficients"][key];
 
-      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["f" /* isNumber */])(_val)) {
+      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["g" /* isNumber */])(_val)) {
         return _val;
       }
     } // We may have references to yet unresolved aliases....
@@ -8006,6 +8012,17 @@ function init_koob_context(_vars, default_ds, default_cube) {
   _context["extend"] = cal_funcs["extend"];
   _context["toStart"] = cal_funcs["toStart"];
   _context["toEnd"] = cal_funcs["toEnd"];
+  _context["isoy"] = cal_funcs["isoy"];
+  _context["isoq"] = cal_funcs["isoq"];
+  _context["isom"] = cal_funcs["isom"];
+  _context["isow"] = cal_funcs["isow"];
+  _context["isod"] = cal_funcs["isod"];
+  _context["year"] = cal_funcs["year"];
+  _context["hoty"] = cal_funcs["hoty"];
+  _context["qoty"] = cal_funcs["qoty"];
+  _context["moty"] = cal_funcs["moty"];
+  _context["woty"] = cal_funcs["woty"];
+  _context["doty"] = cal_funcs["doty"];
   _context["_sequence"] = 0; // magic sequence number for uniq names generation
 
   /* добавляем модификатор=второй аргумент, который показывает в каком месте SQL используется столбец:
@@ -8133,33 +8150,33 @@ function init_koob_context(_vars, default_ds, default_cube) {
         // в фильтрах использовали алиасы или вообще ошиблись.
         // если ключ в фильтрах совпал с именем столбца, то мы это отработали в if() выше
         // нужно найти алиас
-        var _c = _variables["_aliases"][col]; //console.log(`RESOLVED ALIAS: ${JSON.stringify(c)}`)
+        var _c2 = _variables["_aliases"][col]; //console.log(`RESOLVED ALIAS: ${JSON.stringify(c)}`)
 
-        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["b" /* isHash */])(_c)) {
+        if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["b" /* isHash */])(_c2)) {
           // если это просто переименование, то мы можем написать правильный WHERE
           // иначе - это ошибка и нужно использовать HAVING!!!
           // {"columns":["ch.fot_out.group_pay_name"],"unresolved_aliases":["sum"],"agg":true,"alias":"sum","expr":null,"outer_expr":"sum(group_pay_name)"}
           //  {"columns":["ch.fot_out.group_pay_name"],"alias":"xxx","expr":"group_pay_name"}
-          if (_c["columns"].length === 1) {
-            var idName = _c["columns"][0];
+          if (_c2["columns"].length === 1) {
+            var idName = _c2["columns"][0];
 
             var _parts2 = idName.split('.');
 
             var _colname = _parts2[2];
 
-            if (_colname.localeCompare(_c.expr, undefined, {
+            if (_colname.localeCompare(_c2.expr, undefined, {
               sensitivity: 'accent'
-            }) === 0 || "\"".concat(_colname, "\"").localeCompare(_c.expr, undefined, {
+            }) === 0 || "\"".concat(_colname, "\"").localeCompare(_c2.expr, undefined, {
               sensitivity: 'accent'
             }) === 0) {
               // это просто переименование
               if (_variables._target_database == 'clickhouse') {
-                col = "".concat(_parts2[1], ".").concat(_c.expr);
+                col = "".concat(_parts2[1], ".").concat(_c2.expr);
               } else {
-                col = _c.expr;
+                col = _c2.expr;
               }
             } else {
-              throw new Error("Resolving key [".concat(col, "] for filters, but it resolved to complex expression [").concat(_c.expr ? _c.expr : _c.outer_expr, "] which can not be searched at row data level :-()"));
+              throw new Error("Resolving key [".concat(col, "] for filters, but it resolved to complex expression [").concat(_c2.expr ? _c2.expr : _c2.outer_expr, "] which can not be searched at row data level :-()"));
             }
           }
         }
@@ -8275,7 +8292,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
           if (!__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["d" /* isArray */])(arr)) {
             arr = [".-", acc, arr]; // это может быть обращение к хэшу или массиву через индекс или ключ....
-          } else if (arr[0] === "()" && arr.length === 2 && (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["e" /* isString */])(arr[1]) || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["f" /* isNumber */])(arr[1]))) {
+          } else if (arr[0] === "()" && arr.length === 2 && (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["e" /* isString */])(arr[1]) || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["g" /* isNumber */])(arr[1]))) {
             arr = [".-", acc, arr[1]];
           } else {
             arr = arr.slice(0); // must copy array before modify
@@ -9343,7 +9360,7 @@ function get_all_member_filters(_cfg, columns, _filters) {
             if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["d" /* isArray */])(_filters[altId])) {
               if (_filters[altId].length == 2) {
                 // у столбца описан memberAll
-                if (columns[altId].config.memberALL === null || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["e" /* isString */])(columns[altId].config.memberALL) || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["f" /* isNumber */])(columns[altId].config.memberALL)) {
+                if (columns[altId].config.memberALL === null || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["e" /* isString */])(columns[altId].config.memberALL) || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["g" /* isNumber */])(columns[altId].config.memberALL)) {
                   var f = _filters[altId];
 
                   if (f[1] == columns[altId].config.memberALL) {
@@ -9375,7 +9392,7 @@ function get_all_member_filters(_cfg, columns, _filters) {
         }
       }
 
-      if (el.config.memberALL === null || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["e" /* isString */])(el.config.memberALL) || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["f" /* isNumber */])(el.config.memberALL)) {
+      if (el.config.memberALL === null || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["e" /* isString */])(el.config.memberALL) || __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["g" /* isNumber */])(el.config.memberALL)) {
         // есть значение для члена ALL, и оно в виде строки или IS NULL
         // добавляем фильтр, но только если по этому столбцу нет другого фильтра (который задали в конфиге)!!!
         // NOTE: по ключу filters ещё не было нормализации !!! 
@@ -10416,8 +10433,8 @@ function generate_koob_sql(_cfg, _vars) {
 
 
   var from = cube_query_template.query;
-  var limit = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["f" /* isNumber */])(_cfg["limit"]) ? " LIMIT ".concat(_cfg["limit"]) : '';
-  var offset = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["f" /* isNumber */])(_cfg["offset"]) ? " OFFSET ".concat(_cfg["offset"]) : '';
+  var limit = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["g" /* isNumber */])(_cfg["limit"]) ? " LIMIT ".concat(_cfg["limit"]) : '';
+  var offset = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["g" /* isNumber */])(_cfg["offset"]) ? " OFFSET ".concat(_cfg["offset"]) : '';
   var limit_offset = '';
 
   if (_context[1]["_target_database"] === 'oracle') {
@@ -10924,7 +10941,7 @@ function generate_koob_sql(_cfg, _vars) {
       // ищем ${udf_args(column , title, name1, filter1, ....)}
 
       re = /\$\{udf_args\(([^\}]+)\)\}/gi;
-      var c = init_udf_args_context("".concat(_cfg.ds, ".").concat(_cfg.cube), _cfg["filters"], _context[1]["_target_database"]);
+      var c = init_udf_args_context("".concat(_cfg.ds, ".").concat(_cfg.cube), _cfg["filters"], _context[1]["_target_database"], _context[0]);
       processed_from = processed_from.replace(re, udf_args_replacer); // функция filter из table lookup, но тут своя реализация... пробуем
 
       re = /\$\{filter\(([^\}]+)\)\}/gi; // SQLWhereNegate = кажется тут не нужно
@@ -11398,6 +11415,21 @@ function generateCalendarContext(v) {
       return "INTERVAL '1 WEEK - 1 DAY'";
     }
   }
+  /* попытка определить, что параметр - это просто закавыченная строка в понятном формате,
+     и если это так, то  нужно сделать адаптацию для SQL базы */
+
+
+  function adapt_date(dt) {
+    if (/^'\d{4}-\d{2}-\d{2}'$/.test(dt)) {
+      if (_variables._target_database === 'clickhouse') {
+        return "toDate(".concat(dt, ")");
+      } else {
+        return "to_date(".concat(dt, ", 'YYYY-MM-DD')");
+      }
+    }
+
+    return dt;
+  }
 
   function toStart(one, two) {
     var unit;
@@ -11412,7 +11444,9 @@ function generateCalendarContext(v) {
     }
 
     if (_variables._target_database === 'clickhouse' || _variables._target_database === 'postgresql' || _variables._target_database === 'oracle') {
-      return "date_trunc('".concat(toFullUnit(unit), "', ").concat(start, ")");
+      return "date_trunc('".concat(toFullUnit(unit), "', ").concat(adapt_date(start), ")");
+    } else if (_variables._target_database === 'sqlserver') {
+      return "DATETRUNC('".concat(toFullUnit(unit), "', ").concat(adapt_date(start), ")");
     }
 
     throw Error("extend() is not implemented for ".concat(_variables._target_database, " yet"));
@@ -11431,22 +11465,22 @@ function generateCalendarContext(v) {
     }
 
     if (_variables._target_database === 'clickhouse' || _variables._target_database === 'postgresql' || _variables._target_database === 'oracle') {
-      return "date_trunc('".concat(toFullUnit(unit), "', ").concat(start, ") + ").concat(toSQLIntervalEOP(unit));
+      return "date_trunc('".concat(toFullUnit(unit), "', ").concat(adapt_date(start), ") + ").concat(toSQLIntervalEOP(unit));
+    } else if (_variables._target_database === 'sqlserver') {
+      return "DATETRUNC('".concat(toFullUnit(unit), "', ").concat(adapt_date(start), ") + ").concat(toSQLIntervalEOP(unit));
     }
 
     throw Error("extend() is not implemented for ".concat(_variables._target_database, " yet"));
   }
 
   function today() {
-    if (_variables._target_database === 'postgresql') {
-      return 'CURRENT_DATE';
-    } else if (_variables._target_database === 'sqlserver') {
+    if (_variables._target_database === 'sqlserver') {
       return 'GETDATE()';
     } else if (_variables._target_database === 'qlickhouse') {
       return 'today()';
+    } else {
+      return 'CURRENT_DATE';
     }
-
-    throw Error("today() is not implemented for ".concat(_variables._target_database, " yet"));
   }
 
   function now() {
@@ -11476,9 +11510,9 @@ function generateCalendarContext(v) {
 
     if (_variables._target_database === 'postgresql' || _variables._target_database === 'oracle' || _variables._target_database === 'clickhouse') {
       if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__lisp__["d" /* isArray */])(start)) {
-        return ["".concat(start[0], " + ").concat(toSQLInterval(delta, unit)), "".concat(start[1], " + ").concat(toSQLInterval(delta, unit))];
+        return ["".concat(adapt_date(start[0]), " + ").concat(toSQLInterval(delta, unit)), "".concat(adapt_date(start[1]), " + ").concat(toSQLInterval(delta, unit))];
       } else {
-        return "".concat(start, " + ").concat(toSQLInterval(delta, unit));
+        return "".concat(adapt_date(start), " + ").concat(toSQLInterval(delta, unit));
       }
     }
 
@@ -11529,14 +11563,151 @@ function generateCalendarContext(v) {
           throw Error("you can use only 2 elements Array for date literal");
         }
 
-        return [start[0], dateShift(start[1], delta, unit)];
+        return [adapt_date(start[0]), dateShift(start[1], delta, unit)];
       } else {
-        return [start, //`${start} + ${toSQLInterval(delta, unit)}`,
+        return [adapt_date(start), //`${start} + ${toSQLInterval(delta, unit)}`,
         dateShift(start, delta, unit)];
       }
     }
 
     throw Error("extend() is not implemented for ".concat(_variables._target_database, " yet"));
+  } // возвращает год как INTEGER !!!
+
+
+  function year(dt) {
+    if (_variables._target_database === 'sqlserver' || _variables._target_database === 'mysql') {
+      return "year(".concat(adapt_date(dt), ")");
+    } else if (_variables._target_database === 'clickhouse') {
+      return "year(".concat(adapt_date(dt), ")");
+    } else {
+      return "CAST(EXTRACT(YEAR FROM ".concat(adapt_date(dt), ") TO INT)");
+    }
+  } // возвращает полугодие года как INTEGER !!!
+
+
+  function hoty(dt) {
+    if (_variables._target_database === 'sqlserver') {
+      return "(DATEPART(QUARTER, ".concat(adapt_date(dt), ")/3+1)");
+    } else if (_variables._target_database === 'clickhouse') {
+      return "(intDiv(quarter(".concat(adapt_date(dt), "),3)+1)");
+    } else if (_variables._target_database === 'mysql') {
+      return "(quarter(".concat(adapt_date(dt), ") DIV 3 + 1)");
+    } else {
+      return "(CAST(EXTRACT(QUARTER FROM ".concat(adapt_date(dt), ") AS INT)/3+1)");
+    }
+  } // возвращает квартал года как INTEGER !!!
+
+
+  function qoty(dt) {
+    if (_variables._target_database === 'sqlserver') {
+      return "DATEPART(QUARTER, ".concat(adapt_date(dt), ")");
+    } else if (_variables._target_database === 'clickhouse' || _variables._target_database === 'mysql') {
+      return "quarter(".concat(adapt_date(dt), ")");
+    } else {
+      return "CAST(EXTRACT(QUARTER FROM ".concat(adapt_date(dt), ") TO INT)");
+    }
+  } // возвращает месяц года как INTEGER !!!
+
+
+  function moty(dt) {
+    if (_variables._target_database === 'sqlserver' || _variables._target_database === 'mysql') {
+      return "month(".concat(adapt_date(dt), ")");
+    } else if (_variables._target_database === 'clickhouse') {
+      return "month(".concat(adapt_date(dt), ")");
+    } else {
+      return "CAST(EXTRACT(MONTH FROM ".concat(adapt_date(dt), ") TO INT)");
+    }
+  } // возвращает неделю года как INTEGER !!!
+
+
+  function woty(dt) {
+    if (_variables._target_database === 'sqlserver') {
+      return "DATEPART(WEEK, ".concat(adapt_date(dt), ")"); // INT
+    } else if (_variables._target_database === 'mysql') {
+      return "week(".concat(adapt_date(dt), ")");
+    } else if (_variables._target_database === 'clickhouse') {
+      return "week(".concat(adapt_date(dt), ")");
+    } else {
+      return "CAST(EXTRACT(WEEK FROM ".concat(adapt_date(dt), ") TO INT)");
+    }
+  } // возвращает день года как INTEGER
+
+
+  function doty(dt) {
+    if (_variables._target_database === 'sqlserver') {
+      return "DATENAME(dayofyear, ".concat(adapt_date(dt), ")"); // INT
+    } else if (_variables._target_database === 'mysql') {
+      return "CAST(DAYOFYEAR(".concat(adapt_date(dt), ") AS UNSIGNED)");
+    } else if (_variables._target_database === 'clickhouse') {
+      return "toDayOfYear(".concat(adapt_date(dt), ")");
+    } else {
+      return "CAST(EXTRACT(DOY FROM ".concat(adapt_date(dt), ") TO INT)");
+    }
+  } // возвращает год как строку!
+
+
+  function isoy(dt) {
+    if (_variables._target_database === 'sqlserver') {
+      return "FORMAT(".concat(adapt_date(dt), ", 'yyyy')");
+    } else if (_variables._target_database === 'mysql') {
+      return "DATE_FORMAT(".concat(adapt_date(dt), ", '%Y')");
+    } else if (_variables._target_database === 'clickhouse') {
+      return "formatDateTime(".concat(adapt_date(dt), ", '%Y')");
+    } else {
+      return "TO_CHAR(".concat(adapt_date(dt), ", 'YYYY')");
+    }
+  } // 2024-12 
+
+
+  function isom(dt) {
+    if (_variables._target_database === 'sqlserver') {
+      return "FORMAT(".concat(adapt_date(dt), ", 'yyyy-MM')");
+    } else if (_variables._target_database === 'mysql') {
+      return "DATE_FORMAT(".concat(adapt_date(dt), ", '%Y-%m')");
+    } else if (_variables._target_database === 'clickhouse') {
+      return "formatDateTime(".concat(adapt_date(dt), ", '%Y-%m')");
+    } else {
+      return "TO_CHAR(".concat(adapt_date(dt), ", 'YYYY-MM')");
+    }
+  } // 2024-Q1 
+
+
+  function isoq(dt) {
+    if (_variables._target_database === 'sqlserver') {
+      return "CONCAT(FORMAT(".concat(adapt_date(dt), ", 'yyyy'), '-Q', DATEPART(QUARTER, ").concat(adapt_date(dt), "))");
+    } else if (_variables._target_database === 'mysql') {
+      return "CONCAT(DATE_FORMAT(".concat(adapt_date(dt), ", '%Y'), '-Q', quarter(").concat(adapt_date(dt), "))");
+    } else if (_variables._target_database === 'clickhouse') {
+      return "formatDateTime(".concat(adapt_date(dt), ", '%Y-%Q')");
+    } else {
+      return "TO_CHAR(".concat(adapt_date(dt), ", 'YYYY-\"Q\"Q')");
+    }
+  } // 2024-W01 
+
+
+  function isow(dt) {
+    if (_variables._target_database === 'sqlserver') {
+      return "CONCAT( YEAR(DATEADD(day, 3 - (DATEPART(weekday, ".concat(adapt_date(dt), ") + 5) % 7, ").concat(adapt_date(dt), ")), '-W', FORMAT(datepart(iso_week, ").concat(adapt_date(dt), "),'D2'))");
+    } else if (_variables._target_database === 'mysql') {
+      return "INSERT(YEARWEEK(".concat(adapt_date(dt), ", 3), 5, 0,'-W')");
+    } else if (_variables._target_database === 'clickhouse') {
+      return "concat( toString(toISOYear(".concat(adapt_date(dt), ")), '-W', leftPad(toString(toISOWeek(").concat(adapt_date(dt), ")), 2, '0') )");
+    } else {
+      return "TO_CHAR(".concat(adapt_date(dt), ", 'IYYY\"-Q\"IW')");
+    }
+  } // 2024-356 
+
+
+  function isod(dt) {
+    if (_variables._target_database === 'sqlserver') {
+      return "CONCAT(FORMAT(".concat(adapt_date(dt), ", 'yyyy'), '-', FORMAT( DATEPART(dayofyear , ").concat(adapt_date(dt), "), 'D3'))");
+    } else if (_variables._target_database === 'mysql') {
+      return "DATE_FORMAT(".concat(adapt_date(dt), ", '%Y-%j')");
+    } else if (_variables._target_database === 'clickhouse') {
+      return " formatDateTime(".concat(adapt_date(dt), ", '%Y-%j')");
+    } else {
+      return "TO_CHAR(".concat(adapt_date(dt), ", 'YYYY-DDD')");
+    }
   }
 
   return {
@@ -11546,7 +11717,18 @@ function generateCalendarContext(v) {
     'bound': bound,
     'extend': extend,
     'toStart': toStart,
-    'toEnd': toEnd
+    'toEnd': toEnd,
+    'isoy': isoy,
+    'isoq': isoq,
+    'isom': isom,
+    'isow': isow,
+    'isod': isod,
+    'year': year,
+    'hoty': hoty,
+    'qoty': qoty,
+    'moty': moty,
+    'woty': woty,
+    'doty': doty
   };
 }
 

@@ -291,7 +291,8 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
 }
 
 
-function init_udf_args_context(_cube, _vars, _target_database, _cfg) {
+/* _c = контекст, откуда берём на выбор функции */
+function init_udf_args_context(_cube, _vars, _target_database, _c) {
   // ожидаем на вход хэш с фильтрами _vars прямо из нашего запроса koob...
   // _context._target_database === 'postgresql'
   /*
@@ -361,7 +362,11 @@ function init_udf_args_context(_cube, _vars, _target_database, _cfg) {
       return list.map(v=> JSON.stringify(v)).join(c.array_val_sep)
     } 
   } 
-  let _ctx = {};
+  let _cctx = {};
+
+  if (isFunction(_c["get_in"])) {
+    _cctx["get_in"] = _c["get_in"]
+  }
 
   let quote_array_literal = function(v) {
     if (c.array_quot==="ql") {
@@ -396,13 +401,13 @@ function init_udf_args_context(_cube, _vars, _target_database, _cfg) {
   }
 
   // возвращает JSON запрос целиком! 
-  _ctx["koob_filters"] = function() {
+  _cctx["koob_filters"] = function() {
     //console.log(JSON.stringify(_vars))
     //return JSON.stringify(_vars)
     return _vars
   }
 
-  _ctx["udf_args"] = makeSF((ast,ctx) => {
+  _cctx["udf_args"] = makeSF((ast,ctx) => {
       // аргументы = пары значениий, 
       //console.log(`udf_args: `, JSON.stringify(ast))
 
@@ -432,7 +437,7 @@ function init_udf_args_context(_cube, _vars, _target_database, _cfg) {
           let name = source[index];
           let filter_ast = source[index+1];
           //console.log(`SRC: ${name}` + JSON.stringify(source));
-          name = eval_lisp(name, _ctx); // should eval to itself !
+          name = eval_lisp(name, _cctx); // should eval to itself !
           //console.log(`filtername: ${name} filters AST ` + JSON.stringify(filter_ast))
           // FIXME!! тут нужен собственный резолвер ИМЁН, который понимает wantCallable
           // и ищет имена в _vars как запасной вариант!!!
@@ -471,7 +476,7 @@ function init_udf_args_context(_cube, _vars, _target_database, _cfg) {
     return pairs.join(c.arg_sep)
   });
 
-  _ctx["ql"] = function(arg) {
+  _cctx["ql"] = function(arg) {
     //console.log(`QL: ${arg}`  + JSON.stringify(arg))
     if (isArray(arg)){
       //console.log('QL:'  + JSON.stringify(arg))
@@ -496,13 +501,13 @@ function init_udf_args_context(_cube, _vars, _target_database, _cfg) {
   }
 
   return [ 
-    _ctx,
+    _cctx,
     // функция, которая резолвит имена столбцов для случаев, когда имя функции не определено в явном виде в _vars/_context
     // а также пытается зарезолвить коэффициенты
     (key, val, resolveOptions) => {
       //console.log("RESOLVER : " + key + " " + JSON.stringify(resolveOptions))
       if (resolveOptions && resolveOptions.wantCallable) {
-        return undefined // try standard context in _ctx
+        return undefined // try standard context in _cctx
       }
       let fullname = `${_cube}.${key}`
       //console.log("RESOLVER2:" + `CUBE: ${_cube} FULLNAME: ${fullname}  _vars: ${JSON.stringify(_vars)}` + _vars[fullname])
@@ -775,6 +780,20 @@ function init_koob_context(_vars, default_ds, default_cube) {
   _context["extend"] = cal_funcs["extend"]
   _context["toStart"] = cal_funcs["toStart"]
   _context["toEnd"] = cal_funcs["toEnd"]
+
+
+  _context["isoy"] = cal_funcs["isoy"]
+  _context["isoq"] = cal_funcs["isoq"]
+  _context["isom"] = cal_funcs["isom"]
+  _context["isow"] = cal_funcs["isow"]
+  _context["isod"] = cal_funcs["isod"]
+
+  _context["year"] = cal_funcs["year"]
+  _context["hoty"] = cal_funcs["hoty"]
+  _context["qoty"] = cal_funcs["qoty"]
+  _context["moty"] = cal_funcs["moty"]
+  _context["woty"] = cal_funcs["woty"]
+  _context["doty"] = cal_funcs["doty"]
 
   _context["_sequence"] = 0; // magic sequence number for uniq names generation
   
@@ -1763,7 +1782,6 @@ COLUMN CALLED ["sum","where"]
       }
     }
       // check if we have null in the array of values...
-
       let resolvedV;
       if (already_quoted) {
         resolvedV = ast.slice(1).filter(el => el !== null)
@@ -3417,7 +3435,10 @@ export function generate_koob_sql(_cfg, _vars) {
       ///////////////////////////////////////////////////////////////////////
       // ищем ${udf_args(column , title, name1, filter1, ....)}
       re = /\$\{udf_args\(([^\}]+)\)\}/gi
-      let c = init_udf_args_context(`${_cfg.ds}.${_cfg.cube}`, _cfg["filters"], _context[1]["_target_database"]);
+      let c = init_udf_args_context(`${_cfg.ds}.${_cfg.cube}`, 
+                                    _cfg["filters"], 
+                                    _context[1]["_target_database"],
+                                    _context[0]);
 
       function udf_args_replacer(match, columns_text, offset, string) {
         if (SQLWhereNegate) {

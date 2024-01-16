@@ -42,7 +42,8 @@ where \${udf_args(dir, ql(regions.1), id, ql(id), dt, dt)}
 where \${udf_args(dir, regions, id, ql(id), dt, ql(dt))}
 where \${udf_args(dir, regions.1, id, ql(id), dt, dt)}
 where func_call(\${udf_args('', ql(regions))})
-where func_call(\${udf_args('', ql(koob_filters()))})`,
+where func_call(\${udf_args('', ql(koob_filters()))})
+where func_call(\${udf_args('', ql('tst'), '', ql(get_in(user, 'username'))   )})`,
            "config": {"is_template": 1,"skip_where": 1}}}
 
      assert.equal( lpe.generate_koob_sql(
@@ -57,8 +58,8 @@ where func_call(\${udf_args('', ql(koob_filters()))})`,
            "":["|||",{"asd":123}]
         },
         "with":"bi.cube"},
-              {"_target_database": "postgresql"}),
-     `SELECT regions as regions
+              {"_target_database": "postgresql", "_user_info":{"username":"biuser","t":{"a":444}}}),
+     `SELECT regions as regions, percentile_cont(0.5) WITHIN GROUP (ORDER BY id DESC) as id
 FROM (SELECT 1 from cube
 where $lpe_array_quot$["Moscow","piter","tumen"]$lpe_array_quot$, 23000035
 where $lpe_array_quot$["Moscow","piter","tumen"]$lpe_array_quot$, '23000035', $lpe_array_quot$[2019,2022]$lpe_array_quot$
@@ -66,7 +67,9 @@ where 'Moscow', '23000035', $lpe_array_quot$[2019,2022]$lpe_array_quot$
 where $lpe_array_quot$["Moscow","piter","tumen"]$lpe_array_quot$, '23000035', $lpe_array_quot$[2019,2022]$lpe_array_quot$
 where Moscow, '23000035', $lpe_array_quot$[2019,2022]$lpe_array_quot$
 where func_call($lpe_array_quot$["Moscow","piter","tumen"]$lpe_array_quot$)
-where func_call('{"bi.cube.dt":["=",2019,2022],"bi.cube.id":["=",23000035],"bi.cube.regions":["=","Moscow","piter","tumen"],"":["|||",{"asd":123}]}')`
+where func_call('{"bi.cube.dt":["=",2019,2022],"bi.cube.id":["=",23000035],"bi.cube.regions":["=","Moscow","piter","tumen"],"":["|||",{"asd":123}]}')
+where func_call('tst', 'biuser')
+GROUP BY regions`
                        );
 
 
