@@ -119,7 +119,7 @@ export function generateCalendarContext(v){
     function today(){
         if (_variables._target_database === 'sqlserver'){
             return 'GETDATE()'
-        } else if (_variables._target_database === 'qlickhouse'){
+        } else if (_variables._target_database === 'clickhouse'){
             return 'today()'
         } else {
             return 'CURRENT_DATE'
@@ -129,7 +129,7 @@ export function generateCalendarContext(v){
 
     function now(){
         if (_variables._target_database === 'postgresql' || 
-            _variables._target_database === 'qlickhouse') 
+            _variables._target_database === 'clickhouse') 
         {
             return 'now()'
         }
