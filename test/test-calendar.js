@@ -263,6 +263,36 @@ FROM fot_out AS fot_out`
 FROM fot_out AS fot_out`
       )
    })
+
+   it('should eval moty', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["moty('2024-07-01')"],
+         "with":"ch.fot_out"},
+               {"key":null}),
+         `SELECT CAST(EXTRACT(MONTH FROM to_date('2024-07-01', 'YYYY-MM-DD')) AS INT)
+FROM fot_out AS fot_out`
+      )
+   })
+
+   it('should eval moty in clickhouse', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["moty('2024-07-01')"],
+         "with":"ch.fot_out"},
+               {"_target_database": "clickhouse"}),
+         `SELECT month(toDate('2024-07-01'))
+FROM fot_out AS fot_out`
+      )
+   })
+
+   it('should eval moty in sqlserver', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["moty('2024-07-01')"],
+         "with":"ch.fot_out"},
+               {"_target_database": "sqlserver"}),
+         `SELECT month(CAST('2024-07-01' as date))
+FROM fot_out AS fot_out`
+      )
+   })
 })
 
 
