@@ -363,6 +363,46 @@ FROM fot_out AS fot_out`
 FROM fot_out AS fot_out`
       )
    })
+
+   it('should eval isoy', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["isoy('2024-04-26')"],
+         "with":"ch.fot_out"},
+               {"key":null}),
+         `SELECT TO_CHAR(to_date('2024-04-26', 'YYYY-MM-DD'), 'YYYY')
+FROM fot_out AS fot_out`
+      )
+   })
+
+   it('should eval isoy in clickhouse', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["isoy('2024-04-26')"],
+         "with":"ch.fot_out"},
+               {"_target_database": "clickhouse"}),
+         `SELECT formatDateTime(toDate('2024-04-26'), '%Y')
+FROM fot_out AS fot_out`
+      )
+   })
+
+   it('should eval isoy in mysql', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["isoy('2024-04-26')"],
+         "with":"ch.fot_out"},
+               {"_target_database": "mysql"}),
+         `SELECT DATE_FORMAT(STR_TO_DATE('2024-04-26', '%Y-%m-%d'), '%Y')
+FROM fot_out AS fot_out`
+      )
+   })
+
+   it('should eval isoy in sqlserver', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["isoy('2024-04-26')"],
+         "with":"ch.fot_out"},
+               {"_target_database": "sqlserver"}),
+         `SELECT FORMAT(CAST('2024-04-26' as date), 'yyyy')
+FROM fot_out AS fot_out`
+      )
+   })
 })
 
 
