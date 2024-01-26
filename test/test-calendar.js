@@ -144,16 +144,15 @@ FROM fot_out AS fot_out`
       )
    })
    
-   // Упадет так как приводит q к виду CURRENT_DATE + INTERVAL '2*3 MONTH', а должен CURRENT_DATE + INTERVAL '6 MONTH'
-//    it('should eval extend with two arguments +offset negative', function() {
-//       assert.equal(lpe.generate_koob_sql(
-//          {"columns":["extend(2, 'q')"],
-//          "with":"ch.fot_out"},
-//                {"key":null}),
-//          `SELECT CURRENT_DATE,CURRENT_DATE + INTERVAL '6 MONTH'
-// FROM fot_out AS fot_out`
-//       )
-//    })
+   it('should eval extend with two arguments +offset quarter', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["extend(2, 'q')"],
+         "with":"ch.fot_out"},
+               {"key":null}),
+         `SELECT CURRENT_DATE,CURRENT_DATE + INTERVAL '6 MONTH'
+FROM fot_out AS fot_out`
+      )
+   })
 
    it('should eval extend with three arguments +offset', function() {
       assert.equal(lpe.generate_koob_sql(
