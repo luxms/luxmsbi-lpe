@@ -203,6 +203,36 @@ FROM fot_out AS fot_out`
 FROM fot_out AS fot_out`
       )
    })
+
+   it('should eval hoty', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["hoty('2024-01-26')"],
+         "with":"ch.fot_out"},
+               {"key":null}),
+         `SELECT (CAST(EXTRACT(QUARTER FROM to_date('2024-01-26', 'YYYY-MM-DD')) AS INT)/3+1)
+FROM fot_out AS fot_out`
+      )
+   })
+
+   it('should eval hoty in clickhouse', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["hoty('2024-01-26')"],
+         "with":"ch.fot_out"},
+               {"_target_database": "clickhouse"}),
+         `SELECT (intDiv(quarter(toDate('2024-01-26')),3)+1)
+FROM fot_out AS fot_out`
+      )
+   })
+
+   it('should eval hoty in mysql', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["hoty('2024-01-26')"],
+         "with":"ch.fot_out"},
+               {"_target_database": "mysql"}),
+         `SELECT (quarter(STR_TO_DATE('2024-01-26', '%Y-%m-%d')) DIV 3 + 1)
+FROM fot_out AS fot_out`
+      )
+   })
 })
 
 
