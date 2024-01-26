@@ -293,6 +293,36 @@ FROM fot_out AS fot_out`
 FROM fot_out AS fot_out`
       )
    })
+
+   it('should eval woty', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["woty('2024-04-26')"],
+         "with":"ch.fot_out"},
+               {"key":null}),
+         `SELECT CAST(EXTRACT(WEEK FROM to_date('2024-04-26', 'YYYY-MM-DD')) AS INT)
+FROM fot_out AS fot_out`
+      )
+   })
+
+   it('should eval woty in clickhouse', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["woty('2024-04-26')"],
+         "with":"ch.fot_out"},
+               {"_target_database": "clickhouse"}),
+         `SELECT week(toDate('2024-04-26'))
+FROM fot_out AS fot_out`
+      )
+   })
+
+   it('should eval woty in sqlserver', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["woty('2024-04-26')"],
+         "with":"ch.fot_out"},
+               {"_target_database": "sqlserver"}),
+         `SELECT DATEPART(WEEK, CAST('2024-04-26' as date))
+FROM fot_out AS fot_out`
+      )
+   })
 })
 
 
