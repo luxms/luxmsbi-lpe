@@ -29,7 +29,7 @@ export function generateCalendarContext(v){
             return `INTERVAL '${i} YEAR'`
         }
         if (/^'?\s*(?:q|quarter)\s*'?$/i.test(u)) {
-            return `INTERVAL '${i}*3 MONTH'`
+            return `INTERVAL '${+i*3} MONTH'`
         }
         if (/^'?\s*(?:m|month)\s*'?$/i.test(u)) {
             return `INTERVAL '${i} MONTH'`

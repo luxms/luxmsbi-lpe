@@ -11377,7 +11377,7 @@ function generateCalendarContext(v) {
     }
 
     if (/^'?\s*(?:q|quarter)\s*'?$/i.test(u)) {
-      return "INTERVAL '".concat(i, "*3 MONTH'");
+      return "INTERVAL '".concat(+i*3, " MONTH'");
     }
 
     if (/^'?\s*(?:m|month)\s*'?$/i.test(u)) {
