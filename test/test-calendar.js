@@ -443,6 +443,46 @@ FROM fot_out AS fot_out`
 FROM fot_out AS fot_out`
       )
    })
+
+   it('should eval isoq', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["isoq('2024-04-26')"],
+         "with":"ch.fot_out"},
+               {"key":null}),
+         `SELECT TO_CHAR(to_date('2024-04-26', 'YYYY-MM-DD'), 'YYYY-"Q"Q')
+FROM fot_out AS fot_out`
+      )
+   })
+
+   it('should eval isoq in clickhouse', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["isoq('2024-04-26')"],
+         "with":"ch.fot_out"},
+               {"_target_database": "clickhouse"}),
+         `SELECT replaceRegexpOne(formatDateTime(toDate('2024-04-26'), '%Y-%Q'), '-\\d{1}', '-Q' || formatDateTime(toDate('2024-04-26'), '%Q'))
+FROM fot_out AS fot_out`
+      )
+   })
+
+   it('should eval isoq in mysql', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["isoq('2024-04-26')"],
+         "with":"ch.fot_out"},
+               {"_target_database": "mysql"}),
+         `SELECT CONCAT(DATE_FORMAT(STR_TO_DATE('2024-04-26', '%Y-%m-%d'), '%Y'), '-Q', quarter(STR_TO_DATE('2024-04-26', '%Y-%m-%d')))
+FROM fot_out AS fot_out`
+      )
+   })
+
+   it('should eval isoq in sqlserver', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["isoq('2024-04-26')"],
+         "with":"ch.fot_out"},
+               {"_target_database": "sqlserver"}),
+         `SELECT CONCAT(FORMAT(CAST('2024-04-26' as date), 'yyyy'), '-Q', DATEPART(QUARTER, CAST('2024-04-26' as date)))
+FROM fot_out AS fot_out`
+      )
+   })
 })
 
 

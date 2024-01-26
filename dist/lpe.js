@@ -11682,7 +11682,7 @@ function generateCalendarContext(v) {
     } else if (_variables._target_database === 'mysql') {
       return "CONCAT(DATE_FORMAT(".concat(adapt_date(dt), ", '%Y'), '-Q', quarter(").concat(adapt_date(dt), "))");
     } else if (_variables._target_database === 'clickhouse') {
-      return "formatDateTime(".concat(adapt_date(dt), ", '%Y-%Q')");
+      return `replaceRegexpOne(formatDateTime(${adapt_date(dt)}, '%Y-%Q'), '-\\d{1}', '-Q' || formatDateTime(${adapt_date(dt)}, '%Q'))`;
     } else {
       return "TO_CHAR(".concat(adapt_date(dt), ", 'YYYY-\"Q\"Q')");
     }
