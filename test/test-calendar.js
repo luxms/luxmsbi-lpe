@@ -91,6 +91,19 @@ WHERE (CURRENT_DATE = '2020-03-01')`
       )
    })
 
+   it('should eval today in clickhouse', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["today():t"],
+         "filters":{"t":["=","2020-03-01"],
+                   },
+         "with":"ch.fot_out"},
+         {"_target_database": "clickhouse"}),
+         `SELECT today() as t
+FROM fot_out AS fot_out
+WHERE (t = '2020-03-01')`
+      )
+   })
+
    it('should eval bound', function() {
       assert.equal( lpe.generate_koob_sql(
          {"columns":["bound('q')"],
