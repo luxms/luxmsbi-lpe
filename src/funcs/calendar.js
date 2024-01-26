@@ -246,7 +246,7 @@ export function generateCalendarContext(v){
         } else if (_variables._target_database === 'clickhouse'){
             return `year(${adapt_date(dt)})`
         } else {
-            return `CAST(EXTRACT(YEAR FROM ${adapt_date(dt)}) TO INT)`
+            return `CAST(EXTRACT(YEAR FROM ${adapt_date(dt)}) AS INT)`
         }
     }
 

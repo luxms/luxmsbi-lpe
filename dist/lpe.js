@@ -11580,7 +11580,7 @@ function generateCalendarContext(v) {
     } else if (_variables._target_database === 'clickhouse') {
       return "year(".concat(adapt_date(dt), ")");
     } else {
-      return "CAST(EXTRACT(YEAR FROM ".concat(adapt_date(dt), ") TO INT)");
+      return "CAST(EXTRACT(YEAR FROM ".concat(adapt_date(dt), ") AS INT)");
     }
   } // возвращает полугодие года как INTEGER !!!
 
