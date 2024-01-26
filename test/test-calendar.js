@@ -323,6 +323,46 @@ FROM fot_out AS fot_out`
 FROM fot_out AS fot_out`
       )
    })
+
+   it('should eval doty', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["doty('2024-04-26')"],
+         "with":"ch.fot_out"},
+               {"key":null}),
+         `SELECT CAST(EXTRACT(DOY FROM to_date('2024-04-26', 'YYYY-MM-DD')) AS INT)
+FROM fot_out AS fot_out`
+      )
+   })
+
+   it('should eval doty in clickhouse', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["doty('2024-04-26')"],
+         "with":"ch.fot_out"},
+               {"_target_database": "clickhouse"}),
+         `SELECT toDayOfYear(toDate('2024-04-26'))
+FROM fot_out AS fot_out`
+      )
+   })
+
+   it('should eval doty in mysql', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["doty('2024-04-26')"],
+         "with":"ch.fot_out"},
+               {"_target_database": "mysql"}),
+         `SELECT CAST(DAYOFYEAR(STR_TO_DATE('2024-04-26', '%Y-%m-%d')) AS UNSIGNED)
+FROM fot_out AS fot_out`
+      )
+   })
+
+   it('should eval doty in sqlserver', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["doty('2024-04-26')"],
+         "with":"ch.fot_out"},
+               {"_target_database": "sqlserver"}),
+         `SELECT DATENAME(dayofyear, CAST('2024-04-26' as date))
+FROM fot_out AS fot_out`
+      )
+   })
 })
 
 
