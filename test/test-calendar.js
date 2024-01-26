@@ -174,6 +174,36 @@ FROM fot_out AS fot_out`
 FROM fot_out AS fot_out`
       )
    })
+
+   it('should eval year in clickhouse', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["year('2023-01-01')"],
+         "with":"ch.fot_out"},
+               {"_target_database": "clickhouse"}),
+         `SELECT year(toDate('2023-01-01'))
+FROM fot_out AS fot_out`
+      )
+   })
+
+   it('should eval year in mysql', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["year('2023-01-01')"],
+         "with":"ch.fot_out"},
+               {"_target_database": "mysql"}),
+         `SELECT year(to_date('2023-01-01', 'YYYY-MM-DD'))
+FROM fot_out AS fot_out`
+      )
+   })
+
+   it('should eval year in postgresql', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["year('2023-01-01')"],
+         "with":"ch.fot_out"},
+               {"_target_database": "postgresql"}),
+         `SELECT CAST(EXTRACT(YEAR FROM to_date('2023-01-01', 'YYYY-MM-DD')) AS INT)
+FROM fot_out AS fot_out`
+      )
+   })
 })
 
 
