@@ -11697,7 +11697,7 @@ function generateCalendarContext(v) {
     } else if (_variables._target_database === 'clickhouse') {
       return "concat( toString(toISOYear(".concat(adapt_date(dt), ")), '-W', leftPad(toString(toISOWeek(").concat(adapt_date(dt), ")), 2, '0') )");
     } else {
-      return "TO_CHAR(".concat(adapt_date(dt), ", 'IYYY\"-Q\"IW')");
+      return "TO_CHAR(".concat(adapt_date(dt), ", 'IYYY\"-W\"IW')");
     }
   } // 2024-356 
 

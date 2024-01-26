@@ -483,6 +483,46 @@ FROM fot_out AS fot_out`
 FROM fot_out AS fot_out`
       )
    })
+
+   it('should eval isow', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["isow('2024-04-26')"],
+         "with":"ch.fot_out"},
+               {"key":null}),
+         `SELECT TO_CHAR(to_date('2024-04-26', 'YYYY-MM-DD'), 'IYYY"-W"IW')
+FROM fot_out AS fot_out`
+      )
+   })
+
+   it('should eval isow in clickhouse', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["isow('2024-04-26')"],
+         "with":"ch.fot_out"},
+               {"_target_database": "clickhouse"}),
+         `SELECT concat( toString(toISOYear(toDate('2024-04-26'))), '-W', leftPad(toString(toISOWeek(toDate('2024-04-26'))), 2, '0') )
+FROM fot_out AS fot_out`
+      )
+   })
+
+   it('should eval isow in mysql', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["isow('2024-04-26')"],
+         "with":"ch.fot_out"},
+               {"_target_database": "mysql"}),
+         `SELECT INSERT(YEARWEEK(STR_TO_DATE('2024-04-26', '%Y-%m-%d'), 3), 5, 0,'-W')
+FROM fot_out AS fot_out`
+      )
+   })
+
+   it('should eval isow in sqlserver', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["isow('2024-04-26')"],
+         "with":"ch.fot_out"},
+               {"_target_database": "sqlserver"}),
+         `SELECT CONCAT( YEAR(DATEADD(day, 3 - (DATEPART(weekday, CAST('2024-04-26' as date)) + 5) % 7, CAST('2024-04-26' as date))), '-W', FORMAT(datepart(iso_week, CAST('2024-04-26' as date)),'D2'))
+FROM fot_out AS fot_out`
+      )
+   })
 })
 
 

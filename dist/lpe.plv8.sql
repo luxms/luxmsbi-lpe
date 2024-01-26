@@ -11522,7 +11522,7 @@ function generateCalendarContext(v) {
     } else if (_variables._target_database === 'clickhouse') {
       return `replaceRegexpOne(formatDateTime(${adapt_date(dt)}, '%Y-%Q'), '-\\d{1}', '-Q' || formatDateTime(${adapt_date(dt)}, '%Q'))`
     } else {
-      return "TO_CHAR(".concat(adapt_date(dt), ", 'YYYY-\"Q\"Q')");
+      return "TO_CHAR(".concat(adapt_date(dt), ", 'YYYY-\"W\"Q')");
     }
   } // 2024-W01 
 

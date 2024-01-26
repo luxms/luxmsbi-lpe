@@ -368,7 +368,7 @@ export function generateCalendarContext(v){
         } else if (_variables._target_database === 'clickhouse'){
             return `concat( toString(toISOYear(${adapt_date(dt)})), '-W', leftPad(toString(toISOWeek(${adapt_date(dt)})), 2, '0') )`
         } else {
-            return `TO_CHAR(${adapt_date(dt)}, 'IYYY"-Q"IW')`
+            return `TO_CHAR(${adapt_date(dt)}, 'IYYY"-W"IW')`
         }
     }
 
