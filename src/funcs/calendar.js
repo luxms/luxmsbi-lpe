@@ -69,6 +69,8 @@ export function generateCalendarContext(v){
         return "toDate(".concat(dt, ")");
       } else if (_variables._target_database === 'mysql') {
         return "STR_TO_DATE(".concat(dt, ", '%Y-%m-%d')");
+      } else if (_variables._target_database === 'sqlserver') {
+        return "CAST(".concat(dt, " as date)");
       } else { 
         return "to_date(".concat(dt, ", 'YYYY-MM-DD')");
       }
@@ -274,7 +276,7 @@ export function generateCalendarContext(v){
         ){
             return `quarter(${adapt_date(dt)})`
         } else {
-            return `CAST(EXTRACT(QUARTER FROM ${adapt_date(dt)}) TO INT)`
+            return `CAST(EXTRACT(QUARTER FROM ${adapt_date(dt)}) AS INT)`
         }
     }
 
@@ -288,7 +290,7 @@ export function generateCalendarContext(v){
         } else if (_variables._target_database === 'clickhouse'){
             return `month(${adapt_date(dt)})`
         } else {
-            return `CAST(EXTRACT(MONTH FROM ${adapt_date(dt)}) TO INT)`
+            return `CAST(EXTRACT(MONTH FROM ${adapt_date(dt)}) AS INT)`
         }
     }
 
@@ -301,7 +303,7 @@ export function generateCalendarContext(v){
         } else if (_variables._target_database === 'clickhouse'){
             return `week(${adapt_date(dt)})`
         } else {
-            return `CAST(EXTRACT(WEEK FROM ${adapt_date(dt)}) TO INT)`
+            return `CAST(EXTRACT(WEEK FROM ${adapt_date(dt)}) AS INT)`
         }
     }
 
@@ -314,7 +316,7 @@ export function generateCalendarContext(v){
         } else if (_variables._target_database === 'clickhouse'){
             return `toDayOfYear(${adapt_date(dt)})`
         } else {
-            return `CAST(EXTRACT(DOY FROM ${adapt_date(dt)}) TO INT)`
+            return `CAST(EXTRACT(DOY FROM ${adapt_date(dt)}) AS INT)`
         }
     }
 

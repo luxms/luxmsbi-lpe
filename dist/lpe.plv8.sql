@@ -11263,6 +11263,8 @@ function generateCalendarContext(v) {
         return "toDate(".concat(dt, ")");
       } else if (_variables._target_database === 'mysql') {
         return "STR_TO_DATE(".concat(dt, ", '%Y-%m-%d')");
+      } else if (_variables._target_database === 'sqlserver') {
+        return "CAST(".concat(dt, " as date)");
       } else { 
         return "to_date(".concat(dt, ", 'YYYY-MM-DD')");
       }
@@ -11444,7 +11446,7 @@ function generateCalendarContext(v) {
     } else if (_variables._target_database === 'clickhouse' || _variables._target_database === 'mysql') {
       return "quarter(".concat(adapt_date(dt), ")");
     } else {
-      return "CAST(EXTRACT(QUARTER FROM ".concat(adapt_date(dt), ") TO INT)");
+      return "CAST(EXTRACT(QUARTER FROM ".concat(adapt_date(dt), ") AS INT)");
     }
   } // возвращает месяц года как INTEGER !!!
 
@@ -11455,7 +11457,7 @@ function generateCalendarContext(v) {
     } else if (_variables._target_database === 'clickhouse') {
       return "month(".concat(adapt_date(dt), ")");
     } else {
-      return "CAST(EXTRACT(MONTH FROM ".concat(adapt_date(dt), ") TO INT)");
+      return "CAST(EXTRACT(MONTH FROM ".concat(adapt_date(dt), ") AS INT)");
     }
   } // возвращает неделю года как INTEGER !!!
 
@@ -11481,7 +11483,7 @@ function generateCalendarContext(v) {
     } else if (_variables._target_database === 'clickhouse') {
       return "toDayOfYear(".concat(adapt_date(dt), ")");
     } else {
-      return "CAST(EXTRACT(DOY FROM ".concat(adapt_date(dt), ") TO INT)");
+      return "CAST(EXTRACT(DOY FROM ".concat(adapt_date(dt), ") AS INT)");
     }
   } // возвращает год как строку!
 

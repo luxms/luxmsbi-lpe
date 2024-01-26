@@ -233,6 +233,36 @@ FROM fot_out AS fot_out`
 FROM fot_out AS fot_out`
       )
    })
+
+   it('should eval qoty', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["qoty('2024-04-26')"],
+         "with":"ch.fot_out"},
+               {"key":null}),
+         `SELECT CAST(EXTRACT(QUARTER FROM to_date('2024-04-26', 'YYYY-MM-DD')) AS INT)
+FROM fot_out AS fot_out`
+      )
+   })
+
+   it('should eval qoty in clickhouse', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["qoty('2024-04-26')"],
+         "with":"ch.fot_out"},
+               {"_target_database": "clickhouse"}),
+         `SELECT quarter(toDate('2024-04-26'))
+FROM fot_out AS fot_out`
+      )
+   })
+
+   it('should eval qoty in sqlserver', function() {
+      assert.equal(lpe.generate_koob_sql(
+         {"columns":["qoty('2024-04-26')"],
+         "with":"ch.fot_out"},
+               {"_target_database": "sqlserver"}),
+         `SELECT DATEPART(QUARTER, CAST('2024-04-26' as date))
+FROM fot_out AS fot_out`
+      )
+   })
 })
 
 
