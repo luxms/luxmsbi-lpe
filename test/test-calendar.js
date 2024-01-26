@@ -189,7 +189,7 @@ FROM fot_out AS fot_out`
          {"columns":["year('2023-01-01')"],
          "with":"ch.fot_out"},
                {"_target_database": "mysql"}),
-         `SELECT year(to_date('2023-01-01', 'YYYY-MM-DD'))
+         `SELECT year(STR_TO_DATE('2023-01-01', '%Y-%m-%d'))
 FROM fot_out AS fot_out`
       )
    })

@@ -64,13 +64,15 @@ export function generateCalendarContext(v){
     /* попытка определить, что параметр - это просто закавыченная строка в понятном формате,
        и если это так, то  нужно сделать адаптацию для SQL базы */
     function adapt_date(dt) {
-        if (/^'\d{4}-\d{2}-\d{2}'$/.test(dt)) {
-            if (_variables._target_database === 'clickhouse') {
-                return `toDate(${dt})`
-            } else {
-                return `to_date(${dt}, 'YYYY-MM-DD')`
-            }
-        }
+    if (/^'\d{4}-\d{2}-\d{2}'$/.test(dt)) {
+      if (_variables._target_database === 'clickhouse') {
+        return "toDate(".concat(dt, ")");
+      } else if (_variables._target_database === 'mysql') {
+        return "STR_TO_DATE(".concat(dt, ", '%Y-%m-%d')");
+      } else { 
+        return "to_date(".concat(dt, ", 'YYYY-MM-DD')");
+      }
+    }
         return dt
     }
 
