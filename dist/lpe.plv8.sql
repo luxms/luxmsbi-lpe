@@ -11215,7 +11215,7 @@ function generateCalendarContext(v) {
     }
 
     if (/^'?\s*(?:q|quarter)\s*'?$/i.test(u)) {
-      return "INTERVAL '".concat(+i*3, " MONTH'");
+      return "INTERVAL '".concat(+i * 3, " MONTH'");
     }
 
     if (/^'?\s*(?:m|month)\s*'?$/i.test(u)) {
@@ -11265,7 +11265,7 @@ function generateCalendarContext(v) {
         return "STR_TO_DATE(".concat(dt, ", '%Y-%m-%d')");
       } else if (_variables._target_database === 'sqlserver') {
         return "CAST(".concat(dt, " as date)");
-      } else { 
+      } else {
         return "to_date(".concat(dt, ", 'YYYY-MM-DD')");
       }
     }
@@ -11470,7 +11470,7 @@ function generateCalendarContext(v) {
     } else if (_variables._target_database === 'clickhouse') {
       return "week(".concat(adapt_date(dt), ")");
     } else {
-      return "CAST(EXTRACT(WEEK FROM ".concat(adapt_date(dt), ") TO INT)");
+      return "CAST(EXTRACT(WEEK FROM ".concat(adapt_date(dt), ") AS INT)");
     }
   } // возвращает день года как INTEGER
 
@@ -11520,9 +11520,9 @@ function generateCalendarContext(v) {
     } else if (_variables._target_database === 'mysql') {
       return "CONCAT(DATE_FORMAT(".concat(adapt_date(dt), ", '%Y'), '-Q', quarter(").concat(adapt_date(dt), "))");
     } else if (_variables._target_database === 'clickhouse') {
-      return `replaceRegexpOne(formatDateTime(${adapt_date(dt)}, '%Y-%Q'), '-\\d{1}', '-Q' || formatDateTime(${adapt_date(dt)}, '%Q'))`
+      return "formatDateTime(".concat(adapt_date(dt), ", '%Y-Q%Q')");
     } else {
-      return "TO_CHAR(".concat(adapt_date(dt), ", 'YYYY-\"W\"Q')");
+      return "TO_CHAR(".concat(adapt_date(dt), ", 'YYYY-\"Q\"Q')");
     }
   } // 2024-W01 
 
@@ -11535,7 +11535,7 @@ function generateCalendarContext(v) {
     } else if (_variables._target_database === 'clickhouse') {
       return "concat( toString(toISOYear(".concat(adapt_date(dt), ")), '-W', leftPad(toString(toISOWeek(").concat(adapt_date(dt), ")), 2, '0') )");
     } else {
-      return "TO_CHAR(".concat(adapt_date(dt), ", 'IYYY\"-Q\"IW')");
+      return "TO_CHAR(".concat(adapt_date(dt), ", 'IYYY\"-W\"IW')");
     }
   } // 2024-356 
 

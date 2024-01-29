@@ -459,7 +459,7 @@ FROM fot_out AS fot_out`
          {"columns":["isoq('2024-04-26')"],
          "with":"ch.fot_out"},
                {"_target_database": "clickhouse"}),
-         `SELECT replaceRegexpOne(formatDateTime(toDate('2024-04-26'), '%Y-%Q'), '-\\d{1}', '-Q' || formatDateTime(toDate('2024-04-26'), '%Q'))
+         `SELECT formatDateTime(toDate('2024-04-26'), '%Y-Q%Q')
 FROM fot_out AS fot_out`
       )
    })
