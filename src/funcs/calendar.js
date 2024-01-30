@@ -29,7 +29,7 @@ export function generateCalendarContext(v){
             return `INTERVAL '${i} YEAR'`
         }
         if (/^'?\s*(?:q|quarter)\s*'?$/i.test(u)) {
-            return `INTERVAL '${i}*3 MONTH'`
+            return `INTERVAL '${i*3} MONTH'`
         }
         if (/^'?\s*(?:m|month)\s*'?$/i.test(u)) {
             return `INTERVAL '${i} MONTH'`
@@ -64,13 +64,17 @@ export function generateCalendarContext(v){
     /* попытка определить, что параметр - это просто закавыченная строка в понятном формате,
        и если это так, то  нужно сделать адаптацию для SQL базы */
     function adapt_date(dt) {
-        if (/^'\d{4}-\d{2}-\d{2}'$/.test(dt)) {
-            if (_variables._target_database === 'clickhouse') {
-                return `toDate(${dt})`
-            } else {
-                return `to_date(${dt}, 'YYYY-MM-DD')`
-            }
-        }
+    if (/^'\d{4}-\d{2}-\d{2}'$/.test(dt)) {
+      if (_variables._target_database === 'clickhouse') {
+        return `toDate(${dt})`;
+      } else if (_variables._target_database === 'mysql') {
+        return `STR_TO_DATE(${dt}, '%Y-%m-%d')`;
+      } else if (_variables._target_database === 'sqlserver') {
+        return `CAST(${dt} AS DATE)`;
+      } else { 
+        return `to_date(${dt}, 'YYYY-MM-DD')`;
+      }
+    }
         return dt
     }
 
@@ -364,7 +368,7 @@ export function generateCalendarContext(v){
         } else if (_variables._target_database === 'clickhouse'){
             return `concat( toString(toISOYear(${adapt_date(dt)})), '-W', leftPad(toString(toISOWeek(${adapt_date(dt)})), 2, '0') )`
         } else {
-            return `TO_CHAR(${adapt_date(dt)}, 'IYYY"-Q"IW')`
+            return `TO_CHAR(${adapt_date(dt)}, 'IYYY"-W"IW')`
         }
     }
 

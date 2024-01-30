@@ -11384,7 +11384,7 @@ function generateCalendarContext(v) {
     }
 
     if (/^'?\s*(?:q|quarter)\s*'?$/i.test(u)) {
-      return "INTERVAL '".concat(i, "*3 MONTH'");
+      return "INTERVAL '".concat(+i * 3, " MONTH'");
     }
 
     if (/^'?\s*(?:m|month)\s*'?$/i.test(u)) {
@@ -11430,6 +11430,10 @@ function generateCalendarContext(v) {
     if (/^'\d{4}-\d{2}-\d{2}'$/.test(dt)) {
       if (_variables._target_database === 'clickhouse') {
         return "toDate(".concat(dt, ")");
+      } else if (_variables._target_database === 'mysql') {
+        return "STR_TO_DATE(".concat(dt, ", '%Y-%m-%d')");
+      } else if (_variables._target_database === 'sqlserver') {
+        return "CAST(".concat(dt, " as date)");
       } else {
         return "to_date(".concat(dt, ", 'YYYY-MM-DD')");
       }
@@ -11483,7 +11487,7 @@ function generateCalendarContext(v) {
   function today() {
     if (_variables._target_database === 'sqlserver') {
       return 'GETDATE()';
-    } else if (_variables._target_database === 'qlickhouse') {
+    } else if (_variables._target_database === 'clickhouse') {
       return 'today()';
     } else {
       return 'CURRENT_DATE';
@@ -11491,7 +11495,7 @@ function generateCalendarContext(v) {
   }
 
   function now() {
-    if (_variables._target_database === 'postgresql' || _variables._target_database === 'qlickhouse') {
+    if (_variables._target_database === 'postgresql' || _variables._target_database === 'clickhouse') {
       return 'now()';
     }
 
@@ -11587,7 +11591,7 @@ function generateCalendarContext(v) {
     } else if (_variables._target_database === 'clickhouse') {
       return "year(".concat(adapt_date(dt), ")");
     } else {
-      return "CAST(EXTRACT(YEAR FROM ".concat(adapt_date(dt), ") TO INT)");
+      return "CAST(EXTRACT(YEAR FROM ".concat(adapt_date(dt), ") AS INT)");
     }
   } // возвращает полугодие года как INTEGER !!!
 
@@ -11611,7 +11615,7 @@ function generateCalendarContext(v) {
     } else if (_variables._target_database === 'clickhouse' || _variables._target_database === 'mysql') {
       return "quarter(".concat(adapt_date(dt), ")");
     } else {
-      return "CAST(EXTRACT(QUARTER FROM ".concat(adapt_date(dt), ") TO INT)");
+      return "CAST(EXTRACT(QUARTER FROM ".concat(adapt_date(dt), ") AS INT)");
     }
   } // возвращает месяц года как INTEGER !!!
 
@@ -11622,7 +11626,7 @@ function generateCalendarContext(v) {
     } else if (_variables._target_database === 'clickhouse') {
       return "month(".concat(adapt_date(dt), ")");
     } else {
-      return "CAST(EXTRACT(MONTH FROM ".concat(adapt_date(dt), ") TO INT)");
+      return "CAST(EXTRACT(MONTH FROM ".concat(adapt_date(dt), ") AS INT)");
     }
   } // возвращает неделю года как INTEGER !!!
 
@@ -11635,7 +11639,7 @@ function generateCalendarContext(v) {
     } else if (_variables._target_database === 'clickhouse') {
       return "week(".concat(adapt_date(dt), ")");
     } else {
-      return "CAST(EXTRACT(WEEK FROM ".concat(adapt_date(dt), ") TO INT)");
+      return "CAST(EXTRACT(WEEK FROM ".concat(adapt_date(dt), ") AS INT)");
     }
   } // возвращает день года как INTEGER
 
@@ -11648,7 +11652,7 @@ function generateCalendarContext(v) {
     } else if (_variables._target_database === 'clickhouse') {
       return "toDayOfYear(".concat(adapt_date(dt), ")");
     } else {
-      return "CAST(EXTRACT(DOY FROM ".concat(adapt_date(dt), ") TO INT)");
+      return "CAST(EXTRACT(DOY FROM ".concat(adapt_date(dt), ") AS INT)");
     }
   } // возвращает год как строку!
 
@@ -11685,7 +11689,7 @@ function generateCalendarContext(v) {
     } else if (_variables._target_database === 'mysql') {
       return "CONCAT(DATE_FORMAT(".concat(adapt_date(dt), ", '%Y'), '-Q', quarter(").concat(adapt_date(dt), "))");
     } else if (_variables._target_database === 'clickhouse') {
-      return "formatDateTime(".concat(adapt_date(dt), ", '%Y-%Q')");
+      return "formatDateTime(".concat(adapt_date(dt), ", '%Y-Q%Q')");
     } else {
       return "TO_CHAR(".concat(adapt_date(dt), ", 'YYYY-\"Q\"Q')");
     }
@@ -11700,7 +11704,7 @@ function generateCalendarContext(v) {
     } else if (_variables._target_database === 'clickhouse') {
       return "concat( toString(toISOYear(".concat(adapt_date(dt), ")), '-W', leftPad(toString(toISOWeek(").concat(adapt_date(dt), ")), 2, '0') )");
     } else {
-      return "TO_CHAR(".concat(adapt_date(dt), ", 'IYYY\"-Q\"IW')");
+      return "TO_CHAR(".concat(adapt_date(dt), ", 'IYYY\"-W\"IW')");
     }
   } // 2024-356 
 
