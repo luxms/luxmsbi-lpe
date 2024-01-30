@@ -6182,7 +6182,10 @@ var OPERATORS = {
 };
 var PRIORITY = {
   '=': 40,
-  '||': 30
+  '*': 20,
+  '+': 10,
+  '-': 10,
+  '||': 5
 };
 var safeReplace = {
   '\n': '\\n',
@@ -6228,6 +6231,10 @@ function deparseSexpr(sexpr) {
   if (op === '[') return '[' + args.map(deparse).join(', ') + ']';
   if (op === '()') return '(' + args.map(deparse).join(', ') + ')';
   if (op === '->') return args.map(deparse).join('.');
+
+  if ((op === '-' || op === '+') && args.length === 1) {
+    if (isNumber(args[0]) || isString(args[0])) return op + String(args[0]);else return op + deparseWithOptionalBrackets(args[0], op);
+  }
 
   if (OPERATORS[op] === true) {
     return args.map(function (arg) {

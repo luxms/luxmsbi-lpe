@@ -18,7 +18,10 @@ const OPERATORS = {
 
 const PRIORITY = {
   '=': 40,
-  '||': 30,
+  '*': 20,
+  '+': 10,
+  '-': 10,
+  '||': 5,
 };
 
 const safeReplace = {
@@ -62,6 +65,11 @@ function deparseSexpr(sexpr) {
   if (op === '[') return '[' + args.map(deparse).join(', ') + ']';
   if (op === '()') return '(' + args.map(deparse).join(', ') + ')';
   if (op === '->') return args.map(deparse).join('.');
+  if ((op === '-' || op === '+') && args.length === 1) {
+    if (isNumber(args[0]) || isString(args[0])) return op + String(args[0]);
+    else return op + deparseWithOptionalBrackets(args[0], op);
+  }
+
   if (OPERATORS[op] === true) {
     return args.map(arg => deparseWithOptionalBrackets(arg, op)).join(' ' + op + ' ');
   }
@@ -80,7 +88,7 @@ export function deparse(lispExpr) {
     return lispExpr;
 
   } else if (isNumber(lispExpr)) {
-    return lispExpr.toString()
+    return lispExpr.toString();
 
   } else if (isBoolean(lispExpr)) {
     return lispExpr.toString();
@@ -92,7 +100,7 @@ export function deparse(lispExpr) {
     return 'null';
 
   } else if (isArray(lispExpr)) {
-    return deparseSexpr(lispExpr)
+    return deparseSexpr(lispExpr);
 
   } else {
     return String(lispExpr);
