@@ -29,7 +29,7 @@ globalThis.MOCKCubeSQL = {
 \${filters()}
 or \${filters(except(vpz_nm))}
 or \${filters(id,dt)})`, 
-      "config": {"is_template": 1,"skip_where": 1}}}
+      "config": {"is_template": 1,"skip_where": 1, "count_distinct": "uniq"}}}
 
 
 //             "pay_code":["and",["ilike","%А%"],["=","2022-01-02","2022-10-10","2020-09-09"]]
@@ -61,6 +61,51 @@ ORDER BY id LIMIT 10`
             );
    });
 
+
+
+   it('should eval custom distinct', function() {
+      assert.equal( lpe.generate_koob_sql(
+         {"columns":[
+                     "dt", "id"
+                  ],
+         "filters":{
+         },
+         "sort": ["id"],
+         "limit": 10,
+         "distinct": "true",
+         "return": "count",
+         "with":"bi.cube"},
+               {"_target_database": "clickhouse"}),
+   `SELECT uniq(dt, id)
+FROM (SELECT 1 from cube where
+1=1
+or 1=1
+or 1=1)
+ORDER BY id LIMIT 10`
+            );
+   });
+
+
+   it('should eval defaultValue', function() {
+      assert.equal( lpe.generate_koob_sql(
+         {"columns":[
+                     "dt", "spec_mtr_nm"
+                  ],
+         "filters":{
+            "spec_mtr_nm": ["between", "2021-01-01","2021-02-01"]
+         },
+         "sort": ["id"],
+         "limit": 10,
+         "with":"bi.cube"},
+               {"_target_database": "clickhouse"}),
+   `SELECT dt as dt, spec_mtr_nm as spec_mtr_nm
+FROM (SELECT 1 from cube where
+1=1
+or 1=1
+or 1=1)
+ORDER BY id LIMIT 10`
+            );
+   });
 
 
    it('should eval ilike', function() {
@@ -248,6 +293,23 @@ ORDER BY group_pay_name, v_main`
          "clickhouse-bi.cube":{
             "query": `SELECT * FROM tbl`, 
             "config": {"is_template": 0,"skip_where": 0}}}
+
+      assert.equal( lpe.generate_koob_sql(
+         {"columns":["dt", "all_contracts", "regions", "tru", "avg(ratio_paid_balance)","sum(v_rel_pp_i)"],
+         "filters":{"dt":["!=","2020-03","2020-04"],
+                     "pay_name":["!=","Не задано"]},
+         "sort":["all_contracts", "regions"],
+         "with":"bi.cube"},
+               {"_target_database": "clickhouse"}),
+`SELECT dt as dt, all_contracts as all_contracts, regions as regions, tru as tru, avg(ratio_paid_balance) as ratio_paid_balance, sum(v_rel_pp_i)
+FROM SELECT * FROM tbl
+WHERE (cube.dt NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано')
+GROUP BY dt, all_contracts, regions, tru
+ORDER BY all_contracts, regions`
+            );
+
+
+
 
       assert.equal( lpe.generate_koob_sql(
          {"columns":["dt", "all_contracts", "regions", "tru", "avg(ratio_paid_balance)","sum(v_rel_pp_i)"],

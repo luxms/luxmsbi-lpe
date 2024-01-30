@@ -42,7 +42,7 @@ import { forEach } from 'core-js/core/dict';
 
 import { generateAggContext } from './funcs/agg.js';
 import { generateCalendarContext } from './funcs/calendar.js';
-
+import { generateWindowContext } from './funcs/window.js';
 
 //console.log( JSON.stringify(generate_agg_funcs.init({"a":"b"})) );
 
@@ -538,6 +538,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
   let agg_funcs = generateAggContext(_variables)
   let cal_funcs = generateCalendarContext(_variables)
+  let win_funcs = generateWindowContext(_variables)
   
   //_context["lpe_median"] = agg_funcs["lpe_median"]
 
@@ -753,7 +754,10 @@ function init_koob_context(_vars, default_ds, default_cube) {
     //throw Error(`mode() is not implemented for ${_context._target_database} yet`)
   }
 
+  _context["window"] = win_funcs["window"]
+
   _context["median"] = agg_funcs["median"]
+  _context["quantile"] = agg_funcs["quantile"]
   _context["mode"] = agg_funcs["mode"]
   _context["varPop"] = agg_funcs["varPop"]
   _context["stddevPop"] = agg_funcs["stddevPop"]
@@ -852,7 +856,7 @@ COLUMN CALLED ["sum","where"]
       ) {
         // we have just column name or one column alias, prepend table alias !
         if (_variables._target_database == 'clickhouse') {
-          if (sql_context == 'where') { // disable table prefixing for now 
+          if (sql_context == 'where') { // enable table prefixing for now 
             return `${parts[1]}.${c.sql_query}`
           } else {
             return `${c.sql_query}`
@@ -2653,6 +2657,24 @@ export function generate_koob_sql(_cfg, _vars) {
   } 
   */
 
+  var cube_query_template = reports_get_table_sql(ds_info["flavor"], `${_cfg["ds"]}.${_cfg["cube"]}`, _req_cube_info)
+
+
+  /* функция зависит от переменной cube_query_temaplte  :-() */
+  _context[0]["uniq"] = function(col) {
+    // считаем, что аргумент всегда один конкретный столбец (не *)
+    _context[1]["_result"]["agg"] = true
+    if (_context[1]._target_database === 'clickhouse' &&
+      isString(cube_query_template.config.count_distinct) &&
+      /^\w+$/.test(cube_query_template.config.count_distinct)
+    ){
+      return `${cube_query_template.config.count_distinct}(${col})`
+    } else {
+      return `count(distinct(${col}))`
+    }
+  }
+
+
   let columns_s = [];
   let global_only1 = false;
   let global_joins = [];
@@ -2754,10 +2776,18 @@ export function generate_koob_sql(_cfg, _vars) {
   // ищем кандидатов для GROUP BY и заполняем оригинальную структуру служебными полями
   _cfg["_group_by"] = []
   _cfg["_measures"] = []
-  columns_s.map(el => 
-    (el["agg"] === true)
-       ? _cfg["_measures"].push(el) 
-       : _cfg["_group_by"].push(el))
+  columns_s.map(el => {
+    if (el["agg"] === true) {
+      _cfg["_measures"].push(el) 
+    } else {
+      // window functions
+      if (el["do_not_group_by"] === true) {
+        _cfg["_measures"].push(el) 
+      } else {
+        _cfg["_group_by"].push(el)
+      }
+    }
+  })
   _cfg["_columns"] = columns_s
 
   //console.log("RES ", JSON.stringify(_cfg["_columns"]))
@@ -2775,8 +2805,6 @@ export function generate_koob_sql(_cfg, _vars) {
    Для указанных явно дименшенов доп. условий не требуется, клиент сам будет разбираться с результатом
   */
 
-
-  var cube_query_template = reports_get_table_sql(ds_info["flavor"], `${_cfg["ds"]}.${_cfg["cube"]}`, _req_cube_info)
 
   /* Если есть хотя бы один явный столбец group_by, а иначе, если просто считаем агрегаты по всей таблице без группировки по столбцам */
   
@@ -3261,7 +3289,16 @@ export function generate_koob_sql(_cfg, _vars) {
   } else {
     // NOT WINDOW! normal SELECT
     //---------------------------------------------------------------------
+    let custom_count_disctinct = null
 
+    if (  _cfg["return"] === "count" &&
+          isString(cube_query_template.config.count_distinct) &&
+          /^\w+$/.test(cube_query_template.config.count_distinct) &&
+          _context[1]["_target_database"]==='clickhouse' &&
+          isArray(_cfg["distinct"])
+    ) {
+      custom_count_disctinct = cube_query_template.config.count_distinct
+    } 
     // могут быть ньюансы квотации столбцов, обозначения AS и т.д. поэтому каждый участок приводим к LPE и вызываем SQLPE функции с адаптацией под конкретные базы
     var normal_level_columns = _cfg["_columns"].map(el => {
       // It is only to support dictionaries for Clickhouse!!!
@@ -3311,25 +3348,34 @@ export function generate_koob_sql(_cfg, _vars) {
             }
         }
       }
-      
-      if (el.alias){
-        return quot_as_expression(_context[1]["_target_database"], expand_outer_expr(el), el.alias)
+
+      if (custom_count_disctinct) {
+        return expand_outer_expr(el)
       } else {
-        if (el.columns.length === 1) {
-          var parts = el.columns[0].split('.')
-          // We may have auto-generated columns, which has no dots in name!
-          // COLUMN: {"columns":["ch.fot_out.hcode_name"],"expr":"hcode_name"}
-          // COLUMN: {"columns":["koob__range__"],"is_range_column":true,"expr":"koob__range__","join":{
-          if (parts.length === 3) {
-            return quot_as_expression(_context[1]["_target_database"], expand_outer_expr(el), parts[2])
+          if (el.alias){
+            return quot_as_expression(_context[1]["_target_database"], expand_outer_expr(el), el.alias)
           } else {
+            if (el.columns.length === 1) {
+              var parts = el.columns[0].split('.')
+              // We may have auto-generated columns, which has no dots in name!
+              // COLUMN: {"columns":["ch.fot_out.hcode_name"],"expr":"hcode_name"}
+              // COLUMN: {"columns":["koob__range__"],"is_range_column":true,"expr":"koob__range__","join":{
+              if (parts.length === 3) {
+                return quot_as_expression(_context[1]["_target_database"], expand_outer_expr(el), parts[2])
+              } else {
+                return expand_outer_expr(el)
+              }
+            }
+            //console.log("--ONE ELEMENT NO ALIAS" + JSON.stringify(el))
             return expand_outer_expr(el)
           }
-        }
-        //console.log("--ONE ELEMENT NO ALIAS" + JSON.stringify(el))
-        return expand_outer_expr(el)
-      } 
+      }
     }).join(', ')
+
+    if (custom_count_disctinct) {
+      // пишем кастомную функцию вместо DISTINCT !!!
+      normal_level_columns = `${custom_count_disctinct}(${normal_level_columns})`
+    }
 
     order_by = order_by.length ? "\nORDER BY ".concat(order_by.join(', ')) : ''
     let select_tail = normal_level_columns
@@ -3365,8 +3411,7 @@ export function generate_koob_sql(_cfg, _vars) {
         group_by ="\nGROUP BY ".concat(group_by.join(', '))
       }
     }
-
-    select = isArray(_cfg["distinct"]) ? "SELECT DISTINCT " : "SELECT "
+    select = (isArray(_cfg["distinct"]) && (custom_count_disctinct === null)) ? "SELECT DISTINCT " : "SELECT "
     select = select.concat(select_tail)
 
     var final_sql = ''
@@ -3582,8 +3627,8 @@ export function generate_koob_sql(_cfg, _vars) {
     }
 
 //console.log("FINAL: " + final_sql)
-
-    if (_cfg["return"] === "count") {
+//custom_count_disctinct уже содержит кастомную функцию типа uniq() и не нужно делать доп. обёртку
+    if (_cfg["return"] === "count" && custom_count_disctinct === null) {
       if (_context[1]["_target_database"] === 'clickhouse'){
         final_sql = `select toUInt32(count(300)) as count from (${final_sql})`
       } else {

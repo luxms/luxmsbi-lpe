@@ -17,6 +17,19 @@ export function generateAggContext(v){
     }
   }
 
+  function quantile(col, q) {
+    _variables["_result"]["agg"] = true
+    if (_variables._target_database === 'clickhouse') {
+      return `quantileExactLow(${q})(${col})`
+    } else if (_variables._target_database === 'postgresql' || 
+               _variables._target_database === 'oracle') {
+      return `percentile_disc(${q}) WITHIN GROUP (ORDER BY ${col} ASC)`
+    } else {
+      throw Error(`median() is not implemented for ${_variables._target_database} yet`)
+    }
+  }
+
+
   function mode(col) {
     _variables["_result"]["agg"] = true
     if (_variables._target_database === 'clickhouse') {
@@ -107,6 +120,7 @@ export function generateAggContext(v){
 
   return {
     'median': median,
+    'quantile': quantile,
     'mode' : mode,
     'varPop': varPop,
     'varSamp': varSamp,

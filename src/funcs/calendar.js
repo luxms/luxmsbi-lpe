@@ -119,7 +119,7 @@ export function generateCalendarContext(v){
     function today(){
         if (_variables._target_database === 'sqlserver'){
             return 'GETDATE()'
-        } else if (_variables._target_database === 'qlickhouse'){
+        } else if (_variables._target_database === 'clickhouse'){
             return 'today()'
         } else {
             return 'CURRENT_DATE'
@@ -129,7 +129,7 @@ export function generateCalendarContext(v){
 
     function now(){
         if (_variables._target_database === 'postgresql' || 
-            _variables._target_database === 'qlickhouse') 
+            _variables._target_database === 'clickhouse') 
         {
             return 'now()'
         }
@@ -246,7 +246,7 @@ export function generateCalendarContext(v){
         } else if (_variables._target_database === 'clickhouse'){
             return `year(${adapt_date(dt)})`
         } else {
-            return `CAST(EXTRACT(YEAR FROM ${adapt_date(dt)}) TO INT)`
+            return `CAST(EXTRACT(YEAR FROM ${adapt_date(dt)}) AS INT)`
         }
     }
 
@@ -272,7 +272,7 @@ export function generateCalendarContext(v){
         ){
             return `quarter(${adapt_date(dt)})`
         } else {
-            return `CAST(EXTRACT(QUARTER FROM ${adapt_date(dt)}) TO INT)`
+            return `CAST(EXTRACT(QUARTER FROM ${adapt_date(dt)}) AS INT)`
         }
     }
 
@@ -286,7 +286,7 @@ export function generateCalendarContext(v){
         } else if (_variables._target_database === 'clickhouse'){
             return `month(${adapt_date(dt)})`
         } else {
-            return `CAST(EXTRACT(MONTH FROM ${adapt_date(dt)}) TO INT)`
+            return `CAST(EXTRACT(MONTH FROM ${adapt_date(dt)}) AS INT)`
         }
     }
 
@@ -299,7 +299,7 @@ export function generateCalendarContext(v){
         } else if (_variables._target_database === 'clickhouse'){
             return `week(${adapt_date(dt)})`
         } else {
-            return `CAST(EXTRACT(WEEK FROM ${adapt_date(dt)}) TO INT)`
+            return `CAST(EXTRACT(WEEK FROM ${adapt_date(dt)}) AS INT)`
         }
     }
 
@@ -312,7 +312,7 @@ export function generateCalendarContext(v){
         } else if (_variables._target_database === 'clickhouse'){
             return `toDayOfYear(${adapt_date(dt)})`
         } else {
-            return `CAST(EXTRACT(DOY FROM ${adapt_date(dt)}) TO INT)`
+            return `CAST(EXTRACT(DOY FROM ${adapt_date(dt)}) AS INT)`
         }
     }
 
@@ -349,7 +349,7 @@ export function generateCalendarContext(v){
         } else if (_variables._target_database === 'mysql') {
             return `CONCAT(DATE_FORMAT(${adapt_date(dt)}, '%Y'), '-Q', quarter(${adapt_date(dt)}))`
         } else if (_variables._target_database === 'clickhouse'){
-            return `formatDateTime(${adapt_date(dt)}, '%Y-%Q')`
+            return `formatDateTime(${adapt_date(dt)}, '%Y-Q%Q')`
         } else {
             return `TO_CHAR(${adapt_date(dt)}, 'YYYY-"Q"Q')`
         }

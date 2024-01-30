@@ -37,6 +37,8 @@ export function generateWindowContext(v){
       throw Error(`window() first argument must be a function!`) 
     }
 
+    let rememberAgg = _variables["_result"]["agg"]
+
     // из-за хорошо выбранных имён вложенных функций, у нас будет правильный порядок:
     // partition(), order(), frame() !!!
     let args = ast.slice(1).sort((a,b)=> String(b[0]).localeCompare(String(a[0])))
@@ -45,7 +47,6 @@ export function generateWindowContext(v){
     let func_text = eval_lisp(ast[0], ctx)
 
     //console.log(`WINDOW: + ${func_text} AGG: ${_variables["_result"]["agg"]}`)
-    delete _variables["_result"]["agg"]
 
     function over() {
       let context = [
@@ -81,6 +82,18 @@ export function generateWindowContext(v){
 
     // FIXME!!! и ещё заполнить result!!!! если он есть !!! 
     let sql = `${func_text} OVER (${over()})`
+
+    // если не было ранее выявлено agg, но оно было выявлено внутри window(), то удаляем agg
+    // так как это может привести к нежелательной GROUP BY
+    // также есть вариант sum(sum(v)) = и тогда нам нужен агрегат...
+    if (!rememberAgg) {
+      delete _variables["_result"]["agg"]
+    }
+
+    _variables["_result"]["do_not_group_by"] = true
+
+    // FIXME: сначала нужно очистить код от старого running()
+    //_variables["_result"]["window"] = true
     return sql
   })
 
