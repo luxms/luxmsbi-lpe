@@ -259,7 +259,7 @@ FROM fot_out AS fot_out`
          {"columns":["qoty('2024-04-26')"],
          "with":"ch.fot_out"},
                {"_target_database": "sqlserver"}),
-         `SELECT DATEPART(QUARTER, CAST('2024-04-26' as date))
+         `SELECT DATEPART(QUARTER, CAST('2024-04-26' AS DATE))
 FROM fot_out AS fot_out`
       )
    })
@@ -289,7 +289,7 @@ FROM fot_out AS fot_out`
          {"columns":["moty('2024-07-01')"],
          "with":"ch.fot_out"},
                {"_target_database": "sqlserver"}),
-         `SELECT month(CAST('2024-07-01' as date))
+         `SELECT month(CAST('2024-07-01' AS DATE))
 FROM fot_out AS fot_out`
       )
    })
@@ -319,7 +319,7 @@ FROM fot_out AS fot_out`
          {"columns":["woty('2024-04-26')"],
          "with":"ch.fot_out"},
                {"_target_database": "sqlserver"}),
-         `SELECT DATEPART(WEEK, CAST('2024-04-26' as date))
+         `SELECT DATEPART(WEEK, CAST('2024-04-26' AS DATE))
 FROM fot_out AS fot_out`
       )
    })
@@ -359,7 +359,7 @@ FROM fot_out AS fot_out`
          {"columns":["doty('2024-04-26')"],
          "with":"ch.fot_out"},
                {"_target_database": "sqlserver"}),
-         `SELECT DATENAME(dayofyear, CAST('2024-04-26' as date))
+         `SELECT DATENAME(dayofyear, CAST('2024-04-26' AS DATE))
 FROM fot_out AS fot_out`
       )
    })
@@ -399,7 +399,7 @@ FROM fot_out AS fot_out`
          {"columns":["isoy('2024-04-26')"],
          "with":"ch.fot_out"},
                {"_target_database": "sqlserver"}),
-         `SELECT FORMAT(CAST('2024-04-26' as date), 'yyyy')
+         `SELECT FORMAT(CAST('2024-04-26' AS DATE), 'yyyy')
 FROM fot_out AS fot_out`
       )
    })
@@ -439,7 +439,7 @@ FROM fot_out AS fot_out`
          {"columns":["isom('2024-04-26')"],
          "with":"ch.fot_out"},
                {"_target_database": "sqlserver"}),
-         `SELECT FORMAT(CAST('2024-04-26' as date), 'yyyy-MM')
+         `SELECT FORMAT(CAST('2024-04-26' AS DATE), 'yyyy-MM')
 FROM fot_out AS fot_out`
       )
    })
@@ -479,7 +479,7 @@ FROM fot_out AS fot_out`
          {"columns":["isoq('2024-04-26')"],
          "with":"ch.fot_out"},
                {"_target_database": "sqlserver"}),
-         `SELECT CONCAT(FORMAT(CAST('2024-04-26' as date), 'yyyy'), '-Q', DATEPART(QUARTER, CAST('2024-04-26' as date)))
+         `SELECT CONCAT(FORMAT(CAST('2024-04-26' AS DATE), 'yyyy'), '-Q', DATEPART(QUARTER, CAST('2024-04-26' AS DATE)))
 FROM fot_out AS fot_out`
       )
    })
@@ -519,7 +519,7 @@ FROM fot_out AS fot_out`
          {"columns":["isow('2024-04-26')"],
          "with":"ch.fot_out"},
                {"_target_database": "sqlserver"}),
-         `SELECT CONCAT( YEAR(DATEADD(day, 3 - (DATEPART(weekday, CAST('2024-04-26' as date)) + 5) % 7, CAST('2024-04-26' as date))), '-W', FORMAT(datepart(iso_week, CAST('2024-04-26' as date)),'D2'))
+         `SELECT CONCAT( YEAR(DATEADD(day, 3 - (DATEPART(weekday, CAST('2024-04-26' AS DATE)) + 5) % 7, CAST('2024-04-26' AS DATE))), '-W', FORMAT(datepart(iso_week, CAST('2024-04-26' AS DATE)),'D2'))
 FROM fot_out AS fot_out`
       )
    })
@@ -559,7 +559,7 @@ FROM fot_out AS fot_out`
          {"columns":["isod('2024-04-26')"],
          "with":"ch.fot_out"},
                {"_target_database": "sqlserver"}),
-         `SELECT CONCAT(FORMAT(CAST('2024-04-26' as date), 'yyyy'), '-', FORMAT( DATEPART(dayofyear , CAST('2024-04-26' as date)), 'D3'))
+         `SELECT CONCAT(FORMAT(CAST('2024-04-26' AS DATE), 'yyyy'), '-', FORMAT( DATEPART(dayofyear , CAST('2024-04-26' AS DATE)), 'D3'))
 FROM fot_out AS fot_out`
       )
    })

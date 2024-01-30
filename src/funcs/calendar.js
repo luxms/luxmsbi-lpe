@@ -29,7 +29,7 @@ export function generateCalendarContext(v){
             return `INTERVAL '${i} YEAR'`
         }
         if (/^'?\s*(?:q|quarter)\s*'?$/i.test(u)) {
-            return `INTERVAL '${+i*3} MONTH'`
+            return `INTERVAL '${i*3} MONTH'`
         }
         if (/^'?\s*(?:m|month)\s*'?$/i.test(u)) {
             return `INTERVAL '${i} MONTH'`
@@ -66,13 +66,13 @@ export function generateCalendarContext(v){
     function adapt_date(dt) {
     if (/^'\d{4}-\d{2}-\d{2}'$/.test(dt)) {
       if (_variables._target_database === 'clickhouse') {
-        return "toDate(".concat(dt, ")");
+        return `toDate(${dt})`;
       } else if (_variables._target_database === 'mysql') {
-        return "STR_TO_DATE(".concat(dt, ", '%Y-%m-%d')");
+        return `STR_TO_DATE(${dt}, '%Y-%m-%d')`;
       } else if (_variables._target_database === 'sqlserver') {
-        return "CAST(".concat(dt, " as date)");
+        return `CAST(${dt} AS DATE)`;
       } else { 
-        return "to_date(".concat(dt, ", 'YYYY-MM-DD')");
+        return `to_date(${dt}, 'YYYY-MM-DD')`;
       }
     }
         return dt
