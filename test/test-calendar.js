@@ -20,6 +20,21 @@ WHERE (date_trunc('quarter', (NOW() - INTERVAL '1 DAY')) = '2020-03-01') AND (da
       )
    })
 
+   it('should eval toStart/toEnd d', function() {
+      assert.equal( lpe.generate_koob_sql(
+         {"columns":["toStart(dt,d):q", "toEnd(dt,d):e"],
+         "filters":{//"toStart(dt,q)":["=","2020-03-01"],  ТАК НЕЛЬЗЯ :-()
+                     "q":["=","2020-03-01"],
+                     "e":["=","2021-03-01"],
+                     },
+         "with":"ch.fot_out"},
+               {"key":null}),
+         `SELECT date_trunc('day', (NOW() - INTERVAL '1 DAY')) as q, date_trunc('day', (NOW() - INTERVAL '1 DAY')) + INTERVAL '0 DAY' as e
+FROM fot_out AS fot_out
+WHERE (date_trunc('day', (NOW() - INTERVAL '1 DAY')) = '2020-03-01') AND (date_trunc('day', (NOW() - INTERVAL '1 DAY')) + INTERVAL '0 DAY' = '2021-03-01')`
+      )
+   })
+
    it('should eval dateShift', function() {
       assert.equal( lpe.generate_koob_sql(
          {"columns":["dateShift(dt,1,w):w", "dateShift(dt,-3,'y'):y"],

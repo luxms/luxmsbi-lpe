@@ -5611,7 +5611,8 @@ function reports_get_table_sql(target_db_type, tbl, cube) {
   return {
     "query": "".concat(table_name, " AS ").concat(table_name),
     "config": {
-      "is_template": 0
+      "is_template": 0,
+      "count_distinct!!!": "uniq"
     } // hcode_name
     // and ${filters(group_pay_name)}
     //return {"query": `${table_name} AS ${table_name} where ` + '${filters(sex_code,pay_code)} ', "config": {"is_template": 1,"skip_where":0}}

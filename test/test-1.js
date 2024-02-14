@@ -29,6 +29,22 @@ order by doc_currcy,loc_currcy,fiscper
 
 describe('LPE tests', function() {
 
+   it('should eval KOOB total', function() {
+
+      assert.equal( lpe.generate_koob_sql(
+         {"columns":["branch4", "window(sum(6))"],
+         "distinct":false,
+         "filters":{"branch4":["=",["total",["sum", "branch4"]]]},
+         "with":"ch.fot_out"},
+               {"key":null, "_target_database": "clickhouse"}),
+`SELECT DISTINCT COUNT(CASE WHEN (v_main > 1) AND (v_main < 100) THEN 1 END) as v_main, sum(v_rel_pp) as v_rel_pp, sum(v_rel_fzp) as v_rel_fzp, sum(v_rel_pp_i), group_pay_name as group_pay_name
+FROM fot_out AS fot_out
+WHERE ((NOW() - INTERVAL '1 DAY') NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано') AND (area_name = 'Не задано') AND (hcode_name = 'ФЗП') AND (type_oe_bi = 'РЖД') AND (region_name = 'Не задано') AND (category_name = 'Не задано') AND (group_pay_name != 'Не задано') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (pay_code != 'Не задано') AND (sex_code IS NULL)`
+            );
+
+})
+
+
 
    it('should eval KOOB queries', function() {
 

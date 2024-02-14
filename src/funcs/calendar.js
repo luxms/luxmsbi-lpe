@@ -45,19 +45,22 @@ export function generateCalendarContext(v){
     // End of Period
     function toSQLIntervalEOP(u) {
         if (/^'?\s*(?:y|year)\s*'?$/i.test(u)) {
-            return `INTERVAL '1 YEAR - 1 DAY'`
+            return "INTERVAL '1 YEAR - 1 DAY'"
         }
         if (/^'?\s*(?:q|quarter)\s*'?$/i.test(u)) {
-            return `INTERVAL '3 MONTH - 1 DAY'`
+            return "INTERVAL '3 MONTH - 1 DAY'"
         }
         if (/^'?\s*(?:m|month)\s*'?$/i.test(u)) {
-            return `INTERVAL '1 MONTH - 1 DAY'`
+            return "INTERVAL '1 MONTH - 1 DAY'"
         }
         if (/^'?\s*(?:d|day)\s*'?$/i.test(u)) {
-            return `INTERVAL '1 DAY'` // need time precision....
+            // пока что, с учётом того, что у нас точность 1 день
+            // просто ничего не делаем...
+            return "INTERVAL '0 DAY'"
+            //return "INTERVAL '1 DAY - 1 SECOND'" // need time precision.... 1DAY - 1 SECOND ???
         }
         if (/^'?\s*(?:w|week)\s*'?$/i.test(u)) {
-            return `INTERVAL '1 WEEK - 1 DAY'`
+            return "INTERVAL '1 WEEK - 1 DAY'"
         }
     }
 
@@ -98,6 +101,11 @@ export function generateCalendarContext(v){
         }
         throw Error(`extend() is not implemented for ${_variables._target_database} yet`)  
     }
+
+    /* toEnd(dt, day) может вернуть как время, что было бы правильным (2020-01-01 23:59:59), так и дату.
+    Сейчас возвращаем дату. Так как время нельзя сравнивать с датой, будет неравенство.
+    Когда появится поддержка времени, нужно будет думать как это совместить
+    */
 
     function toEnd(one, two) {
         let unit

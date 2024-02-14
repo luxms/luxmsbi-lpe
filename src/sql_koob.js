@@ -737,23 +737,6 @@ function init_koob_context(_vars, default_ds, default_cube) {
     }
   }
 
-  _context["corr"] = function(c1, c2) {
-    _variables["_result"]["agg"] = true
-    return `corr(${c1}, ${c2})`
-    //throw Error(`mode() is not implemented for ${_context._target_database} yet`)
-  }
-
-  // COUNT(CASE WHEN A = 42 THEN 1 END)
-  _context["countIf"] = function(cond) {
-    _variables["_result"]["agg"] = true
-    if (_variables._target_database === 'clickhouse') {
-      return `countIf(${cond})`
-    } else {
-      return `COUNT(CASE WHEN ${cond} THEN 1 END)`
-    }
-    //throw Error(`mode() is not implemented for ${_context._target_database} yet`)
-  }
-
   _context["window"] = win_funcs["window"]
 
   _context["median"] = agg_funcs["median"]
@@ -763,7 +746,9 @@ function init_koob_context(_vars, default_ds, default_cube) {
   _context["stddevPop"] = agg_funcs["stddevPop"]
   _context["varSamp"] = agg_funcs["varSamp"]
   _context["stddevSamp"] = agg_funcs["stddevSamp"]
-
+  _context["corr"] = agg_funcs["corr"]
+  _context["countIf"] = agg_funcs["countIf"]
+ 
   // deprecated REMOVE in v.11
   _context["var_pop"] = _context["varPop"]
 
@@ -857,6 +842,7 @@ COLUMN CALLED ["sum","where"]
         // we have just column name or one column alias, prepend table alias !
         if (_variables._target_database == 'clickhouse') {
           if (sql_context == 'where') { // enable table prefixing for now 
+            // template_where не должен подставлять имя таблицы!
             return `${parts[1]}.${c.sql_query}`
           } else {
             return `${c.sql_query}`
@@ -2239,6 +2225,10 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
 
   let c = context[1]
 
+
+  //FIXME hack чтобы работал код для agg функций
+  context[1]["_result"] = {"columns":[]}
+
   var ret = filters_array.map(_filters => {
       let part_where = null
       let pw = Object.keys(_filters).filter(k => comparator(k)).map( 
@@ -2299,6 +2289,9 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
       }
       return part_where
     }).filter(el => el !== null && el.length > 0)
+
+delete context[1]["_result"]
+
 //console.log("RET: " + ret)
 //console.log(JSON.stringify(filters_array))
 //console.log("---------------------------")
@@ -2675,9 +2668,38 @@ export function generate_koob_sql(_cfg, _vars) {
   }
 
 
+  /* функция зависит от cube_query_template() */
+
+  _context[0]["total"] = makeSF((ast, ctx, rs) => {
+    // считаем, что аргумент всегда один конкретный столбец или формула (не *)
+
+    let known_agg = _context[1]["_result"]["agg"]
+
+    _context[1]["_result"]["agg"] = false
+    // console.log("AST:" + JSON.stringify(ast))
+    // парсим пока что только первый аргумент!!!
+    let col = eval_lisp(ast[0], ctx, rs)
+
+    if(!_context[1]["_result"]["agg"]) {
+      throw new Error(`total() first argument must be an aggregate`)
+    }
+
+    _context[1]["_result"]["agg"] = known_agg 
+
+    if ( cube_query_template.config.is_template ) {
+      throw new Error(`total() is not yet supported for SQL templates :-(`)
+    }
+
+    let f = cube_query_template.query
+
+    return `(SELECT ${col} FROM ${f})`
+  })
+
+
   let columns_s = [];
   let global_only1 = false;
   let global_joins = [];
+
   let columns = _cfg["columns"].map(el => {
                                       // eval should fill in _context[1]["_result"] object
                                       // hackers way to get results!!!!
@@ -2790,7 +2812,7 @@ export function generate_koob_sql(_cfg, _vars) {
   })
   _cfg["_columns"] = columns_s
 
-  //console.log("RES ", JSON.stringify(_cfg["_columns"]))
+  //console.log("RES ", JSON.stringify(columns_s))
 
   if (_cfg["_measures"].length === 0) {
     // do not group if we have no aggregates !!!
@@ -2884,15 +2906,16 @@ export function generate_koob_sql(_cfg, _vars) {
 */
   let SQLWhereNegate = _cfg["options"].includes('SQLWhereNegate')
 
-  var where = '';
-  var part_where = SQLWhereNegate ? '1=0' : '1=1';
+  let where = '';
+  let part_where = SQLWhereNegate ? '1=0' : '1=1';
   let havingSQL = '';
   let part_having = SQLWhereNegate ? '1=0' : '1=1';
 
-  var filters_array = _cfg["filters"];
-  if (isHash(filters_array)) {
+  let filters_array = []
+  let filters_array_request = _cfg["filters"];
+  if (isHash(filters_array_request)) {
     let cols = _context[1]["_columns"]
-    Object.keys(filters_array).map(col => {
+    Object.keys(filters_array_request).map(col => {
       if (isHash(cols[col])){
         if (cols[col]["type"] === 'AGGFN') {
           // Move col to the having hashmap ???
@@ -2900,14 +2923,14 @@ export function generate_koob_sql(_cfg, _vars) {
           if (_cfg["having"][col]) {
             Error(`"having" hashmap contains same column as derived column from AGGFN dimension: ${col}`)
           }
-          _cfg["having"][col] = filters_array[col]
-          delete filters_array[col]
+          _cfg["having"][col] = filters_array_request[col]
+          delete filters_array_request[col]
           // console.log("AGGFN:" + JSON.stringify(_cfg["having"]))
         }
       }
     })
 
-    filters_array = [filters_array] // делаем общий код на все варианты входных форматов {}/[]
+    filters_array_request = [filters_array_request] // делаем общий код на все варианты входных форматов {}/[]
   }
 
 /* здесь надо пройти по массиву filters_array, и вычислить AGGFN столбцы, и перенести их в having
@@ -2918,11 +2941,6 @@ export function generate_koob_sql(_cfg, _vars) {
 
 */
 
-
-
-  //_context[1]["column"] - это функция для резолва столбца в его текстовое представление
-  filters_array = get_filters_array(_context, filters_array, '', undefined, false, 'where');
-// это теперь массив из уже готового SQL WHERE!
 
   havingSQL = get_filters_array(_context, [_cfg["having"]], '');
   // ["((NOW() - INTERVAL '1 DAY') > '2020-01-01') AND ((max(sum(v_main))) > 100)"]
@@ -2941,6 +2959,95 @@ export function generate_koob_sql(_cfg, _vars) {
     // но может здесь и логичнее было бы
     havingSQL = '';
   }
+
+  /* для кликхауса возможно надо другой контекст для подстановки в filters() */
+
+  let access_where = ''
+
+  let prepare_sql_where_parts = function(where_context){
+    // where_context = 'where'
+    let ret = {
+      'filters_array': [],
+      'where': '',
+      'part_where': SQLWhereNegate ? '1=0' : '1=1',
+      'access_where': ''
+    }
+    ret['filters_array'] = get_filters_array(_context, filters_array_request, '', undefined, false, where_context);
+    // это теперь массив из уже готового SQL WHERE!
+  
+    // access filters
+    var filters = _context[1]["_access_filters"]
+    var ast = []
+    //console.log("WHERE access filters: ", JSON.stringify(filters))
+    if (isString(filters) && filters.length > 0) {
+      var ast = parse(`expr(${filters})`)
+      ast.splice(0, 1, '()') // replace expr with ()
+    } else if (isArray(filters) && filters.length > 0){
+      if (filters[0] === 'expr') {
+        filters[0] = '()'
+        ast = filters
+      } else if (filters[0] !== '()') {
+        ast = ['()',filters]
+      }
+    } else {
+      //warning
+      //console.log('Access filters are missed.')
+    }
+    //console.log("WHERE access filters AST", JSON.stringify(ast))
+  
+    if (ast.length > 0) { // array
+      ret['access_where'] = eval_lisp(ast, _context)
+    }
+  
+    let fw = ''
+    if (ret['filters_array'].length == 1){
+      fw = ret['filters_array'][0]
+    } else if (ret['filters_array'].length > 1){
+      fw = `(${ret['filters_array'].join(")\n   OR (")})`
+    }
+  
+  
+    if (fw.length > 0) {
+      if (ret['access_where'] !== undefined && ret['access_where'].length > 0) {
+        fw = `(${fw})\n   AND\n   ${ret['access_where']}`
+      }
+    } else {
+      if (ret['access_where'] !== undefined && ret['access_where'].length > 0) {
+        fw = ret['access_where']
+      }
+    }
+  
+    if ( cube_query_template.config.is_template && cube_query_template.config.skip_where ) {
+      // не печатаем часть WHERE, даже если она и должна быть, так как в конфиге куба нас просят
+      // этого не делать. 
+      if (fw.length > 0) {
+        ret['part_where'] = fw
+      }
+    } else {
+      if (fw.length > 0) {
+        if (SQLWhereNegate) {
+          ret['where'] = `\nWHERE NOT (${fw})`
+          ret['part_where'] = `NOT (${fw})`
+        } else {
+          ret['where'] = `\nWHERE ${fw}`
+          ret['part_where'] = fw
+        }
+      }
+    }
+    //console.log(`RET: ${JSON.stringify(ret) } `)
+    return ret
+  } // end of prepare_sql_where_parts
+
+
+  let res = prepare_sql_where_parts('where')
+  where = res['where']
+  part_where = res['part_where']
+  access_where = res['access_where']
+  filters_array = res['filters_array']
+   /*
+  //_context[1]["column"] - это функция для резолва столбца в его текстовое представление
+  filters_array = get_filters_array(_context, filters_array_request, '', undefined, false, 'where');
+  // это теперь массив из уже готового SQL WHERE!
 
   // access filters
   var filters = _context[1]["_access_filters"]
@@ -3000,10 +3107,9 @@ export function generate_koob_sql(_cfg, _vars) {
         where = `\nWHERE ${fw}`
         part_where = fw
       }
-      
     }
   }
-
+*/
 
   // для teradata limit/offset 
   let global_extra_columns = []
@@ -3418,7 +3524,19 @@ export function generate_koob_sql(_cfg, _vars) {
     if (cube_query_template.config.is_template) {
       // надо подставить WHERE аккуратно, это уже посчитано, заменяем ${filters} и ${filters()}
       var re = /\$\{filters(?:\(\))?\}/gi;
-      var processed_from = from.replace(re, part_where); //SQLWhereNegate уже учтено!
+
+      // FIXME!!! part_where создан с подстановкой имени таблицы для Clickhouse!!!
+      // FIXME!!! а это не всегда работает для шаблонов!!!
+      let our_where
+      if (_context[1]["_target_database"]==='clickhouse') {
+        our_where = prepare_sql_where_parts('template_where')
+        our_where = our_where["part_where"]
+      } else {
+        our_where = part_where
+      }
+
+
+      var processed_from = from.replace(re, our_where); //SQLWhereNegate уже учтено!
 
 
       // access_filters

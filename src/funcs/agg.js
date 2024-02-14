@@ -117,6 +117,23 @@ export function generateAggContext(v){
     }
   }
 
+  function corr(c1, c2) {
+    _variables["_result"]["agg"] = true
+    return `corr(${c1}, ${c2})`
+    //throw Error(`mode() is not implemented for ${_context._target_database} yet`)
+  }
+
+  // COUNT(CASE WHEN A = 42 THEN 1 END)
+  function countIf(cond) {
+    _variables["_result"]["agg"] = true
+    if (_variables._target_database === 'clickhouse') {
+      return `countIf(${cond})`
+    } else {
+      return `COUNT(CASE WHEN ${cond} THEN 1 END)`
+    }
+    //throw Error(`mode() is not implemented for ${_context._target_database} yet`)
+  }
+
 
   return {
     'median': median,
@@ -125,7 +142,9 @@ export function generateAggContext(v){
     'varPop': varPop,
     'varSamp': varSamp,
     'stddevSamp': stddevSamp,
-    'stddevPop': stddevPop
+    'stddevPop': stddevPop,
+    'corr': corr,
+    'countIf': countIf
   }
               
 }

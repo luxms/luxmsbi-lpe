@@ -46,6 +46,7 @@ describe('KOOB templates', function() {
                      'sum(id)'
                   ],
          "filters":{
+            "dt":["=","2021-01-01"]
          },
          "sort": ["id"],
          "limit": 10,
@@ -53,9 +54,9 @@ describe('KOOB templates', function() {
                {"_target_database": "clickhouse"}),
    `SELECT leftPad(toString(toYear(dt)), 4, '0') as dt, format('{}-Q{}', leftPad(toString(toYear(dt)), 4, '0'), toString(toQuarter(dt))) as dt_period, format('{}-W{}', leftPad(toString(toYear(dt)), 4, '0'), leftPad(toString(toISOWeek(dt)), 2, '0')) as dt_w, format('{}-Q{}', leftPad(toString(toYear(dt)), 4, '0'), toString(toQuarter(dt))) as dt_q, sum(id) as id
 FROM (SELECT 1 from cube where
-1=1
-or 1=1
-or 1=1)
+(dt = '2021-01-01')
+or (dt = '2021-01-01')
+or (dt = '2021-01-01'))
 GROUP BY dt, dt_period, dt_w, dt_q
 ORDER BY id LIMIT 10`
             );
@@ -100,8 +101,8 @@ ORDER BY id LIMIT 10`
                {"_target_database": "clickhouse"}),
    `SELECT dt as dt, spec_mtr_nm as spec_mtr_nm
 FROM (SELECT 1 from cube where
-1=1
-or 1=1
+(spec_mtr_nm BETWEEN '2021-01-01' AND '2021-02-01')
+or (spec_mtr_nm BETWEEN '2021-01-01' AND '2021-02-01')
 or 1=1)
 ORDER BY id LIMIT 10`
             );
@@ -124,7 +125,7 @@ ORDER BY id LIMIT 10`
                {"_target_database": "clickhouse"}),
    `SELECT sum(id) as "АХТУНГ", id as id
 FROM (SELECT 1 from cube where
-(toString(cube.regions) ILIKE '%N%') AND ((toString(cube.dt) ILIKE '%А%') AND (cube.dt IN ('2022-01-02', '2022-10-10', '2020-09-09')))
+(toString(regions) ILIKE '%N%') AND ((toString(dt) ILIKE '%А%') AND (dt IN ('2022-01-02', '2022-10-10', '2020-09-09')))
 or (toString(regions) ILIKE '%N%') AND ((toString(dt) ILIKE '%А%') AND (dt IN ('2022-01-02', '2022-10-10', '2020-09-09')))
 or ((toString(dt) ILIKE '%А%') AND (dt IN ('2022-01-02', '2022-10-10', '2020-09-09'))))
 GROUP BY id
@@ -187,7 +188,7 @@ where \${filters(id)}
                      {"_target_database": "clickhouse"}),
          `SELECT regions as regions
 FROM (SELECT 1 from cube where
-where (cube.dt BETWEEN 2019 AND 2022) AND (cube.id = 23000035)
+where (dt BETWEEN 2019 AND 2022) AND (id = 23000035)
 where (id = 23000035) and status_nm = 'Закрыт'
 where (dt BETWEEN 2019 AND 2022) AND (id = 23000035) and status_nm != 'Проект'
 where (dt BETWEEN 2019 AND 2022) AND (id = 23000035) and status_nm != 'Проект'
@@ -257,7 +258,7 @@ or \${filters("id",'dt':'date space')})`,
                   {"_target_database": "clickhouse"}),
    `SELECT sum(id) as "АХТУНГ", id as id
 FROM (SELECT 1 from cube where
-(toString(cube.regions) ILIKE '%N%') AND (cube.id = 123) AND ((toString(cube.dt) ILIKE '%А%') AND (cube.dt IN ('2022-01-02', '2022-10-10', '2020-09-09')))
+(toString(regions) ILIKE '%N%') AND (id = 123) AND ((toString(dt) ILIKE '%А%') AND (dt IN ('2022-01-02', '2022-10-10', '2020-09-09')))
 or (toString(regions) ILIKE '%N%') AND (id = 123) AND ((toString(dt) ILIKE '%А%') AND (dt IN ('2022-01-02', '2022-10-10', '2020-09-09')))
 or (id = 123) AND ((toString("date space") ILIKE '%А%') AND ("date space" IN ('2022-01-02', '2022-10-10', '2020-09-09'))))
 GROUP BY id
