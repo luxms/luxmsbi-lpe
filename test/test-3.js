@@ -44,7 +44,9 @@ describe('LPE KOOB window', function() {
          "sort": ["id"],
          "limit": 10,
          "with":"bi.cube"},
-               {"_target_database": "clickhouse"}),
+               {"_target_database": "clickhouse", "_access_filters": {
+                  "spec_mtr_nm": ["between", "2021-01-01","2021-02-01"]
+               }}),
    `SELECT uniq(dt, id)
 FROM (SELECT 1 from cube where
 1=1

@@ -10311,6 +10311,12 @@ function generate_koob_sql(_cfg, _vars) {
 
   if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["b" /* isHash */])(filters_array_request)) {
     var cols = _context[1]["_columns"];
+    /* здесь надо пройти по массиву filters_array, и вычислить AGGFN столбцы, и перенести их в having
+    До того, как мы начнём генерить условия WHERE
+     Пока что делаем только для простого случая, когда filters_array = hash, и нет никаких сложных
+    склеек OR
+     */
+
     Object.keys(filters_array_request).map(function (col) {
       if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["b" /* isHash */])(cols[col])) {
         if (cols[col]["type"] === 'AGGFN') {
@@ -10326,14 +10332,6 @@ function generate_koob_sql(_cfg, _vars) {
     });
     filters_array_request = [filters_array_request]; // делаем общий код на все варианты входных форматов {}/[]
   }
-  /* здесь надо пройти по массиву filters_array, и вычислить AGGFN столбцы, и перенести их в having
-  До того, как мы начнём генерить условия WHERE
-  
-  Пока что делаем только для простого случая, когда filters_array = hash, и нет никаких сложных
-  склеек OR
-  
-  */
-
 
   havingSQL = get_filters_array(_context, [_cfg["having"]], ''); // ["((NOW() - INTERVAL '1 DAY') > '2020-01-01') AND ((max(sum(v_main))) > 100)"]
   // console.log("AGGFN:" + JSON.stringify(havingSQL))
@@ -10382,9 +10380,20 @@ function generate_koob_sql(_cfg, _vars) {
       } else if (filters[0] !== '()') {
         ast = ['()', filters];
       }
+    } else if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["b" /* isHash */])(filters)) {
+      // новый формат фильтров, который совпадает с уже существующим....
+      // возможно нужно ключи привести к полному имени ds.cube.column ????
+      var _access_where = get_filters_array(_context, [filters], '', undefined, false, where_context);
+
+      if (_access_where.length == 1) {
+        ret['access_where'] = _access_where[0];
+      } else if (_access_where.length > 1) {
+        ret['access_where'] = "(".concat(_access_where.join(")\n   OR ("), ")");
+      } //console.log(`NEW FILTERS: ${JSON.stringify(access_where)}`)
+
     } else {} //warning
-    //console.log('Access filters are missed.')
-    //console.log("WHERE access filters AST", JSON.stringify(ast))
+      //console.log('Access filters are missed.')
+      //console.log("WHERE access filters AST", JSON.stringify(ast))
 
 
     if (ast.length > 0) {

@@ -2915,6 +2915,14 @@ export function generate_koob_sql(_cfg, _vars) {
   let filters_array_request = _cfg["filters"];
   if (isHash(filters_array_request)) {
     let cols = _context[1]["_columns"]
+
+    /* здесь надо пройти по массиву filters_array, и вычислить AGGFN столбцы, и перенести их в having
+    До того, как мы начнём генерить условия WHERE
+
+    Пока что делаем только для простого случая, когда filters_array = hash, и нет никаких сложных
+    склеек OR
+
+    */
     Object.keys(filters_array_request).map(col => {
       if (isHash(cols[col])){
         if (cols[col]["type"] === 'AGGFN') {
@@ -2932,14 +2940,6 @@ export function generate_koob_sql(_cfg, _vars) {
 
     filters_array_request = [filters_array_request] // делаем общий код на все варианты входных форматов {}/[]
   }
-
-/* здесь надо пройти по массиву filters_array, и вычислить AGGFN столбцы, и перенести их в having
-До того, как мы начнём генерить условия WHERE
-
-Пока что делаем только для простого случая, когда filters_array = hash, и нет никаких сложных
-склеек OR
-
-*/
 
 
   havingSQL = get_filters_array(_context, [_cfg["having"]], '');
@@ -2989,6 +2989,16 @@ export function generate_koob_sql(_cfg, _vars) {
       } else if (filters[0] !== '()') {
         ast = ['()',filters]
       }
+    } else if (isHash(filters)){
+      // новый формат фильтров, который совпадает с уже существующим....
+      // возможно нужно ключи привести к полному имени ds.cube.column ????
+      let access_where = get_filters_array(_context, [filters], '', undefined, false, where_context);
+      if (access_where.length == 1){
+        ret['access_where'] = access_where[0]
+      } else if (access_where.length > 1){
+        ret['access_where'] = `(${access_where.join(")\n   OR (")})`
+      }
+      //console.log(`NEW FILTERS: ${JSON.stringify(access_where)}`)
     } else {
       //warning
       //console.log('Access filters are missed.')
