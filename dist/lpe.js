@@ -8832,7 +8832,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
   _context['/'] = function (l, r) {
     if (_variables._target_database === 'clickhouse') {
-      return "CAST(".concat(l, " AS Float64) / ").concat(r);
+      return "CAST(".concat(l, " AS Nullable(Float64)) / ").concat(r);
     } else {
       return "CAST(".concat(l, " AS FLOAT) / ").concat(r);
     }

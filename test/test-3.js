@@ -17,7 +17,7 @@ globalThis.MOCKcubeColumns =  [
    {"id":"bi.cube.kgg_rank","sql_query":"kgg_rank","type":"STRING","config":{"possible_aggregations": []}},                         
    {"id":"bi.cube.dt","sql_query":"dt","type":"NUMBER","config":{"possible_aggregations": []}},                                     
    {"id":"bi.cube.purch_region_nm","sql_query":"purch_region_nm","type":"STRING","config":{"possible_aggregations": []}},           
-   {"id":"bi.cube.spec_mtr_nm","sql_query":"spec_mtr_nm","type":"STRING","config":{"possible_aggregations": [], "defaultValue":["=","DF"]}},                   
+   {"id":"bi.cube.spec_mtr_nm","sql_query":"spec_mtr_nm","type":"STRING","config":{"possible_aggregations": [], "defaultValue":["=",["column","dt"]]}},                   
    {"id":"bi.cube.vpz_nm","sql_query":"vpz_nm","type":"STRING","config":{"possible_aggregations": []}},                             
    {"id":"bi.cube.purch_method_nm","sql_query":"purch_method_nm","type":"STRING","config":{"possible_aggregations": []}},           
    {"id":"bi.cube.org_inn_cd","sql_query":"org_inn_cd","type":"STRING","config":{"possible_aggregations": []}},                     
@@ -40,6 +40,28 @@ describe('LPE KOOB window', function() {
                   ],
          "filters":{
             "spec_mtr_nm": ["between", "2021-01-01","2021-02-01"]
+         },
+         "sort": ["id"],
+         "limit": 10,
+         "with":"bi.cube"},
+               {"_target_database": "clickhouse"}),
+   `SELECT uniq(dt, id)
+FROM (SELECT 1 from cube where
+1=1
+or 1=1
+or 1=1)
+ORDER BY id LIMIT 10`
+            );
+   });
+
+
+   it('should eval defaultValue', function() {
+      assert.equal( lpe.generate_koob_sql(
+         {"columns":[
+                     "dt", "spec_mtr_nm"
+                  ],
+         "filters":{
+            "dt": ["between", "2021-01-01","2021-02-01"]
          },
          "sort": ["id"],
          "limit": 10,

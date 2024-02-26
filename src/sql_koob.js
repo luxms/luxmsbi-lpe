@@ -1410,7 +1410,7 @@ COLUMN CALLED ["sum","where"]
 
   _context['/'] = function(l, r) {
     if (_variables._target_database === 'clickhouse'){
-      return `CAST(${l} AS Float64) / ${r}`
+      return `CAST(${l} AS Nullable(Float64)) / ${r}`
     } else {
       return `CAST(${l} AS FLOAT) / ${r}`
     }
