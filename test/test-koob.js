@@ -867,6 +867,24 @@ FROM fot_out AS fot_out`
 });
 
 
+it('aliases should not override functions', function() {
+   assert.equal( lpe.generate_koob_sql(
+      {"columns":[
+         "between(dt, dateShift(dt, -3, month).bound('q')):max", 
+         "max(dt)",
+      ],
+"filters":{},
+"sort":[],
+"with":"ch.fot_out"},
+   {"_target_database": "postgresql"}),
+`SELECT (NOW() - INTERVAL '1 DAY') BETWEEN date_trunc('quarter', (NOW() - INTERVAL '1 DAY') + INTERVAL '-3 MONTH') AND date_trunc('quarter', (NOW() - INTERVAL '1 DAY') + INTERVAL '-3 MONTH') + INTERVAL '3 MONTH - 1 DAY' as max, max((NOW() - INTERVAL '1 DAY')) as dt
+FROM fot_out AS fot_out
+WHERE (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
+GROUP BY (NOW() - INTERVAL '1 DAY') BETWEEN date_trunc('quarter', (NOW() - INTERVAL '1 DAY') + INTERVAL '-3 MONTH') AND date_trunc('quarter', (NOW() - INTERVAL '1 DAY') + INTERVAL '-3 MONTH') + INTERVAL '3 MONTH - 1 DAY'`
+);
+});
+
+
 /*
   it('Should eval defaultValue', function() {
   assert.equal( lpe.generate_koob_sql(

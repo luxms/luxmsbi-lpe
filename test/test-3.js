@@ -17,16 +17,16 @@ globalThis.MOCKcubeColumns =  [
    {"id":"bi.cube.kgg_rank","sql_query":"kgg_rank","type":"STRING","config":{"possible_aggregations": []}},                         
    {"id":"bi.cube.dt","sql_query":"dt","type":"NUMBER","config":{"possible_aggregations": []}},                                     
    {"id":"bi.cube.purch_region_nm","sql_query":"purch_region_nm","type":"STRING","config":{"possible_aggregations": []}},           
-   {"id":"bi.cube.spec_mtr_nm","sql_query":"spec_mtr_nm","type":"STRING","config":{"possible_aggregations": [], "defaultValue":["=",["column","dt"]]}},                   
-   {"id":"bi.cube.vpz_nm","sql_query":"vpz_nm","type":"STRING","config":{"possible_aggregations": []}},                             
+   {"id":"bi.cube.spec_mtr_nm","sql_query":"spec_mtr_nm","type":"STRING","config":{"possible_aggregations": [], "clickhouseArray":true, "defaultValue":["=",["column","dt"]]}},                   
+   {"id":"bi.cube.vpz_nm","sql_query":"vpz_nm","type":"STRING","config":{"possible_aggregations": [], "clickhouseArray":true}},                             
    {"id":"bi.cube.purch_method_nm","sql_query":"purch_method_nm","type":"STRING","config":{"possible_aggregations": []}},           
    {"id":"bi.cube.org_inn_cd","sql_query":"org_inn_cd","type":"STRING","config":{"possible_aggregations": []}},                     
    {"id":"bi.cube.regions","sql_query":"regions","type":"STRING","config":{"possible_aggregations": []}}]
    
    globalThis.MOCKCubeSQL = {
       "clickhouse-bi.cube":{
-         "query": `max.table`, 
-         "config": {}}}
+         "query": `max.table \${filters(spec_mtr_nm:vpz_nm)}`, 
+         "config": {"is_template":1}}}
 
 
 
@@ -36,17 +36,17 @@ describe('LPE KOOB window', function() {
    it('should eval defaultValue', function() {
       assert.equal( lpe.generate_koob_sql(
          {"columns":[
-                     "dt", "spec_mtr_nm"
+                     "vpz_nm", "max(dt):min", "min(dt)"
                   ],
          "filters":{
-            "spec_mtr_nm": ["between", "2021-01-01","2021-02-01"]
+            "spec_mtr_nm": ["!=","1","2"]
          },
          "sort": ["id"],
          "limit": 10,
          "with":"bi.cube"},
-               {"_target_database": "clickhouse", "_access_filters": {
-                  "spec_mtr_nm": ["between", "2021-01-01","2021-02-01"]
-               }}),
+               {"_target_database": "clickhouse", 
+               "_access_filters": ["=", "abc", ["ANY", ["lpe", ["map", ["split", "ascdsfaddadqdsf", "s"], "ql"]]]]
+               }),
    `SELECT uniq(dt, id)
 FROM (SELECT 1 from cube where
 1=1
@@ -56,26 +56,5 @@ ORDER BY id LIMIT 10`
             );
    });
 
-
-   it('should eval defaultValue', function() {
-      assert.equal( lpe.generate_koob_sql(
-         {"columns":[
-                     "dt", "spec_mtr_nm"
-                  ],
-         "filters":{
-            "dt": ["between", "2021-01-01","2021-02-01"]
-         },
-         "sort": ["id"],
-         "limit": 10,
-         "with":"bi.cube"},
-               {"_target_database": "clickhouse"}),
-   `SELECT uniq(dt, id)
-FROM (SELECT 1 from cube where
-1=1
-or 1=1
-or 1=1)
-ORDER BY id LIMIT 10`
-            );
-   });
 
 })
