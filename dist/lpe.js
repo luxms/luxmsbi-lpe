@@ -12164,9 +12164,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
-function eval_lpe(lpe, ctx) {
+function eval_lpe(lpe, ctx, options) {
   var ast = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__lpep__["a" /* parse */])(lpe);
-  return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_3__lisp__["a" /* eval_lisp */])(ast, ctx);
+  return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_3__lisp__["a" /* eval_lisp */])(ast, ctx, options);
 }
 
  // test:

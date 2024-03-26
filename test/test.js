@@ -85,6 +85,14 @@ describe('LPE tests', function() {
       assert.deepEqual(lpe.parse('period_type=3'), ['=', 'period_type', 3]);    // or use (eq?) (equals?) (equal?)
     });
 
+    it('should correctly work with resolvString', function () {
+      const O = {resolveString: false};
+      assert.equal(lpe.eval_lpe('a', {}, O), undefined);
+      assert.equal(lpe.eval_lpe('a or b', {}, O), undefined);
+      assert.equal(lpe.eval_lpe('a and b', {}, O), undefined);
+      assert.equal(lpe.eval_lpe('a and b', {a: true}, O), undefined);
+    });
+
     it('should parse UI stack expressions', function() {
       assert.deepEqual(lpe.parse('mlp(filter(id=[12,3]||title~"abc"),filter(id=2),filter(id=3241324132))'), ["mlp",["filter",["or",["=","id",["[","12","3"]],["~","title",['"',"abc"]]]],["filter",["=","id","2"]],["filter",["=","id","3241324132"]]]);
 
@@ -241,7 +249,7 @@ describe('LPE tests', function() {
         assert.equal( lpe.eval_sql_where(
             'where ( loc_id in ($(locations.filterit(it.is_hidden != 0).pluck(id))) )',
             {"locations":[{"is_hidden":0,"id":2324342},{"id":9890798,"is_hidden":1}], "period": {"title":"Noyabr","id":2131}}),
-            "WHERE loc_id in (9890798)" 
+            "WHERE loc_id in (9890798)"
         );
 
         // + interval generation from period_type
@@ -352,8 +360,8 @@ describe('LPE tests', function() {
 
         assert.equal( lpe.eval_sql_where(
             'order_by(+addr, -perek_check, -b)',
-            {"fts": "Карго", "limit": "LIMIT 100", "filter": "Карго", "offset": "OFFSET 0", 
-            "dataset": "0ce0d124-495d-11e8-867c-bf44ef619f60", "metrics": ["382"], "periods": ["2019040100000036"], 
+            {"fts": "Карго", "limit": "LIMIT 100", "filter": "Карго", "offset": "OFFSET 0",
+            "dataset": "0ce0d124-495d-11e8-867c-bf44ef619f60", "metrics": ["382"], "periods": ["2019040100000036"],
             "_columns": {"addr": {"name": "addr", "order": "a.ADDR", "title": "Адрес"},
               "b": {"name": "b", "order": "some-crazy-Schema.b", "title": "Й"},
              "perek_check": {"name": "perek_check", "title": "Причина", "search": "perek_check"}}, "lookupId": "9", "order_by": "", "locations": ["3"], "metric_id": 382, "period.id": "2019040100000036", "period_id": 2019040100000036, "parameters": ["382"], "period.qty": "1", "location_id": 3, "limit_offset": "LIMIT 100 OFFSET 0", "period.start_time": "2019-04-01T00:00:00", "period.period_type": "6"}),
@@ -365,7 +373,7 @@ describe('LPE tests', function() {
             'order_by(+addr, -perek_check, -b)',
             {"fts": "Карго", "limit": "LIMIT 100", "filter": "Карго", "offset": "OFFSET 0",
             "sort": "-c",
-            "dataset": "0ce0d124-495d-11e8-867c-bf44ef619f60", "metrics": ["382"], "periods": ["2019040100000036"], 
+            "dataset": "0ce0d124-495d-11e8-867c-bf44ef619f60", "metrics": ["382"], "periods": ["2019040100000036"],
             "_columns": {"addr": {"name": "addr", "order": "a.ADDR", "title": "Адрес", "order_extra":"nulls first"},
               "b": {"name": "b", "order": "some-crazy-Schema.b", "title": "Й"},
              "perek_check": {"name": "perek_check", "title": "Причина", "search": "perek_check", "order_extra":"nulls last"},
@@ -377,9 +385,9 @@ describe('LPE tests', function() {
         // one ilike
         assert.equal( lpe.eval_sql_where(
             "where( addr = 'Москва' )",
-            {"fts": "Карго", "limit": "LIMIT 100", "filter": "Карго", "offset": "OFFSET 0", 
-            "dataset": "0ce0d124-495d-11e8-867c-bf44ef619f60", "metrics": ["382"], "periods": ["2019040100000036"], 
-            "_columns": {"addr": {"name": "addr", "order": "addr", "title": "Адрес"}, 
+            {"fts": "Карго", "limit": "LIMIT 100", "filter": "Карго", "offset": "OFFSET 0",
+            "dataset": "0ce0d124-495d-11e8-867c-bf44ef619f60", "metrics": ["382"], "periods": ["2019040100000036"],
+            "_columns": {"addr": {"name": "addr", "order": "addr", "title": "Адрес"},
              "perek_check": {"name": "perek_check", "title": "Причина", "search": "perek_check"}}, "lookupId": "9", "order_by": "", "locations": ["3"], "metric_id": 382, "period.id": "2019040100000036", "period_id": 2019040100000036, "parameters": ["382"], "period.qty": "1", "location_id": 3, "limit_offset": "LIMIT 100 OFFSET 0", "period.start_time": "2019-04-01T00:00:00", "period.period_type": "6"}),
             "WHERE addr = 'Москва' and (perek_check ilike '%Карго%')"
         );
@@ -388,22 +396,22 @@ describe('LPE tests', function() {
         // addr не имеет атрибута search, поэтому для него нет ilike!
         assert.equal( lpe.eval_sql_where(
             "where( addr = 'Москва' )",
-            {"_target_database": "oracle", "fts": "Карго", "limit": "LIMIT 100", "filter": "Карго", "offset": "OFFSET 0", 
-            "dataset": "0ce0d124-495d-11e8-867c-bf44ef619f60", "metrics": ["382"], "periods": ["2019040100000036"], 
-            "_columns": {"addr": {"name": "addr", "order": "addr", "title": "Адрес"}, 
+            {"_target_database": "oracle", "fts": "Карго", "limit": "LIMIT 100", "filter": "Карго", "offset": "OFFSET 0",
+            "dataset": "0ce0d124-495d-11e8-867c-bf44ef619f60", "metrics": ["382"], "periods": ["2019040100000036"],
+            "_columns": {"addr": {"name": "addr", "order": "addr", "title": "Адрес"},
             "perek_check": {"name": "perek_check", "title": "Причина", "search": "perek_check"}}, "lookupId": "9", "order_by": "", "locations": ["3"], "metric_id": 382, "period.id": "2019040100000036", "period_id": 2019040100000036, "parameters": ["382"], "period.qty": "1", "location_id": 3, "limit_offset": "LIMIT 100 OFFSET 0", "period.start_time": "2019-04-01T00:00:00", "period.period_type": "6"}),
             "WHERE addr = 'Москва' and (UPPER( perek_check ) LIKE UPPER('%Карго%'))"
         );
 
         assert.equal( lpe.eval_sql_where(
             "where( addr = 'Москва' )",
-            {"_target_database": "sqlserver", "fts": "Карго", "limit": "LIMIT 100", "filter": "Карго", "offset": "OFFSET 0", 
-            "dataset": "0ce0d124-495d-11e8-867c-bf44ef619f60", "metrics": ["382"], "periods": ["2019040100000036"], 
-            "_columns": {"addr": {"name": "addr", "order": "addr", "title": "Адрес", "search": "addr"}, 
+            {"_target_database": "sqlserver", "fts": "Карго", "limit": "LIMIT 100", "filter": "Карго", "offset": "OFFSET 0",
+            "dataset": "0ce0d124-495d-11e8-867c-bf44ef619f60", "metrics": ["382"], "periods": ["2019040100000036"],
+            "_columns": {"addr": {"name": "addr", "order": "addr", "title": "Адрес", "search": "addr"},
             "perek_check": {"name": "perek_check", "title": "Причина", "search": "perek_check"}}, "lookupId": "9", "order_by": "", "locations": ["3"], "metric_id": 382, "period.id": "2019040100000036", "period_id": 2019040100000036, "parameters": ["382"], "period.qty": "1", "location_id": 3, "limit_offset": "LIMIT 100 OFFSET 0", "period.start_time": "2019-04-01T00:00:00", "period.period_type": "6"}),
             "WHERE addr = 'Москва' and (UPPER( addr ) LIKE UPPER('%Карго%') or UPPER( perek_check ) LIKE UPPER('%Карго%'))"
         );
-    
+
         // many ilike
         assert.equal( lpe.eval_sql_where(
             "where( addr = 'Москва' )",
@@ -414,9 +422,9 @@ describe('LPE tests', function() {
         // Empty where, but FTS
         assert.equal( lpe.eval_sql_where(
             "where( )",
-            {"fts": "Карго", "limit": "LIMIT 100", "filter": "Карго", "offset": "OFFSET 0", 
-            "dataset": "0ce0d124-495d-11e8-867c-bf44ef619f60", "metrics": ["382"], "periods": ["2019040100000036"], 
-            "_columns": {"addr": {"name": "addr", "order": "addr", "title": "Адрес"}, 
+            {"fts": "Карго", "limit": "LIMIT 100", "filter": "Карго", "offset": "OFFSET 0",
+            "dataset": "0ce0d124-495d-11e8-867c-bf44ef619f60", "metrics": ["382"], "periods": ["2019040100000036"],
+            "_columns": {"addr": {"name": "addr", "order": "addr", "title": "Адрес"},
                 "perek_check": {"name": "perek_check", "title": "Причина", "search": "perek_check"}}, "lookupId": "9", "order_by": "", "locations": ["3"], "metric_id": 382, "period.id": "2019040100000036", "period_id": 2019040100000036, "parameters": ["382"], "period.qty": "1", "location_id": 3, "limit_offset": "LIMIT 100 OFFSET 0", "period.start_time": "2019-04-01T00:00:00", "period.period_type": "6"}),
             "WHERE (perek_check ilike '%Карго%')"
         );
@@ -424,9 +432,9 @@ describe('LPE tests', function() {
         // Empty where, but 2 FTS
         assert.equal( lpe.eval_sql_where(
             "where( )",
-            {"fts": "Карго", "limit": "LIMIT 100", "filter": "Карго", "offset": "OFFSET 0", 
-            "dataset": "0ce0d124-495d-11e8-867c-bf44ef619f60", "metrics": ["382"], "periods": ["2019040100000036"], 
-            "_columns": {"addr": {"name": "addr", "order": "addr", "title": "Адрес", "search": "addr"}, 
+            {"fts": "Карго", "limit": "LIMIT 100", "filter": "Карго", "offset": "OFFSET 0",
+            "dataset": "0ce0d124-495d-11e8-867c-bf44ef619f60", "metrics": ["382"], "periods": ["2019040100000036"],
+            "_columns": {"addr": {"name": "addr", "order": "addr", "title": "Адрес", "search": "addr"},
                 "perek_check": {"name": "perek_check", "title": "Причина", "search": "perek_check"}}, "lookupId": "9", "order_by": "", "locations": ["3"], "metric_id": 382, "period.id": "2019040100000036", "period_id": 2019040100000036, "parameters": ["382"], "period.qty": "1", "location_id": 3, "limit_offset": "LIMIT 100 OFFSET 0", "period.start_time": "2019-04-01T00:00:00", "period.period_type": "6"}),
             "WHERE (addr ilike '%Карго%' or perek_check ilike '%Карго%')"
         );
@@ -434,9 +442,9 @@ describe('LPE tests', function() {
         // empty where
         assert.equal( lpe.eval_sql_where(
             "where( )",
-            {"limit": "LIMIT 100", "filter": "Карго", "offset": "OFFSET 0", 
-            "dataset": "0ce0d124-495d-11e8-867c-bf44ef619f60", "metrics": ["382"], "periods": ["2019040100000036"], 
-            "_columns": {"addr": {"name": "addr", "order": "addr", "title": "Адрес", "search": "addr"}, 
+            {"limit": "LIMIT 100", "filter": "Карго", "offset": "OFFSET 0",
+            "dataset": "0ce0d124-495d-11e8-867c-bf44ef619f60", "metrics": ["382"], "periods": ["2019040100000036"],
+            "_columns": {"addr": {"name": "addr", "order": "addr", "title": "Адрес", "search": "addr"},
                 "perek_check": {"name": "perek_check", "title": "Причина", "search": "perek_check"}}, "lookupId": "9", "order_by": "", "locations": ["3"], "metric_id": 382, "period.id": "2019040100000036", "period_id": 2019040100000036, "parameters": ["382"], "period.qty": "1", "location_id": 3, "limit_offset": "LIMIT 100 OFFSET 0", "period.start_time": "2019-04-01T00:00:00", "period.period_type": "6"}),
             "WHERE TRUE"
         );
@@ -447,7 +455,7 @@ describe('LPE tests', function() {
             "where(l.id in ($(locations.pluck(id))))",
             {"context": null, "locations": [{"id": 47, "srt": 2147483647, "tags": [], "title": "SPB99-DMZ02", "alt_id": null, "config": {}, "src_id": null, "created": "2019-08-13T15:46:34.173204+03:00", "updated": "2019-08-13T15:46:34.173204+03:00", "latitude": null, "is_hidden": 0, "longitude": null, "parent_id": 2, "tree_path": "spb99-ccvc01.gazprom-neft.local:MSK01:SPB99-DMZ02", "tree_level": 2}], "period_type": {"id": 4, "unit": "DAY"}, "period_range": {"end": {"qty": 1, "start_time": "2019-08-02T00:00:00", "granularity": 54, "period_type": 4}, "start": {"qty": 1, "start_time": "2019-08-01T00:00:00", "granularity": 54, "period_type": 4}}, "metric_id_list": "3", "period_type.id": 4, "location_id_list": "47", "period_type.unit": "DAY"}),
             "WHERE l.id in (47)"
-        ); 
+        );
 
 
         // Quoting
@@ -469,7 +477,7 @@ describe('LPE tests', function() {
             "where(l.id ~ $(locations.join('|')))",
             {"_target_database": "oracle", "context": null, "locations": [1234,3456]}),
             "WHERE REGEXP_LIKE( l.id , '1234|3456' )"
-        ); 
+        );
 
         assert.equal( lpe.eval_sql_where(
             "where(l.id ~ $(locations.join('|')))",
@@ -481,7 +489,7 @@ describe('LPE tests', function() {
 
 
     it('should eval full SQL expressions', function() {
-        
+
         assert.deepEqual( lpe.parse_sql_expr(
             'filter(a=b and b < 3).slice(2,45).order_by(+a,-d)',
             {"period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
@@ -572,67 +580,67 @@ describe('LPE tests', function() {
             {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
             "WHERE myfunc(Noyabr) = 234"
         );
-  
+
         assert.equal( lpe.eval_sql_where(
            'where( cond(myfunc($(period.title1)) = 234, "defaultVal")  )',
            {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
            'WHERE myfunc("defaultVal") = 234'
        );
-  
+
        assert.equal( lpe.eval_sql_where(
         "where( cond(myfunc($(period.title1)) = 234,'defaultVal')  )",
         {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
         "WHERE myfunc('defaultVal') = 234"
         );
-  
+
        assert.equal( lpe.eval_sql_where(
         'where( cond(myfunc($(period.title1)) = 234, ["myfunc(1)"])  )',
         {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
         'WHERE myfunc(1)'
         );
-  
+
         assert.equal( lpe.eval_sql_where(
            "where( cond(myfunc($(period.title1)) = '234')  )",
            {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
            "WHERE myfunc() = '234'"
            );
-  
+
         assert.equal( lpe.eval_sql_where(
            "where( cond(myfunc($(period.title)) = '234')  )",
            {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
            "WHERE myfunc(Noyabr) = '234'"
            );
-  
+
         assert.equal( lpe.eval_sql_where(
            "where( cond(myfunc(ql($(period.title))) = '234')  )",
            {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":"Noyabr"}}),
            "WHERE myfunc('Noyabr') = '234'"
            );
-  
+
         assert.equal( lpe.eval_sql_where(
            "where( cond(myfunc($(period.title)) = '234')  )",
            {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":2001}}),
            "WHERE myfunc(2001) = '234'"
            );
-  
+
         assert.equal( lpe.eval_sql_where(
            'where( cond(table.column = $(period.title))  )',
            {"_quoting":"explicit", "a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":2001}}),
            "WHERE table.column = 2001"
            );
-  
+
         assert.equal( lpe.eval_sql_where(
            'where( cond(table.column = ql($(period.title)))  )',
            {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":2001}}),
            "WHERE table.column = '2001'"
            );
-  
+
         assert.equal( lpe.eval_sql_where(
            'cond(table.column = ql($(period.title)))  ',
            {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":2001}}),
            "table.column = '2001'"
            );
-  
+
         assert.equal( lpe.eval_sql_where(
            'filter( cond(table.col or $(period.title) or 23) or cond(table.col2 = ql($(period.title))) )',
            {"_quoting":"explicit","a":"b","period_type_list":[-1, '2',3,"4", {"a":[1,2,3,'sdf']}], "period": {"title":2001}}),
