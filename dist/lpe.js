@@ -316,6 +316,7 @@ __webpack_require__(8).inspectSource = function (it) {
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "f", function() { return isFunction; });
 /* unused harmony export makeMacro */
 /* harmony export (immutable) */ __webpack_exports__["c"] = makeSF;
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "h", function() { return STDLIB; });
 /* harmony export (immutable) */ __webpack_exports__["a"] = eval_lisp;
 /* unused harmony export init_lisp */
 /* unused harmony export evaluate */
@@ -759,7 +760,6 @@ var SPECIAL_FORMS = {
     return ret;
   })
 };
-
 var STDLIB = _objectSpread({
   // built-in constants
   '#t': true,
@@ -7976,15 +7976,16 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
 
   _ctx.push(function (key, val, resolveOptions) {
-    //console.log(`WANT to resolve ${key} ${val}`, JSON.stringify(resolveOptions));
+    // console.log(`WANT to resolve ${key} ${val}`, JSON.stringify(resolveOptions));
     // console.log(`COLUMN: `, JSON.stringify(_variables["_columns"][key]));
     // вызываем функцию column(ПолноеИмяСтолбца) если нашли столбец в дефолтном кубе
     if (_variables["_columns"][key]) return _context["column"](key); //console.log('NOT HERE?')
 
     if (_variables["_columns"][default_ds][default_cube][key]) return _context["column"]("".concat(default_ds, ".").concat(default_cube, ".").concat(key)); // reference to alias!
     //console.log("DO WE HAVE SUCH ALIAS?" , JSON.stringify(_variables["_aliases"]))
+    // алиас не должен переопределять функции с таким же именем
 
-    if (_variables["_aliases"][key]) {
+    if (_variables["_aliases"][key] && (resolveOptions === undefined || !resolveOptions["wantCallable"])) {
       if (!__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["b" /* isHash */])(_variables["_result"])) {
         _variables["_result"] = {};
       }
@@ -8157,7 +8158,14 @@ function init_koob_context(_vars, default_ds, default_cube) {
   _context["woty"] = cal_funcs["woty"];
   _context["doty"] = cal_funcs["doty"];
   _context["_sequence"] = 0; // magic sequence number for uniq names generation
+  // специальная обёртка для вычисления lpe выражений.
+  // Например, в lpe есть count(), split() которые сейчас транслируются в SQL.
+  // у lpe должен быть только один аргумент!  lpe(get_in().map(ql))
 
+  _context["lpe"] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["c" /* makeSF */])(function (ast, ctx, rs) {
+    var c = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["a" /* eval_lisp */])(ast[0], [__WEBPACK_IMPORTED_MODULE_19__lisp__["h" /* STDLIB */], ctx], rs);
+    return c;
+  });
   /* добавляем модификатор=второй аргумент, который показывает в каком месте SQL используется столбец:
   where, having, group, template_where
   */
@@ -8832,7 +8840,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
   _context['/'] = function (l, r) {
     if (_variables._target_database === 'clickhouse') {
-      return "CAST(".concat(l, " AS Float64) / ").concat(r);
+      return "CAST(".concat(l, " AS Nullable(Float64)) / ").concat(r);
     } else {
       return "CAST(".concat(l, " AS FLOAT) / ").concat(r);
     }
@@ -9172,9 +9180,26 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
     var already_quoted = false;
 
+    var clickhouseArray = _variables["_columns"]["".concat(_variables["_ds"], ".").concat(c)];
+
+    if (clickhouseArray === undefined) {
+      clickhouseArray = _variables["_columns"]["".concat(_variables["_ds"], ".").concat(_variables["_cube"], ".").concat(c)];
+    }
+
+    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["b" /* isHash */])(clickhouseArray)) {
+      clickhouseArray = clickhouseArray["config"];
+
+      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["b" /* isHash */])(clickhouseArray)) {
+        clickhouseArray = clickhouseArray["clickhouseArray"]; // assume = true
+      }
+    }
+
     if (ast.length === 1) {
       return '1=0';
     } else if (ast.length === 2) {
+      // For clickhouse we have table name already applied!!!
+      //console.log(`COLUMN: ${_variables["_ds"]}.${c}`)
+      //console.log(`CFG: ${JSON.stringify(clickhouseArray)}`)
       if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["d" /* isArray */])(ast[1])) {
         if (ast[1][0] === "[") {
           // это массив значений, который мы превращаем в "col IN ()"
@@ -9198,12 +9223,12 @@ function init_koob_context(_vars, default_ds, default_cube) {
         } else {
           // assuming if (ast[1][0] === "'")
           var v = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["a" /* eval_lisp */])(ast[1], ctx, rs);
-          return v === null ? "".concat(c, " IS NULL") : "".concat(c, " = ").concat(v);
+          return v === null ? "".concat(c, " IS NULL") : clickhouseArray === true ? "arrayIntersect(".concat(c, ", [").concat(v, "]) != []") : "".concat(c, " = ").concat(v);
         }
       } else {
         var _v2 = resolveValue(ast[1]);
 
-        return _v2 === null ? "".concat(c, " IS NULL") : "".concat(c, " = ").concat(_v2);
+        return _v2 === null ? "".concat(c, " IS NULL") : clickhouseArray === true ? "arrayIntersect(".concat(c, ", [").concat(_v2, "]) != []") : "".concat(c, " = ").concat(_v2);
       }
     } // check if we have null in the array of values...
 
@@ -9223,7 +9248,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
     }
 
     var hasNull = resolvedV.length < ast.length - 1;
-    var ret = "".concat(c, " IN (").concat(resolvedV.join(', '), ")");
+    var ret = clickhouseArray === true ? "arrayIntersect(".concat(c, ",[").concat(resolvedV.join(', '), "]) != []") : "".concat(c, " IN (").concat(resolvedV.join(', '), ")");
     if (hasNull) ret = "".concat(ret, " OR ").concat(c, " IS NULL");
     return ret;
   });
@@ -9251,6 +9276,20 @@ function init_koob_context(_vars, default_ds, default_cube) {
       return __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["a" /* eval_lisp */])(v, ctx, rs);
     };
 
+    var clickhouseArray = _variables["_columns"]["".concat(_variables["_ds"], ".").concat(c)];
+
+    if (clickhouseArray === undefined) {
+      clickhouseArray = _variables["_columns"]["".concat(_variables["_ds"], ".").concat(_variables["_cube"], ".").concat(c)];
+    }
+
+    if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["b" /* isHash */])(clickhouseArray)) {
+      clickhouseArray = clickhouseArray["config"];
+
+      if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["b" /* isHash */])(clickhouseArray)) {
+        clickhouseArray = clickhouseArray["clickhouseArray"]; // assume = true
+      }
+    }
+
     if (ast.length === 1) {
       return '1=1';
     } else if (ast.length === 2) {
@@ -9259,7 +9298,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
         ast = [c].concat(a);
       } else {
         var v = resolveValue(ast[1]);
-        return v === null ? "".concat(c, " IS NOT NULL") : "".concat(c, " != ").concat(v);
+        return v === null ? "".concat(c, " IS NOT NULL") : clickhouseArray === true ? "arrayIntersect(".concat(c, ", [").concat(v, "]) = []") : "".concat(c, " != ").concat(v);
       }
     } // check if we have null in the array of values...
 
@@ -9270,7 +9309,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
       return el !== null;
     });
     var hasNull = resolvedV.length < ast.length - 1;
-    var ret = "".concat(c, " NOT IN (").concat(resolvedV.join(', '), ")");
+    var ret = clickhouseArray === true ? "arrayIntersect(".concat(c, ",[").concat(resolvedV.join(', '), "]) = []") : "".concat(c, " NOT IN (").concat(resolvedV.join(', '), ")");
     if (hasNull) ret = "".concat(ret, " AND ").concat(c, " IS NOT NULL");
     return ret;
   }); //console.log('CONTEXT RETURN!', _ctx[0]['()']);
@@ -9789,7 +9828,7 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
       var wh = ["and"].concat(pw); //console.log("WHERE", JSON.stringify(wh))
       // возможно, тут нужен спец. контекст с правильной обработкой or/and  функций.
       // ибо первым аргументом мы тут всегда ставим столбец!!! 
-      // console.log('*****: ' + JSON.stringify(wh))
+      //console.log('*****: ' + JSON.stringify(wh))
 
       part_where = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["a" /* eval_lisp */])(JSON.parse(JSON.stringify(wh)), context); //console.log('.....: ' + JSON.stringify(filters_array))
     } else {
@@ -10193,8 +10232,7 @@ function generate_koob_sql(_cfg, _vars) {
   _context[0]["total"] = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["c" /* makeSF */])(function (ast, ctx, rs) {
     // считаем, что аргумент всегда один конкретный столбец или формула (не *)
     var known_agg = _context[1]["_result"]["agg"];
-    _context[1]["_result"]["agg"] = false; // console.log("AST:" + JSON.stringify(ast))
-    // парсим пока что только первый аргумент!!!
+    _context[1]["_result"]["agg"] = false; // парсим пока что только первый аргумент!!!
 
     var col = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["a" /* eval_lisp */])(ast[0], ctx, rs);
 
@@ -10481,6 +10519,12 @@ function generate_koob_sql(_cfg, _vars) {
 
   if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["b" /* isHash */])(filters_array_request)) {
     var cols = _context[1]["_columns"];
+    /* здесь надо пройти по массиву filters_array, и вычислить AGGFN столбцы, и перенести их в having
+    До того, как мы начнём генерить условия WHERE
+     Пока что делаем только для простого случая, когда filters_array = hash, и нет никаких сложных
+    склеек OR
+     */
+
     Object.keys(filters_array_request).map(function (col) {
       if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["b" /* isHash */])(cols[col])) {
         if (cols[col]["type"] === 'AGGFN') {
@@ -10496,14 +10540,6 @@ function generate_koob_sql(_cfg, _vars) {
     });
     filters_array_request = [filters_array_request]; // делаем общий код на все варианты входных форматов {}/[]
   }
-  /* здесь надо пройти по массиву filters_array, и вычислить AGGFN столбцы, и перенести их в having
-  До того, как мы начнём генерить условия WHERE
-  
-  Пока что делаем только для простого случая, когда filters_array = hash, и нет никаких сложных
-  склеек OR
-  
-  */
-
 
   havingSQL = get_filters_array(_context, [_cfg["having"]], ''); // ["((NOW() - INTERVAL '1 DAY') > '2020-01-01') AND ((max(sum(v_main))) > 100)"]
   // console.log("AGGFN:" + JSON.stringify(havingSQL))
@@ -10552,9 +10588,20 @@ function generate_koob_sql(_cfg, _vars) {
       } else if (filters[0] !== '()') {
         ast = ['()', filters];
       }
+    } else if (__webpack_require__.i(__WEBPACK_IMPORTED_MODULE_19__lisp__["b" /* isHash */])(filters)) {
+      // новый формат фильтров, который совпадает с уже существующим....
+      // возможно нужно ключи привести к полному имени ds.cube.column ????
+      var _access_where = get_filters_array(_context, [filters], '', undefined, false, where_context);
+
+      if (_access_where.length == 1) {
+        ret['access_where'] = _access_where[0];
+      } else if (_access_where.length > 1) {
+        ret['access_where'] = "(".concat(_access_where.join(")\n   OR ("), ")");
+      } //console.log(`NEW FILTERS: ${JSON.stringify(access_where)}`)
+
     } else {} //warning
-    //console.log('Access filters are missed.')
-    //console.log("WHERE access filters AST", JSON.stringify(ast))
+      //console.log('Access filters are missed.')
+      //console.log("WHERE access filters AST", JSON.stringify(ast))
 
 
     if (ast.length > 0) {

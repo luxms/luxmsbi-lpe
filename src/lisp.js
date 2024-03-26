@@ -257,7 +257,7 @@ const SPECIAL_FORMS = {                                                         
 };
 
 
-const STDLIB = {
+export const STDLIB = {
   // built-in constants
   '#t': true,
   '#f': false,

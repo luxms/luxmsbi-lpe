@@ -181,8 +181,8 @@ HAVING ((NOW() - INTERVAL '1 DAY') > '2020-01-01')`
   });
 
 
-  it('KOOB access filters', function() {
-   assert.equal( lpe.generate_koob_sql(
+   it('KOOB access filters', function() {
+     assert.equal( lpe.generate_koob_sql(
       {"columns":["v_rel_pp_i / (100 * (v_main + 1))", "sum((v_main+v_rel_pp_i)/100)"],
       "with":"ch.fot_out"},
             {"_access_filters":"v_main > 1 and (v_rel_pp_i < 0 or v_rel_pp_i = 0) and v_main = [1,2,3] and v_main != [1,2,3] or v_main = ['a','b','c']"}),
@@ -195,7 +195,7 @@ GROUP BY CAST(v_rel_pp_i AS FLOAT) / (100 * (v_main + 1))`
          );
    })
 
-it('KOOB access filters LPE', function() {
+      it('KOOB access filters LPE', function() {
        assert.equal( lpe.generate_koob_sql(
           {"columns":["v_rel_pp_i / (100 * (v_main + 1))", "sum((v_main+v_rel_pp_i)/100)"],
           "with":"ch.fot_out"},
@@ -209,7 +209,7 @@ GROUP BY CAST(v_rel_pp_i AS FLOAT) / (100 * (v_main + 1))`
              );
        })
 
-it('KOOB access filters LPE with expr', function() {
+      it('KOOB access filters LPE with expr', function() {
        assert.equal( lpe.generate_koob_sql(
            {"columns":["v_rel_pp_i / (100 * (v_main + 1))", "sum((v_main+v_rel_pp_i)/100)"],
            "with":"ch.fot_out"},
@@ -224,8 +224,8 @@ GROUP BY CAST(v_rel_pp_i AS FLOAT) / (100 * (v_main + 1))`
            })
 
 
-it('KOOB access filters LPE with quoted string expr', function() {
-            assert.equal( lpe.generate_koob_sql(
+      it('KOOB access filters LPE with quoted string expr', function() {
+         assert.equal( lpe.generate_koob_sql(
                 {"columns":["v_rel_pp_i / (100 * (v_main + 1))", "sum((v_main+v_rel_pp_i)/100)"],
                 "with":"ch.fot_out"},
                         {"_access_filters":["expr", [">","v_main",["'","quoted string"]]]}),
@@ -237,6 +237,24 @@ WHERE ((group_pay_name = 'Не задано') AND (pay_code = 'Не задано
 GROUP BY CAST(v_rel_pp_i AS FLOAT) / (100 * (v_main + 1))`
                     );
                 })
+
+
+      it('KOOB access filters LPE with JSON object', function() {
+         assert.equal( lpe.generate_koob_sql(
+                  {"columns":["v_rel_pp_i / (100 * (v_main + 1))", "sum((v_main+v_rel_pp_i)/100)"],
+                  "with":"ch.fot_out"},
+                        {"_access_filters":{"v_main": ["=", null], "v_rel_pp_i":[">", 100]}}),
+            `SELECT CAST(v_rel_pp_i AS FLOAT) / (100 * (v_main + 1)) as v_main, sum(CAST((v_main + v_rel_pp_i) AS FLOAT) / 100) as v_main
+FROM fot_out AS fot_out
+WHERE ((group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL))
+   AND
+   (v_main IS NULL) AND (v_rel_pp_i > 100)
+GROUP BY CAST(v_rel_pp_i AS FLOAT) / (100 * (v_main + 1))`
+                     );
+                  })
+
+
+
    it('should eval KOOB concat (PostgreSQL)', function() {
                   assert.equal( lpe.generate_koob_sql(
                      {"columns":[
@@ -845,6 +863,24 @@ it('Should eval calendar', function() {
    {"_target_database": "postgresql"}),
 `SELECT (NOW() - INTERVAL '1 DAY') BETWEEN date_trunc('quarter', (NOW() - INTERVAL '1 DAY') + INTERVAL '-3 MONTH') AND date_trunc('quarter', (NOW() - INTERVAL '1 DAY') + INTERVAL '-3 MONTH') + INTERVAL '3 MONTH - 1 DAY' as dt, (NOW() - INTERVAL '1 DAY') BETWEEN date_trunc('year', (NOW() - INTERVAL '1 DAY') + INTERVAL '-3 MONTH') AND date_trunc('year', (NOW() - INTERVAL '1 DAY') + INTERVAL '-3 MONTH') + INTERVAL '1 YEAR - 1 DAY' as dt, (NOW() - INTERVAL '1 DAY') BETWEEN date_trunc('quarter', (NOW() - INTERVAL '1 DAY') + INTERVAL '-3 MONTH') AND date_trunc('quarter', (NOW() - INTERVAL '1 DAY') + INTERVAL '-3 MONTH') + INTERVAL '3 MONTH - 1 DAY' + INTERVAL '9 MONTH' as dt
 FROM fot_out AS fot_out`
+);
+});
+
+
+it('aliases should not override functions', function() {
+   assert.equal( lpe.generate_koob_sql(
+      {"columns":[
+         "between(dt, dateShift(dt, -3, month).bound('q')):max", 
+         "max(dt)",
+      ],
+"filters":{},
+"sort":[],
+"with":"ch.fot_out"},
+   {"_target_database": "postgresql"}),
+`SELECT (NOW() - INTERVAL '1 DAY') BETWEEN date_trunc('quarter', (NOW() - INTERVAL '1 DAY') + INTERVAL '-3 MONTH') AND date_trunc('quarter', (NOW() - INTERVAL '1 DAY') + INTERVAL '-3 MONTH') + INTERVAL '3 MONTH - 1 DAY' as max, max((NOW() - INTERVAL '1 DAY')) as dt
+FROM fot_out AS fot_out
+WHERE (group_pay_name = 'Не задано') AND (pay_code = 'Не задано') AND (pay_name = 'Не задано') AND (sex_code IS NULL)
+GROUP BY (NOW() - INTERVAL '1 DAY') BETWEEN date_trunc('quarter', (NOW() - INTERVAL '1 DAY') + INTERVAL '-3 MONTH') AND date_trunc('quarter', (NOW() - INTERVAL '1 DAY') + INTERVAL '-3 MONTH') + INTERVAL '3 MONTH - 1 DAY'`
 );
 });
 

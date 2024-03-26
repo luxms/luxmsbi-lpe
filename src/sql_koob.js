@@ -21,7 +21,7 @@
 */
 
 import console from './console/console';
-import {eval_lisp, isString, isArray, isHash, isFunction, makeSF, isNumber} from './lisp';
+import {eval_lisp, isString, isArray, isHash, isFunction, makeSF, isNumber, STDLIB} from './lisp';
 import {sql_where_context} from './sql_where';
 //import {eval_sql_where} from './sql_where';
 
@@ -593,7 +593,7 @@ function init_koob_context(_vars, default_ds, default_cube) {
   // а также пытается зарезолвить коэффициенты
   _ctx.push(
     (key, val, resolveOptions) => {
-      //console.log(`WANT to resolve ${key} ${val}`, JSON.stringify(resolveOptions));
+      // console.log(`WANT to resolve ${key} ${val}`, JSON.stringify(resolveOptions));
       // console.log(`COLUMN: `, JSON.stringify(_variables["_columns"][key]));
       // вызываем функцию column(ПолноеИмяСтолбца) если нашли столбец в дефолтном кубе
       if (_variables["_columns"][key]) return _context["column"](key)
@@ -601,7 +601,8 @@ function init_koob_context(_vars, default_ds, default_cube) {
       if (_variables["_columns"][default_ds][default_cube][key]) return _context["column"](`${default_ds}.${default_cube}.${key}`)
       // reference to alias!
       //console.log("DO WE HAVE SUCH ALIAS?" , JSON.stringify(_variables["_aliases"]))
-      if (_variables["_aliases"][key]) {
+      // алиас не должен переопределять функции с таким же именем
+      if (_variables["_aliases"][key] && (resolveOptions === undefined || !resolveOptions["wantCallable"])) {
         if (!isHash(_variables["_result"])) {
           _variables["_result"] = {}
         }
@@ -786,6 +787,13 @@ function init_koob_context(_vars, default_ds, default_cube) {
 
   _context["_sequence"] = 0; // magic sequence number for uniq names generation
   
+  // специальная обёртка для вычисления lpe выражений.
+  // Например, в lpe есть count(), split() которые сейчас транслируются в SQL.
+  // у lpe должен быть только один аргумент!  lpe(get_in().map(ql))
+  _context["lpe"] = makeSF((ast, ctx, rs) => {
+    let c = eval_lisp(ast[0],[STDLIB, ctx], rs)
+    return c
+  })
   /* добавляем модификатор=второй аргумент, который показывает в каком месте SQL используется столбец:
   where, having, group, template_where
   */
@@ -1410,7 +1418,7 @@ COLUMN CALLED ["sum","where"]
 
   _context['/'] = function(l, r) {
     if (_variables._target_database === 'clickhouse'){
-      return `CAST(${l} AS Float64) / ${r}`
+      return `CAST(${l} AS Nullable(Float64)) / ${r}`
     } else {
       return `CAST(${l} AS FLOAT) / ${r}`
     }
@@ -1735,9 +1743,26 @@ COLUMN CALLED ["sum","where"]
       //return eval_lisp(v,_context)
     }
     let already_quoted = false
+
+
+    let clickhouseArray = _variables["_columns"][`${_variables["_ds"]}.${c}`]
+    if (clickhouseArray===undefined) {
+      clickhouseArray = _variables["_columns"][`${_variables["_ds"]}.${_variables["_cube"]}.${c}`]
+    }
+    if (isHash(clickhouseArray)){
+      clickhouseArray = clickhouseArray["config"]
+      if (isHash(clickhouseArray)){
+        clickhouseArray = clickhouseArray["clickhouseArray"] // assume = true
+      }
+    }
+
     if (ast.length === 1) {
       return '1=0'
     } else if (ast.length === 2) {
+      // For clickhouse we have table name already applied!!!
+      //console.log(`COLUMN: ${_variables["_ds"]}.${c}`)
+      //console.log(`CFG: ${JSON.stringify(clickhouseArray)}`)
+      
       if (isArray(ast[1])) {
         if (ast[1][0] === "["){
           // это массив значений, который мы превращаем в "col IN ()"
@@ -1762,13 +1787,13 @@ COLUMN CALLED ["sum","where"]
 
           return v === null 
           ? `${c} IS NULL` 
-          : `${c} = ${v}`
+          : (clickhouseArray === true ? `arrayIntersect(${c}, [${v}]) != []` : `${c} = ${v}`)
         }
       } else {
         let v = resolveValue(ast[1])
         return v === null 
         ? `${c} IS NULL` 
-        : `${c} = ${v}`
+        : (clickhouseArray === true ? `arrayIntersect(${c}, [${v}]) != []` : `${c} = ${v}`)
       }
     }
       // check if we have null in the array of values...
@@ -1779,7 +1804,7 @@ COLUMN CALLED ["sum","where"]
         resolvedV = ast.slice(1).map(el => resolveValue(el)).filter(el => el !== null)
       }
       const hasNull = resolvedV.length < ast.length - 1;
-      var ret = `${c} IN (${resolvedV.join(', ')})`
+      var ret = clickhouseArray === true ? `arrayIntersect(${c},[${resolvedV.join(', ')}]) != []` : `${c} IN (${resolvedV.join(', ')})`
       if(hasNull) ret = `${ret} OR ${c} IS NULL`
       return ret
   })
@@ -1802,6 +1827,17 @@ COLUMN CALLED ["sum","where"]
       return eval_lisp(v,ctx,rs)
     }
 
+    let clickhouseArray = _variables["_columns"][`${_variables["_ds"]}.${c}`]
+    if (clickhouseArray===undefined) {
+      clickhouseArray = _variables["_columns"][`${_variables["_ds"]}.${_variables["_cube"]}.${c}`]
+    }
+    if (isHash(clickhouseArray)){
+      clickhouseArray = clickhouseArray["config"]
+      if (isHash(clickhouseArray)){
+        clickhouseArray = clickhouseArray["clickhouseArray"] // assume = true
+      }
+    }
+
     if (ast.length === 1) {
       return '1=1'
     } else if (ast.length === 2) {
@@ -1813,7 +1849,7 @@ COLUMN CALLED ["sum","where"]
         var v = resolveValue(ast[1])
         return v === null 
         ? `${c} IS NOT NULL` 
-        : `${c} != ${v}`
+        : (clickhouseArray === true ? `arrayIntersect(${c}, [${v}]) = []` : `${c} != ${v}`)
       }
     } 
 
@@ -1821,7 +1857,7 @@ COLUMN CALLED ["sum","where"]
     
     var resolvedV = ast.slice(1).map(el => resolveValue(el)).filter(el => el !== null)
     const hasNull = resolvedV.length < ast.length - 1;
-    var ret = `${c} NOT IN (${resolvedV.join(', ')})`
+    var ret = clickhouseArray === true ? `arrayIntersect(${c},[${resolvedV.join(', ')}]) = []` : `${c} NOT IN (${resolvedV.join(', ')})`
     if(hasNull) ret = `${ret} AND ${c} IS NOT NULL`
     return ret
 
@@ -2281,7 +2317,7 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
         //console.log("WHERE", JSON.stringify(wh))
         // возможно, тут нужен спец. контекст с правильной обработкой or/and  функций.
         // ибо первым аргументом мы тут всегда ставим столбец!!! 
-        // console.log('*****: ' + JSON.stringify(wh))
+        //console.log('*****: ' + JSON.stringify(wh))
         part_where = eval_lisp(JSON.parse(JSON.stringify(wh)), context)
         //console.log('.....: ' + JSON.stringify(filters_array))
       } else {
@@ -2676,7 +2712,7 @@ export function generate_koob_sql(_cfg, _vars) {
     let known_agg = _context[1]["_result"]["agg"]
 
     _context[1]["_result"]["agg"] = false
-    // console.log("AST:" + JSON.stringify(ast))
+
     // парсим пока что только первый аргумент!!!
     let col = eval_lisp(ast[0], ctx, rs)
 
@@ -2915,6 +2951,14 @@ export function generate_koob_sql(_cfg, _vars) {
   let filters_array_request = _cfg["filters"];
   if (isHash(filters_array_request)) {
     let cols = _context[1]["_columns"]
+
+    /* здесь надо пройти по массиву filters_array, и вычислить AGGFN столбцы, и перенести их в having
+    До того, как мы начнём генерить условия WHERE
+
+    Пока что делаем только для простого случая, когда filters_array = hash, и нет никаких сложных
+    склеек OR
+
+    */
     Object.keys(filters_array_request).map(col => {
       if (isHash(cols[col])){
         if (cols[col]["type"] === 'AGGFN') {
@@ -2932,14 +2976,6 @@ export function generate_koob_sql(_cfg, _vars) {
 
     filters_array_request = [filters_array_request] // делаем общий код на все варианты входных форматов {}/[]
   }
-
-/* здесь надо пройти по массиву filters_array, и вычислить AGGFN столбцы, и перенести их в having
-До того, как мы начнём генерить условия WHERE
-
-Пока что делаем только для простого случая, когда filters_array = hash, и нет никаких сложных
-склеек OR
-
-*/
 
 
   havingSQL = get_filters_array(_context, [_cfg["having"]], '');
@@ -2989,6 +3025,16 @@ export function generate_koob_sql(_cfg, _vars) {
       } else if (filters[0] !== '()') {
         ast = ['()',filters]
       }
+    } else if (isHash(filters)){
+      // новый формат фильтров, который совпадает с уже существующим....
+      // возможно нужно ключи привести к полному имени ds.cube.column ????
+      let access_where = get_filters_array(_context, [filters], '', undefined, false, where_context);
+      if (access_where.length == 1){
+        ret['access_where'] = access_where[0]
+      } else if (access_where.length > 1){
+        ret['access_where'] = `(${access_where.join(")\n   OR (")})`
+      }
+      //console.log(`NEW FILTERS: ${JSON.stringify(access_where)}`)
     } else {
       //warning
       //console.log('Access filters are missed.')
