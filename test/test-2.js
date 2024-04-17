@@ -6,7 +6,7 @@ globalThis.MOCKCubeSQL = {};
 
 describe('LPE tests', function() {
     globalThis.MOCKcubeColumns =  [
-        {"id":"bi.cube.filters","sql_query":"filters","type":"STRING","config":{"possible_aggregations": []}},
+        {"id":"bi.cube.filters","sql_query":"filters","type":"STRING","config":{"defaultValue":"lpe:ensureThat(filters = total(max(if(a=1, id, null))))","possible_aggregations": []}},
         {"id":"bi.cube.id","sql_query":"id","type":"NUMBER","config":{"possible_aggregations": []}},
         {"id":"bi.cube.type","sql_query":"type","type":"STRING","config":{"possible_aggregations": []}},                             
         {"id":"bi.cube.if","sql_query":"if","type":"STRING","config":{"possible_aggregations": []}},                             
@@ -35,7 +35,7 @@ describe('LPE tests', function() {
     it('should eval udf_args()', function() {
     globalThis.MOCKCubeSQL = {
         "postgresql-bi.cube":{
-           "query": `(SELECT 1 from cube
+           "query": `(SELECT 1 from cube \${filters()}
 where \${udf_args('', ql(regions), id, id, dt, ql(d))}
 where \${udf_args(dir, ql(regions), id, ql(id), dt, dt)}
 where \${udf_args(dir, ql(regions.1), id, ql(id), dt, dt)}

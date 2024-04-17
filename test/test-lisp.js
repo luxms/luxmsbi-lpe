@@ -19,8 +19,11 @@ describe('LISP tests', function () {
 
   it('should run let special form', function () {
     assert.deepEqual(lpe.eval_lisp(["let", { "foo": 2 }, "foo"]), 2);
-    assert.deepEqual(lpe.eval_lisp(["let", [["foo", 2]], "foo"]), 2);
+    assert.deepEqual(lpe.eval_lisp(["let", [["foo", 2],["bar",3]], ["+","foo","bar"]]), 5);
     assert.deepEqual(lpe.eval_lisp(["let", ["foo", 2], "foo"]), 2);
+    assert.deepEqual(lpe.eval_lisp( lpe.parse('let(foo(2), foo)')), 2);
+    assert.deepEqual(lpe.eval_lisp( lpe.parse('let([foo,3], foo)')), 3);
+    assert.deepEqual(lpe.eval_lisp( lpe.parse('let([[foo,3],[bar,4]], foo+bar)')), 7);
   });
 
   it('should allow hash changes declared with let', function () {
@@ -68,6 +71,17 @@ describe('LISP tests', function () {
     assert.deepEqual(lpe.eval_lisp(["min", ["[", 3, 2, 1]]), 1);
     assert.deepEqual(lpe.eval_lisp(["max", ["[", 3, 2, 1]]), 3);
   });
+
+  it('and or not', function () {
+    assert.deepEqual(lpe.eval_lpe('a or b', {"a":123}, {resolveString: true}), 123);
+    assert.deepEqual(lpe.eval_lpe('a or b', {"a":123}, {resolveString: false}), 123);
+  });
+
+  /*
+  it('concat', function () {
+    assert.deepEqual(lpe.eval_lisp( lpe.parse( 'concat( if(c=null, 1, false), "abc")'), { a: true , b: true}), '1abc');
+  });
+  */
 
   it('get-in', function () {
     assert.deepEqual(lpe.eval_lisp(lpe.parse('begin(a . 3 . 1)'), { "a": { "3": [300, 600] } }), 600);

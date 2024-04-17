@@ -520,16 +520,18 @@ ORDER BY perda, lead DESC LIMIT 100 OFFSET 10`
                   ],
          "filters":{"hcode_name": ["=",  ['get_in', "user", "t","a"]],
          "group_pay_name": ["=", ['ql', ['get_in', "user", ["[","t","a"]]]],
+         "pay_code": ["=", ['lpe', ["count", ['get_in', "koob", "query", "columns"]]]],
          "v_rel_pp" : ["=", ["column", "group_pay_name"]]
       },
          "sort":["perda","-lead"],
          "limit": 100,
          "offset": 10,
          "with":"ch.fot_out"},
-               {"_target_database": "clickhouse","_user_info":{"username":"biuser","t":{"a":444}}}),
+               {"_target_database": "clickhouse",
+               "_user_info":{"username":"biuser","t":{"a":444}}}),
    `SELECT toString(v_rel_pp) as v_rel_pp, sum(group_pay_name) as group_pay_name, 'biuser' as uname
 FROM fot_out AS fot_out
-WHERE (fot_out.hcode_name = 444) AND (fot_out.group_pay_name = '444') AND (fot_out.v_rel_pp = fot_out.group_pay_name) AND (fot_out.pay_code = 'Не задано') AND (fot_out.pay_name = 'Не задано') AND (fot_out.sex_code IS NULL)
+WHERE (fot_out.hcode_name = 444) AND (fot_out.group_pay_name = '444') AND (fot_out.pay_code = 3) AND (fot_out.v_rel_pp = fot_out.group_pay_name) AND (fot_out.sex_code IS NULL)
 GROUP BY v_rel_pp, uname
 ORDER BY perda, lead DESC LIMIT 100 OFFSET 10`
             );

@@ -650,15 +650,27 @@ function makeLetBindings(ast, ctx, rs) {
       result[varName] = EVAL(ast[varName], ctx, rs);
     }
   } else if (isArray(ast) && isString(ast[0])) {
-    result[ast[0]] = EVAL(ast[1], ctx, rs);
+    if (ast[0] === '[') {
+      ast = ast.slice(1);
+    }
+
+    if (isString(ast[0])) {
+      result[ast[0]] = EVAL(ast[1], ctx, rs);
+    } else if (isArray(ast[0])) {
+      ast.forEach(function (pair) {
+        return pair[0] === '[' ? result[pair[1]] = EVAL(pair[2], ctx, rs) : result[pair[0]] = EVAL(pair[1], ctx, rs);
+      });
+    } else {
+      throw new Error('LISP: let expression (1) invalid form in ' + ast);
+    }
   } else if (isArray(ast)) {
     ast.forEach(function (pair) {
-      return result[pair[0]] = EVAL(pair[1], ctx, rs);
+      return pair[0] === '[' ? result[pair[1]] = EVAL(pair[2], ctx, rs) : result[pair[0]] = EVAL(pair[1], ctx, rs);
     });
   } else if (isFunction(ast)) {
     return ast;
   } else {
-    throw new Error('LISP: let expression invalid form in ' + ast);
+    throw new Error('LISP: let expression (2) invalid form in ' + ast);
   }
 
   return result;
@@ -1054,14 +1066,14 @@ var STDLIB = _objectSpread({
     return args;
   },
   'map': function map(arr, fn) {
-    return arr.map(function (it) {
+    return isArray(arr) ? arr.map(function (it) {
       return fn(it);
-    });
+    }) : [];
   },
   'filter': function filter(arr, fn) {
-    return arr.filter(function (it) {
+    return isArray(arr) ? arr.filter(function (it) {
       return fn(it);
-    });
+    }) : [];
   },
   'throw': function _throw(a) {
     throw a;
@@ -1152,7 +1164,7 @@ var STDLIB = _objectSpread({
     }).join(' '));
   },
   'slice': function slice(a, b) {
-    return a.slice(b, (arguments.length <= 2 ? 0 : arguments.length - 2) > 0 ? arguments.length <= 2 ? undefined : arguments[2] : a.length);
+    return isArray(a) ? a.slice(b, (arguments.length <= 2 ? 0 : arguments.length - 2) > 0 ? arguments.length <= 2 ? undefined : arguments[2] : a.length) : [];
   },
   'first': function first(a) {
     return a.length > 0 ? a[0] : null;
@@ -1202,7 +1214,10 @@ var STDLIB = _objectSpread({
     return Object.prototype.toString.call(a);
   },
   'join': function join(a, sep) {
-    return Array.prototype.join.call(a, sep);
+    return isArray(a) ? Array.prototype.join.call(a, sep) : '';
+  },
+  'rand': function rand() {
+    return Math.random();
   },
   // operator from APL language
   '⍴': function _(len) {

@@ -98,13 +98,22 @@ function makeLetBindings(ast, ctx, rs) {
       result[varName] = EVAL(ast[varName], ctx, rs);
     }
   } else if (isArray(ast) && isString(ast[0])) {
-    result[ast[0]] = EVAL(ast[1], ctx, rs);
+    if(ast[0] === '[') {
+      ast = ast.slice(1)
+    }
+    if (isString(ast[0])) {
+      result[ast[0]] = EVAL(ast[1], ctx, rs);
+    } else if (isArray(ast[0])){
+      ast.forEach(pair => pair[0] === '[' ? result[pair[1]] = EVAL(pair[2], ctx, rs) : result[pair[0]] = EVAL(pair[1], ctx, rs));
+    } else {
+      throw new Error('LISP: let expression (1) invalid form in ' + ast);
+    }
   } else if (isArray(ast)) {
-    ast.forEach(pair => result[pair[0]] = EVAL(pair[1], ctx, rs));
+    ast.forEach(pair => pair[0] === '[' ? result[pair[1]] = EVAL(pair[2], ctx, rs) : result[pair[0]] = EVAL(pair[1], ctx, rs));
   } else if (isFunction(ast)) {
     return ast;
   } else {
-    throw new Error('LISP: let expression invalid form in ' + ast);
+    throw new Error('LISP: let expression (2) invalid form in ' + ast);
   }
   return result;
 }
@@ -298,8 +307,8 @@ export const STDLIB = {
   'not': a => !a,
   'list': (...args) => args,
   'vector': (...args) => args,
-  'map': (arr, fn) => arr.map(it => fn(it)),
-  'filter': (arr, fn) => arr.filter(it => fn(it)),
+  'map': (arr, fn) => isArray(arr) ? arr.map(it => fn(it)) : [],
+  'filter': (arr, fn) => isArray(arr) ? arr.filter(it => fn(it)) : [],
   'throw': a => { throw(a) },
   'identity': a => a,
   'pluck': (c, k) => c.map(el => el[k]),                                        // for each array element, get property value, present result as array.
@@ -323,7 +332,7 @@ export const STDLIB = {
   'empty?': (a) => isArray(a) ? a.length === 0 : false,
   'cons': (a, b) => [].concat([a], b),
   'prn': (...args) => console.log(args.map((x) => JSON.stringify(x)).join(' ')),
-  'slice': (a, b, ...end) => a.slice(b, end.length > 0 ? end[0] : a.length),
+  'slice': (a, b, ...end) => isArray(a) ? a.slice(b, end.length > 0 ? end[0] : a.length) : [],
   'first': (a) => a.length > 0 ? a[0] : null,
   'last': (a) => a[a.length - 1],
   'sort': (a) => isArray(a) ? a.sort() : [],
@@ -335,7 +344,8 @@ export const STDLIB = {
   'concat': (...a) => [].concat.apply([], a),
   'pr_str': (...a) => a.map(x => JSON.stringify(x)).join(' '),
   'classOf': (a) => Object.prototype.toString.call(a),
-  'join': (a, sep) => Array.prototype.join.call(a, sep),
+  'join': (a, sep) => isArray(a) ? Array.prototype.join.call(a, sep) : '',
+  'rand': () => Math.random(),
   // operator from APL language
   '⍴': (len, ...values) => Array.apply(null, Array(len)).map((a, idx) => values[idx % values.length]),
   re_match: (t,r,o) => t.match(new RegExp(r,o)),

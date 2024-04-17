@@ -791,7 +791,11 @@ function init_koob_context(_vars, default_ds, default_cube) {
   // Например, в lpe есть count(), split() которые сейчас транслируются в SQL.
   // у lpe должен быть только один аргумент!  lpe(get_in().map(ql))
   _context["lpe"] = makeSF((ast, ctx, rs) => {
-    let c = eval_lisp(ast[0],[STDLIB, ctx], rs)
+    let _v = {
+      "user": _variables["_user_info"], 
+      "koob" : {"query": _variables["_koob_api_request_body"]}
+    };
+    let c = eval_lisp(ast[0],[STDLIB, _v, ctx], rs)
     return c
   })
   /* добавляем модификатор=второй аргумент, который показывает в каком месте SQL используется столбец:
@@ -814,7 +818,12 @@ COLUMN CALLED ["sum","where"]
 
     //console.log(`COLUMN CALLED ${ JSON.stringify(ast) }`)
     // считаем, что сюда приходят только полностью резолвенные имена с двумя точками...
-    let c = _variables["_columns"][col]
+    let c
+    let parts = col.split('.')
+
+    if (parts.length === 3) {
+      c = _variables["_columns"][col]
+    }
 
     if (!isHash(c)) {
       // пробуем добавить датасорс и куб и найти столбец по его полному id
@@ -842,9 +851,10 @@ COLUMN CALLED ["sum","where"]
       let parts = col.split('.')
       let colname = parts[2]
       //console.log(`COMPARE ${colname} = ${JSON.stringify(c)}`)
-      if (colname.localeCompare(c.sql_query, undefined, { sensitivity: 'accent' }) === 0 ||
+      if (
+        (colname.localeCompare(c.sql_query, undefined, { sensitivity: 'accent' }) === 0 ||
       /*`"${colname}"`.localeCompare(c.sql_query, undefined, { sensitivity: 'accent' }) === 0 */
-      (c.sql_query.length>2 && /^"([^"]+|"{2})+"$/.test(c.sql_query))
+      (c.sql_query.length>2 && /^"([^"]+|"{2})+"$/.test(c.sql_query)))
       //FIXME: handle "a"."b" as well?
       ) {
         // we have just column name or one column alias, prepend table alias !
@@ -1025,18 +1035,18 @@ COLUMN CALLED ["sum","where"]
     var a = Array.prototype.slice.call(arguments);
 
     if ( (isArray(a[0]) && a[0][0] === '"') || !isArray(a[0])){ 
-      console.log("-> !" , JSON.stringify(a))
-      return a.map(el => isArray(el) ? eval_lisp(el, _ctx) : el).join('.');
+      //console.log("-> !" , JSON.stringify(a))
+      return a.map(el => isArray(el) ? eval_lisp(el, _ctx, {"resolveColumn":false}) : el).join('.');
     } else {
       // нужно сделать настоящий ->
       let [acc, ...ast] = a
       for (let arr of ast) {
         if (!isArray(arr)) {
-          arr = [".-", acc, arr];                                                 // это может быть обращение к хэшу или массиву через индекс или ключ....
+          arr = [".-", acc, arr];  // это может быть обращение к хэшу или массиву через индекс или ключ....
         } else if (arr[0] === "()" && arr.length === 2 && (isString(arr[1]) || isNumber(arr[1]))) {
           arr = [".-", acc, arr[1]];
         } else {
-          arr = arr.slice(0);                                                     // must copy array before modify
+          arr = arr.slice(0); // must copy array before modify
           arr.splice(1, 0, acc);
           //console.log("AST !!!!" + JSON.stringify(arr))
           // AST[["filterit",[">",1,0]]]
@@ -1062,7 +1072,7 @@ COLUMN CALLED ["sum","where"]
 
     // если нам придёт вот такое "count(v_rel_pp):'АХТУНГ'",
     var al = n
-    if (isArray(n) && n[0] == "'" || n[0] == '"') {
+    if (isArray(n) && n[0] === "'" || n[0] === '"') {
       al= n[1]
     }
     //console.log("AS   " + JSON.stringify(_ctx));
@@ -1081,7 +1091,8 @@ COLUMN CALLED ["sum","where"]
       }
       return otext
     }
-    
+    // FIXME: кажется это вообще не работает, так как ожидается n в виде текста, а он может быть []
+    // но сюда мы не попадаем, так как _variables["_result"]
     return quot_as_expression(_variables["_target_database"], otext, n)
   }
   _context[':'].ast = [[],{},[],1]; // mark as macro
@@ -1107,15 +1118,18 @@ COLUMN CALLED ["sum","where"]
   // either 1 or 3 args !!!
   _context['range'] = function(from, to, step) {
     if (_variables._target_database === 'clickhouse'){
+      let r
       if (to === undefined) {
-        return `arrayJoin(range(${from}))`
+        r = `arrayJoin(range(${from}))`
       } else {
         if (step === undefined){
-          return `arrayJoin(range(${from},${to}))`
+          r = `arrayJoin(range(${from},${to}))`
         } else {
-          return `arrayJoin(range(${from},${to}, ${step}))`
+          r = `arrayJoin(range(${from},${to}, ${step}))`
         }
       }
+      _variables["_result"]["is_range_column"] = true
+      return r
     } else if (_variables._target_database === 'postgresql'){
       let s = ''
       if (to === undefined) {
@@ -1442,8 +1456,13 @@ COLUMN CALLED ["sum","where"]
   _context['get_in'] = makeSF((ast, ctx, rs) => {
     // FIXME, кажется это вызывается из sql_where
     // возвращаем переменные, которые в нашем контексте, вызывая стандартный get_in
-    // при этом наши переменные фильтруем!!пока что есть только _user_info
-    let _v = {"user": _variables["_user_info"]};
+    // при этом наши переменные фильтруем!!пока что есть только _user_info и koob.request
+    let _v = {
+      "user": _variables["_user_info"], 
+      "koob" : {"query": _variables["_koob_api_request_body"]}
+    };
+    //console.log(JSON.stringify(_v))
+    //console.log(JSON.stringify(eval_lisp(["get_in"].concat(ast), _v, rs)))
     return eval_lisp(["get_in"].concat(ast), _v, rs);
   });
 
@@ -1502,10 +1521,20 @@ COLUMN CALLED ["sum","where"]
   }
   _context['not'].ast = [[],{},[],1]; // mark as macro
 
+
+  /**
+   * resolveOptions может иметь ключ resolveString, но мы добавляем опцию
+   * reolveColumn и если ЯВНО равно false, то неделаем поиска столбцов,которые былипо-умолчанию
+   */
   _context["'"] = makeSF((ast, ctx, rs) => {
     //console.log(`QUOT ${JSON.stringify(ast)} ${JSON.stringify(_variables["_result"])}`)
     // try to check if it is a column?
     let a = ast[0];
+
+    if ( rs.resolveColumn === false) {
+      //console.log(`SINGLE QUOT resolveColumn: false ==${db_quote_literal(a)}==`)
+      return db_quote_literal(a)
+    }
     
     //console.log(`QUOT ${JSON.stringify(ast)} ==${c}== ${JSON.stringify(_variables["_result"])}`)
     //console.log(`CMP: ${c} !== ${a}\n ${JSON.stringify(_variables)}`)
@@ -1530,17 +1559,27 @@ COLUMN CALLED ["sum","where"]
     }
   })
 
+ /**
+   * resolveOptions может иметь ключ resolveString, но мы добавляем опцию
+   * reolveColumn и если ЯВНО равно false, то неделаем поиска столбцов,которые былипо-умолчанию
+   */
+
   _context['"'] = makeSF((ast, ctx, rs) => {
     //console.log(`QUOT ${JSON.stringify(ast)} ${JSON.stringify(_variables["_result"])}`)
     // try to check if it is a column?
     let a = ast[0];
-    let c = _context["column"](a)
-    //console.log(`QUOT ${JSON.stringify(ast)} ==${c}== ${JSON.stringify(_variables["_result"])}`)
-    if (c != a) {
-      // значит уже есть sql выражение, например ("рус яз")
-      return c
-    } else {
+    if ( rs.resolveColumn === false) {
+      //console.log(`QUOT resolveColumn: false ==${db_quote_ident(a)}==`)
       return db_quote_ident(a)
+    } else {
+      let c = _context["column"](a);
+      //console.log(`QUOT ${JSON.stringify(ast)} ==${c}== ${JSON.stringify(_variables["_result"])}`)
+      if (c != a) {
+        // значит уже есть sql выражение, например ("рус яз")
+        return c
+      } else {
+        return db_quote_ident(a)
+      }
     }
   })
 
@@ -1557,6 +1596,11 @@ COLUMN CALLED ["sum","where"]
     // so we created our own version...
     // console.log("QL: " + el)
     return el === null ? null : db_quote_literal(el)
+  }
+
+  // специальная функция, видя которую не делаем магию и не подставляем имена столбцов куда попало 
+  _context["ensureThat"] = function(el) {
+    return el
   }
 
   /* тут мы не пометили AGG !!!
@@ -2037,11 +2081,12 @@ function get_parallel_hierarchy_filters(_cfg, columns, _filters) {
           if (isString(el.config.defaultValue) && el.config.defaultValue.startsWith('lpe:')) {
             let expr = el.config.defaultValue.substr(4)
             let evaled = parse(expr)
-            
-            if (isArray(evaled) && evaled[0] != '"' && evaled[0] != "'") {
-              _filters[el.id] = evaled
-            } else {
+
+            if (isArray(evaled) && (evaled[0] === '"' || evaled[0] === "'") ) {
+              // это константа и поэтому нужно добавить равенство!
               _filters[el.id] = ["=", evaled]
+            } else {
+              _filters[el.id] = evaled
             }
           } else {
             _filters[el.id] = ["=",el.config.defaultValue]
@@ -2186,6 +2231,7 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
 /* нужно пройти по LPE и добавить второй аргумент ко всем вызовам column(), чтобы чётко указать
 что это контекст where или having */
 
+
   let reformator = function(ar) {
     if (isArray(ar)) {
       if (ar[0] === "column") {
@@ -2206,7 +2252,7 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
       return h
   })
   
-  //console.log("get_filters_array <<<< " + JSON.stringify(filters_array))
+  //console.log("get_filters_array0 <<<< " + JSON.stringify(filters_array))
 
   let comparator = function(k) {
     return k !== ""
@@ -2225,17 +2271,32 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
     }
   }
 
+  let local_alias_lpe_evaled_map = {}
+
   if (isArray(required_columns) && required_columns.length > 0) {
+    //console.log(`REQ COLS: ${JSON.stringify(required_columns)}`)
     required_columns = required_columns.map(el => {
       let ast = parse(el)
       let colname, aliasname
-      //console.log('> ' + JSON.stringify(ast))
+      //console.log('get_filters_array1> ' + JSON.stringify(ast))
       if (isArray(ast)) {
         //[":",["'","dt"],["'","date"]]
         // FIXME: не будем делать context & eval, но надо бы
+
         if (ast[0] === ':') {
           colname = ignore_quot(ast[1])
-          aliasname = ignore_quot(ast[2])
+          // [":",["'","dt"],["()",["->",["\"","date space"],["\"","tbl"],["\"","col"]]]]
+          if (isArray(ast[2]) && ast[2][0] === '()') {
+            ast[2] = ast[2][1]
+            aliasname = eval_lisp(ast[2], context)
+            //console.log(`get_filters_array2><< ${aliasname} ==` + JSON.stringify(ast[2]))
+            local_alias_lpe_evaled_map[aliasname] = true
+          } else {
+            //aliasname = ignore_quot(ast[2])
+            aliasname = eval_lisp(ast[2], context)
+          }
+          //console.log('get_filters_array3=== ' + aliasname)
+          
         } else {
           colname = ignore_quot(ast)
           aliasname = colname
@@ -2265,6 +2326,16 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
   //FIXME hack чтобы работал код для agg функций
   context[1]["_result"] = {"columns":[]}
 
+  let should_quot_local_alias = function(a) {
+    if (local_alias_lpe_evaled_map[a] === true) {
+      return false
+    }
+    if (a.startsWith("'") || a.startsWith('"')) {
+      return false
+    }
+    return should_quote_alias(a)
+  }
+
   var ret = filters_array.map(_filters => {
       let part_where = null
       let pw = Object.keys(_filters).filter(k => comparator(k)).map( 
@@ -2274,8 +2345,9 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
                     const [op, ...args] = _filters[key];
 
                     let colname = aliases[key] // это только при наличии required_columns
+                    //console.log(`   STEP ${colname}`)
                     if (isString(colname)){
-                      if (should_quote_alias(colname)) {
+                      if (should_quot_local_alias(colname)) {
                         // FIXME: double check that lisp is ok with quoted string
                         colname = db_quote_ident(colname)
                       }
@@ -2288,7 +2360,14 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
                         colname = ["column", key, sql_context]
                       }
                     }
-                    return [op, ["ignore(me)", colname], ...args];
+                    //console.log(`   STEP1 ${colname}`)
+
+                    if (op === "ensureThat") {
+                      return [op, ...args]
+                    } else {
+                      //console.log(`STEP0: ${colname} == ${local_alias_lpe_evaled_map[colname]} `)
+                      return [op, ["ignore(me)", colname], ...args];
+                    }
                     
                     /*
                     let el = _filters[key].slice(0)
@@ -2314,7 +2393,7 @@ function get_filters_array(context, filters_array, cube, required_columns, negat
 
       if (pw.length > 0) {
         let wh = ["and"].concat(pw)
-        //console.log("WHERE", JSON.stringify(wh))
+        //console.log("--WHERE", JSON.stringify(wh))
         // возможно, тут нужен спец. контекст с правильной обработкой or/and  функций.
         // ибо первым аргументом мы тут всегда ставим столбец!!! 
         //console.log('*****: ' + JSON.stringify(wh))
@@ -2368,8 +2447,8 @@ function cache_alias_keys(_cfg) {
 //  но возможно для teradata и oracle мы захотим брать в двойные кавычки...
 function genereate_subtotals_group_by(cfg, group_by_list, target_database){
   let subtotals = cfg["subtotals"]
-  let ret = {'group_by':'', 'select':[]}
-  //console.log(`CFG ${JSON.stringify(cfg)}`)
+  let ret = {'group_by':'', 'select':[], 'having': ''}
+  //console.log(`SUBTOTALS CFG ${JSON.stringify(cfg)}`)
   // {"ds":"ch","cube":"fot_out",
   //console.log(`GROUP BY: ${JSON.stringify(subtotals)} ${JSON.stringify(group_by_list)}`)
   if (group_by_list.length === 0) {
@@ -2399,11 +2478,11 @@ function genereate_subtotals_group_by(cfg, group_by_list, target_database){
           if (i===-1){
             if (group_by_columns === null){
               group_by_columns = group_by_list.map(el => isString(el.columns[0]) ? el.columns[0].split('.')[2]:undefined).filter(el => el !== undefined)
-              console.log(JSON.stringify(group_by_columns));
+              //console.log(JSON.stringify(group_by_columns));
             }
             var i = group_by_columns.indexOf(col)
             if (i===-1){
-              console.log(`GROUP BY for ${col} : ${JSON.stringify(group_by_list)}`)
+              //console.log(`GROUP BY for ${col} : ${JSON.stringify(group_by_list)}`)
               // GROUP BY: ["dt"] [{"columns":["ch.fot_out.dt"],"alias":"ddd","expr":"(NOW() - INTERVAL '1 DAY')"}]
               throw Error(`looking for column ${col} listed in subtotals, but can not find in group_by`)
             }
@@ -2413,11 +2492,43 @@ function genereate_subtotals_group_by(cfg, group_by_list, target_database){
     }
   }
 
-  // check existance of range() column, we should include it as first column in every grouping set!
-  // even if 
-  // but only if range is the first column!!!
+  // check existance of range() column
   let range_cols = group_by_list.filter(el => el.is_range_column === true)
   let range_col = range_cols[0]
+  let range_col_in_the_middle = false
+
+  // проверяем, является ли range НЕ первым столбцом в subtotals ??? #1248
+  // FIXME считается, что у нас может быть только один range column!!!
+
+  for (let i=1; i<subtotals.length; i++){
+    let subtotal_name = subtotals[i]
+    let gb_range_column_index = group_by_list.findIndex( c => 
+                    c.is_range_column === true 
+                    &&
+                    (c.expr === subtotal_name 
+                    || c.expr === `"${subtotal_name}"` 
+                    || c.alias === subtotal_name
+                    || c.alias === `"${subtotal_name}"`
+                    ))
+    
+    //console.log(`${target_database}# SUBTOTAL: ${subtotal_name}` + gb_range_column_index)
+    //console.log(JSON.stringify(group_by_list))
+    if ( gb_range_column_index !== -1 ) {
+      range_col_in_the_middle = true
+      range_col = group_by_list[gb_range_column_index]
+      break;
+    }
+  } // for
+
+  /*
+  if (!range_col_in_the_middle && isObject(range_col) && group_by_list[0].is_range_column !== true){
+    // есть вариант, что в subtotals у нас не найдено range in the middle, но
+    // в самом group by есть range, и он не на первом месте (но по фэншую надо искать с условием не только на первом месте)
+    // На всякий случай добавляем фильтрацию!
+
+    range_col_in_the_middle = true
+  }*/
+
   //let accum_val = (group_by_list[0] && group_by_list[0].is_range_column === true) ? [range_col.expr] : []
   let accum_val = []
 
@@ -2435,7 +2546,7 @@ function genereate_subtotals_group_by(cfg, group_by_list, target_database){
     }
     return r
     */
-   // FIXME: range shoulf be handled smartly!!!!
+   // FIXME: range should be handled smartly!!!!
     return group_by_list.filter(c => c.expr !== col && c.expr !== `"${col}"` 
                                  && c.alias !== col && c.alias !== `"${col}"`
                                 ).map(c => c.expr).join(', ')
@@ -2466,22 +2577,24 @@ function genereate_subtotals_group_by(cfg, group_by_list, target_database){
           res.shift(); // remove GROUPING SETS () 
 
 /*
-
+SEE #706 !!!
           -GROUP BY GROUPING SETS ((koob__range__table__.day_of_calendar - 1, (NOW() - INTERVAL '1 DAY'), v_main, group_pay_name)
-we should rmove this useless item:,(koob__range__table__.day_of_calendar - 1),
+we should remove this useless item:,(koob__range__table__.day_of_calendar - 1),
           -                        (koob__range__table__.day_of_calendar - 1,(NOW() - INTERVAL '1 DAY')),
           -                        (koob__range__table__.day_of_calendar - 1,(NOW() - INTERVAL '1 DAY'),v_main)
           -  
 */
+
+/*
           if (group_by_list[0].is_range_column && res.length>1) {
             res.shift();
           }
-
+*/
           return res;
     }
   let conf = cfg["config"] || {};
 
-  let subtotals_combinations = conf["subtotalsMode"] == "AllButOneInterleaved"
+  let subtotals_combinations = conf["subtotalsMode"] === "AllButOneInterleaved"
                               ? cross_subtotals_combinations
                               : hier_subtotals_combinations;
   let uberTotal = ''
@@ -2489,12 +2602,9 @@ we should rmove this useless item:,(koob__range__table__.day_of_calendar - 1),
 
   // #756 не надо добавлять () даже если просили, если есть range()
   if (conf["subtotalsTotal"] && !range_col) {
-    // FIXME !!! нужно добавить (), но это должно работать вместе с range() и не ломать ответ
     uberTotal = ",\n                        ()"
   }
 
-  // делать дедупликацию пока что сложно, поэтому временно сделаем distinct
-  // FIXME
 /*
 GRPBY: {"columns":[],"unresolved_aliases":["type_oe_bi"],"expr":"type_oe_bi"}
 SUBTOTAL: type_oe_bi
@@ -2503,6 +2613,8 @@ GRPBY: {"columns":[],"expr":"ch.fot_out.dt"}
 SUBTOTAL: dt
 */
   if (conf["subtotalsMode"] != "AllButOneInterleaved") {
+    //console.log('group_by_list: ' + JSON.stringify(group_by_list))
+    //console.log('subtotals: ' + JSON.stringify(subtotals))
 
     if (group_by_list.length == subtotals.length // || 
       /* есть range() и совпадает кол-во subtotals с group by */ 
@@ -2522,6 +2634,7 @@ SUBTOTAL: dt
         // Удаляем бессмысленную группировку, так как она и так учтена в GROUP BY
         subtotals = subtotals.slice(0,-1)
 
+        /* See #706 - не нужно удалять subtotal по range()
         if (range_col && subtotals.length === 1 && 
           (subtotals[0] === group_by_list[0].alias || subtotals[0] === group_by_list[0].expr) &&
           group_by_list[0].is_range_column
@@ -2529,8 +2642,11 @@ SUBTOTAL: dt
           // after cleaning of the last column we have only range column = it is useless!
           // console.log('FIRST GRPBY: ' + JSON.stringify(group_by_list[0]))
           // console.log('FIRST SUBTOTAL: ' + subtotals[0])
-          subtotals = []
-        }
+           subtotals = []
+        }*/
+
+
+
         /*
         if (subtotals.length === 0){
           // проверяем range()
@@ -2568,6 +2684,19 @@ SUBTOTAL: dt
       return `"∑${r}"`
     }
   }
+
+  let get_grouping_expr = function(el){
+    return `GROUPING(${el.expr})`;
+  }
+
+  /* временно отключаем, нужно не алиас подставлять а exp */
+
+  if (range_col_in_the_middle && isObject(range_col)){
+    // не нужны суммы по range()!! #1248
+    let a = target_database === 'clickhouse' ? get_alias(range_col) : get_grouping_expr(range_col)
+    ret.having = `${a} != 1`
+  }
+
   ret.select = group_by_list.map(el => `GROUPING(${el.expr}) AS ${get_alias(el)}`)
   return ret
 }
@@ -2584,12 +2713,14 @@ _vars["_cube"] содержит уже выбранную запись из ба
 
 export function generate_koob_sql(_cfg, _vars) {
 // так как мы потом меняем _vars, дописывая туда _ds и _cube для более удобного резолва
-// столбцов, то нужно ценнную иифу запомнить!
+// столбцов, то нужно ценнную инфу запомнить!
 
   let _req_cube_info = _vars["_cube"]
 
   //let _context = {... _vars};
   let _context = _vars
+  _context["_koob_api_request_body"] = _cfg; // запоминаем весь запрос из клиента, то есть можно перейти к одному аргументу _vars в будущем!
+
   if (isHash(_cfg["coefficients"])){
     _context["_coefficients"] = _cfg["coefficients"]
   }
@@ -2714,6 +2845,7 @@ export function generate_koob_sql(_cfg, _vars) {
     _context[1]["_result"]["agg"] = false
 
     // парсим пока что только первый аргумент!!!
+    //console.log(JSON.stringify(ast))
     let col = eval_lisp(ast[0], ctx, rs)
 
     if(!_context[1]["_result"]["agg"]) {
@@ -3553,6 +3685,14 @@ export function generate_koob_sql(_cfg, _vars) {
             ) {
           let subtotals = genereate_subtotals_group_by(_cfg, _cfg["_group_by"], _context[1]["_target_database"])
 
+          if (subtotals.having !== '') {
+            if (havingSQL === '') {
+              havingSQL = `\nHAVING ${subtotals.having}`
+            } else {
+              havingSQL = havingSQL.replace("\nHAVING","\nHAVING (")
+              havingSQL = `${havingSQL}) AND (${subtotals.having})`
+            }
+          }
           group_by = subtotals.group_by
           select_tail = `${select_tail}, ${subtotals.select.join(', ')}`
           // We need to add extra columns to the select as well
@@ -3617,7 +3757,7 @@ export function generate_koob_sql(_cfg, _vars) {
 
       // ищем filters(a,v,c)
       // FIXME: не делаем access_filters :()
-      re = /\$\{filters\(([^\)]+)\)\}/gi
+      re = /\$\{filters\(([^\}]+)\)\}/gi
       
       function inclusive_replacer(match, columns_text, offset, string) {
         if (SQLWhereNegate) {

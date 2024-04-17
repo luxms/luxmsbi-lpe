@@ -2,7 +2,7 @@ var assert = require('assert');
 var lpe = require('../dist/lpe');
 
 globalThis.MOCKcubeColumns =  [
-   {"id":"bi.cube.filters","sql_query":"filters","type":"STRING","config":{"possible_aggregations": []}},
+   {"id":"bi.cube.filters","sql_query":"filters","type":"STRING","config":{"defaultValue":"lpe:ensureThat(filters = total(max(if(a=1, id, null))))", "possible_aggregations": []}},
    {"id":"bi.cube.id","sql_query":"id","type":"NUMBER","config":{"possible_aggregations": []}},                                     
    {"id":"bi.cube.org_fullname_nm","sql_query":"org_fullname_nm","type":"STRING","config":{"possible_aggregations": []}},           
    {"id":"bi.cube.org_shortname_nm","sql_query":"org_shortname_nm","type":"STRING","config":{"possible_aggregations": []}},         
@@ -25,8 +25,8 @@ globalThis.MOCKcubeColumns =  [
    
    globalThis.MOCKCubeSQL = {
       "clickhouse-bi.cube":{
-         "query": `max.table \${filters(spec_mtr_nm:vpz_nm)}`, 
-         "config": {"is_template":1}}}
+         "query": `max.table`, 
+         "config": {"is_template":0}}}
 
 
 
@@ -36,7 +36,7 @@ describe('LPE KOOB window', function() {
    it('should eval defaultValue', function() {
       assert.equal( lpe.generate_koob_sql(
          {"columns":[
-                     "vpz_nm", "max(dt):min", "min(dt)"
+                     "vpz_nm", "max(dt):min", "min(dt)", "lpe(rand())", "rand()"
                   ],
          "filters":{
             "spec_mtr_nm": ["!=","1","2"]

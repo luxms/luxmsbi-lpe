@@ -1,70 +1,62 @@
 var assert = require('assert');
 var lpe = require('../dist/lpe');
 
-/*
-{"columns": 
-["doc_currcy", "fm_area", "loc_currcy", "fiscper", 
-"running(sum, deb_cre_lc, -fiscper):rs",
-"running(lead, rs):lead",
-"rs - lead",
-"(lead / rs * 100):perda"
-]
-select loc_currcy,fiscper, deb_cre_lc,  deb_cre_lc_accum, perda, prev from (
-SELECT
-    fiscper,doc_currcy,loc_currcy,
-    finalizeAggregation(mnt) AS deb_cre_lc,
-    runningAccumulate(mnt, (doc_currcy,loc_currcy)) AS deb_cre_lc_accum,
-    finalizeAggregation(mnt) / runningAccumulate(mnt, (doc_currcy,loc_currcy)) * 100  as perda,
-    runningAccumulate(mnt, (doc_currcy,loc_currcy)) - finalizeAggregation(mnt)  as prev
-FROM
-(
-select fiscper,doc_currcy,loc_currcy, initializeAggregation('sumState',count(deb_cre_lc )) as mnt 
-from gpn.zgrccp410_out zv 
-group by fiscper,doc_currcy ,loc_currcy
-order by doc_currcy,loc_currcy,fiscper
-)
-) where fiscper = '2019-03-01'
-
-*/
-
-describe('LPE tests', function() {
-
-   it('should eval KOOB total', function() {
-
-      assert.equal( lpe.generate_koob_sql(
-         {"columns":["branch4", "window(sum(6))"],
-         "distinct":false,
-         "filters":{"branch4":["=",["total",["sum", "branch4"]]]},
-         "with":"ch.fot_out"},
-               {"key":null, "_target_database": "clickhouse"}),
-`SELECT DISTINCT COUNT(CASE WHEN (v_main > 1) AND (v_main < 100) THEN 1 END) as v_main, sum(v_rel_pp) as v_rel_pp, sum(v_rel_fzp) as v_rel_fzp, sum(v_rel_pp_i), group_pay_name as group_pay_name
-FROM fot_out AS fot_out
-WHERE ((NOW() - INTERVAL '1 DAY') NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано') AND (area_name = 'Не задано') AND (hcode_name = 'ФЗП') AND (type_oe_bi = 'РЖД') AND (region_name = 'Не задано') AND (category_name = 'Не задано') AND (group_pay_name != 'Не задано') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (pay_code != 'Не задано') AND (sex_code IS NULL)`
-            );
-
-})
+globalThis.MOCKcubeColumns =  [
+   {"id":"bi.cube.filters","sql_query":"filters","type":"STRING","config":{"possible_aggregations": []}},
+   {"id":"bi.cube.id","sql_query":'"id"',"type":"NUMBER","config":{"possible_aggregations": []}},                                     
+   {"id":"bi.cube.org_fullname_nm","sql_query":"org_fullname_nm","type":"STRING","config":{"possible_aggregations": []}},           
+   {"id":"bi.cube.org_shortname_nm","sql_query":"org_shortname_nm","type":"STRING","config":{"possible_aggregations": []}},         
+   {"id":"bi.cube.contracts_by_year","sql_query":"contracts_by_year","type":"STRING","config":{"possible_aggregations": []}},       
+   {"id":"bi.cube.all_contracts","sql_query":"all_contracts","type":"STRING","config":{"possible_aggregations": []}},               
+   {"id":"bi.cube.additional_contracts","sql_query":"additional_contracts","type":"STRING","config":{"possible_aggregations": []}}, 
+   {"id":"bi.cube.ratio_paid_balance","sql_query":"ratio_paid_balance","type":"STRING","config":{"possible_aggregations": []}},     
+   {"id":"bi.cube.rating","sql_query":"rating","type":"STRING","config":{"possible_aggregations": []}},                             
+   {"id":"bi.cube.contracts_status","sql_query":"contracts_status","type":"STRING","config":{"possible_aggregations": []}},         
+   {"id":"bi.cube.purchase_method","sql_query":"purchase_method","type":"STRING","config":{"possible_aggregations": []}},           
+   {"id":"bi.cube.tru","sql_query":"tru","type":"STRING","config":{"possible_aggregations": []}},                                   
+   {"id":"bi.cube.kgg_rank","sql_query":"kgg_rank","type":"STRING","config":{"possible_aggregations": []}},                         
+   {"id":"bi.cube.dt","sql_query":"dt","type":"NUMBER","config":{"possible_aggregations": []}},                                     
+   {"id":"bi.cube.purch_region_nm","sql_query":"purch_region_nm","type":"STRING","config":{"possible_aggregations": []}},           
+   {"id":"bi.cube.spec_mtr_nm","sql_query":"spec_mtr_nm","type":"STRING","config":{"possible_aggregations": []}},                   
+   {"id":"bi.cube.vpz_nm","sql_query":"vpz_nm","type":"STRING","config":{"possible_aggregations": []}},                             
+   {"id":"bi.cube.purch_method_nm","sql_query":"purch_method_nm","type":"STRING","config":{"possible_aggregations": []}},           
+   {"id":"bi.cube.org_inn_cd","sql_query":"org_inn_cd","type":"STRING","config":{"possible_aggregations": []}},                     
+   {"id":"bi.cube.regions","sql_query":"regions","type":"STRING","config":{"possible_aggregations": []}}]
 
 
+         it('should eval empty and()', function() {
 
-   it('should eval KOOB queries', function() {
-
-      assert.equal( lpe.generate_koob_sql(
-         {"columns":["branch4","uniq(ss1):ss1"],
-         "distinct":false,
-         "filters":{"ss1":["between","2020-03","2020-04"]},
-         "with":"ch.fot_out"},
-               {"key":null, "_target_database": "clickhouse"}),
-`SELECT DISTINCT COUNT(CASE WHEN (v_main > 1) AND (v_main < 100) THEN 1 END) as v_main, sum(v_rel_pp) as v_rel_pp, sum(v_rel_fzp) as v_rel_fzp, sum(v_rel_pp_i), group_pay_name as group_pay_name
-FROM fot_out AS fot_out
-WHERE ((NOW() - INTERVAL '1 DAY') NOT IN ('2020-03', '2020-04')) AND (pay_name != 'Не задано') AND (area_name = 'Не задано') AND (hcode_name = 'ФЗП') AND (type_oe_bi = 'РЖД') AND (region_name = 'Не задано') AND (category_name = 'Не задано') AND (group_pay_name != 'Не задано') AND (municipal_name = 'Не задано') AND (prod_group_name = 'Не задано') AND (profession_name = 'Не задано') AND (pay_code != 'Не задано') AND (sex_code IS NULL)
-GROUP BY group_pay_name
-ORDER BY group_pay_name, v_main`
-            );
-
-})
-
-});
-
-
-
+            globalThis.MOCKCubeSQL = {
+               "clickhouse-bi.cube":{
+                  "query": `(SELECT 1 from cube
+where \${filters(id:("bi"."cube"."id"))}
+where \${filters(dt:("bi"."cube".'dt'))}
+where \${filters(dt:(bi.cube.dt))}
+where \${filters(id:(bi.cube.id))}
+where \${filters(id:(bi1.cube.id))}
+where \${filters(id:(cube.id))}
+`, 
+                  "config": {"is_template": 1,"skip_where": 1}}}
+            
+                        assert.equal( lpe.generate_koob_sql(
+                           {"columns":[
+                                       "regions"
+                                    ],
+                           "filters":{
+                              "dt":["between",2019,2022],
+                              "id":["=",23000035]
+                           },
+                           "with":"bi.cube"},
+                                 {"_target_database": "clickhouse"}),
+                     `SELECT regions as regions
+FROM (SELECT 1 from cube
+where ("bi"."cube"."id" = 23000035)
+where ("bi"."cube".'dt' BETWEEN 2019 AND 2022)
+where (dt BETWEEN 2019 AND 2022)
+where ("id" = 23000035)
+where (bi1.cube.id = 23000035)
+where (cube.id = 23000035)
+`
+                              );
+                     });
 

@@ -34,8 +34,6 @@ or \${filters(id,dt)})`,
 
 //             "pay_code":["and",["ilike","%А%"],["=","2022-01-02","2022-10-10","2020-09-09"]]
 describe('KOOB templates', function() {
-
-
    it('should eval to_char', function() {
       assert.equal( lpe.generate_koob_sql(
          {"columns":[
@@ -235,7 +233,15 @@ FROM SELECT 1 from cube where a = true or b = var_samp(regions) or a IN (1,2,3) 
             "query": `(SELECT 1 from cube where
 \${filters()}
 or \${filters(except(vpz_nm))}
-or \${filters("id",'dt':'date space')})`, 
+or \${filters("id",'dt':date_space)}
+or \${filters("id",'dt':"date space")}
+or \${filters("id",'dt':'date space')}
+or \${filters("id",'dt':("date space"))}
+or \${filters("id",'dt':('date space'))}
+or \${filters(id:("bi"."cube"."id"))}
+or \${filters(id:("date_space"."tbl"."col"))}
+or \${filters('dt':("date space"."tbl"."col0"),'id':("date space 2"))}
+or \${filters("id",'dt':("date space"."tbl"."col"))})`,
             "config": {"is_template": 1,"skip_where": 1}}}
 /* FIXME:except  and usual filters тоже должны использоватьимя куба!!!
 но это должна быть опция, так как мы не знаем в каком месте SQL реально стоит filters()
@@ -260,11 +266,19 @@ or \${filters("id",'dt':'date space')})`,
 FROM (SELECT 1 from cube where
 (toString(regions) ILIKE '%N%') AND (id = 123) AND ((toString(dt) ILIKE '%А%') AND (dt IN ('2022-01-02', '2022-10-10', '2020-09-09')))
 or (toString(regions) ILIKE '%N%') AND (id = 123) AND ((toString(dt) ILIKE '%А%') AND (dt IN ('2022-01-02', '2022-10-10', '2020-09-09')))
-or (id = 123) AND ((toString("date space") ILIKE '%А%') AND ("date space" IN ('2022-01-02', '2022-10-10', '2020-09-09'))))
+or (id = 123) AND ((toString(date_space) ILIKE '%А%') AND (date_space IN ('2022-01-02', '2022-10-10', '2020-09-09')))
+or (id = 123) AND ((toString("date space") ILIKE '%А%') AND ("date space" IN ('2022-01-02', '2022-10-10', '2020-09-09')))
+or (id = 123) AND ((toString('date space') ILIKE '%А%') AND ('date space' IN ('2022-01-02', '2022-10-10', '2020-09-09')))
+or (id = 123) AND ((toString("date space") ILIKE '%А%') AND ("date space" IN ('2022-01-02', '2022-10-10', '2020-09-09')))
+or (id = 123) AND ((toString('date space') ILIKE '%А%') AND ('date space' IN ('2022-01-02', '2022-10-10', '2020-09-09')))
+or ("bi"."cube"."id" = 123)
+or ("date_space"."tbl"."col" = 123)
+or ("date space 2" = 123) AND ((toString("date space"."tbl"."col0") ILIKE '%А%') AND ("date space"."tbl"."col0" IN ('2022-01-02', '2022-10-10', '2020-09-09')))
+or (id = 123) AND ((toString("date space"."tbl"."col") ILIKE '%А%') AND ("date space"."tbl"."col" IN ('2022-01-02', '2022-10-10', '2020-09-09'))))
 GROUP BY id
 ORDER BY id LIMIT 10`
-               );
-   });
+               )
+});
 
 
    it('should eval KOOB SUBTOTALS ONE PLAIN ROW', function() {
@@ -364,6 +378,70 @@ GROUP BY GROUPING SETS ((ddd, all_contracts, regions, tru)
 ORDER BY all_contracts, regions`
                );
          });
+});
+
+
+describe('lpe IN aliases', function() {
+   it('should () with alias', function() {
+
+      globalThis.MOCKcubeColumns =  [
+         {"id":"bi.cube.filters","sql_query":"filters","type":"STRING","config":{"possible_aggregations": []}},
+         {"id":"bi.cube.id","sql_query":'"id"',"type":"NUMBER","config":{"possible_aggregations": []}},                                     
+         {"id":"bi.cube.org_fullname_nm","sql_query":"org_fullname_nm","type":"STRING","config":{"possible_aggregations": []}},           
+         {"id":"bi.cube.org_shortname_nm","sql_query":"org_shortname_nm","type":"STRING","config":{"possible_aggregations": []}},         
+         {"id":"bi.cube.contracts_by_year","sql_query":"contracts_by_year","type":"STRING","config":{"possible_aggregations": []}},       
+         {"id":"bi.cube.all_contracts","sql_query":"all_contracts","type":"STRING","config":{"possible_aggregations": []}},               
+         {"id":"bi.cube.additional_contracts","sql_query":"additional_contracts","type":"STRING","config":{"possible_aggregations": []}}, 
+         {"id":"bi.cube.ratio_paid_balance","sql_query":"ratio_paid_balance","type":"STRING","config":{"possible_aggregations": []}},     
+         {"id":"bi.cube.rating","sql_query":"rating","type":"STRING","config":{"possible_aggregations": []}},                             
+         {"id":"bi.cube.contracts_status","sql_query":"contracts_status","type":"STRING","config":{"possible_aggregations": []}},         
+         {"id":"bi.cube.purchase_method","sql_query":"purchase_method","type":"STRING","config":{"possible_aggregations": []}},           
+         {"id":"bi.cube.tru","sql_query":"tru","type":"STRING","config":{"possible_aggregations": []}},                                   
+         {"id":"bi.cube.kgg_rank","sql_query":"kgg_rank","type":"STRING","config":{"possible_aggregations": []}},                         
+         {"id":"bi.cube.dt","sql_query":"dt","type":"NUMBER","config":{"possible_aggregations": []}},                                     
+         {"id":"bi.cube.purch_region_nm","sql_query":"purch_region_nm","type":"STRING","config":{"possible_aggregations": []}},           
+         {"id":"bi.cube.spec_mtr_nm","sql_query":"spec_mtr_nm","type":"STRING","config":{"possible_aggregations": []}},                   
+         {"id":"bi.cube.vpz_nm","sql_query":"vpz_nm","type":"STRING","config":{"possible_aggregations": []}},                             
+         {"id":"bi.cube.purch_method_nm","sql_query":"purch_method_nm","type":"STRING","config":{"possible_aggregations": []}},           
+         {"id":"bi.cube.org_inn_cd","sql_query":"org_inn_cd","type":"STRING","config":{"possible_aggregations": []}},                     
+         {"id":"bi.cube.regions","sql_query":"regions","type":"STRING","config":{"possible_aggregations": []}}]
+         
+
+      globalThis.MOCKCubeSQL = {
+         "clickhouse-bi.cube":{
+            "query": `(SELECT 1 from cube
+where \${filters(id:("bi"."cube"."id"))}
+where \${filters(dt:("bi"."cube".'dt'))}
+where \${filters(dt:(bi.cube.dt))}
+where \${filters(id:(bi.cube.id))}
+where \${filters(id:(bi1.cube.id))}
+where \${filters(id:(cube.id))}
+`, 
+            "config": {"is_template": 1,"skip_where": 1}}}
+      
+                  assert.equal( lpe.generate_koob_sql(
+                     {"columns":[
+                                 "regions"
+                              ],
+                     "filters":{
+                        "dt":["between",2019,2022],
+                        "id":["=",23000035]
+                     },
+                     "with":"bi.cube"},
+                           {"_target_database": "clickhouse"}),
+               `SELECT regions as regions
+FROM (SELECT 1 from cube
+where ("bi"."cube"."id" = 23000035)
+where ("bi"."cube".'dt' BETWEEN 2019 AND 2022)
+where (dt BETWEEN 2019 AND 2022)
+where ("id" = 23000035)
+where (bi1.cube.id = 23000035)
+where (cube.id = 23000035)
+`
+                        );
+               });
+
+
 });
 
 

@@ -59,7 +59,7 @@ ORDER BY org_shortname_nm LIMIT 5 OFFSET 10`
          {"columns":[
                      "sum(dt):'АХТУНГ'",
                      'org_fullname_nm',
-                     'range(2):rng'
+                     'range(2):rng',
                   ],
          "filters":{"org_shortname_nm":["!=", null]},
          "sort": ["org_shortname_nm"],
@@ -76,7 +76,66 @@ GROUP BY GROUPING SETS ((org_fullname_nm, koob__range__)
                        )
 ORDER BY org_shortname_nm LIMIT 5 OFFSET 10`
             );
-   });
+
+/*  в тесте выше можно было бы добавить HAVING "∑rng" != 1
+так как range нет в subtotals но есть в group by, и в group by он идёт последним
+#1248
+*/
+   assert.equal( lpe.generate_koob_sql(
+      {"columns":[
+                  "tru",
+                  "sum(dt):'АХТУНГ'",
+                  'org_fullname_nm',
+                  'range(2):rng',
+                  'org_shortname_nm'
+               ],
+      "filters":{"org_shortname_nm":["!=", null]},
+      "sort": ["org_shortname_nm"],
+      "subtotals": ["org_fullname_nm","rng","org_shortname_nm"],
+      "limit": 5,
+      "offset": 10,
+      "with":"bi.cube"},
+            {"_target_database": "postgresql"}),
+`SELECT tru as tru, sum(dt) as "АХТУНГ", org_fullname_nm as org_fullname_nm, koob__range__ as rng, org_shortname_nm as org_shortname_nm, GROUPING(tru) AS "∑tru", GROUPING(org_fullname_nm) AS "∑org_fullname_nm", GROUPING(koob__range__) AS "∑rng", GROUPING(org_shortname_nm) AS "∑org_shortname_nm"
+FROM (SELECT filters, id, dt, org_fullname_nm, org_shortname_nm from cube) AS tbl,generate_series(0, 2-1) as koob__range__
+WHERE (org_shortname_nm IS NOT NULL)
+GROUP BY GROUPING SETS ((tru, org_fullname_nm, koob__range__, org_shortname_nm)
+                       ,(org_fullname_nm),
+                        (org_fullname_nm,koob__range__),
+                        (org_fullname_nm,koob__range__,org_shortname_nm)
+                       )
+HAVING GROUPING(koob__range__) != 1
+ORDER BY org_shortname_nm LIMIT 5 OFFSET 10`
+         );
+
+
+assert.equal( lpe.generate_koob_sql(
+   {"columns":[
+               "tru",
+               "sum(dt):'АХТУНГ'",
+               'org_fullname_nm',
+               'range(2):rng',
+               'org_shortname_nm'
+            ],
+   "filters":{"org_shortname_nm":["!=", null]},
+   "sort": ["org_shortname_nm"],
+   "subtotals": ["org_fullname_nm","rng","org_shortname_nm"],
+   "limit": 5,
+   "offset": 10,
+   "with":"bi.cube"},
+         {"_target_database": "clickhouse"}),
+`SELECT tru as tru, sum(dt) as "АХТУНГ", org_fullname_nm as org_fullname_nm, arrayJoin(range(2)) as rng, org_shortname_nm as org_shortname_nm, GROUPING(tru) AS "∑tru", GROUPING(org_fullname_nm) AS "∑org_fullname_nm", GROUPING(arrayJoin(range(2))) AS "∑rng", GROUPING(org_shortname_nm) AS "∑org_shortname_nm"
+FROM cube AS cube
+WHERE (cube.org_shortname_nm IS NOT NULL)
+GROUP BY GROUPING SETS ((tru, org_fullname_nm, rng, org_shortname_nm)
+                       ,(org_fullname_nm),
+                        (org_fullname_nm,rng),
+                        (org_fullname_nm,rng,org_shortname_nm)
+                       )
+HAVING "∑rng" != 1
+ORDER BY org_shortname_nm LIMIT 5 OFFSET 10`
+      );
+});
 
 /* FIXME:
 

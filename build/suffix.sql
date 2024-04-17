@@ -35,7 +35,7 @@ AS $function$
     return '["function"]';
   } else {
     /*plv8.elog(NOTICE, "tp = ", typeof(ret));*/
-    if (typeof(ret) === 'string'){
+    if ((typeof(ret) === 'string') && (parseInt(plv8.version) < 3)){
 	    return JSON.stringify(ret);
     } else {
       return ret;
