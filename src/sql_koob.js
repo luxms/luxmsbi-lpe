@@ -21,6 +21,8 @@
 */
 
 import console from './console/console';
+import {tokenize_sql_template} from './utils/lpe_sql_tokenizer.js';
+
 import {eval_lisp, isString, isArray, isHash, isFunction, makeSF, isNumber, STDLIB} from './lisp';
 import {sql_where_context} from './sql_where';
 //import {eval_sql_where} from './sql_where';
