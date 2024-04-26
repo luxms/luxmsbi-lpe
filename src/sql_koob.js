@@ -265,12 +265,21 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
       if (el.match(/^([a-zA-Z_][\w ]*\.){1,2}[a-zA-Z_][\w ]*$/) !== null) {
         return ["column",  el]
       }
-      var ast = parse(`expr(${el})`)
-      if (typeof ast === 'string') {
-        // but if it was string, try to expand
-        return ["column", expand_column( ast )]
+
+      // can throw exceptions
+      try {
+        // try parsing
+        var ast = parse(`expr(${el})`)
+        if (typeof ast === 'string') {
+          // but if it was string, try to expand
+          return ["column", expand_column( ast )]
+        }
+
+        return ast
+      } catch {
+        // if failed, return as is
+        return ["column",  el]
       }
-      return ast
     } else if (Array.isArray(el)){
       return el
     } else {
