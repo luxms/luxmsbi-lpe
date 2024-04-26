@@ -886,6 +886,62 @@ GROUP BY (NOW() - INTERVAL '1 DAY') BETWEEN date_trunc('quarter', (NOW() - INTER
 );
 });
 
+it('Should eval with column names outside "A-Za-z_ " range', function() {
+   assert.equal( lpe.generate_koob_sql(
+      {"columns":[
+         'Т Е С Т 1',
+         'Т Е С Т 2',
+         'Т Е С Т 3'
+      ],
+      "filters":{},
+      "sort":[],
+      "with":"ch.fot_out"},
+            {"_target_database": "postgresql"}),
+`SELECT "Т Е С Т 1" as "Т Е С Т 1", "Т Е С Т 2" as "Т Е С Т 2", "Т Е С Т 3" as "Т Е С Т 3"
+FROM fot_out AS fot_out`
+         );
+});
+
+it('Should eval with column names outside "A-Za-z_ " range with filters and sort', function() {
+   assert.equal( lpe.generate_koob_sql(
+       {
+         "columns":[
+           'Т Е С Т 1',
+           'Т Е С Т 2',
+           'Т Е С Т 3'
+       ],
+         "filters":{
+             "Т Е С Т 1": ["=", "test1"],
+             "Т Е С Т 3": ["=", "test3"]
+       },
+         "sort":["-Т Е С Т 2"],
+         "with":"ch.fot_out"
+       },
+       {"_target_database": "postgresql"}),
+`SELECT "Т Е С Т 1" as "Т Е С Т 1", "Т Е С Т 2" as "Т Е С Т 2", "Т Е С Т 3" as "Т Е С Т 3"
+FROM fot_out AS fot_out
+WHERE ("Т Е С Т 1" = 'test1') AND ("Т Е С Т 3" = 'test3')
+ORDER BY "Т Е С Т 2" DESC`
+         );
+});
+
+it('Should eval with column names outside "A-Za-z_ " range with function calls', function() {
+   assert.equal( lpe.generate_koob_sql(
+       {
+         "columns":[
+           "concat(\"Т Е С Т 1\", '10'):test1",
+           "concatWithSep('+', \"Т Е С Т 2\", \"Т Е С Т 3\"):res"
+       ],
+         "filters":{},
+         "sort":["+test1"],
+         "with":"ch.fot_out"
+       },
+       {"_target_database": "postgresql"}),
+`SELECT concat("Т Е С Т 1",'10') as test1, concatWithSep('+',"Т Е С Т 2","Т Е С Т 3") as res
+FROM fot_out AS fot_out
+ORDER BY test1`
+         );
+});
 
 /*
   it('Should eval defaultValue', function() {

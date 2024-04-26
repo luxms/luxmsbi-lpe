@@ -76,7 +76,10 @@ export function reports_get_columns(cubeId, dims) {
      "profession_name","config":{}}, {"id":"ch.fot_out.v_agg","type":"AGGFN","title":"v_agg","sql_query":"max(sum(v_main))","config":{}}, {"id":"ch.fot_out.v_rel_fzp","type":"SUM",
      "title":"v_rel_fzp","sql_query":"v_rel_fzp","config":{}}, {"id":"ch.fot_out.v_main","type":"SUM","title":"v_main","sql_query":"v_main","config":{}}, {"id":"ch.fot_out.v_rel_fzp","type":"SUM",
      "title":"v_rel_fzp","sql_query":"v_rel_fzp","config":{}}, {"id":"ch.fot_out.v_rel_pp","type":"SUM","title":"v_rel_pp","sql_query":"v_rel_pp","config":{}},
-     {"id":"ch.fot_out.fackt","type":"SUM","title":"fackt","sql_query":"round(v_main,2)","config":{}}];
+     {"id":"ch.fot_out.fackt","type":"SUM","title":"fackt","sql_query":"round(v_main,2)","config":{}},
+     {"id":"ch.fot_out.Т Е С Т 1","type":"SUM","title":"Т Е С Т 1","sql_query":"\"Т Е С Т 1\"","config":{}},
+     {"id":"ch.fot_out.Т Е С Т 2","type":"SUM","title":"Т Е С Т 2","sql_query":"\"Т Е С Т 2\"","config":{}},
+     {"id":"ch.fot_out.Т Е С Т 3","type":"SUM","title":"Т Е С Т 3","sql_query":"\"Т Е С Т 3\"","config":{}}];
      }
 
      var parts = cubeId.split('.')
