@@ -2491,8 +2491,7 @@ function parse(str) {
 
     return parseResult.sexpr;
   } catch (err) {
-    __WEBPACK_IMPORTED_MODULE_1__console_console__["a" /* default */].error("Error", err.message);
-    __WEBPACK_IMPORTED_MODULE_1__console_console__["a" /* default */].error("Error", err.stack);
+    __WEBPACK_IMPORTED_MODULE_1__console_console__["a" /* default */].warn(err.stack);
     throw err;
   }
 }
@@ -5561,6 +5560,24 @@ function reports_get_columns(cubeId, dims) {
       "type": "SUM",
       "title": "fackt",
       "sql_query": "round(v_main,2)",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.Т Е С Т 1",
+      "type": "SUM",
+      "title": "Т Е С Т 1",
+      "sql_query": "\"Т Е С Т 1\"",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.Т Е С Т 2",
+      "type": "SUM",
+      "title": "Т Е С Т 2",
+      "sql_query": "\"Т Е С Т 2\"",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.Т Е С Т 3",
+      "type": "SUM",
+      "title": "Т Е С Т 3",
+      "sql_query": "\"Т Е С Т 3\"",
       "config": {}
     }];
   }

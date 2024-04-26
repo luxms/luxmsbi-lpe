@@ -2525,8 +2525,7 @@ function parse(str) {
 
     return parseResult.sexpr;
   } catch (err) {
-    __WEBPACK_IMPORTED_MODULE_1__console_console__["a" /* default */].error("Error", err.message);
-    __WEBPACK_IMPORTED_MODULE_1__console_console__["a" /* default */].error("Error", err.stack);
+    __WEBPACK_IMPORTED_MODULE_1__console_console__["a" /* default */].warn(err.stack);
     throw err;
   }
 }
@@ -7503,16 +7502,23 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
 
       if (el.match(/^([a-zA-Z_][\w ]*\.){1,2}[a-zA-Z_][\w ]*$/) !== null) {
         return ["column", el];
+      } // can throw exceptions
+
+
+      try {
+        // try parsing
+        var ast = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_23__lpep__["a" /* parse */])("expr(".concat(el, ")"));
+
+        if (typeof ast === 'string') {
+          // but if it was string, try to expand
+          return ["column", expand_column(ast)];
+        }
+
+        return ast;
+      } catch (_unused) {
+        // if failed, return as is
+        return ["column", el];
       }
-
-      var ast = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_23__lpep__["a" /* parse */])("expr(".concat(el, ")"));
-
-      if (typeof ast === 'string') {
-        // but if it was string, try to expand
-        return ["column", expand_column(ast)];
-      }
-
-      return ast;
     } else if (Array.isArray(el)) {
       return el;
     } else {

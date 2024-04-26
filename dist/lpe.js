@@ -2523,8 +2523,7 @@ function parse(str) {
 
     return parseResult.sexpr;
   } catch (err) {
-    __WEBPACK_IMPORTED_MODULE_1__console_console__["a" /* default */].error("Error", err.message);
-    __WEBPACK_IMPORTED_MODULE_1__console_console__["a" /* default */].error("Error", err.stack);
+    __WEBPACK_IMPORTED_MODULE_1__console_console__["a" /* default */].warn(err.stack);
     throw err;
   }
 }
@@ -3488,6 +3487,24 @@ function reports_get_columns(cubeId, dims) {
       "type": "SUM",
       "title": "fackt",
       "sql_query": "round(v_main,2)",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.Т Е С Т 1",
+      "type": "SUM",
+      "title": "Т Е С Т 1",
+      "sql_query": "\"Т Е С Т 1\"",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.Т Е С Т 2",
+      "type": "SUM",
+      "title": "Т Е С Т 2",
+      "sql_query": "\"Т Е С Т 2\"",
+      "config": {}
+    }, {
+      "id": "ch.fot_out.Т Е С Т 3",
+      "type": "SUM",
+      "title": "Т Е С Т 3",
+      "sql_query": "\"Т Е С Т 3\"",
       "config": {}
     }];
   }
@@ -7906,16 +7923,23 @@ function normalize_koob_config(_cfg, cube_prefix, ctx) {
 
       if (el.match(/^([a-zA-Z_][\w ]*\.){1,2}[a-zA-Z_][\w ]*$/) !== null) {
         return ["column", el];
+      } // can throw exceptions
+
+
+      try {
+        // try parsing
+        var ast = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_23__lpep__["a" /* parse */])("expr(".concat(el, ")"));
+
+        if (typeof ast === 'string') {
+          // but if it was string, try to expand
+          return ["column", expand_column(ast)];
+        }
+
+        return ast;
+      } catch (_unused) {
+        // if failed, return as is
+        return ["column", el];
       }
-
-      var ast = __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_23__lpep__["a" /* parse */])("expr(".concat(el, ")"));
-
-      if (typeof ast === 'string') {
-        // but if it was string, try to expand
-        return ["column", expand_column(ast)];
-      }
-
-      return ast;
     } else if (Array.isArray(el)) {
       return el;
     } else {
