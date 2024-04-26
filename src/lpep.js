@@ -720,8 +720,7 @@ export function parse(str) {
     return parseResult.sexpr;
 
   } catch(err) {
-    console.error("Error", err.message);
-    console.error("Error", err.stack);
+    console.warn(err.stack);
     throw err;
   }
 }
