@@ -27,9 +27,9 @@ export const isFunction = (arg) => (typeof arg === 'function');
  * @param {*} ctx - array, hashmap or function that stores variables
  * @param {*} varName - the name of variable
  * @param {*} value - optional value to set (undefined if get)
- * @param {*} resolveOptions - options on how to resolve
+ * @param {*} resolveOptions - options on how to resolve. resolveString - must be checked by caller and is not handled here...
  */
-function $var$(ctx, varName, value, resolveOptions) {
+function $var$(ctx, varName, value, resolveOptions = {}) {
   if (isArray(ctx)) {                                                           // contexts chain
     for (let theCtx of ctx) {
       const result = $var$(theCtx, varName, value, resolveOptions);
@@ -43,12 +43,13 @@ function $var$(ctx, varName, value, resolveOptions) {
   }
 
   if (isFunction(ctx)) {
-    return ctx(varName, value, resolveOptions);
+      return ctx(varName, value, resolveOptions);
   }
 
   if (isHash(ctx)) {
     if (value === undefined) {                                                  // get from hash
       const result = ctx[varName];
+      //console.log(`$var: for ${varName} got ${isFunction(result)? 'FUNC' : result}`)
       if (result !== undefined) {                                               // found value in hash
         return result;
       }
@@ -175,7 +176,7 @@ const SPECIAL_FORMS = {                                                         
     return result;
   }),
   'resolve': makeSF((ast, ctx, rs) => {
-    const result = $var$(ctx, ast[0]);
+    const result = $var$(ctx, ast[0], undefined, rs);
     return result;
   }),
   'eval_lpe': makeSF((ast, ctx, rs) => {
@@ -224,14 +225,13 @@ const SPECIAL_FORMS = {                                                         
     return eval_lisp(m, ctx, rs);
   }),
   'assoc_in': makeSF((ast, ctx, rs) => {
-    const array = eval_lisp(ast[1], ctx, rs);
+    const array = eval_lisp(ast[1], ctx, {...rs, wantCallable: false});
     // удивительно, но работает set(a . 3 , 2, "Hoy")
     //const m = ["->", ast[0]].concat( array.slice(0,-1) );
     //const e = ["set", m, array.pop(), ast[2]]
     // первый аргумент в ast - ссылка на контекст/имя переменной
     //console.log('assoc_in var:', JSON.stringify(ast))
-    let focus = $var$(ctx, ast[0], undefined, rs);
-    let top = focus
+    let focus = $var$(ctx, ast[0], undefined, {...rs, wantCallable: false});
     for (var i = 0; i < array.length-1; i++) {
       if (focus[array[i]] === undefined) {
         // нужно создать
@@ -249,11 +249,11 @@ const SPECIAL_FORMS = {                                                         
     return eval_lisp(e, ctx, rs);
   }),
   'cp': makeSF((ast, ctx, rs) => {
-    const from = eval_lisp(ast[0], ctx, rs)
-    const to = eval_lisp(ast[1], ctx, rs)
-    //console.log('CP to ', JSON.stringify(to))
+    const from = eval_lisp(ast[0], ctx, {...rs, wantCallable: false})
+    const to = eval_lisp(ast[1], ctx, {...rs, wantCallable: false})
+    //console.log(`CP ${JSON.stringify(from)} to `, JSON.stringify(to))
     const lpe = ["assoc_in", to[0], ["["].concat(to.slice(1)), ["get_in", from[0], ["["].concat(from.slice(1))]]
-    //console.log('CP', JSON.stringify(lpe))
+    //console.log('CP', JSON.stringify(ast))
     return eval_lisp(lpe, ctx, rs);
   }),
   'ctx': makeSF((ast, ctx, rs) => {
@@ -277,7 +277,7 @@ export const STDLIB = {
   'Object': Object,
   'Hashmap': {},
   'Date': Date,
-  'console': globalThis.console,
+  'console': console,
   'JSON': JSON,
 
   // special forms
@@ -306,7 +306,12 @@ export const STDLIB = {
   'not': a => !a,
   'list': (...args) => args,
   'vector': (...args) => args,
-  'map': (arr, fn) => isArray(arr) ? arr.map(it => fn(it)) : [],
+  'map': makeSF((ast, ctx, rs) => {
+          let arr = eval_lisp(ast[0], ctx,  {...rs, wantCallable: false})
+          rs.wantCallable = true
+          let fn = eval_lisp(ast[1], ctx,  {...rs, wantCallable: true})
+          return isArray(arr) ? arr.map(it => fn(it)) : []
+  }),
   'filter': (arr, fn) => isArray(arr) ? arr.filter(it => fn(it)) : [],
   'throw': a => { throw(a) },
   'identity': a => a,
@@ -326,11 +331,15 @@ export const STDLIB = {
   'keys': (a) => Object.keys(a),
   'vals': (a) => Object.values(a),
   'rest': (a) => a.slice(1),
-  'split': (s,d) => s.split(d),
-  'println': (...args) => globalThis.console.log(args.map(x => isString(x) ? x : JSON.stringify(x)).join(' ')),
+  'split': makeSF((ast, ctx, rs) => {
+                  let str = eval_lisp(ast[0], ctx,  {...rs, wantCallable: false})
+                  let sep = eval_lisp(ast[1], ctx,  {...rs, wantCallable: false})
+                  return str.split(sep)
+                }),
+  'println': (...args) => console.log(args.map(x => isString(x) ? x : JSON.stringify(x)).join(' ')),
   'empty?': (a) => isArray(a) ? a.length === 0 : false,
   'cons': (a, b) => [].concat([a], b),
-  'prn': (...args) => globalThis.console.log(args.map((x) => JSON.stringify(x)).join(' ')),
+  'prn': (...args) => console.log(args.map((x) => JSON.stringify(x)).join(' ')),
   'slice': (a, b, ...end) => isArray(a) ? a.slice(b, end.length > 0 ? end[0] : a.length) : [],
   'first': (a) => a.length > 0 ? a[0] : null,
   'last': (a) => a[a.length - 1],
@@ -360,7 +369,7 @@ export const STDLIB = {
     // императивная лапша для макроса ->
     // надо вот так: https://clojuredocs.org/clojure.core/-%3E%3E
     // AST[["filterit",[">",1,0]]]
-    // console.log("---------> " +JSON.stringify(acc) + " " + JSON.stringify(ast));
+    //console.log("---------> " +JSON.stringify(acc) + " " + JSON.stringify(ast));
 
     for (let arr of ast) {
       if (!isArray(arr)) {
@@ -434,8 +443,8 @@ function macroexpand(ast, ctx, resolveString = true) {
   while (true) {
     if (!isArray(ast)) break;
     if (!isString(ast[0])) break;
-    const v = $var$(ctx, ast[0]);
-    //const v = $var$(ctx, ast[0], undefined, {"resolveString": resolveString}); возможно надо так
+    //const v = $var$(ctx, ast[0]);
+    const v = $var$(ctx, ast[0], undefined, {"resolveString": resolveString}); //возможно надо так
     if (!isFunction(v)) break;
 
     if (!isMacro(v)) break;
@@ -472,26 +481,37 @@ function env_bind(ast, ctx, exprs) {
 
 
 function EVAL(ast, ctx, resolveOptions) {
-
+  //console.log(`EVAL CALLED FOR ${JSON.stringify(ast)}`)
   while (true) {
     //ast = macroexpand(ast, ctx);
     //ast = macroexpand(ast, ctx, resolveOptions && resolveOptions.resolveString ? true: false);
+
     if (!isArray(ast)) {                                                        // atom
       if (isString(ast)) {
         const value = $var$(ctx, ast, undefined, resolveOptions);
-        //console.log(`${JSON.stringify(resolveOptions)} var ${ast} resolved to ${JSON.stringify(value)}`)
-        if (value !== undefined) {                                              // variable
-          //console.log(`resolved var ${value}`)
-          return value;
+        //console.log(`${JSON.stringify(resolveOptions)} var ${ast} resolved to ${isFunction(value)?'FUNCTION':''} ${JSON.stringify(value)}`)
+        if (value !== undefined) {
+          if (isFunction(value) && resolveOptions["wantCallable"] !== true) {
+            return ast
+          } else {                                 // variable
+            //console.log(`EVAL RETURN resolved var ${JSON.stringify(ast)}`)
+            return value;
+          }
         }
+        //console.log(`EVAL RETURN resolved2 var ${resolveOptions && resolveOptions.resolveString ? ast : undefined}`)
         return resolveOptions && resolveOptions.resolveString ? ast : undefined;                                 // if string and not in ctx
       }
+      //console.log(`EVAL RETURN resolved3 var ${JSON.stringify(ast)}`)
       return ast;
     }
+
+    //console.log(`EVAL CONTINUE for ${JSON.stringify(ast)}`)
 
     // apply
     // c 2022 делаем macroexpand сначала, а не после
     ast = macroexpand(ast, ctx, resolveOptions && resolveOptions.resolveString ? true: false);
+
+    //console.log(`EVAL CONTINUE after macroexpand: ${JSON.stringify(ast)}`)
     if (!Array.isArray(ast)) return ast;                                        // TODO: do we need eval here?
     if (ast.length === 0) return null;                                         // TODO: [] => empty list (or, maybe return vector [])
 
@@ -504,15 +524,16 @@ function EVAL(ast, ctx, resolveOptions) {
       throw new Error('Error: ' + String(op) + ' is not a function');
     }
 
-    if (isSF(op)) {                                                          // special form
+    if (isSF(op)) {                                                       // special form
       const sfResult = op(argsAst, ctx, resolveOptions);
       return sfResult;
     }
 
-    //console.log("EVAL NOT SF evaluated args 11111: ", op.name, JSON.stringify(argsAst))
+    //console.log("EVAL NOT SF evaluated name&args: ", op.name, JSON.stringify(argsAst))
     const args = argsAst.map(a => EVAL(a, ctx, resolveOptions));                 // evaluate arguments
     //console.log("EVAL NOT SF evaluated args: ", JSON.stringify(args))
     if (op.ast) {
+      //console.log("EVAL NOT SF evaluated args AST: ", JSON.stringify(op.ast))
       ast = op.ast[0];
       ctx = env_bind(op.ast[2], op.ast[1], args);                               // TCO
     } else {

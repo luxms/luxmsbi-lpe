@@ -756,10 +756,12 @@ var isFunction = function isFunction(arg) {
  * @param {*} ctx - array, hashmap or function that stores variables
  * @param {*} varName - the name of variable
  * @param {*} value - optional value to set (undefined if get)
- * @param {*} resolveOptions - options on how to resolve
+ * @param {*} resolveOptions - options on how to resolve. resolveString - must be checked by caller and is not handled here...
  */
 
-function $var$(ctx, varName, value, resolveOptions) {
+function $var$(ctx, varName, value) {
+  var resolveOptions = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+
   if (isArray(ctx)) {
     // contexts chain
     var _iteratorNormalCompletion = true;
@@ -805,7 +807,7 @@ function $var$(ctx, varName, value, resolveOptions) {
   if (isHash(ctx)) {
     if (value === undefined) {
       // get from hash
-      var _result = ctx[varName];
+      var _result = ctx[varName]; //console.log(`$var: for ${varName} got ${isFunction(result)? 'FUNC' : result}`)
 
       if (_result !== undefined) {
         // found value in hash
@@ -997,7 +999,7 @@ var SPECIAL_FORMS = {
     return result;
   }),
   'resolve': makeSF(function (ast, ctx, rs) {
-    var result = $var$(ctx, ast[0]);
+    var result = $var$(ctx, ast[0], undefined, rs);
     return result;
   }),
   'eval_lpe': makeSF(function (ast, ctx, rs) {
@@ -1058,14 +1060,17 @@ var SPECIAL_FORMS = {
     return eval_lisp(m, ctx, rs);
   }),
   'assoc_in': makeSF(function (ast, ctx, rs) {
-    var array = eval_lisp(ast[1], ctx, rs); // удивительно, но работает set(a . 3 , 2, "Hoy")
+    var array = eval_lisp(ast[1], ctx, _objectSpread({}, rs, {
+      wantCallable: false
+    })); // удивительно, но работает set(a . 3 , 2, "Hoy")
     //const m = ["->", ast[0]].concat( array.slice(0,-1) );
     //const e = ["set", m, array.pop(), ast[2]]
     // первый аргумент в ast - ссылка на контекст/имя переменной
     //console.log('assoc_in var:', JSON.stringify(ast))
 
-    var focus = $var$(ctx, ast[0], undefined, rs);
-    var top = focus;
+    var focus = $var$(ctx, ast[0], undefined, _objectSpread({}, rs, {
+      wantCallable: false
+    }));
 
     for (var i = 0; i < array.length - 1; i++) {
       if (focus[array[i]] === undefined) {
@@ -1085,10 +1090,14 @@ var SPECIAL_FORMS = {
     return eval_lisp(e, ctx, rs);
   }),
   'cp': makeSF(function (ast, ctx, rs) {
-    var from = eval_lisp(ast[0], ctx, rs);
-    var to = eval_lisp(ast[1], ctx, rs); //console.log('CP to ', JSON.stringify(to))
+    var from = eval_lisp(ast[0], ctx, _objectSpread({}, rs, {
+      wantCallable: false
+    }));
+    var to = eval_lisp(ast[1], ctx, _objectSpread({}, rs, {
+      wantCallable: false
+    })); //console.log(`CP ${JSON.stringify(from)} to `, JSON.stringify(to))
 
-    var lpe = ["assoc_in", to[0], ["["].concat(to.slice(1)), ["get_in", from[0], ["["].concat(from.slice(1))]]; //console.log('CP', JSON.stringify(lpe))
+    var lpe = ["assoc_in", to[0], ["["].concat(to.slice(1)), ["get_in", from[0], ["["].concat(from.slice(1))]]; //console.log('CP', JSON.stringify(ast))
 
     return eval_lisp(lpe, ctx, rs);
   }),
@@ -1115,7 +1124,7 @@ var STDLIB = _objectSpread({
   'Object': Object,
   'Hashmap': {},
   'Date': Date,
-  'console': globalThis.console,
+  'console': console,
   'JSON': JSON
 }, SPECIAL_FORMS, {
   // built-in functions
@@ -1271,11 +1280,18 @@ var STDLIB = _objectSpread({
 
     return args;
   },
-  'map': function map(arr, fn) {
+  'map': makeSF(function (ast, ctx, rs) {
+    var arr = eval_lisp(ast[0], ctx, _objectSpread({}, rs, {
+      wantCallable: false
+    }));
+    rs.wantCallable = true;
+    var fn = eval_lisp(ast[1], ctx, _objectSpread({}, rs, {
+      wantCallable: true
+    }));
     return isArray(arr) ? arr.map(function (it) {
       return fn(it);
     }) : [];
-  },
+  }),
   'filter': function filter(arr, fn) {
     return isArray(arr) ? arr.filter(function (it) {
       return fn(it);
@@ -1342,15 +1358,21 @@ var STDLIB = _objectSpread({
   'rest': function rest(a) {
     return a.slice(1);
   },
-  'split': function split(s, d) {
-    return s.split(d);
-  },
+  'split': makeSF(function (ast, ctx, rs) {
+    var str = eval_lisp(ast[0], ctx, _objectSpread({}, rs, {
+      wantCallable: false
+    }));
+    var sep = eval_lisp(ast[1], ctx, _objectSpread({}, rs, {
+      wantCallable: false
+    }));
+    return str.split(sep);
+  }),
   'println': function println() {
     for (var _len18 = arguments.length, args = new Array(_len18), _key18 = 0; _key18 < _len18; _key18++) {
       args[_key18] = arguments[_key18];
     }
 
-    return globalThis.console.log(args.map(function (x) {
+    return console.log(args.map(function (x) {
       return isString(x) ? x : JSON.stringify(x);
     }).join(' '));
   },
@@ -1365,7 +1387,7 @@ var STDLIB = _objectSpread({
       args[_key19] = arguments[_key19];
     }
 
-    return globalThis.console.log(args.map(function (x) {
+    return console.log(args.map(function (x) {
       return JSON.stringify(x);
     }).join(' '));
   },
@@ -1460,7 +1482,7 @@ var STDLIB = _objectSpread({
     // императивная лапша для макроса ->
     // надо вот так: https://clojuredocs.org/clojure.core/-%3E%3E
     // AST[["filterit",[">",1,0]]]
-    // console.log("---------> " +JSON.stringify(acc) + " " + JSON.stringify(ast));
+    //console.log("---------> " +JSON.stringify(acc) + " " + JSON.stringify(ast));
     for (var _i2 = 0; _i2 < ast.length; _i2++) {
       var arr = ast[_i2];
 
@@ -1557,8 +1579,11 @@ function macroexpand(ast, ctx) {
   //console.log("MACROEXPAND: " + JSON.stringify(ast))
   while (true) {
     if (!isArray(ast)) break;
-    if (!isString(ast[0])) break;
-    var v = $var$(ctx, ast[0]); //const v = $var$(ctx, ast[0], undefined, {"resolveString": resolveString}); возможно надо так
+    if (!isString(ast[0])) break; //const v = $var$(ctx, ast[0]);
+
+    var v = $var$(ctx, ast[0], undefined, {
+      "resolveString": resolveString
+    }); //возможно надо так
 
     if (!isFunction(v)) break;
     if (!isMacro(v)) break;
@@ -1595,29 +1620,38 @@ function env_bind(ast, ctx, exprs) {
 }
 
 function EVAL(ast, ctx, resolveOptions) {
+  //console.log(`EVAL CALLED FOR ${JSON.stringify(ast)}`)
   while (true) {
     //ast = macroexpand(ast, ctx);
     //ast = macroexpand(ast, ctx, resolveOptions && resolveOptions.resolveString ? true: false);
     if (!isArray(ast)) {
       // atom
       if (isString(ast)) {
-        var value = $var$(ctx, ast, undefined, resolveOptions); //console.log(`${JSON.stringify(resolveOptions)} var ${ast} resolved to ${JSON.stringify(value)}`)
+        var value = $var$(ctx, ast, undefined, resolveOptions); //console.log(`${JSON.stringify(resolveOptions)} var ${ast} resolved to ${isFunction(value)?'FUNCTION':''} ${JSON.stringify(value)}`)
 
         if (value !== undefined) {
-          // variable
-          //console.log(`resolved var ${value}`)
-          return value;
-        }
+          if (isFunction(value) && resolveOptions["wantCallable"] !== true) {
+            return ast;
+          } else {
+            // variable
+            //console.log(`EVAL RETURN resolved var ${JSON.stringify(ast)}`)
+            return value;
+          }
+        } //console.log(`EVAL RETURN resolved2 var ${resolveOptions && resolveOptions.resolveString ? ast : undefined}`)
+
 
         return resolveOptions && resolveOptions.resolveString ? ast : undefined; // if string and not in ctx
-      }
+      } //console.log(`EVAL RETURN resolved3 var ${JSON.stringify(ast)}`)
+
 
       return ast;
-    } // apply
+    } //console.log(`EVAL CONTINUE for ${JSON.stringify(ast)}`)
+    // apply
     // c 2022 делаем macroexpand сначала, а не после
 
 
-    ast = macroexpand(ast, ctx, resolveOptions && resolveOptions.resolveString ? true : false);
+    ast = macroexpand(ast, ctx, resolveOptions && resolveOptions.resolveString ? true : false); //console.log(`EVAL CONTINUE after macroexpand: ${JSON.stringify(ast)}`)
+
     if (!Array.isArray(ast)) return ast; // TODO: do we need eval here?
 
     if (ast.length === 0) return null; // TODO: [] => empty list (or, maybe return vector [])
@@ -1640,7 +1674,7 @@ function EVAL(ast, ctx, resolveOptions) {
       // special form
       var sfResult = op(argsAst, ctx, resolveOptions);
       return sfResult;
-    } //console.log("EVAL NOT SF evaluated args 11111: ", op.name, JSON.stringify(argsAst))
+    } //console.log("EVAL NOT SF evaluated name&args: ", op.name, JSON.stringify(argsAst))
 
 
     var args = argsAst.map(function (a) {
@@ -1649,6 +1683,7 @@ function EVAL(ast, ctx, resolveOptions) {
     //console.log("EVAL NOT SF evaluated args: ", JSON.stringify(args))
 
     if (op.ast) {
+      //console.log("EVAL NOT SF evaluated args AST: ", JSON.stringify(op.ast))
       ast = op.ast[0];
       ctx = env_bind(op.ast[2], op.ast[1], args); // TCO
     } else {
