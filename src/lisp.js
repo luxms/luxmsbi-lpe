@@ -231,7 +231,8 @@ const SPECIAL_FORMS = {                                                         
     //const e = ["set", m, array.pop(), ast[2]]
     // первый аргумент в ast - ссылка на контекст/имя переменной
     //console.log('assoc_in var:', JSON.stringify(ast))
-    let focus = $var$(ctx, ast[0], undefined, {...rs, wantCallable: false});
+    // let focus = $var$(ctx, ast[0], undefined, {...rs, wantCallable: false});
+    let focus = EVAL(ast[0], ctx, {...rs, wantCallable: false});
     for (var i = 0; i < array.length-1; i++) {
       if (focus[array[i]] === undefined) {
         // нужно создать
@@ -249,12 +250,12 @@ const SPECIAL_FORMS = {                                                         
     return eval_lisp(e, ctx, rs);
   }),
   'cp': makeSF((ast, ctx, rs) => {
-    const from = eval_lisp(ast[0], ctx, {...rs, wantCallable: false})
-    const to = eval_lisp(ast[1], ctx, {...rs, wantCallable: false})
+    const from = EVAL(ast[0], ctx, {...rs, wantCallable: false})
+    const to = EVAL(ast[1], ctx, {...rs, wantCallable: false})
     //console.log(`CP ${JSON.stringify(from)} to `, JSON.stringify(to))
     const lpe = ["assoc_in", to[0], ["["].concat(to.slice(1)), ["get_in", from[0], ["["].concat(from.slice(1))]]
     //console.log('CP', JSON.stringify(ast))
-    return eval_lisp(lpe, ctx, rs);
+    return EVAL(lpe, ctx, rs);
   }),
   'ctx': makeSF((ast, ctx, rs) => {
     //FIXME will work only for single keys, we want: ctx(k1,k2,k3.df)
@@ -484,7 +485,7 @@ function EVAL(ast, ctx, resolveOptions) {
   //console.log(`EVAL CALLED FOR ${JSON.stringify(ast)}`)
   while (true) {
     //ast = macroexpand(ast, ctx);
-    //ast = macroexpand(ast, ctx, resolveOptions && resolveOptions.resolveString ? true: false);
+    ast = macroexpand(ast, ctx, resolveOptions && resolveOptions.resolveString ? true: false);
 
     if (!isArray(ast)) {                                                        // atom
       if (isString(ast)) {
@@ -509,7 +510,7 @@ function EVAL(ast, ctx, resolveOptions) {
 
     // apply
     // c 2022 делаем macroexpand сначала, а не после
-    ast = macroexpand(ast, ctx, resolveOptions && resolveOptions.resolveString ? true: false);
+    // ast = macroexpand(ast, ctx, resolveOptions && resolveOptions.resolveString ? true: false);
 
     //console.log(`EVAL CONTINUE after macroexpand: ${JSON.stringify(ast)}`)
     if (!Array.isArray(ast)) return ast;                                        // TODO: do we need eval here?
