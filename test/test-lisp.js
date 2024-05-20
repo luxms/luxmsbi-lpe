@@ -66,6 +66,11 @@ describe('LISP tests', function () {
     assert.deepEqual(lpe.eval_lisp(["if", false, 1, false, 2, true, 3, 4], {}), 3);                       // if (false) 1; else if (false) 2; else if (true) 3; else 4
   });
 
+
+  it('nested struct if', function () {
+    assert.deepEqual(lpe.eval_lpe("if(http.req.vars.dataset='databoring' and http.req.vars.table='configs', true, false)", {"http":{"req":{"vars":{"table":"configs","dataset":"databoring"}}}}, {resolveString: true}), true);
+  });
+
   it('arrays', function () {
     assert.deepEqual(lpe.eval_lisp(["sort", ["[", 3, 2, 1]]), [1, 2, 3]);
     assert.deepEqual(lpe.eval_lisp(["min", ["[", 3, 2, 1]]), 1);
@@ -75,6 +80,8 @@ describe('LISP tests', function () {
   it('and or not', function () {
     assert.deepEqual(lpe.eval_lpe('a or b', {"a":123}, {resolveString: true}), 123);
     assert.deepEqual(lpe.eval_lpe('a or b', {"a":123}, {resolveString: false}), 123);
+    assert.deepEqual(lpe.eval_lpe('a or b', {"aaa":123}, {resolveString: true}), "a");
+    assert.deepEqual(lpe.eval_lpe('a or b', {"aaa":123}, {resolveString: false}), null);   
   });
 
   /*
