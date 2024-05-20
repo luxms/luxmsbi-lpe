@@ -1463,13 +1463,13 @@ var STDLIB = _objectSpread({
   },
   // not implemented yet
   // 'hash-table->alist'
+  '"': makeSF(function (ast, ctx, rs) {
+    return ast[0].toString();
+  }),
+  '\'': makeSF(function (ast, ctx, rs) {
+    return ast[0].toString();
+  }),
   // macros
-  '"': makeMacro(function (a) {
-    return a.toString();
-  }),
-  '\'': makeMacro(function (a) {
-    return a.toString();
-  }),
   // '()': makeMacro((...args) => ['begin', ...args]), from 2022 It is just grouping of expressions
   '()': makeMacro(function (args) {
     return args;

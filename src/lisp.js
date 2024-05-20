@@ -360,10 +360,10 @@ export const STDLIB = {
   re_match: (t,r,o) => t.match(new RegExp(r,o)),
   // not implemented yet
   // 'hash-table->alist'
+  '"' : makeSF((ast, ctx, rs) => ast[0].toString()),
+  '\'' : makeSF((ast, ctx, rs) => ast[0].toString()),
 
   // macros
-  '"' :  makeMacro((a) => a.toString()),
-  '\'' :  makeMacro((a) => a.toString()),
  // '()': makeMacro((...args) => ['begin', ...args]), from 2022 It is just grouping of expressions
   '()': makeMacro(args => args),
   '->': makeMacro((acc, ...ast) => {                                            // thread first macro
