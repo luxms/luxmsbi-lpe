@@ -1,0 +1,45 @@
+{
+  "name": "@luxms/lpe",
+  "version": "1.1.0",
+  "description": "Lux Path Expressions Lexer and Parser implementation in Javascript",
+  "main": "./dist/lpe.js",
+  "types": "./src/index.d.ts",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://download.luxms.com/repository/npm-luxms/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@gito.luxms.com:luxmsbi/luxmsbi-lpe.git"
+  },
+  "keywords": [
+    "Pratt",
+    "parser",
+    "lpe"
+  ],
+  "author": "Dmitry Dorofeev",
+  "license": "MIT",
+  "scripts": {
+    "test": "mocha --reporter spec",
+    "t": "mocha --reporter spec test/test.js",
+    "test-lisp": "mocha --reporter spec test/test-lisp.js",
+    "cli": "node -e \"console.log(JSON.stringify(require('./dist/lpe').parse(require('fs').readFileSync('/dev/stdin').toString())))\"",
+    "eval": "node -e \"var lpe=require('./dist/lpe');console.log(JSON.stringify(lpe.eval_lisp(lpe.parse(require('fs').readFileSync('/dev/stdin').toString()))))\"",
+    "build": "webpack",
+    "watch": "webpack -w",
+    "dev": "NODE_ENV=development nodemon -x 'npm run build && npm run test || exit 1' --watch src --watch test"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.0.0",
+    "@babel/preset-env": "^7.0.0",
+    "args-parser": "^1.1.0",
+    "babel-loader": "^8.0.0",
+    "core-js": "^2.6.5",
+    "mocha": "^10.2.0",
+    "webpack": "^2.7.0",
+    "webpack-auto-inject-version": "^1.2.2"
+  },
+  "dependencies": {
+    "license-report": "^6.1.0"
+  }
+}
