@@ -57,7 +57,6 @@
     <textarea id="lisp-input"></textarea>
 
     <button id="lisp-action">Execute</button>
-    <button id="sql-action">Exec SQL</button>
 
     <span id="result-input-title" class="input-title">LPE expression:</span>
     <textarea id="result-input" readonly></textarea>
@@ -71,7 +70,6 @@
     var resultInput = document.getElementById('result-input');
     var lpeAction = document.getElementById('lpe-action');
     var lispAction = document.getElementById('lisp-action');
-    var sqlAction = document.getElementById('sql-action');
 
     lpeInput.value = window.localStorage.getItem('lpe') || '';
     lispInput.value = window.localStorage.getItem('lisp') || '';
@@ -95,22 +93,39 @@
       }
     }
 
-    function runLispAction() {
-      try {
-        var lisp = JSON.parse(lispInput.value);
-        var result = lpe.eval_lisp(lisp);
-        resultInput.value = JSON.stringify(result, null, 2);
-      } catch (err) {
-        console.error(err);
-        console.error(err.stack);
-        resultInput.value = err.message;
-      }
+    function later(v) {
+      return new Promise((resolve) => {
+        setTimeout(() => resolve(v), 500 * (1 + Math.random() / 10));
+      });
     }
 
-    function runSQLAction() {
+    function runLispAction() {
+      const ctx = {
+        v1: 1,
+        v2: 2,
+        v3: 3,
+        v4: 4,
+        p1: later(1),
+        p2: later(2),
+        p3: later(3),
+        p4: later(4),
+      };
+
       try {
-        var result = lpe.eval_sql_where(lpeInput.value,{});
-        resultInput.value = JSON.stringify(result, null, 2);
+        var lisp = JSON.parse(lispInput.value);
+        var result = lpe.eval_lisp(lisp, ctx);
+        if (result instanceof Promise) {
+          resultInput.value = '...';
+          result.then(result => {
+            resultInput.value = JSON.stringify(result, null, 2);
+          }, err => {
+            console.error(err);
+            console.error(err.stack);
+            resultInput.value = err.message;
+          });
+        } else {
+          resultInput.value = JSON.stringify(result, null, 2);
+        }
       } catch (err) {
         console.error(err);
         console.error(err.stack);
@@ -155,8 +170,6 @@
     lpeAction.addEventListener('click', runLPEAction, false);
 
     lispAction.addEventListener('click', runLispAction, false);
-
-    sqlAction.addEventListener('click', runSQLAction, false);
   </script>
 </body>
 </html>
