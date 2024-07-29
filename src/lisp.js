@@ -480,6 +480,21 @@ function env_bind(ast, ctx, exprs) {
   return [newCtx, ctx];
 }
 
+/**
+ * Unwrap values if they are promise or stream
+ * @param {any[]} args
+ * @param callback
+ * @param {any?} error
+ */
+function unbox(args, callback, error) {
+  const hasPromise = args.find(a => a instanceof Promise);
+  if (hasPromise) {
+    return Promise.all(args).then(callback);
+  } else {
+    return callback(args);
+  }
+}
+
 
 function EVAL(ast, ctx, resolveOptions) {
   //console.log(`EVAL CALLED FOR ${JSON.stringify(ast)}`)
@@ -525,26 +540,25 @@ function EVAL(ast, ctx, resolveOptions) {
       throw new Error('Error: ' + String(op) + ' is not a function');
     }
 
-    if (isSF(op)) {                                                       // special form
+    if (isSF(op)) {                                                                                 // special form
       const sfResult = op(argsAst, ctx, resolveOptions);
       return sfResult;
     }
 
-    //console.log("EVAL NOT SF evaluated name&args: ", op.name, JSON.stringify(argsAst))
-    const args = argsAst.map(a => EVAL(a, ctx, resolveOptions));                 // evaluate arguments
-    //console.log("EVAL NOT SF evaluated args: ", JSON.stringify(args))
-    if (op.ast) {
-      //console.log("EVAL NOT SF evaluated args AST: ", JSON.stringify(op.ast))
+    const args = argsAst.map(a => EVAL(a, ctx, resolveOptions));                                    // evaluate arguments
+
+    if (op.ast) {                                                                                   // Macro
       ast = op.ast[0];
-      ctx = env_bind(op.ast[2], op.ast[1], args);                               // TCO
+      ctx = env_bind(op.ast[2], op.ast[1], args);                                                   // TCO
     } else {
-      //console.log("EVAL NOT SF evaluated args APPLY: ", op.name, ' ', JSON.stringify(args))
-      /*
-        toString.apply(toString, ['aa'])
-        '[object Function]'
-      */
-      const fnResult = op.apply(op, args);
-      return fnResult;
+      debugger;
+      return unbox(
+          args,
+          (args) => {
+            debugger;
+            const fnResult = op.apply(op, args);
+            return fnResult;
+          });
     }
   }
 } // EVAL
