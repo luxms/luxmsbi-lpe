@@ -119,20 +119,30 @@ function makeLetBindings(ast, ctx, rs) {
 }
 
 
+// if (condition, then, else)
+// if (condition, then, condition2, then2, ..., else)
+const ifSF = (ast, ctx, ro) => {
+  if (ast.length === 0) return undefined;
+  if (ast.length === 1) return EVAL(ast[0], ctx, ro);                                            // one arg - by convention return the argument
+  const condition = EVAL(ast[0], ctx, {...ro, resolveString: false});
+  return unbox([condition], ([condition]) => {
+    if (condition) {
+      return EVAL(ast[1], ctx, ro);
+    } else {
+      return ifSF(ast.slice(2), ctx, ro);
+    }
+  });
+}
+
+
+
 const SPECIAL_FORMS = {                                                         // built-in special forms
   'let': makeSF((ast, ctx, rs) => EVAL(['begin', ...ast.slice(1)], [makeLetBindings(ast[0], ctx, rs), ctx], rs)),
   '`': makeSF((ast, ctx) => ast[0]),                                            // quote
   'macroexpand': makeSF(macroexpand),
   'begin': makeSF((ast, ctx, rs) => ast.reduce((acc, astItem) => EVAL(astItem, ctx, rs), null)),
   'do': makeSF((ast, ctx) => { throw new Error('DO not implemented') }),
-  'if': makeSF((ast, ctx, ro) => {
-    for (let i = 0; i < ast.length; i += 2) {
-      if (i === ast.length - 1) return EVAL(ast[i], ctx, ro);                                       // last odd operand means "else"
-      let cond = EVAL(ast[i], ctx, {...ro, resolveString: false});
-      if (cond) return EVAL(ast[i + 1], ctx, ro);
-    }
-    return undefined;
-  }),
+  'if': makeSF(ifSF),
   '~': makeSF((ast, ctx, rs) => {                                               // mark as macro
     const f = EVAL(ast[0], ctx, rs);                                            // eval regular function
     f.ast.push(1); // mark as macro
@@ -496,18 +506,17 @@ function unbox(args, callback, error) {
 }
 
 
-function EVAL(ast, ctx, resolveOptions) {
+function EVAL(ast, ctx, options) {
   //console.log(`EVAL CALLED FOR ${JSON.stringify(ast)}`)
   while (true) {
-    //ast = macroexpand(ast, ctx);
-    ast = macroexpand(ast, ctx, resolveOptions && resolveOptions.resolveString ? true: false);
+    ast = macroexpand(ast, ctx, options?.resolveString ?? false);                                   // by default do not resolve string
 
     if (!isArray(ast)) {                                                        // atom
       if (isString(ast)) {
-        const value = $var$(ctx, ast, undefined, resolveOptions);
+        const value = $var$(ctx, ast, undefined, options);
         //console.log(`${JSON.stringify(resolveOptions)} var ${ast} resolved to ${isFunction(value)?'FUNCTION':''} ${JSON.stringify(value)}`)
         if (value !== undefined) {
-          if (isFunction(value) && resolveOptions["wantCallable"] !== true) {
+          if (isFunction(value) && options["wantCallable"] !== true) {
             return ast
           } else {                                 // variable
             //console.log(`EVAL RETURN resolved var ${JSON.stringify(ast)}`)
@@ -515,7 +524,7 @@ function EVAL(ast, ctx, resolveOptions) {
           }
         }
         //console.log(`EVAL RETURN resolved2 var ${resolveOptions && resolveOptions.resolveString ? ast : undefined}`)
-        return resolveOptions && resolveOptions.resolveString ? ast : undefined;                                 // if string and not in ctx
+        return options && options.resolveString ? ast : undefined;                                 // if string and not in ctx
       }
       //console.log(`EVAL RETURN resolved3 var ${JSON.stringify(ast)}`)
       return ast;
@@ -534,28 +543,26 @@ function EVAL(ast, ctx, resolveOptions) {
     //console.log("EVAL1: ", JSON.stringify(resolveOptions),  JSON.stringify(ast))
     const [opAst, ...argsAst] = ast;
 
-    const op = EVAL(opAst, ctx, {... resolveOptions, wantCallable: true});                                 // evaluate operator
+    const op = EVAL(opAst, ctx, {... options, wantCallable: true});                                 // evaluate operator
 
     if (typeof op !== 'function') {
       throw new Error('Error: ' + String(op) + ' is not a function');
     }
 
     if (isSF(op)) {                                                                                 // special form
-      const sfResult = op(argsAst, ctx, resolveOptions);
+      const sfResult = op(argsAst, ctx, options);
       return sfResult;
     }
 
-    const args = argsAst.map(a => EVAL(a, ctx, resolveOptions));                                    // evaluate arguments
+    const args = argsAst.map(a => EVAL(a, ctx, options));                                    // evaluate arguments
 
     if (op.ast) {                                                                                   // Macro
       ast = op.ast[0];
       ctx = env_bind(op.ast[2], op.ast[1], args);                                                   // TCO
     } else {
-      debugger;
       return unbox(
           args,
           (args) => {
-            debugger;
             const fnResult = op.apply(op, args);
             return fnResult;
           });
