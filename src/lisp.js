@@ -13,7 +13,6 @@
 
 import {parse} from './lpep';
 
-
 export const isArray = (arg) => Object.prototype.toString.call(arg) === '[object Array]';
 export const isString = (arg) => (typeof arg === 'string');
 export const isNumber = (arg) => (typeof arg === 'number');
@@ -493,19 +492,44 @@ function env_bind(ast, ctx, exprs) {
 /**
  * Unwrap values if they are promise or stream
  * @param {any[]} args
- * @param callback
+ * @param body
  * @param {any?} error
  */
-function unbox(args, callback, error) {
+function unbox(args, body, error) {
   const hasPromise = args.find(a => a instanceof Promise);
+
+  const onFail = (reason) => {
+    if (error) {
+      error(reason);
+    }
+  };
+
   if (hasPromise) {
-    return Promise.all(args).then(callback);
+    return Promise.all(args).then(body).catch(onFail);
   } else {
-    return callback(args);
+    try {
+      return body(args);
+    } catch (err) {
+      onFail(err);
+    }
   }
 }
 
 
+/**
+ * @typedef {Object} EvalOptions
+ * @property {boolean=} resolveString Would proceed variables to their names
+ * lpe 'x' -> string 'x' (if x is not defined)
+ */
+
+
+/**
+ *
+ * @param ast
+ * @param ctx
+ * @param {EvalOptions=} options
+ * @returns {Promise<Awaited<unknown>[] | void>|*|null|undefined}
+ */
 function EVAL(ast, ctx, options) {
   //console.log(`EVAL CALLED FOR ${JSON.stringify(ast)}`)
   while (true) {
@@ -537,8 +561,8 @@ function EVAL(ast, ctx, options) {
     // ast = macroexpand(ast, ctx, resolveOptions && resolveOptions.resolveString ? true: false);
 
     //console.log(`EVAL CONTINUE after macroexpand: ${JSON.stringify(ast)}`)
-    if (!Array.isArray(ast)) return ast;                                        // TODO: do we need eval here?
-    if (ast.length === 0) return null;                                         // TODO: [] => empty list (or, maybe return vector [])
+    if (!Array.isArray(ast)) return ast;                                                            // TODO: do we need eval here?
+    if (ast.length === 0) return null;                                                              // TODO: [] => empty list (or, maybe return vector [])
 
     //console.log("EVAL1: ", JSON.stringify(resolveOptions),  JSON.stringify(ast))
     const [opAst, ...argsAst] = ast;
@@ -554,7 +578,7 @@ function EVAL(ast, ctx, options) {
       return sfResult;
     }
 
-    const args = argsAst.map(a => EVAL(a, ctx, options));                                    // evaluate arguments
+    const args = argsAst.map(a => EVAL(a, ctx, options));                                           // evaluate arguments
 
     if (op.ast) {                                                                                   // Macro
       ast = op.ast[0];
@@ -572,7 +596,7 @@ function EVAL(ast, ctx, options) {
 
 
 export function eval_lisp(ast, ctx, options) {
-  const result = EVAL(ast, [ctx || {}, STDLIB], options || {"resolveString": true});
+  const result = EVAL(ast, [ctx || {}, STDLIB], options || {resolveString: true});
   return result;
 }
 
@@ -590,6 +614,3 @@ export function init_lisp(ctx) {
 export function evaluate(ast, ctx) {
   return eval_lisp(ast, ctx);
 }
-
-
-

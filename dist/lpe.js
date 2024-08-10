@@ -1523,17 +1523,40 @@ function env_bind(ast, ctx, exprs) {
 /**
  * Unwrap values if they are promise or stream
  * @param {any[]} args
- * @param callback
+ * @param body
  * @param {any?} error
  */
-function unbox(args, callback, error) {
+function unbox(args, body, error) {
   const hasPromise = args.find(a => a instanceof Promise);
+  const onFail = reason => {
+    if (error) {
+      error(reason);
+    }
+  };
   if (hasPromise) {
-    return Promise.all(args).then(callback);
+    return Promise.all(args).then(body).catch(onFail);
   } else {
-    return callback(args);
+    try {
+      return body(args);
+    } catch (err) {
+      onFail(err);
+    }
   }
 }
+
+/**
+ * @typedef {Object} EvalOptions
+ * @property {boolean=} resolveString Would proceed variables to their names
+ * lpe 'x' -> string 'x' (if x is not defined)
+ */
+
+/**
+ *
+ * @param ast
+ * @param ctx
+ * @param {EvalOptions=} options
+ * @returns {Promise<Awaited<unknown>[] | void>|*|null|undefined}
+ */
 function EVAL(ast, ctx, options) {
   //console.log(`EVAL CALLED FOR ${JSON.stringify(ast)}`)
   while (true) {
@@ -1602,7 +1625,7 @@ function EVAL(ast, ctx, options) {
 
 function eval_lisp(ast, ctx, options) {
   const result = EVAL(ast, [ctx || {}, STDLIB], options || {
-    "resolveString": true
+    resolveString: true
   });
   return result;
 }
