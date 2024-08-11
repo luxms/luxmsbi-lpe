@@ -13,6 +13,15 @@
 
 import {parse} from './lpep';
 
+/**
+ * @typedef {Object} EvalOptions
+ * @property {boolean=} resolveString Would proceed variables to their names
+ *                          lpe 'x' -> string 'x' (if x is not defined)
+ * @property {any=} streamAdapter Is there any streaming library so lpe can use it
+ */
+
+
+
 export const isArray = (arg) => Object.prototype.toString.call(arg) === '[object Array]';
 export const isString = (arg) => (typeof arg === 'string');
 export const isNumber = (arg) => (typeof arg === 'number');
@@ -26,7 +35,7 @@ export const isFunction = (arg) => (typeof arg === 'function');
  * @param {*} ctx - array, hashmap or function that stores variables
  * @param {*} varName - the name of variable
  * @param {*} value - optional value to set (undefined if get)
- * @param {*} resolveOptions - options on how to resolve. resolveString - must be checked by caller and is not handled here...
+ * @param {EvalOptions=} resolveOptions - options on how to resolve. resolveString - must be checked by caller and is not handled here...
  */
 function $var$(ctx, varName, value, resolveOptions = {}) {
   if (isArray(ctx)) {                                                           // contexts chain
@@ -124,13 +133,17 @@ const ifSF = (ast, ctx, ro) => {
   if (ast.length === 0) return undefined;
   if (ast.length === 1) return EVAL(ast[0], ctx, ro);                                            // one arg - by convention return the argument
   const condition = EVAL(ast[0], ctx, {...ro, resolveString: false});
-  return unbox([condition], ([condition]) => {
-    if (condition) {
-      return EVAL(ast[1], ctx, ro);
-    } else {
-      return ifSF(ast.slice(2), ctx, ro);
-    }
-  });
+  return unbox(
+    [condition],
+    ([condition]) => {
+      if (condition) {
+        return EVAL(ast[1], ctx, ro);
+      } else {
+        return ifSF(ast.slice(2), ctx, ro);
+      }
+    },
+    (error) => {},
+    ro?.streamAdapter);
 }
 
 
@@ -492,35 +505,47 @@ function env_bind(ast, ctx, exprs) {
 /**
  * Unwrap values if they are promise or stream
  * @param {any[]} args
- * @param body
- * @param {any?} error
+ * @param {(arg: any[]) => any} resolve callback to run when all ready
+ * @param {any} reject
+ * @param {any?} streamAdapter
  */
-function unbox(args, body, error) {
+function unbox(args, resolve, reject, streamAdapter) {
   const hasPromise = args.find(a => a instanceof Promise);
+  const hasStreams = !!args.find(a => streamAdapter?.isStream(a));
 
-  const onFail = (reason) => {
-    if (error) {
-      error(reason);
-    }
-  };
+  if (hasStreams) {
+    // TODO: add loading state
+    const evaluatedArgs = args.map(a => streamAdapter.isStream(a) ? streamAdapter.getLastValue(a) : a)
+    const firstValue = resolve(evaluatedArgs);
+    const subscriptions = [];
+    const outputStream = streamAdapter.createStream(firstValue, () => {
+      // onDispose handler - dispose all dependencies
+      subscriptions.forEach(subscription => subscription?.dispose?.());                             // unsubscribe all subscriptions
+      args.filter(a => streamAdapter?.isStream(a)).forEach(streamAdapter.disposeStream);            // and free services
+    });
+    args.forEach((a, idx) => {
+      if (streamAdapter.isStream(a)) {
+        subscriptions.push(                                                                         // save subscription in order to dispose later
+          streamAdapter.subscribe(a, (value) => {
+            evaluatedArgs[idx] = value;
+            const nextValue = resolve(evaluatedArgs);
+            streamAdapter.next(outputStream, nextValue);
+          }));
+      }
+    });
+    return outputStream;
 
-  if (hasPromise) {
-    return Promise.all(args).then(body).catch(onFail);
+  } else if (hasPromise) {                                                                          // TODO: handle both streams and promises
+    return Promise.all(args).then(resolve).catch(reject);
+
   } else {
     try {
-      return body(args);
+      return resolve(args);
     } catch (err) {
-      onFail(err);
+      reject(err);
     }
   }
 }
-
-
-/**
- * @typedef {Object} EvalOptions
- * @property {boolean=} resolveString Would proceed variables to their names
- * lpe 'x' -> string 'x' (if x is not defined)
- */
 
 
 /**
@@ -589,7 +614,11 @@ function EVAL(ast, ctx, options) {
           (args) => {
             const fnResult = op.apply(op, args);
             return fnResult;
-          });
+          },
+          (error) => {
+              // ??
+          },
+          options?.streamAdapter);
     }
   }
 } // EVAL
