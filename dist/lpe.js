@@ -1016,6 +1016,14 @@ var web_dom_iterable = __webpack_require__(890);
  */
 
 
+
+/**
+ * @typedef {Object} EvalOptions
+ * @property {boolean=} resolveString Would proceed variables to their names
+ *                          lpe 'x' -> string 'x' (if x is not defined)
+ * @property {any=} streamAdapter Is there any streaming library so lpe can use it
+ */
+
 const isArray = arg => Object.prototype.toString.call(arg) === '[object Array]';
 const isString = arg => typeof arg === 'string';
 const isNumber = arg => typeof arg === 'number';
@@ -1028,7 +1036,7 @@ const isFunction = arg => typeof arg === 'function';
  * @param {*} ctx - array, hashmap or function that stores variables
  * @param {*} varName - the name of variable
  * @param {*} value - optional value to set (undefined if get)
- * @param {*} resolveOptions - options on how to resolve. resolveString - must be checked by caller and is not handled here...
+ * @param {EvalOptions=} resolveOptions - options on how to resolve. resolveString - must be checked by caller and is not handled here...
  */
 function $var$(ctx, varName, value, resolveOptions = {}) {
   if (isArray(ctx)) {
@@ -1109,6 +1117,24 @@ function makeLetBindings(ast, ctx, rs) {
   }
   return result;
 }
+
+// if (condition, then, else)
+// if (condition, then, condition2, then2, ..., else)
+const ifSF = (ast, ctx, ro) => {
+  if (ast.length === 0) return undefined;
+  if (ast.length === 1) return EVAL(ast[0], ctx, ro); // one arg - by convention return the argument
+  const condition = EVAL(ast[0], ctx, {
+    ...ro,
+    resolveString: false
+  });
+  return unbox([condition], ([condition]) => {
+    if (condition) {
+      return EVAL(ast[1], ctx, ro);
+    } else {
+      return ifSF(ast.slice(2), ctx, ro);
+    }
+  }, error => {}, ro === null || ro === void 0 ? void 0 : ro.streamAdapter);
+};
 const SPECIAL_FORMS = {
   // built-in special forms
   'let': makeSF((ast, ctx, rs) => EVAL(['begin', ...ast.slice(1)], [makeLetBindings(ast[0], ctx, rs), ctx], rs)),
@@ -1119,17 +1145,7 @@ const SPECIAL_FORMS = {
   'do': makeSF((ast, ctx) => {
     throw new Error('DO not implemented');
   }),
-  'if': makeSF((ast, ctx, ro) => {
-    for (let i = 0; i < ast.length; i += 2) {
-      if (i === ast.length - 1) return EVAL(ast[i], ctx, ro); // last odd operand means "else"
-      let cond = EVAL(ast[i], ctx, {
-        ...ro,
-        resolveString: false
-      });
-      if (cond) return EVAL(ast[i + 1], ctx, ro);
-    }
-    return undefined;
-  }),
+  'if': makeSF(ifSF),
   '~': makeSF((ast, ctx, rs) => {
     // mark as macro
     const f = EVAL(ast[0], ctx, rs); // eval regular function
@@ -1511,18 +1527,73 @@ function env_bind(ast, ctx, exprs) {
   }
   return [newCtx, ctx];
 }
-function EVAL(ast, ctx, resolveOptions) {
+
+/**
+ * Unwrap values if they are promise or stream
+ * @param {any[]} args
+ * @param {(arg: any[]) => any} resolve callback to run when all ready
+ * @param {any} reject
+ * @param {any?} streamAdapter
+ */
+function unbox(args, resolve, reject, streamAdapter) {
+  const hasPromise = args.find(a => a instanceof Promise);
+  const hasStreams = !!args.find(a => streamAdapter === null || streamAdapter === void 0 ? void 0 : streamAdapter.isStream(a));
+  if (hasStreams) {
+    // TODO: add loading state
+    const evaluatedArgs = args.map(a => streamAdapter.isStream(a) ? streamAdapter.getLastValue(a) : a);
+    const firstValue = resolve(evaluatedArgs);
+    const subscriptions = [];
+    const outputStream = streamAdapter.createStream(firstValue, () => {
+      // onDispose handler - dispose all dependencies
+      subscriptions.forEach(subscription => {
+        var _subscription$dispose;
+        return subscription === null || subscription === void 0 || (_subscription$dispose = subscription.dispose) === null || _subscription$dispose === void 0 ? void 0 : _subscription$dispose.call(subscription);
+      }); // unsubscribe all subscriptions
+      args.filter(a => streamAdapter === null || streamAdapter === void 0 ? void 0 : streamAdapter.isStream(a)).forEach(streamAdapter.disposeStream); // and free services
+    });
+    args.forEach((a, idx) => {
+      if (streamAdapter.isStream(a)) {
+        subscriptions.push(
+        // save subscription in order to dispose later
+        streamAdapter.subscribe(a, value => {
+          evaluatedArgs[idx] = value;
+          const nextValue = resolve(evaluatedArgs);
+          streamAdapter.next(outputStream, nextValue);
+        }));
+      }
+    });
+    return outputStream;
+  } else if (hasPromise) {
+    // TODO: handle both streams and promises
+    return Promise.all(args).then(resolve).catch(reject);
+  } else {
+    try {
+      return resolve(args);
+    } catch (err) {
+      reject(err);
+    }
+  }
+}
+
+/**
+ *
+ * @param ast
+ * @param ctx
+ * @param {EvalOptions=} options
+ * @returns {Promise<Awaited<unknown>[] | void>|*|null|undefined}
+ */
+function EVAL(ast, ctx, options) {
   //console.log(`EVAL CALLED FOR ${JSON.stringify(ast)}`)
   while (true) {
-    //ast = macroexpand(ast, ctx);
-    ast = macroexpand(ast, ctx, resolveOptions && resolveOptions.resolveString ? true : false);
+    ast = macroexpand(ast, ctx, (options === null || options === void 0 ? void 0 : options.resolveString) ?? false); // by default do not resolve string
+
     if (!isArray(ast)) {
       // atom
       if (isString(ast)) {
-        const value = $var$(ctx, ast, undefined, resolveOptions);
+        const value = $var$(ctx, ast, undefined, options);
         //console.log(`${JSON.stringify(resolveOptions)} var ${ast} resolved to ${isFunction(value)?'FUNCTION':''} ${JSON.stringify(value)}`)
         if (value !== undefined) {
-          if (isFunction(value) && resolveOptions["wantCallable"] !== true) {
+          if (isFunction(value) && options["wantCallable"] !== true) {
             return ast;
           } else {
             // variable
@@ -1531,7 +1602,7 @@ function EVAL(ast, ctx, resolveOptions) {
           }
         }
         //console.log(`EVAL RETURN resolved2 var ${resolveOptions && resolveOptions.resolveString ? ast : undefined}`)
-        return resolveOptions && resolveOptions.resolveString ? ast : undefined; // if string and not in ctx
+        return options && options.resolveString ? ast : undefined; // if string and not in ctx
       }
       //console.log(`EVAL RETURN resolved3 var ${JSON.stringify(ast)}`)
       return ast;
@@ -1550,7 +1621,7 @@ function EVAL(ast, ctx, resolveOptions) {
     //console.log("EVAL1: ", JSON.stringify(resolveOptions),  JSON.stringify(ast))
     const [opAst, ...argsAst] = ast;
     const op = EVAL(opAst, ctx, {
-      ...resolveOptions,
+      ...options,
       wantCallable: true
     }); // evaluate operator
 
@@ -1559,32 +1630,29 @@ function EVAL(ast, ctx, resolveOptions) {
     }
     if (isSF(op)) {
       // special form
-      const sfResult = op(argsAst, ctx, resolveOptions);
+      const sfResult = op(argsAst, ctx, options);
       return sfResult;
     }
+    const args = argsAst.map(a => EVAL(a, ctx, options)); // evaluate arguments
 
-    //console.log("EVAL NOT SF evaluated name&args: ", op.name, JSON.stringify(argsAst))
-    const args = argsAst.map(a => EVAL(a, ctx, resolveOptions)); // evaluate arguments
-    //console.log("EVAL NOT SF evaluated args: ", JSON.stringify(args))
     if (op.ast) {
-      //console.log("EVAL NOT SF evaluated args AST: ", JSON.stringify(op.ast))
+      // Macro
       ast = op.ast[0];
       ctx = env_bind(op.ast[2], op.ast[1], args); // TCO
     } else {
-      //console.log("EVAL NOT SF evaluated args APPLY: ", op.name, ' ', JSON.stringify(args))
-      /*
-        toString.apply(toString, ['aa'])
-        '[object Function]'
-      */
-      const fnResult = op.apply(op, args);
-      return fnResult;
+      return unbox(args, args => {
+        const fnResult = op.apply(op, args);
+        return fnResult;
+      }, error => {
+        // ??
+      }, options === null || options === void 0 ? void 0 : options.streamAdapter);
     }
   }
 } // EVAL
 
 function eval_lisp(ast, ctx, options) {
   const result = EVAL(ast, [ctx || {}, STDLIB], options || {
-    "resolveString": true
+    resolveString: true
   });
   return result;
 }
