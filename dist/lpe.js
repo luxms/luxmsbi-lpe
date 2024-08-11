@@ -1002,7 +1002,6 @@ __webpack_require__.d(__webpack_exports__, {
 var web_dom_iterable = __webpack_require__(890);
 ;// CONCATENATED MODULE: ./src/lisp.js
 
-
 /**
  *  miniMAL lisp interpreter
  *  Copyright (C) 2014 Joel Martin
@@ -1010,12 +1009,12 @@ var web_dom_iterable = __webpack_require__(890);
  *  https://github.com/kanaka/mal
  *
  */
-
 /**
  *  The code has been reworked to suite LuxmsBI needs
  *  by esix & Dmitry Dorofeev
  *  2017-2019
  */
+
 
 const isArray = arg => Object.prototype.toString.call(arg) === '[object Array]';
 const isString = arg => typeof arg === 'string';
@@ -1023,6 +1022,7 @@ const isNumber = arg => typeof arg === 'number';
 const isBoolean = arg => arg === true || arg === false;
 const isHash = arg => typeof arg === 'object' && arg !== null && !isArray(arg);
 const isFunction = arg => typeof arg === 'function';
+
 /**
  * Get or Set variable in context
  * @param {*} ctx - array, hashmap or function that stores variables
@@ -1030,79 +1030,61 @@ const isFunction = arg => typeof arg === 'function';
  * @param {*} value - optional value to set (undefined if get)
  * @param {*} resolveOptions - options on how to resolve. resolveString - must be checked by caller and is not handled here...
  */
-
 function $var$(ctx, varName, value, resolveOptions = {}) {
   if (isArray(ctx)) {
     // contexts chain
     for (let theCtx of ctx) {
       const result = $var$(theCtx, varName, value, resolveOptions);
       if (result === undefined) continue; // no such var in context
-
       if (value === undefined) return result; // get => we've got a result
-
       return $var$(theCtx, varName, value, resolveOptions); // set => redirect 'set' to context with variable.
     }
-
     if (value === undefined) return undefined; // get => variable not found in all contexts
-
     if (ctx.length) $var$(ctx[0], varName, value, resolveOptions); // set => set variable to HEAD context
-
     return undefined; // ??? ctx.length = 0
   }
-
   if (isFunction(ctx)) {
     return ctx(varName, value, resolveOptions);
   }
-
   if (isHash(ctx)) {
     if (value === undefined) {
       // get from hash
-      const result = ctx[varName]; //console.log(`$var: for ${varName} got ${isFunction(result)? 'FUNC' : result}`)
-
+      const result = ctx[varName];
+      //console.log(`$var: for ${varName} got ${isFunction(result)? 'FUNC' : result}`)
       if (result !== undefined) {
         // found value in hash
         return result;
       }
-
       if (varName.substr(0, 3) !== 'sf:' && isFunction(ctx['sf:' + varName])) {
         // user-defined special form
         return makeSF(ctx['sf:' + varName]);
       }
-
       return undefined;
     } else {
       return ctx[varName] = value;
     }
   }
-
   return undefined;
 }
-
 function makeMacro(fn, ast) {
   fn.ast = ast || [[], {}, [], 1]; // mark as macro
-
   return fn;
 }
-
 function isMacro(fn) {
   if (!isFunction(fn)) return false;
   if (!isArray(fn.ast)) return false;
   return !!fn.ast[3];
 }
-
 function makeSF(fn) {
   fn.__isSpecialForm = true;
   return fn;
 }
-
 function isSF(fn) {
   if (!isFunction(fn)) return false;
   return !!fn.__isSpecialForm;
 }
-
 function makeLetBindings(ast, ctx, rs) {
   let result = {};
-
   if (isHash(ast)) {
     for (let varName in ast) {
       result[varName] = EVAL(ast[varName], ctx, rs);
@@ -1111,7 +1093,6 @@ function makeLetBindings(ast, ctx, rs) {
     if (ast[0] === '[') {
       ast = ast.slice(1);
     }
-
     if (isString(ast[0])) {
       result[ast[0]] = EVAL(ast[1], ctx, rs);
     } else if (isArray(ast[0])) {
@@ -1126,10 +1107,8 @@ function makeLetBindings(ast, ctx, rs) {
   } else {
     throw new Error('LISP: let expression (2) invalid form in ' + ast);
   }
-
   return result;
 }
-
 const SPECIAL_FORMS = {
   // built-in special forms
   'let': makeSF((ast, ctx, rs) => EVAL(['begin', ...ast.slice(1)], [makeLetBindings(ast[0], ctx, rs), ctx], rs)),
@@ -1143,32 +1122,28 @@ const SPECIAL_FORMS = {
   'if': makeSF((ast, ctx, ro) => {
     for (let i = 0; i < ast.length; i += 2) {
       if (i === ast.length - 1) return EVAL(ast[i], ctx, ro); // last odd operand means "else"
-
-      let cond = EVAL(ast[i], ctx, { ...ro,
+      let cond = EVAL(ast[i], ctx, {
+        ...ro,
         resolveString: false
       });
       if (cond) return EVAL(ast[i + 1], ctx, ro);
     }
-
     return undefined;
   }),
   '~': makeSF((ast, ctx, rs) => {
     // mark as macro
     const f = EVAL(ast[0], ctx, rs); // eval regular function
-
     f.ast.push(1); // mark as macro
-
     return f;
   }),
   '.-': makeSF((ast, ctx, rs) => {
     // get or set attribute
-    let [obj, propertyName, value] = ast.map(a => EVAL(a, ctx, rs)); // hack
-
+    let [obj, propertyName, value] = ast.map(a => EVAL(a, ctx, rs));
+    // hack
     if (propertyName === undefined && isString(ast[1])) {
       // string propertyName tried to evaluate in rs context
       propertyName = ast[1];
     }
-
     try {
       return value !== undefined ? obj[propertyName] = value : obj[propertyName];
     } catch (err) {
@@ -1197,9 +1172,7 @@ const SPECIAL_FORMS = {
   'fn': makeSF((ast, ctx, rs) => {
     // define new function (lambda)
     const f = (...args) => EVAL(ast[1], env_bind(ast[0], ctx, args), rs);
-
     f.ast = [ast[1], ctx, ast[0]]; // f.ast compresses more than f.data
-
     return f;
   }),
   'def': makeSF((ast, ctx, rs) => {
@@ -1239,14 +1212,13 @@ const SPECIAL_FORMS = {
   }),
   'get_in': makeSF((ast, ctx, rs) => {
     let array = [];
-    let hashname; //console.log(JSON.stringify(ast))
-
+    let hashname;
+    //console.log(JSON.stringify(ast))
     if (isArray(ast[0])) {
       hashname = eval_lisp(ast[0], ctx, rs);
     } else {
       hashname = ast[0];
     }
-
     if (isArray(ast[1]) && ast[1][0] === '[') {
       // массив аргументов, ка в классическом get_in в Clojure
       array = eval_lisp(ast[1], ctx, rs);
@@ -1255,28 +1227,29 @@ const SPECIAL_FORMS = {
       [, ...array] = ast;
       const a = ["["].concat(array);
       array = eval_lisp(a, ctx, rs);
-    } // но вообще-то вот так ещё круче ["->","a",3,1]
+    }
+
+    // но вообще-то вот так ещё круче ["->","a",3,1]
     // const m = ["->"].concat( array.slice(1).reduce((a, b) => {a.push([".-",b]); return a}, [[".-", ast[0], array[0]]]) );
-
-
-    const m = ["->", hashname].concat(array); //console.log('get_in', JSON.stringify(m))
-
+    const m = ["->", hashname].concat(array);
+    //console.log('get_in', JSON.stringify(m))
     return eval_lisp(m, ctx, rs);
   }),
   'assoc_in': makeSF((ast, ctx, rs) => {
-    const array = eval_lisp(ast[1], ctx, { ...rs,
+    const array = eval_lisp(ast[1], ctx, {
+      ...rs,
       wantCallable: false
-    }); // удивительно, но работает set(a . 3 , 2, "Hoy")
+    });
+    // удивительно, но работает set(a . 3 , 2, "Hoy")
     //const m = ["->", ast[0]].concat( array.slice(0,-1) );
     //const e = ["set", m, array.pop(), ast[2]]
     // первый аргумент в ast - ссылка на контекст/имя переменной
     //console.log('assoc_in var:', JSON.stringify(ast))
     // let focus = $var$(ctx, ast[0], undefined, {...rs, wantCallable: false});
-
-    let focus = EVAL(ast[0], ctx, { ...rs,
+    let focus = EVAL(ast[0], ctx, {
+      ...rs,
       wantCallable: false
     });
-
     for (var i = 0; i < array.length - 1; i++) {
       if (focus[array[i]] === undefined) {
         // нужно создать
@@ -1289,21 +1262,22 @@ const SPECIAL_FORMS = {
         focus = focus[array[i]];
       }
     }
-
-    const e = ["set", focus, array.pop(), ast[2]]; //console.log(JSON.stringify(e), JSON.stringify(eval_lisp(e, ctx, rs)))
-
+    const e = ["set", focus, array.pop(), ast[2]];
+    //console.log(JSON.stringify(e), JSON.stringify(eval_lisp(e, ctx, rs)))
     return eval_lisp(e, ctx, rs);
   }),
   'cp': makeSF((ast, ctx, rs) => {
-    const from = EVAL(ast[0], ctx, { ...rs,
+    const from = EVAL(ast[0], ctx, {
+      ...rs,
       wantCallable: false
     });
-    const to = EVAL(ast[1], ctx, { ...rs,
+    const to = EVAL(ast[1], ctx, {
+      ...rs,
       wantCallable: false
-    }); //console.log(`CP ${JSON.stringify(from)} to `, JSON.stringify(to))
-
-    const lpe = ["assoc_in", to[0], ["["].concat(to.slice(1)), ["get_in", from[0], ["["].concat(from.slice(1))]]; //console.log('CP', JSON.stringify(ast))
-
+    });
+    //console.log(`CP ${JSON.stringify(from)} to `, JSON.stringify(to))
+    const lpe = ["assoc_in", to[0], ["["].concat(to.slice(1)), ["get_in", from[0], ["["].concat(from.slice(1))]];
+    //console.log('CP', JSON.stringify(ast))
     return EVAL(lpe, ctx, rs);
   }),
   'ctx': makeSF((ast, ctx, rs) => {
@@ -1355,11 +1329,13 @@ const STDLIB = {
   'list': (...args) => args,
   'vector': (...args) => args,
   'map': makeSF((ast, ctx, rs) => {
-    let arr = eval_lisp(ast[0], ctx, { ...rs,
+    let arr = eval_lisp(ast[0], ctx, {
+      ...rs,
       wantCallable: false
     });
     rs.wantCallable = true;
-    let fn = eval_lisp(ast[1], ctx, { ...rs,
+    let fn = eval_lisp(ast[1], ctx, {
+      ...rs,
       wantCallable: true
     });
     return isArray(arr) ? arr.map(it => fn(it)) : [];
@@ -1389,10 +1365,12 @@ const STDLIB = {
   'vals': a => Object.values(a),
   'rest': a => a.slice(1),
   'split': makeSF((ast, ctx, rs) => {
-    let str = eval_lisp(ast[0], ctx, { ...rs,
+    let str = eval_lisp(ast[0], ctx, {
+      ...rs,
       wantCallable: false
     });
-    let sep = eval_lisp(ast[1], ctx, { ...rs,
+    let sep = eval_lisp(ast[1], ctx, {
+      ...rs,
       wantCallable: false
     });
     return str.split(sep);
@@ -1435,6 +1413,7 @@ const STDLIB = {
     // надо вот так: https://clojuredocs.org/clojure.core/-%3E%3E
     // AST[["filterit",[">",1,0]]]
     //console.log("---------> " +JSON.stringify(acc) + " " + JSON.stringify(ast));
+
     for (let arr of ast) {
       if (!isArray(arr)) {
         arr = [".-", acc, arr]; // это может быть обращение к хэшу или массиву через индекс или ключ....
@@ -1442,21 +1421,18 @@ const STDLIB = {
         arr = [".-", acc, arr[1]];
       } else {
         arr = arr.slice(0); // must copy array before modify
-
-        arr.splice(1, 0, acc); //console.log("AST !!!!" + JSON.stringify(arr))
+        arr.splice(1, 0, acc);
+        //console.log("AST !!!!" + JSON.stringify(arr))
         // AST[["filterit",[">",1,0]]]
         // AST !!!!["filterit","locations",[">",1,0]]
         // подставляем "вычисленное" ранее значение в качестве первого аргумента... классика thread first
       }
-
       acc = arr;
-    } //console.log("AST !!!!" + JSON.stringify(acc))
-
-
+    }
+    //console.log("AST !!!!" + JSON.stringify(acc))
     if (!isArray(acc)) {
       return ["resolve", acc];
     }
-
     return acc;
   }),
   '->>': makeMacro((acc, ...ast) => {
@@ -1467,7 +1443,6 @@ const STDLIB = {
       arr.push(acc);
       acc = arr;
     }
-
     return acc;
   }),
   'invoke': makeMacro((...ast) => {
@@ -1489,33 +1464,32 @@ const STDLIB = {
   }),
   // system functions & objects
   // 'js': eval,
+
   eval: a => EVAL(a, STDLIB)
 };
-
 for (const [key, val] of Object.entries(STDLIB)) {
   if (isFunction(val)) {
     val.lpeName = key;
   }
 }
-
 function macroexpand(ast, ctx, resolveString = true) {
   //console.log("MACROEXPAND: " + JSON.stringify(ast))
   while (true) {
     if (!isArray(ast)) break;
-    if (!isString(ast[0])) break; //const v = $var$(ctx, ast[0]);
-
+    if (!isString(ast[0])) break;
+    //const v = $var$(ctx, ast[0]);
     const v = $var$(ctx, ast[0], undefined, {
       "resolveString": resolveString
     }); //возможно надо так
-
     if (!isFunction(v)) break;
     if (!isMacro(v)) break;
     ast = v.apply(v, ast.slice(1)); // Это макрос! 3-й элемент макроса установлен в 1 через push
-  } //console.log("MACROEXPAND RETURN: " + JSON.stringify(ast))
-
+  }
+  //console.log("MACROEXPAND RETURN: " + JSON.stringify(ast))
 
   return ast;
 }
+
 /**
  * Return new ctx with symbols in ast bound to
  * corresponding values in exprs
@@ -1524,11 +1498,8 @@ function macroexpand(ast, ctx, resolveString = true) {
  * @param exprs
  * @returns {*[]}
  */
-
-
 function env_bind(ast, ctx, exprs) {
   let newCtx = {};
-
   for (let i = 0; i < ast.length; i++) {
     if (ast[i] === "&") {
       // variable length arguments
@@ -1538,21 +1509,18 @@ function env_bind(ast, ctx, exprs) {
       newCtx[ast[i]] = exprs[i];
     }
   }
-
   return [newCtx, ctx];
 }
-
 function EVAL(ast, ctx, resolveOptions) {
   //console.log(`EVAL CALLED FOR ${JSON.stringify(ast)}`)
   while (true) {
     //ast = macroexpand(ast, ctx);
     ast = macroexpand(ast, ctx, resolveOptions && resolveOptions.resolveString ? true : false);
-
     if (!isArray(ast)) {
       // atom
       if (isString(ast)) {
-        const value = $var$(ctx, ast, undefined, resolveOptions); //console.log(`${JSON.stringify(resolveOptions)} var ${ast} resolved to ${isFunction(value)?'FUNCTION':''} ${JSON.stringify(value)}`)
-
+        const value = $var$(ctx, ast, undefined, resolveOptions);
+        //console.log(`${JSON.stringify(resolveOptions)} var ${ast} resolved to ${isFunction(value)?'FUNCTION':''} ${JSON.stringify(value)}`)
         if (value !== undefined) {
           if (isFunction(value) && resolveOptions["wantCallable"] !== true) {
             return ast;
@@ -1561,52 +1529,49 @@ function EVAL(ast, ctx, resolveOptions) {
             //console.log(`EVAL RETURN resolved var ${JSON.stringify(ast)}`)
             return value;
           }
-        } //console.log(`EVAL RETURN resolved2 var ${resolveOptions && resolveOptions.resolveString ? ast : undefined}`)
-
-
+        }
+        //console.log(`EVAL RETURN resolved2 var ${resolveOptions && resolveOptions.resolveString ? ast : undefined}`)
         return resolveOptions && resolveOptions.resolveString ? ast : undefined; // if string and not in ctx
-      } //console.log(`EVAL RETURN resolved3 var ${JSON.stringify(ast)}`)
-
-
+      }
+      //console.log(`EVAL RETURN resolved3 var ${JSON.stringify(ast)}`)
       return ast;
-    } //console.log(`EVAL CONTINUE for ${JSON.stringify(ast)}`)
+    }
+
+    //console.log(`EVAL CONTINUE for ${JSON.stringify(ast)}`)
+
     // apply
     // c 2022 делаем macroexpand сначала, а не после
     // ast = macroexpand(ast, ctx, resolveOptions && resolveOptions.resolveString ? true: false);
+
     //console.log(`EVAL CONTINUE after macroexpand: ${JSON.stringify(ast)}`)
-
-
     if (!Array.isArray(ast)) return ast; // TODO: do we need eval here?
-
     if (ast.length === 0) return null; // TODO: [] => empty list (or, maybe return vector [])
-    //console.log("EVAL1: ", JSON.stringify(resolveOptions),  JSON.stringify(ast))
 
+    //console.log("EVAL1: ", JSON.stringify(resolveOptions),  JSON.stringify(ast))
     const [opAst, ...argsAst] = ast;
-    const op = EVAL(opAst, ctx, { ...resolveOptions,
+    const op = EVAL(opAst, ctx, {
+      ...resolveOptions,
       wantCallable: true
     }); // evaluate operator
 
     if (typeof op !== 'function') {
       throw new Error('Error: ' + String(op) + ' is not a function');
     }
-
     if (isSF(op)) {
       // special form
       const sfResult = op(argsAst, ctx, resolveOptions);
       return sfResult;
-    } //console.log("EVAL NOT SF evaluated name&args: ", op.name, JSON.stringify(argsAst))
+    }
 
-
+    //console.log("EVAL NOT SF evaluated name&args: ", op.name, JSON.stringify(argsAst))
     const args = argsAst.map(a => EVAL(a, ctx, resolveOptions)); // evaluate arguments
     //console.log("EVAL NOT SF evaluated args: ", JSON.stringify(args))
-
     if (op.ast) {
       //console.log("EVAL NOT SF evaluated args AST: ", JSON.stringify(op.ast))
       ast = op.ast[0];
       ctx = env_bind(op.ast[2], op.ast[1], args); // TCO
     } else {
       //console.log("EVAL NOT SF evaluated args APPLY: ", op.name, ' ', JSON.stringify(args))
-
       /*
         toString.apply(toString, ['aa'])
         '[object Function]'
@@ -1617,36 +1582,42 @@ function EVAL(ast, ctx, resolveOptions) {
   }
 } // EVAL
 
-
 function eval_lisp(ast, ctx, options) {
   const result = EVAL(ast, [ctx || {}, STDLIB], options || {
     "resolveString": true
   });
   return result;
-} // Use with care
+}
 
+// Use with care
 function init_lisp(ctx) {
   ctx = [ctx || {}, STDLIB];
   return {
     eval: ast => eval_lisp(ast, ctx),
     val: (varName, value) => $var$(ctx, varName, value)
   };
-} // deprecated
+}
 
+// deprecated
 function evaluate(ast, ctx) {
   return eval_lisp(ast, ctx);
 }
 ;// CONCATENATED MODULE: ./src/lpel.js
 // http://javascript.crockford.com/tdop/tdop.html
+
 // 2010-02-23
+
 // (c) 2006 Douglas Crockford
+
 // Produce an array of simple token objects from a string.
 // A simple token object contains these members:
 //      type: 'name', 'string', 'number', 'operator'
 //      value: string or number value of the token
 //      from: index of first character of the token
 //      to: index of the last character + 1
+
 // Comments of the // type are ignored.
+
 // Operators are by default single characters. Multicharacter
 // operators can be made by supplying a string of prefix and
 // suffix characters.
@@ -1654,20 +1625,21 @@ function evaluate(ast, ctx) {
 //      '<>+-&', '=>&:'
 // will match any of these:
 //      <=  >>  >>>  <>  >=  +: -: &: &&: &&
-const isDigit = c => c >= '0' && c <= '9'; //const isLetter = (c) => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+
+const isDigit = c => c >= '0' && c <= '9';
+//const isLetter = (c) => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
 // https://stackoverflow.com/questions/9862761/how-to-check-if-character-is-a-letter-in-javascript
 //const isLetter = (c) => RegExp(/^\p{L}$/,'u').test(c);
+const isLetter = c => c.toLowerCase() != c.toUpperCase();
 
-
-const isLetter = c => c.toLowerCase() != c.toUpperCase(); // Transform a token object into an exception object and throw it.
-
-
+// Transform a token object into an exception object and throw it.
 function LPESyntaxError(message) {
   this.constructor.prototype.__proto__ = Error.prototype;
   Error.call(this);
   Error.captureStackTrace(this, this.constructor);
   this.name = this.constructor.name;
-  this.message = message; // this.stack = (new Error()).stack;
+  this.message = message;
+  // this.stack = (new Error()).stack;
 }
 function makeError(t, message) {
   t.message = message;
@@ -1678,50 +1650,42 @@ function tokenize(s, prefix = '<>+-&', suffix = '=>&:') {
   if (s.startsWith('lpe:')) s = s.substr(4);
   if (s.startsWith('⚡')) s = s.substr(1);
   let c; // The current character.
-
   let from; // The index of the start of the token.
-
   let i = 0; // The index of the current character.
-
   let length = s.length;
   let n; // The number value.
-
   let q; // The quote character.
-
   let str; // The string value.
-
   let result = []; // An array to hold the results.
-
   const make = (type, value) => ({
     type,
     value,
     from,
     to: i
   }); // Make a token object.
+
   // If the source string is empty, return nothing.
-
-
   if (!s) {
     return [];
-  } // Loop through this text, one character at a time.
+  }
 
-
+  // Loop through this text, one character at a time.
   c = s.charAt(i);
-
   while (c) {
-    from = i; // Ignore whitespace.
+    from = i;
 
+    // Ignore whitespace.
     if (c <= ' ') {
       i += 1;
-      c = s.charAt(i); // name.
+      c = s.charAt(i);
+
+      // name.
     } else if (isLetter(c) || c === '_' || c === '$' || c === '#') {
       // first char of name. TODO: remove #
       str = c;
       i += 1;
-
       for (;;) {
         c = s.charAt(i);
-
         if (isLetter(c) || isDigit(c) || c === '_' || c === '$') {
           str += c;
           i += 1;
@@ -1729,195 +1693,177 @@ function tokenize(s, prefix = '<>+-&', suffix = '=>&:') {
           break;
         }
       }
+      result.push(make('name', str));
+      // number.
 
-      result.push(make('name', str)); // number.
       // A number cannot start with a decimal point. It must start with a digit,
       // possibly '0'.
     } else if (c >= '0' && c <= '9') {
       str = c;
-      i += 1; // Look for more digits.
+      i += 1;
+
+      // Look for more digits.
 
       for (;;) {
         c = s.charAt(i);
-
         if (c < '0' || c > '9') {
           break;
         }
-
         i += 1;
         str += c;
-      } // Look for a decimal fraction part.
+      }
 
+      // Look for a decimal fraction part.
 
       if (c === '.') {
         i += 1;
         str += c;
-
         for (;;) {
           c = s.charAt(i);
-
           if (c < '0' || c > '9') {
             break;
           }
-
           i += 1;
           str += c;
         }
-      } // Look for an exponent part.
+      }
 
-
+      // Look for an exponent part.
       if (c === 'e' || c === 'E') {
         i += 1;
         str += c;
         c = s.charAt(i);
-
         if (c === '-' || c === '+') {
           i += 1;
           str += c;
           c = s.charAt(i);
         }
-
         if (c < '0' || c > '9') {
           makeError(make('number', str), "Bad exponent");
         }
-
         do {
           i += 1;
           str += c;
           c = s.charAt(i);
         } while (c >= '0' && c <= '9');
-      } // Make sure the next character is not a letter.
+      }
 
+      // Make sure the next character is not a letter.
 
       if (c >= 'a' && c <= 'z') {
         str += c;
         i += 1;
         makeError(make('number', str), "Bad number");
-      } // Don't convert the string value to a number. If it is finite, then it is a good
+      }
+
+      // Don't convert the string value to a number. If it is finite, then it is a good
       // token.
       // result.push(make('number', parseFloat(str)));
       // result.push(make('number', str));
 
-
       n = +str;
-
       if (isFinite(n)) {
         result.push(make('number', n));
       } else {
         makeError(make('number', str), "Bad number");
-      } // string
+      }
 
+      // string
     } else if (c === '\'' || c === '"') {
       str = '';
       q = c;
       i += 1;
-
       for (;;) {
         c = s.charAt(i);
-
         if (c < ' ') {
           // make('string', str).error(c === '\n' || c === '\r' || c === '' ?
           //     "Unterminated string." :
           //     "Control character in string.", make('', str));
           makeError(make('', str) || make(q === '"' ? 'string_double' : 'string_single', str), c === '\n' || c === '\r' || c === '' ? "Unterminated string." : "Control character in string.");
-        } // Look for the closing quote.
+        }
 
+        // Look for the closing quote.
 
         if (c === q) {
           break;
-        } // Look for escapement.
+        }
 
+        // Look for escapement.
 
         if (c === '\\') {
           i += 1;
-
           if (i >= length) {
             makeError(make(q === '"' ? 'string_double' : 'string_single', str), "Unterminated string");
           }
-
           c = s.charAt(i);
-
           switch (c) {
             case 'b':
               c = '\b';
               break;
-
             case 'f':
               c = '\f';
               break;
-
             case 'n':
               c = '\n';
               break;
-
             case 'r':
               c = '\r';
               break;
-
             case 't':
               c = '\t';
               break;
-
             case 'u':
               if (i >= length) {
                 makeError(make(q === '"' ? 'string_double' : 'string_single', str), "Unterminated string");
               }
-
               c = parseInt(s.substr(i + 1, 4), 16);
-
               if (!isFinite(c) || c < 0) {
                 makeError(make(q === '"' ? 'string_double' : 'string_single', str), "Unterminated string");
               }
-
               c = String.fromCharCode(c);
               i += 4;
               break;
           }
         }
-
         str += c;
         i += 1;
       }
-
       i += 1;
       result.push(make(q === '"' ? 'string_double' : 'string_single', str));
-      c = s.charAt(i); // comment.
+      c = s.charAt(i);
+
+      // comment.
     } else if (c === '/' && s.charAt(i + 1) === '/') {
       i += 1;
-
       for (;;) {
         c = s.charAt(i);
-
         if (c === '\n' || c === '\r' || c === '') {
           break;
         }
-
-        i += 1;
-      } // combining
-
-    } else if (prefix.indexOf(c) >= 0) {
-      str = c;
-      i += 1;
-
-      while (true) {
-        c = s.charAt(i);
-
-        if (i >= length || suffix.indexOf(c) < 0) {
-          break;
-        }
-
-        str += c;
         i += 1;
       }
 
-      result.push(make('operator', str)); // single-character operator
+      // combining
+    } else if (prefix.indexOf(c) >= 0) {
+      str = c;
+      i += 1;
+      while (true) {
+        c = s.charAt(i);
+        if (i >= length || suffix.indexOf(c) < 0) {
+          break;
+        }
+        str += c;
+        i += 1;
+      }
+      result.push(make('operator', str));
+
+      // single-character operator
     } else {
       i += 1;
       result.push(make('operator', c));
       c = s.charAt(i);
     }
   }
-
   return result;
 }
 /* harmony default export */ const lpel = ((/* unused pure expression or super */ null && (tokenize)));
@@ -1931,6 +1877,7 @@ function tokenize(s, prefix = '<>+-&', suffix = '=>&:') {
  *      arity and first, second etc will be removed
  *
  */
+
 // Parser for Simplified JavaScript written in Simplified JavaScript
 // From Top Down Operator Precedence
 // http://javascript.crockford.com/tdop/index.html
@@ -1957,27 +1904,25 @@ var make_parse = function () {
   var m_symbol_table = {};
   var m_token;
   var m_tokens;
-  var m_token_nr; // стэк для типов выражений
+  var m_token_nr;
 
+  // стэк для типов выражений
   var m_expr_scope = {
     pop: function () {}
   }; // для разбора логических выражений типа (A and B or C)
+
   // для хранения алиасов для операций
-
   var m_operator_aliases = {};
-
   var operator_alias = function (from, to) {
     m_operator_aliases[from] = to;
   };
-
   var itself = function () {
     return this;
   };
-
   let scope = {
     find: function (n) {
       var e = this,
-          o;
+        o;
       var s = Object.create(original_symbol);
       s.nud = itself;
       s.led = null;
@@ -1999,31 +1944,25 @@ var make_parse = function () {
     parent: null,
     tp: "lpe"
   };
-
   var new_expression_scope = function (tp) {
     var s = m_expr_scope;
     m_expr_scope = Object.create(tp === "logical" ? expr_logical_scope : expr_lpe_scope);
     m_expr_scope.parent = s;
     return m_expr_scope;
   };
-
   var advance = function (id) {
     var a, o, t, v;
-
     if (id && m_token.id !== id) {
       makeError(m_token, "Got " + m_token.value + " but expected '" + id + "'.");
     }
-
     if (m_token_nr >= m_tokens.length) {
       m_token = m_symbol_table["(end)"];
       return;
     }
-
     t = m_tokens[m_token_nr];
     m_token_nr += 1;
     v = t.value;
     a = t.type;
-
     if (a === "name") {
       if (v === 'true' || v === 'false' || v === 'null') {
         o = m_symbol_table[v];
@@ -2031,8 +1970,8 @@ var make_parse = function () {
       } else if (m_expr_scope.tp == "logical") {
         if (v === "or" || v === "and" || v === "not" || v === "in" || v === "is") {
           //a = "operator";
-          o = m_symbol_table[v]; //console.log("OPERATOR>", v , " ", JSON.stringify(o))
-
+          o = m_symbol_table[v];
+          //console.log("OPERATOR>", v , " ", JSON.stringify(o))
           if (!o) {
             makeError(t, "Unknown logical operator.");
           }
@@ -2044,7 +1983,6 @@ var make_parse = function () {
       }
     } else if (a === "operator") {
       o = m_symbol_table[v];
-
       if (!o) {
         makeError(t, "Unknown operator.");
       }
@@ -2060,47 +1998,38 @@ var make_parse = function () {
     } else {
       makeError(t, "Unexpected token.");
     }
-
     m_token = Object.create(o);
     m_token.from = t.from;
     m_token.to = t.to;
     m_token.value = v;
     m_token.arity = a;
-
     if (a == "operator") {
       m_token.sexpr = m_operator_aliases[v];
     } else {
       m_token.sexpr = v; // by dima
     }
-
     return m_token;
   };
-
   var statement = function () {
     var n = m_token,
-        v;
-
+      v;
     if (n.std) {
-      advance(); //scope.reserve(n);
-
+      advance();
+      //scope.reserve(n);
       return n.std();
     }
-
-    v = expression(0); //if (!v.assignment && v.id !== "(") {
-
+    v = expression(0);
+    //if (!v.assignment && v.id !== "(") {
     /*  if (v.id !== "(" && v.id !== "name" && v.id !== "number") {
         console.log(v);
         v.error("Bad expression statement.");
     }*/
     //advance(";");
-
     return v;
   };
-
   var statements = function () {
     var a = [],
-        s;
-
+      s;
     while (true) {
       //console.log(token);
       if (m_token.id === "(end)") {
@@ -2109,36 +2038,30 @@ var make_parse = function () {
         // skip optional ;
         advance();
       }
-
-      s = statement(); //console.log("STATEMENT ", s);
-
+      s = statement();
+      //console.log("STATEMENT ", s);
       if (s) {
         a.push(s);
       }
     }
-
     return a.length === 0 ? null : a.length === 1 ? a[0] : {
       "sexpr": ["begin"].concat(a.map(function (el) {
         return el["sexpr"];
       }))
     };
   };
-
   var expression = function (rbp) {
     var left;
     var t = m_token;
     advance();
     left = t.nud();
-
     while (rbp < m_token.lbp) {
       t = m_token;
       advance();
       left = t.led(left);
     }
-
     return left;
   };
-
   var original_symbol = {
     nud: function () {
       makeError(this, "Undefined.");
@@ -2147,11 +2070,9 @@ var make_parse = function () {
       makeError(this, "Missing operator.");
     }
   };
-
   var symbol = function (id, bp) {
     var s = m_symbol_table[id];
     bp = bp || 0;
-
     if (s) {
       if (bp >= s.lbp) {
         s.lbp = bp;
@@ -2162,14 +2083,11 @@ var make_parse = function () {
       s.lbp = bp;
       m_symbol_table[id] = s;
     }
-
     operator_alias(id, id);
     return s;
   };
-
   var infix = function (id, bp, led) {
     var s = symbol(id, bp);
-
     s.led = led || function (left) {
       this.first = left;
       var right = expression(bp);
@@ -2178,16 +2096,14 @@ var make_parse = function () {
       this.sexpr = [this.sexpr, left.sexpr, right.sexpr];
       return this;
     };
-
     return s;
-  }; // infix operators are left associative.
+  };
+
+  // infix operators are left associative.
   // We can also make right associative operators, such as short-circuiting logical operators,
   // by reducing the right binding power.
-
-
   var infixr = function (id, bp, led) {
     var s = symbol(id, bp);
-
     s.led = led || function (left) {
       this.first = left;
       var right = expression(bp - 1);
@@ -2196,13 +2112,10 @@ var make_parse = function () {
       this.sexpr = [this.sexpr, left.sexpr, right.sexpr];
       return this;
     };
-
     return s;
   };
-
   var prefix = function (id, nud) {
     var s = symbol(id);
-
     s.nud = nud || function () {
       // scope.reserve(this);
       var expr = expression(70);
@@ -2211,16 +2124,13 @@ var make_parse = function () {
       this.sexpr = [this.sexpr, expr.sexpr];
       return this;
     };
-
     return s;
   };
-
   var stmt = function (s, f) {
     var x = symbol(s);
     x.std = f;
     return x;
   };
-
   symbol("(end)");
   symbol("(name)");
   symbol("(null)");
@@ -2229,40 +2139,36 @@ var make_parse = function () {
   symbol(")");
   symbol("]");
   symbol("}");
-
   symbol("true").nud = function () {
     this.sexpr = true;
     return this;
   };
-
   symbol("false").nud = function () {
     this.sexpr = false;
     return this;
   };
-
   symbol("null").nud = function () {
     this.sexpr = null;
     return this;
-  }; // allow to skip values in function calls....
+  };
 
-
+  // allow to skip values in function calls....
   var comma = symbol(",");
-
   symbol("(string_literal_double)").nud = function () {
     this.first = '"';
     this.arity = "unary";
     this.sexpr = ['"', this.sexpr];
     return this;
   };
-
   symbol("(string_literal_single)").nud = function () {
     this.first = "'";
     this.arity = "unary";
     this.sexpr = ["'", this.sexpr];
     return this;
   };
+  symbol("(number_literal)").nud = itself;
 
-  symbol("(number_literal)").nud = itself; // [esix]: commented as in conflict with SQL operator ':'
+  // [esix]: commented as in conflict with SQL operator ':'
   // infix("?", 20, function (left) {
   //   this.first = left;
   //   this.second = expression(0);
@@ -2272,19 +2178,17 @@ var make_parse = function () {
   //   this.sexpr = ["if", this.first.sexpr, this.second.sexpr, this.third.sexpr];
   //   return this;
   // });
-  // [esix]: ternary operator with no conflict on ':' operator
 
+  // [esix]: ternary operator with no conflict on ':' operator
   infix('?', 20, function (left) {
     this.first = left;
     this.second = expression(0);
     this.arity = 'binary';
-
     if (this.second.arity === 'binary' && this.second.value === ':') {
       this.sexpr = ["if", this.first.sexpr, this.second.sexpr[1], this.second.sexpr[2]];
     } else {
       makeError(this.second, "Invalid ternary operator.");
     }
-
     return this;
   });
   infixr("&&", 30);
@@ -2304,24 +2208,24 @@ var make_parse = function () {
   infixr('⊢', 30);
   operator_alias('⊢', 'cdr');
   infixr('⍴', 30);
-  /* will be used in logical scope, allow (a or and(b,c,ss)) */
 
+  /* will be used in logical scope, allow (a or and(b,c,ss)) */
   infixr("and", 30).nud = function () {
     return this;
   };
   /* allow (a and or(b,c,ss)) */
-
-
   infixr("or", 30).nud = function () {
     return this;
-  }; // required for SQL logical scope where a in (1,2,3)
+  };
 
-
+  // required for SQL logical scope where a in (1,2,3)
   infixr("in", 30);
-  infixr("is", 30); // for SQL types: '10'::BIGINT
+  infixr("is", 30);
 
-  infixr("::", 90); // for SQL as
+  // for SQL types: '10'::BIGINT
+  infixr("::", 90);
 
+  // for SQL as
   infixr(":", 80);
   infix(":=", 30);
   infixr('~', 40);
@@ -2347,8 +2251,8 @@ var make_parse = function () {
   infix("*", 60);
   infix("/", 60);
   infix("(", 80, function (left) {
-    var a = []; //console.log("FUNC>", left.value)
-
+    var a = [];
+    //console.log("FUNC>", left.value)
     if (left.id === "[") {
       // FIXME TODO
       this.arity = "ternary";
@@ -2359,19 +2263,15 @@ var make_parse = function () {
       this.arity = "binary";
       this.first = left;
       this.value = "("; // it was '(' by dima
-
       this.second = a;
-
       if ((left.arity !== "unary" || left.id !== "function") && left.arity !== "name" && left.id !== "(" && left.id !== "&&" && left.id !== "||" && left.id !== "?") {
         makeError(left, "Expected a variable name.");
       }
-    } // dima support for missed function arguments...
-
-
+    }
+    // dima support for missed function arguments...
     if (m_token.id !== ")") {
       if (false) { var e; } else {
         new_expression_scope("lpe");
-
         while (true) {
           // console.log(">" + token.arity + " NAME:" + left.value);
           if (m_token.id === ',') {
@@ -2388,31 +2288,26 @@ var make_parse = function () {
             break;
           } else {
             new_expression_scope("logical");
-            var e = expression(0); //console.log("LOGICAL????? " + JSON.stringify(e));
-
-            m_expr_scope.pop(); // var e = statements();
-
+            var e = expression(0);
+            //console.log("LOGICAL????? " + JSON.stringify(e));
+            m_expr_scope.pop();
+            // var e = statements();
             a.push(e);
-
             if (m_token.id !== ",") {
               break;
             }
-
             advance(",");
           }
         }
-
         m_expr_scope.pop();
       }
     }
-
     this.sexpr = [this.first.value].concat(a.map(function (el) {
       return el.sexpr;
     }));
     advance(")");
     return this;
   });
-
   function lift_funseq(node) {
     if (node.value === "->") {
       return lift_funseq(node.first).concat(lift_funseq(node.second));
@@ -2438,7 +2333,6 @@ var make_parse = function () {
         return [node.sexpr];
       }
   }
-
   function lift_funseq_2(node) {
     if (node.value === "->>") {
       return lift_funseq(node.first).concat(lift_funseq(node.second));
@@ -2457,10 +2351,9 @@ var make_parse = function () {
         return [node.sexpr];
       }
   }
-
   infix(".", 70, function (left) {
-    this.first = left; // this.second = expression(0);
-
+    this.first = left;
+    // this.second = expression(0);
     this.second = expression(70);
     this.arity = "binary";
     this.value = "->";
@@ -2468,23 +2361,25 @@ var make_parse = function () {
     return this;
   });
   infix("..", 70, function (left) {
-    this.first = left; // this.second = expression(0);
-
+    this.first = left;
+    // this.second = expression(0);
     this.second = expression(70);
     this.arity = "binary";
     this.value = "->>";
     this.sexpr = ["->>"].concat(lift_funseq_2(this));
     return this;
-  }); // WARNING HACK FIXME DIMA - добавил чтобы писать order_by(+a)
+  });
+
+  // WARNING HACK FIXME DIMA - добавил чтобы писать order_by(+a)
   // А также замена /table на +table в htSQL
-
   prefix("+");
-  prefix("!"); // allow func().not(a)   а также f(a is not null)
+  prefix("!");
 
+  // allow func().not(a)   а также f(a is not null)
   var n = prefix("not", function () {
     // it is nud function
-    var expr = expression(70); //console.log("AHTUNG expr is " + JSON.stringify(expr))
-
+    var expr = expression(70);
+    //console.log("AHTUNG expr is " + JSON.stringify(expr))
     if (isArray(expr.sexpr) && expr.sexpr[0] === '()') {
       /* выражение not() выдаёт вот такое:
         {
@@ -2538,7 +2433,6 @@ var make_parse = function () {
         sexpr: ['not'],
         first: this
       };
-
       if (expr.sexpr.length > 1) {
         e.second = [{
           from: 4,
@@ -2550,45 +2444,40 @@ var make_parse = function () {
         e.sexpr.push(expr.sexpr); // keep () in the parsed AST
         //e.sexpr = e.sexpr.concat(expr.sexpr) // keep () in the parsed AST
       }
-
       return e;
-    } // simple operator `not expr`
+    }
 
-
+    // simple operator `not expr`
     this.first = expr;
     this.arity = "unary";
-    this.sexpr = [this.sexpr, expr.sexpr]; //console.log("2NOT nud:" + JSON.stringify(this))
-
+    this.sexpr = [this.sexpr, expr.sexpr];
+    //console.log("2NOT nud:" + JSON.stringify(this))
     return this;
   });
-
   n.led = function (left) {
     //console.log("NOT led left:" + JSON.stringify(left))
     return this;
   }; // will be used in logical scope
 
-
   prefix("¬");
   operator_alias("!", "not");
-  operator_alias("¬", "not"); // trying to optimize, when we have negated -number
+  operator_alias("¬", "not");
 
+  // trying to optimize, when we have negated -number
   prefix("-");
   prefix(".", function () {
     var v = expression(70);
-
     if (v.value !== "(") {
       makeError(v, "Only functions may have dot (.) unary operator.");
-    } // this.first = v;
+    }
+    // this.first = v;
     // this.arity = "unary";
     // return this;
     // skip unary dot !!!
-
-
     return v;
   });
   prefix("(", function () {
     var e;
-
     if (m_token.value === ')') {
       // если это просто () две скобки, то возвращаем сразу кусок AST,генерим функцию с именем "()"
       // {"from":3,"to":4,"value":"(","arity":"operator","sexpr":"("}
@@ -2604,13 +2493,11 @@ var make_parse = function () {
       advance(")");
       return this;
     }
-
-    e = expression(0); //console.log('(), got e' + JSON.stringify(e))
-
+    e = expression(0);
+    //console.log('(), got e' + JSON.stringify(e))
     if (m_expr_scope.tp == "logical") {
       // we should remember all brackets to restore original user expression
       e.value = "("; // FIXME: why not make it '()' ?? and looks like function `()` call ?
-
       e.sexpr = ["()", e.sexpr];
     } else {
       if (e.value === "->") {
@@ -2623,26 +2510,22 @@ var make_parse = function () {
         };
       }
     }
-
-    advance(")"); //console.log('(), return e' + JSON.stringify(e))
-
+    advance(")");
+    //console.log('(), return e' + JSON.stringify(e))
     return e;
   });
   prefix("[", function () {
     var a = [];
-
     if (m_token.id !== "]") {
       while (true) {
-        a.push(expression(0)); // a.push(statements());
-
+        a.push(expression(0));
+        // a.push(statements());
         if (m_token.id !== ",") {
           break;
         }
-
         advance(",");
       }
     }
-
     advance("]");
     this.first = a;
     this.arity = "unary";
@@ -2654,18 +2537,16 @@ var make_parse = function () {
     m_token_nr = 0;
     new_expression_scope("logical");
     advance();
-    var s = statements(); // var s = expression(0);
-
+    var s = statements();
+    // var s = expression(0);
     advance("(end)");
     return s;
   };
 };
-
 const parser = make_parse();
 function parse(str) {
   try {
     const parseResult = parser(str); // from, to, value, arity, sexpr
-
     return parseResult.sexpr;
   } catch (err) {
     console.error("Error", err.message);
@@ -2676,17 +2557,11 @@ function parse(str) {
 
 ;// CONCATENATED MODULE: ./src/lped.js
 const lped_isArray = arg => Object.prototype.toString.call(arg) === '[object Array]';
-
 const lped_isString = arg => typeof arg === 'string';
-
 const lped_isNumber = arg => typeof arg === 'number';
-
 const lped_isBoolean = arg => arg === true || arg === false;
-
 const lped_isHash = arg => typeof arg === 'object' && arg !== null && !lped_isArray(arg);
-
 const lped_isFunction = arg => typeof arg === 'function';
-
 const OPERATORS = {
   '+': true,
   '-': true,
@@ -2710,33 +2585,26 @@ const safeReplace = {
   '\'': '\\\'',
   '\\': '\\\\'
 };
-
 function fixString(s) {
   return s.split('').map(char => char in safeReplace ? safeReplace[char] : char).join('');
 }
-
 function deparseWithOptionalBrackets(sexpr, op) {
   const res = deparse(sexpr);
-
   if (lped_isArray(sexpr) && sexpr.length && OPERATORS[sexpr[0]]) {
     if (op === sexpr[0]) {
       return res;
     }
-
     const priority1 = PRIORITY[op];
     const priority2 = PRIORITY[sexpr[0]];
-
     if (priority1 && priority2 && priority1 < priority2) {
       // no need on brackets
       return res;
     }
-
     return '(' + res + ')';
   } else {
     return res;
   }
 }
-
 function deparseSexpr(sexpr) {
   const op = sexpr[0];
   const args = sexpr.slice(1);
@@ -2745,23 +2613,18 @@ function deparseSexpr(sexpr) {
   if (op === '[') return '[' + args.map(deparse).join(', ') + ']';
   if (op === '()') return '(' + args.map(deparse).join(', ') + ')';
   if (op === '->') return args.map(deparse).join('.');
-
   if ((op === '-' || op === '+') && args.length === 1) {
     if (lped_isNumber(args[0]) || lped_isString(args[0])) return op + String(args[0]);else return op + deparseWithOptionalBrackets(args[0], op);
   }
-
   if (OPERATORS[op] === true) {
     return args.map(arg => deparseWithOptionalBrackets(arg, op)).join(' ' + op + ' ');
   }
-
   if (lped_isString(OPERATORS[op])) {
     return args.map(arg => deparseWithOptionalBrackets(arg, OPERATORS[op])).join(' ' + OPERATORS[op] + ' ');
   }
-
   if (op === 'begin') return args.map(deparse).join('; ');
   return op + '(' + sexpr.slice(1).map(deparse).join(', ') + ')';
 }
-
 function deparse(lispExpr) {
   if (lped_isString(lispExpr)) {
     return lispExpr;
@@ -2783,13 +2646,13 @@ function deparse(lispExpr) {
 
 
 
-
 function eval_lpe(lpe, ctx, options) {
   const ast = parse(lpe);
   return eval_lisp(ast, ctx, options);
 }
 
- // test:
+
+// test:
 // var ast = parse('2+2*2');
 // console.log(ast);
 // var res = eval_lisp(ast, []);
