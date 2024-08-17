@@ -129,30 +129,42 @@ function makeLetBindings(ast, ctx, rs) {
 
 // if (condition, then, else)
 // if (condition, then, condition2, then2, ..., else)
-const ifSF = (ast, ctx, ro) => {
+const ifSF = (ast, ctx, options) => {
   if (ast.length === 0) return undefined;
-  if (ast.length === 1) return EVAL(ast[0], ctx, ro);                                            // one arg - by convention return the argument
-  const condition = EVAL(ast[0], ctx, {...ro, resolveString: false});
+  if (ast.length === 1) return EVAL(ast[0], ctx, options);                                          // one arg - by convention return the argument
+  const condition = EVAL(ast[0], ctx, {...options, resolveString: false});
   return unbox(
     [condition],
     ([condition]) => {
       if (condition) {
-        return EVAL(ast[1], ctx, ro);
+        return EVAL(ast[1], ctx, options);
       } else {
-        return ifSF(ast.slice(2), ctx, ro);
+        return ifSF(ast.slice(2), ctx, options);
       }
     },
     (error) => {},
-    ro?.streamAdapter);
+    options?.streamAdapter);
 }
 
+/**
+ * Рекурсивный begin
+ */
+const beginSF = (ast, ctx, options) => {
+  if (ast.length === 0) return null;
+  const firstOperator = EVAL(ast[0], ctx, options);
+  return unbox(
+      [firstOperator],
+      ([firstResult]) => ast.length === 1 ? firstResult : beginSF(ast.slice(1), ctx, options),      // Если один аргумент - возвращаем значение
+      (error) => {},
+      options?.streamAdapter);
+};
 
 
 const SPECIAL_FORMS = {                                                         // built-in special forms
   'let': makeSF((ast, ctx, rs) => EVAL(['begin', ...ast.slice(1)], [makeLetBindings(ast[0], ctx, rs), ctx], rs)),
   '`': makeSF((ast, ctx) => ast[0]),                                            // quote
   'macroexpand': makeSF(macroexpand),
-  'begin': makeSF((ast, ctx, rs) => ast.reduce((acc, astItem) => EVAL(astItem, ctx, rs), null)),
+  'begin': makeSF(beginSF),
   'do': makeSF((ast, ctx) => { throw new Error('DO not implemented') }),
   'if': makeSF(ifSF),
   '~': makeSF((ast, ctx, rs) => {                                               // mark as macro
@@ -509,7 +521,7 @@ function env_bind(ast, ctx, exprs) {
  * @param {any} reject
  * @param {any?} streamAdapter
  */
-function unbox(args, resolve, reject, streamAdapter) {
+export function unbox(args, resolve, reject, streamAdapter) {
   const hasPromise = args.find(a => a instanceof Promise);
   const hasStreams = !!args.find(a => streamAdapter?.isStream(a));
 
