@@ -995,7 +995,8 @@ __webpack_require__.d(__webpack_exports__, {
   isNumber: () => (/* reexport */ isNumber),
   isString: () => (/* reexport */ isString),
   makeSF: () => (/* reexport */ makeSF),
-  parse: () => (/* reexport */ parse)
+  parse: () => (/* reexport */ parse),
+  unbox: () => (/* reexport */ unbox)
 });
 
 // EXTERNAL MODULE: ./node_modules/core-js/modules/web.dom.iterable.js
@@ -1120,20 +1121,31 @@ function makeLetBindings(ast, ctx, rs) {
 
 // if (condition, then, else)
 // if (condition, then, condition2, then2, ..., else)
-const ifSF = (ast, ctx, ro) => {
+const ifSF = (ast, ctx, options) => {
   if (ast.length === 0) return undefined;
-  if (ast.length === 1) return EVAL(ast[0], ctx, ro); // one arg - by convention return the argument
+  if (ast.length === 1) return EVAL(ast[0], ctx, options); // one arg - by convention return the argument
   const condition = EVAL(ast[0], ctx, {
-    ...ro,
+    ...options,
     resolveString: false
   });
   return unbox([condition], ([condition]) => {
     if (condition) {
-      return EVAL(ast[1], ctx, ro);
+      return EVAL(ast[1], ctx, options);
     } else {
-      return ifSF(ast.slice(2), ctx, ro);
+      return ifSF(ast.slice(2), ctx, options);
     }
-  }, error => {}, ro === null || ro === void 0 ? void 0 : ro.streamAdapter);
+  }, error => {}, options === null || options === void 0 ? void 0 : options.streamAdapter);
+};
+
+/**
+ * Рекурсивный begin
+ */
+const beginSF = (ast, ctx, options) => {
+  if (ast.length === 0) return null;
+  const firstOperator = EVAL(ast[0], ctx, options);
+  return unbox([firstOperator], ([firstResult]) => ast.length === 1 ? firstResult : beginSF(ast.slice(1), ctx, options),
+  // Если один аргумент - возвращаем значение
+  error => {}, options === null || options === void 0 ? void 0 : options.streamAdapter);
 };
 const SPECIAL_FORMS = {
   // built-in special forms
@@ -1141,7 +1153,7 @@ const SPECIAL_FORMS = {
   '`': makeSF((ast, ctx) => ast[0]),
   // quote
   'macroexpand': makeSF(macroexpand),
-  'begin': makeSF((ast, ctx, rs) => ast.reduce((acc, astItem) => EVAL(astItem, ctx, rs), null)),
+  'begin': makeSF(beginSF),
   'do': makeSF((ast, ctx) => {
     throw new Error('DO not implemented');
   }),
