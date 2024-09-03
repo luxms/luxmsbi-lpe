@@ -172,17 +172,25 @@ const SPECIAL_FORMS = {                                                         
     f.ast.push(1); // mark as macro
     return f;
   }),
-  '.-': makeSF((ast, ctx, rs) => {                                              // get or set attribute
-    let [obj, propertyName, value] = ast.map(a => EVAL(a, ctx, rs));
+  '.-': makeSF((ast, ctx, options) => {                                                             // get or set attribute
+    let [obj, propertyName, value] = ast.map(a => EVAL(a, ctx, options));
     // hack
-    if (propertyName === undefined && isString(ast[1])) {                       // string propertyName tried to evaluate in rs context
+    if (propertyName === undefined && isString(ast[1])) {                                           // string propertyName tried to evaluate in rs context
       propertyName = ast[1];
     }
-    try {
-      return (value !== undefined) ? (obj[propertyName] = value) : obj[propertyName];
-    } catch (err) {
-      return value;                                                             // undefined when 'get'
-    }
+    return unbox(
+        [obj, propertyName, value],
+        ([obj, propertyName, value]) => {
+          try {
+            return (value !== undefined) ? (obj[propertyName] = value) : obj[propertyName];
+          } catch (err) {
+            return value;                                                             // undefined when 'get'
+          }
+        },
+        (error) => {
+          // ??
+        },
+        options?.streamAdapter);
   }),
   '.': makeSF((ast, ctx, rs) => {                                               // call object method
     const [obj, methodName, ...args] = ast.map(a => EVAL(a, ctx, rs));
@@ -527,24 +535,60 @@ export function unbox(args, resolve, reject, streamAdapter) {
 
   if (hasStreams) {
     // TODO: add loading state
-    const evaluatedArgs = args.map(a => streamAdapter.isStream(a) ? streamAdapter.getLastValue(a) : a)
-    const firstValue = resolve(evaluatedArgs);
+    const evaluatedArgs = args.map(a => streamAdapter.isStream(a) ? streamAdapter.getLastValue(a) : a);
+    let outputStream;                                                                               // what will be returned
     const subscriptions = [];
-    const outputStream = streamAdapter.createStream(firstValue, () => {
-      // onDispose handler - dispose all dependencies
+    let resultStream;
+    let resultStreamSubscription;
+
+    const disposeResultStream = () => {                                                             // handler - dispose resultStream if any
+      if (resultStreamSubscription) {
+        resultStreamSubscription.dispose?.();
+        resultStreamSubscription = null;
+      }
+      if (resultStream) {
+        streamAdapter.disposeStream(resultStream);
+        resultStream = null;
+      }
+    }
+
+    const dispose = () => {                                                                         // handler - dispose all dependencies
+      disposeResultStream();
       subscriptions.forEach(subscription => subscription?.dispose?.());                             // unsubscribe all subscriptions
       args.filter(a => streamAdapter?.isStream(a)).forEach(streamAdapter.disposeStream);            // and free services
-    });
+    };
+
+    const onNextValue = (value) => {                                                                // when we have extracted value from result
+      streamAdapter.next(outputStream, value);
+    }
+
+    const onNextResult = (result) => {                                                              // will be called on next result to be pushed into stream
+      if (streamAdapter.isStream(result)) {                                                         // when result is stream itself
+        if (resultStream !== result) {                                                              // and only when new stream is received
+          disposeResultStream();
+          resultStream = result;
+          onNextValue(streamAdapter.getLastValue(resultStream));
+          resultStreamSubscription = streamAdapter.subscribe(resultStream, onNextValue);
+        }
+      } else {                                                                                      // when result is just value (TODO: Promise)
+        disposeResultStream();                                                                      // we don't need stream any more if it was on previous result
+        onNextValue(result);
+      }
+    }
+
+    outputStream = streamAdapter.createStream(undefined, dispose);
+    onNextResult(resolve(evaluatedArgs));
+
     args.forEach((a, idx) => {
       if (streamAdapter.isStream(a)) {
         subscriptions.push(                                                                         // save subscription in order to dispose later
           streamAdapter.subscribe(a, (value) => {
-            evaluatedArgs[idx] = value;
-            const nextValue = resolve(evaluatedArgs);
-            streamAdapter.next(outputStream, nextValue);
+            evaluatedArgs[idx] = value;                                                             // update arguments
+            onNextResult(resolve(evaluatedArgs))
           }));
       }
     });
+
     return outputStream;
 
   } else if (hasPromise) {                                                                          // TODO: handle both streams and promises
@@ -552,7 +596,7 @@ export function unbox(args, resolve, reject, streamAdapter) {
 
   } else {
     try {
-      return resolve(args);
+      return resolve(args);                                                                         // TODO check if stream or promise returned
     } catch (err) {
       reject(err);
     }
