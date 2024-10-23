@@ -404,6 +404,7 @@ export const STDLIB = {
   // 'hash-table->alist'
   '"' : makeSF((ast, ctx, rs) => String(ast[0])),
   '\'' : makeSF((ast, ctx, rs) => String(ast[0])),
+  '[]' : makeSF((ast, ctx, rs) => String(ast[0])),
 
   // macros
  // '()': makeMacro((...args) => ['begin', ...args]), from 2022 It is just grouping of expressions

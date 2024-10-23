@@ -62,7 +62,6 @@ export function tokenize(s, prefix = '<>+-&', suffix = '=>&:') {
   let i = 0;                  // The index of the current character.
   let length = s.length;
   let n;                      // The number value.
-  let q;                      // The quote character.
   let str;                    // The string value.
   let result = [];            // An array to hold the results.
   const make = (type, value) => ({type, value, from, to: i});                   // Make a token object.
@@ -165,7 +164,6 @@ export function tokenize(s, prefix = '<>+-&', suffix = '=>&:') {
       // result.push(make('number', parseFloat(str)));
       // result.push(make('number', str));
 
-
       n = +str;
       if (isFinite(n)) {
         result.push(make('number', n));
@@ -173,37 +171,29 @@ export function tokenize(s, prefix = '<>+-&', suffix = '=>&:') {
         makeError(make('number', str), "Bad number");
       }
 
-
-    // string
-
-    } else if (c === '\'' || c === '"') {
+    } else if (c === '\'' || c === '"' || c === '[') {                                              // 'string', "string", [string]
+      /** @type {'string_double' | 'string_single' | 'string_column'}  */
+      const type = c === '"' ? 'string_double' : c === '\'' ? 'string_single' : 'string_column';
+      const closer = c === '"' ? '"' : c === '\'' ? '\'' : ']';
       str = '';
-      q = c;
       i += 1;
       for (;;) {
         c = s.charAt(i);
         if (c < ' ') {
-          // make('string', str).error(c === '\n' || c === '\r' || c === '' ?
-          //     "Unterminated string." :
-          //     "Control character in string.", make('', str));
-          makeError(make('', str) || make(q==='"'?'string_double':'string_single', str),
+          makeError(make('', str) || make(type, str),
                     c === '\n' || c === '\r' || c === '' ?
                          "Unterminated string." :
                          "Control character in string.");
         }
 
-        // Look for the closing quote.
-
-        if (c === q) {
+        if (c === closer) {                                                                         // Look for the closing quote.
           break;
         }
 
-        // Look for escapement.
-
-        if (c === '\\') {
+        if ((type === 'string_single' || type === 'string_double') && c === '\\') {                 // Look for escapement.
           i += 1;
           if (i >= length) {
-            makeError(make(q==='"'?'string_double':'string_single', str), "Unterminated string");
+            makeError(make(type, str), "Unterminated string");
           }
           c = s.charAt(i);
           switch (c) {
@@ -224,11 +214,11 @@ export function tokenize(s, prefix = '<>+-&', suffix = '=>&:') {
             break;
           case 'u':
             if (i >= length) {
-              makeError(make(q==='"'?'string_double':'string_single', str), "Unterminated string");
+              makeError(make(type, str), "Unterminated string");
             }
             c = parseInt(s.substr(i + 1, 4), 16);
             if (!isFinite(c) || c < 0) {
-              makeError(make(q==='"'?'string_double':'string_single', str), "Unterminated string");
+              makeError(make(type, str), "Unterminated string");
             }
             c = String.fromCharCode(c);
             i += 4;
@@ -239,7 +229,7 @@ export function tokenize(s, prefix = '<>+-&', suffix = '=>&:') {
         i += 1;
       }
       i += 1;
-      result.push(make(q==='"'?'string_double':'string_single', str));
+      result.push(make(type, str));
       c = s.charAt(i);
 
     // comment.

@@ -1436,6 +1436,7 @@ const STDLIB = {
   // 'hash-table->alist'
   '"': makeSF((ast, ctx, rs) => String(ast[0])),
   '\'': makeSF((ast, ctx, rs) => String(ast[0])),
+  '[]': makeSF((ast, ctx, rs) => String(ast[0])),
   // macros
   // '()': makeMacro((...args) => ['begin', ...args]), from 2022 It is just grouping of expressions
   '()': makeMacro(args => args),
@@ -1775,7 +1776,6 @@ function tokenize(s, prefix = '<>+-&', suffix = '=>&:') {
   let i = 0; // The index of the current character.
   let length = s.length;
   let n; // The number value.
-  let q; // The quote character.
   let str; // The string value.
   let result = []; // An array to hold the results.
   const make = (type, value) => ({
@@ -1888,33 +1888,27 @@ function tokenize(s, prefix = '<>+-&', suffix = '=>&:') {
       } else {
         makeError(make('number', str), "Bad number");
       }
-
-      // string
-    } else if (c === '\'' || c === '"') {
+    } else if (c === '\'' || c === '"' || c === '[') {
+      // 'string', "string", [string]
+      /** @type {'string_double' | 'string_single' | 'string_column'}  */
+      const type = c === '"' ? 'string_double' : c === '\'' ? 'string_single' : 'string_column';
+      const closer = c === '"' ? '"' : c === '\'' ? '\'' : ']';
       str = '';
-      q = c;
       i += 1;
       for (;;) {
         c = s.charAt(i);
         if (c < ' ') {
-          // make('string', str).error(c === '\n' || c === '\r' || c === '' ?
-          //     "Unterminated string." :
-          //     "Control character in string.", make('', str));
-          makeError(make('', str) || make(q === '"' ? 'string_double' : 'string_single', str), c === '\n' || c === '\r' || c === '' ? "Unterminated string." : "Control character in string.");
+          makeError(make('', str) || make(type, str), c === '\n' || c === '\r' || c === '' ? "Unterminated string." : "Control character in string.");
         }
-
-        // Look for the closing quote.
-
-        if (c === q) {
+        if (c === closer) {
+          // Look for the closing quote.
           break;
         }
-
-        // Look for escapement.
-
-        if (c === '\\') {
+        if ((type === 'string_single' || type === 'string_double') && c === '\\') {
+          // Look for escapement.
           i += 1;
           if (i >= length) {
-            makeError(make(q === '"' ? 'string_double' : 'string_single', str), "Unterminated string");
+            makeError(make(type, str), "Unterminated string");
           }
           c = s.charAt(i);
           switch (c) {
@@ -1935,11 +1929,11 @@ function tokenize(s, prefix = '<>+-&', suffix = '=>&:') {
               break;
             case 'u':
               if (i >= length) {
-                makeError(make(q === '"' ? 'string_double' : 'string_single', str), "Unterminated string");
+                makeError(make(type, str), "Unterminated string");
               }
               c = parseInt(s.substr(i + 1, 4), 16);
               if (!isFinite(c) || c < 0) {
-                makeError(make(q === '"' ? 'string_double' : 'string_single', str), "Unterminated string");
+                makeError(make(type, str), "Unterminated string");
               }
               c = String.fromCharCode(c);
               i += 4;
@@ -1950,7 +1944,7 @@ function tokenize(s, prefix = '<>+-&', suffix = '=>&:') {
         i += 1;
       }
       i += 1;
-      result.push(make(q === '"' ? 'string_double' : 'string_single', str));
+      result.push(make(type, str));
       c = s.charAt(i);
 
       // comment.
@@ -2107,12 +2101,18 @@ var make_parse = function () {
       if (!o) {
         makeError(t, "Unknown operator.");
       }
-    } else if (a === "string_double") {
-      o = m_symbol_table["(string_literal_double)"];
-      a = "literal";
-    } else if (a === "string_single") {
-      o = m_symbol_table["(string_literal_single)"];
-      a = "literal";
+    } else if (a === 'string_double') {
+      // "строчка" в двойнгых кавычках
+      o = m_symbol_table['(string_literal_double)'];
+      a = 'literal';
+    } else if (a === 'string_single') {
+      // 'строчка' в ординарных
+      o = m_symbol_table['(string_literal_single)'];
+      a = 'literal';
+    } else if (a === 'string_column') {
+      // [строчка] в скобочках
+      o = m_symbol_table['(string_literal_column)'];
+      a = 'literal';
     } else if (a === "number") {
       o = m_symbol_table["(number_literal)"];
       a = "literal";
@@ -2124,7 +2124,7 @@ var make_parse = function () {
     m_token.to = t.to;
     m_token.value = v;
     m_token.arity = a;
-    if (a == "operator") {
+    if (a === "operator") {
       m_token.sexpr = m_operator_aliases[v];
     } else {
       m_token.sexpr = v; // by dima
@@ -2258,7 +2258,7 @@ var make_parse = function () {
   symbol(":");
   symbol(";");
   symbol(")");
-  symbol("]");
+  // symbol("]");
   symbol("}");
   symbol("true").nud = function () {
     this.sexpr = true;
@@ -2285,6 +2285,12 @@ var make_parse = function () {
     this.first = "'";
     this.arity = "unary";
     this.sexpr = ["'", this.sexpr];
+    return this;
+  };
+  symbol("(string_literal_column)").nud = function () {
+    this.first = "'";
+    this.arity = "unary";
+    this.sexpr = ["[]", this.sexpr];
     return this;
   };
   symbol("(number_literal)").nud = itself;
@@ -2372,23 +2378,15 @@ var make_parse = function () {
   infix("*", 60);
   infix("/", 60);
   infix("(", 80, function (left) {
-    var a = [];
-    //console.log("FUNC>", left.value)
-    if (left.id === "[") {
-      // FIXME TODO
-      this.arity = "ternary";
-      this.first = left.first;
-      this.second = left.second;
-      this.third = a;
-    } else {
-      this.arity = "binary";
-      this.first = left;
-      this.value = "("; // it was '(' by dima
-      this.second = a;
-      if ((left.arity !== "unary" || left.id !== "function") && left.arity !== "name" && left.id !== "(" && left.id !== "&&" && left.id !== "||" && left.id !== "?") {
-        makeError(left, "Expected a variable name.");
-      }
+    let a = [];
+    this.arity = "binary";
+    this.first = left;
+    this.value = "("; // it was '(' by dima
+    this.second = a;
+    if ((left.arity !== "unary" || left.id !== "function") && left.arity !== "name" && left.id !== "(" && left.id !== "&&" && left.id !== "||" && left.id !== "?") {
+      makeError(left, "Expected a variable name.");
     }
+
     // dima support for missed function arguments...
     if (m_token.id !== ")") {
       if (false) { var e; } else {
@@ -2632,27 +2630,29 @@ var make_parse = function () {
       }
     }
     advance(")");
-    //console.log('(), return e' + JSON.stringify(e))
     return e;
   });
-  prefix("[", function () {
-    var a = [];
-    if (m_token.id !== "]") {
-      while (true) {
-        a.push(expression(0));
-        // a.push(statements());
-        if (m_token.id !== ",") {
-          break;
-        }
-        advance(",");
-      }
-    }
-    advance("]");
-    this.first = a;
-    this.arity = "unary";
-    this.sexpr = ["["].concat(a.map(el => el.sexpr));
-    return this;
-  });
+
+  // Arrays have been deprecated: TODO: make qw/qq
+  // prefix("[", function () {
+  //   var a = [];
+  //   if (m_token.id !== "]") {
+  //     while (true) {
+  //       a.push(expression(0));
+  //       // a.push(statements());
+  //       if (m_token.id !== ",") {
+  //         break;
+  //       }
+  //       advance(",");
+  //     }
+  //   }
+  //   advance("]");
+  //   this.first = a;
+  //   this.arity = "unary";
+  //   this.sexpr = ["["].concat(a.map((el) => el.sexpr));
+  //   return this;
+  // });
+
   return function (source) {
     m_tokens = tokenize(source, '=<>!+-*&|/%^:.', '=<>&|:.');
     m_token_nr = 0;

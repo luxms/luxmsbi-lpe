@@ -1,6 +1,6 @@
 {
   "name": "@luxms/lpe",
-  "version": "1.3.2",
+  "version": "1.4.0",
   "description": "Lux Path Expressions Lexer and Parser implementation in Javascript",
   "main": "./dist/lpe.js",
   "types": "./src/index.d.ts",
