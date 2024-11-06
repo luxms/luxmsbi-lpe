@@ -15,9 +15,9 @@ import {parse} from './lpep';
 
 /**
  * @typedef {Object} EvalOptions
- * @property {boolean=} resolveString Would proceed variables to their names
- *                          lpe 'x' -> string 'x' (if x is not defined)
+ * @property {boolean=} resolveString Would proceed variables to their names <br>`lpe 'x' -> string 'x' (if x is not defined)`
  * @property {any=} streamAdapter Is there any streaming library so lpe can use it
+ * @property {boolean=} squareBrackets Should `[Square Brackets]` be interpreted as string
  */
 
 
@@ -221,9 +221,9 @@ const SPECIAL_FORMS = {                                                         
     const result = $var$(ctx, ast[0], undefined, rs);
     return result;
   }),
-  'eval_lpe': makeSF((ast, ctx, rs) => {
-    const lpeCode = eval_lisp(ast[0], ctx, rs);
-    const lisp = parse(lpeCode);
+  'eval_lpe': makeSF((ast, ctx, options) => {
+    const lpeCode = eval_lisp(ast[0], ctx, options);
+    const lisp = parse(lpeCode, options);
     const result = eval_lisp(lisp, ctx);
     return result;
   }),

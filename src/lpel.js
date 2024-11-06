@@ -53,9 +53,20 @@ export function makeError(t, message) {
 }
 
 
-export function tokenize(s, prefix = '<>+-&', suffix = '=>&:') {
+const PREFIX = '=<>!+-*&|/%^:.';
+const SUFFIX = '=<>&|:.';
+
+/**
+ *
+ * @param s
+ * @param {{squareBrackets: boolean}} options
+ * @returns {*[]}
+ */
+export function tokenize(s, options) {
   if (s.startsWith('lpe:')) s = s.substr(4);
   if (s.startsWith('⚡'))  s = s.substr(1);
+
+  const {squareBrackets} = options;
 
   let c;                      // The current character.
   let from;                   // The index of the start of the token.
@@ -171,7 +182,7 @@ export function tokenize(s, prefix = '<>+-&', suffix = '=>&:') {
         makeError(make('number', str), "Bad number");
       }
 
-    } else if (c === '\'' || c === '"' || c === '[') {                                              // 'string', "string", [string]
+    } else if (c === '\'' || c === '"' || (squareBrackets && c === '[')) {                          // 'string', "string", [string]
       /** @type {'string_double' | 'string_single' | 'string_column'}  */
       const type = c === '"' ? 'string_double' : c === '\'' ? 'string_single' : 'string_column';
       const closer = c === '"' ? '"' : c === '\'' ? '\'' : ']';
@@ -245,12 +256,12 @@ export function tokenize(s, prefix = '<>+-&', suffix = '=>&:') {
 
     // combining
 
-    } else if (prefix.indexOf(c) >= 0) {
+    } else if (PREFIX.indexOf(c) >= 0) {
       str = c;
       i += 1;
       while (true) {
         c = s.charAt(i);
-        if (i >= length || suffix.indexOf(c) < 0) {
+        if (i >= length || SUFFIX.indexOf(c) < 0) {
           break;
         }
         str += c;

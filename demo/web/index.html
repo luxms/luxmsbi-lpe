@@ -51,6 +51,7 @@
     <span id="lpe-input-title" class="input-title">LPE expression:</span>
     <textarea id="lpe-input"></textarea>
 
+    <label><input type="checkbox" id="square-brackets" checked>[Square Brackets]</label>
     <button id="lpe-action">Parse</button>
 
     <span id="lisp-input-title" class="input-title">LPE expression:</span>
@@ -70,14 +71,16 @@
     var resultInput = document.getElementById('result-input');
     var lpeAction = document.getElementById('lpe-action');
     var lispAction = document.getElementById('lisp-action');
+    var squareBrackets = document.getElementById('square-brackets');
 
     lpeInput.value = window.localStorage.getItem('lpe') || '';
     lispInput.value = window.localStorage.getItem('lisp') || '';
+    squareBrackets.checked = window.localStorage.getItem('square-brackets') !== 'false';
 
     function runLPEAction() {
       var lisp;
       try {
-        lisp = lpe.parse(lpeInput.value);
+        lisp = lpe.parse(lpeInput.value, { squareBrackets: squareBrackets.checked });
         lispInput.value = JSON.stringify(lisp, null, 2);
       } catch (err) {
         console.error(err);
@@ -174,6 +177,11 @@
     lpeAction.addEventListener('click', runLPEAction, false);
 
     lispAction.addEventListener('click', runLispAction, false);
+
+    squareBrackets.addEventListener('change', function (e) {
+      window.localStorage.setItem('square-brackets', !!e.target.checked);
+    }, false);
+
   </script>
 </body>
 </html>

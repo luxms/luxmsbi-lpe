@@ -1020,9 +1020,9 @@ var web_dom_iterable = __webpack_require__(890);
 
 /**
  * @typedef {Object} EvalOptions
- * @property {boolean=} resolveString Would proceed variables to their names
- *                          lpe 'x' -> string 'x' (if x is not defined)
+ * @property {boolean=} resolveString Would proceed variables to their names <br>`lpe 'x' -> string 'x' (if x is not defined)`
  * @property {any=} streamAdapter Is there any streaming library so lpe can use it
+ * @property {boolean=} squareBrackets Should `[Square Brackets]` be interpreted as string
  */
 
 const isArray = arg => Object.prototype.toString.call(arg) === '[object Array]';
@@ -1217,9 +1217,9 @@ const SPECIAL_FORMS = {
     const result = $var$(ctx, ast[0], undefined, rs);
     return result;
   }),
-  'eval_lpe': makeSF((ast, ctx, rs) => {
-    const lpeCode = eval_lisp(ast[0], ctx, rs);
-    const lisp = parse(lpeCode);
+  'eval_lpe': makeSF((ast, ctx, options) => {
+    const lpeCode = eval_lisp(ast[0], ctx, options);
+    const lisp = parse(lpeCode, options);
     const result = eval_lisp(lisp, ctx);
     return result;
   }),
@@ -1768,9 +1768,21 @@ function makeError(t, message) {
   const errorDescription = JSON.stringify(t, ['name', 'message', 'from', 'to', 'key', 'value', 'arity', 'first', 'second', 'third', 'fourth'], 4);
   throw new LPESyntaxError(errorDescription);
 }
-function tokenize(s, prefix = '<>+-&', suffix = '=>&:') {
+const PREFIX = '=<>!+-*&|/%^:.';
+const SUFFIX = '=<>&|:.';
+
+/**
+ *
+ * @param s
+ * @param {{squareBrackets: boolean}} options
+ * @returns {*[]}
+ */
+function tokenize(s, options) {
   if (s.startsWith('lpe:')) s = s.substr(4);
   if (s.startsWith('⚡')) s = s.substr(1);
+  const {
+    squareBrackets
+  } = options;
   let c; // The current character.
   let from; // The index of the start of the token.
   let i = 0; // The index of the current character.
@@ -1888,7 +1900,7 @@ function tokenize(s, prefix = '<>+-&', suffix = '=>&:') {
       } else {
         makeError(make('number', str), "Bad number");
       }
-    } else if (c === '\'' || c === '"' || c === '[') {
+    } else if (c === '\'' || c === '"' || squareBrackets && c === '[') {
       // 'string', "string", [string]
       /** @type {'string_double' | 'string_single' | 'string_column'}  */
       const type = c === '"' ? 'string_double' : c === '\'' ? 'string_single' : 'string_column';
@@ -1959,12 +1971,12 @@ function tokenize(s, prefix = '<>+-&', suffix = '=>&:') {
       }
 
       // combining
-    } else if (prefix.indexOf(c) >= 0) {
+    } else if (PREFIX.indexOf(c) >= 0) {
       str = c;
       i += 1;
       while (true) {
         c = s.charAt(i);
-        if (i >= length || suffix.indexOf(c) < 0) {
+        if (i >= length || SUFFIX.indexOf(c) < 0) {
           break;
         }
         str += c;
@@ -2015,7 +2027,15 @@ std = statement denotation
 
 
 
-var make_parse = function () {
+
+/**
+ *
+ * @param {{squareBrackets: boolean}} options
+ * @returns {function(*): null|*|{sexpr: string[]}}
+ */
+const make_parse = function (options = {}) {
+  const squareBrackets = options.squareBrackets ?? false; // by default - ! squareBrackets
+
   var m_symbol_table = {};
   var m_token;
   var m_tokens;
@@ -2258,7 +2278,7 @@ var make_parse = function () {
   symbol(":");
   symbol(";");
   symbol(")");
-  // symbol("]");
+  symbol("]");
   symbol("}");
   symbol("true").nud = function () {
     this.sexpr = true;
@@ -2632,29 +2652,30 @@ var make_parse = function () {
     advance(")");
     return e;
   });
-
-  // Arrays have been deprecated: TODO: make qw/qq
-  // prefix("[", function () {
-  //   var a = [];
-  //   if (m_token.id !== "]") {
-  //     while (true) {
-  //       a.push(expression(0));
-  //       // a.push(statements());
-  //       if (m_token.id !== ",") {
-  //         break;
-  //       }
-  //       advance(",");
-  //     }
-  //   }
-  //   advance("]");
-  //   this.first = a;
-  //   this.arity = "unary";
-  //   this.sexpr = ["["].concat(a.map((el) => el.sexpr));
-  //   return this;
-  // });
-
+  if (!squareBrackets) {
+    prefix("[", function () {
+      var a = [];
+      if (m_token.id !== "]") {
+        while (true) {
+          a.push(expression(0));
+          // a.push(statements());
+          if (m_token.id !== ",") {
+            break;
+          }
+          advance(",");
+        }
+      }
+      advance("]");
+      this.first = a;
+      this.arity = "unary";
+      this.sexpr = ["["].concat(a.map(el => el.sexpr));
+      return this;
+    });
+  }
   return function (source) {
-    m_tokens = tokenize(source, '=<>!+-*&|/%^:.', '=<>&|:.');
+    m_tokens = tokenize(source, {
+      squareBrackets
+    });
     m_token_nr = 0;
     new_expression_scope("logical");
     advance();
@@ -2664,9 +2685,28 @@ var make_parse = function () {
     return s;
   };
 };
-const parser = make_parse();
-function parse(str) {
+const parser3 = make_parse({
+  squareBrackets: false
+});
+const parser4 = make_parse({
+  squareBrackets: true
+});
+
+/**
+ *
+ * @param str
+ * @param {EvalOptions} options
+ * @returns {*}
+ */
+function parse(str, options = {}) {
   try {
+    const squareBrackets = options.squareBrackets ?? false; // by default - do not use square brackets (true)
+    let parser;
+    if (squareBrackets) {
+      parser = parser4; // In v4 - square brackets are interpreted as special strings (SQL column/table)
+    } else {
+      parser = parser3;
+    }
     const parseResult = parser(str); // from, to, value, arity, sexpr
     return parseResult.sexpr;
   } catch (err) {
@@ -2768,7 +2808,7 @@ function deparse(lispExpr) {
 
 
 function eval_lpe(lpe, ctx, options) {
-  const ast = parse(lpe);
+  const ast = parse(lpe, options);
   return eval_lisp(ast, ctx, options);
 }
 

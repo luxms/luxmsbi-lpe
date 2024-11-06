@@ -33,8 +33,14 @@ std = statement denotation
 import { isArray } from './lisp';
 import { tokenize, makeError, LPESyntaxError } from './lpel';
 
+/**
+ *
+ * @param {{squareBrackets: boolean}} options
+ * @returns {function(*): null|*|{sexpr: string[]}}
+ */
+const make_parse = function (options = {}) {
+  const squareBrackets = options.squareBrackets ?? false;                           // by default - ! squareBrackets
 
-var make_parse = function () {
   var m_symbol_table = {};
   var m_token;
   var m_tokens;
@@ -284,7 +290,7 @@ var make_parse = function () {
   symbol(":");
   symbol(";");
   symbol(")");
-  // symbol("]");
+  symbol("]");
   symbol("}");
 
   symbol("true").nud = function () { this.sexpr = true; return this; };
@@ -677,28 +683,29 @@ var make_parse = function () {
     return e;
   });
 
-  // Arrays have been deprecated: TODO: make qw/qq
-  // prefix("[", function () {
-  //   var a = [];
-  //   if (m_token.id !== "]") {
-  //     while (true) {
-  //       a.push(expression(0));
-  //       // a.push(statements());
-  //       if (m_token.id !== ",") {
-  //         break;
-  //       }
-  //       advance(",");
-  //     }
-  //   }
-  //   advance("]");
-  //   this.first = a;
-  //   this.arity = "unary";
-  //   this.sexpr = ["["].concat(a.map((el) => el.sexpr));
-  //   return this;
-  // });
+  if (!squareBrackets) {
+    prefix("[", function () {
+      var a = [];
+      if (m_token.id !== "]") {
+        while (true) {
+          a.push(expression(0));
+          // a.push(statements());
+          if (m_token.id !== ",") {
+            break;
+          }
+          advance(",");
+        }
+      }
+      advance("]");
+      this.first = a;
+      this.arity = "unary";
+      this.sexpr = ["["].concat(a.map((el) => el.sexpr));
+      return this;
+    });
+  }
 
   return function (source) {
-    m_tokens = tokenize(source, '=<>!+-*&|/%^:.', '=<>&|:.');
+    m_tokens = tokenize(source, {squareBrackets});
     m_token_nr = 0;
     new_expression_scope("logical");
     advance();
@@ -710,10 +717,25 @@ var make_parse = function () {
 };
 
 
-const parser = make_parse();
+const parser3 = make_parse({squareBrackets: false});
+const parser4 = make_parse({squareBrackets: true});
 
-export function parse(str) {
+/**
+ *
+ * @param str
+ * @param {EvalOptions} options
+ * @returns {*}
+ */
+export function parse(str, options = {}) {
   try {
+    const squareBrackets = options.squareBrackets ?? false;                                         // by default - do not use square brackets (true)
+    let parser;
+    if (squareBrackets) {
+      parser = parser4;                                                                             // In v4 - square brackets are interpreted as special strings (SQL column/table)
+    } else {
+      parser = parser3;
+    }
+
     const parseResult = parser(str);   // from, to, value, arity, sexpr
     return parseResult.sexpr;
 
