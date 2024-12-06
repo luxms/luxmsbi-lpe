@@ -116,11 +116,12 @@
         p2: later(2),
         p3: later(3),
         p4: later(4),
+        t1: () => {throw 1}
       };
 
       try {
         var lisp = JSON.parse(lispInput.value);
-        var result = lpe.eval_lisp(lisp, ctx);
+        var result = lpe.eval_lisp(lisp, ctx, {resolveString: false, wantCallable: true});
         if (result instanceof Promise) {
           resultInput.value = '...';
           result.then(result => {
@@ -136,7 +137,7 @@
       } catch (err) {
         console.error(err);
         console.error(err.stack);
-        resultInput.value = err.message;
+        resultInput.value = 'Error\n' + (err.message ?? err);
       }
     }
 

@@ -142,7 +142,6 @@ const ifSF = (ast, ctx, options) => {
         return ifSF(ast.slice(2), ctx, options);
       }
     },
-    (error) => {},
     options?.streamAdapter);
 }
 
@@ -155,7 +154,6 @@ const beginSF = (ast, ctx, options) => {
   return unbox(
       [firstOperator],
       ([firstResult]) => ast.length === 1 ? firstResult : beginSF(ast.slice(1), ctx, options),      // Если один аргумент - возвращаем значение
-      (error) => {},
       options?.streamAdapter);
 };
 
@@ -186,9 +184,6 @@ const SPECIAL_FORMS = {                                                         
           } catch (err) {
             return value;                                                             // undefined when 'get'
           }
-        },
-        (error) => {
-          // ??
         },
         options?.streamAdapter);
   }),
@@ -527,10 +522,9 @@ function env_bind(ast, ctx, exprs) {
  * Unwrap values if they are promise or stream
  * @param {any[]} args
  * @param {(arg: any[]) => any} resolve callback to run when all ready
- * @param {any} reject
  * @param {any?} streamAdapter
  */
-export function unbox(args, resolve, reject, streamAdapter) {
+export function unbox(args, resolve, streamAdapter) {
   const hasPromise = args.find(a => a instanceof Promise);
   const hasStreams = !!args.find(a => streamAdapter?.isStream(a));
 
@@ -593,14 +587,10 @@ export function unbox(args, resolve, reject, streamAdapter) {
     return outputStream;
 
   } else if (hasPromise) {                                                                          // TODO: handle both streams and promises
-    return Promise.all(args).then(resolve).catch(reject);
+    return Promise.all(args).then(resolve);
 
   } else {
-    try {
-      return resolve(args);                                                                         // TODO check if stream or promise returned
-    } catch (err) {
-      reject(err);
-    }
+    return resolve(args);                                                                           // TODO check if stream or promise returned
   }
 }
 
@@ -671,9 +661,6 @@ function EVAL(ast, ctx, options) {
           (args) => {
             const fnResult = op.apply(op, args);
             return fnResult;
-          },
-          (error) => {
-              // ??
           },
           options?.streamAdapter);
     }

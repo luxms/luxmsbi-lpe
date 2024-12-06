@@ -1134,7 +1134,7 @@ const ifSF = (ast, ctx, options) => {
     } else {
       return ifSF(ast.slice(2), ctx, options);
     }
-  }, error => {}, options === null || options === void 0 ? void 0 : options.streamAdapter);
+  }, options === null || options === void 0 ? void 0 : options.streamAdapter);
 };
 
 /**
@@ -1143,9 +1143,8 @@ const ifSF = (ast, ctx, options) => {
 const beginSF = (ast, ctx, options) => {
   if (ast.length === 0) return null;
   const firstOperator = EVAL(ast[0], ctx, options);
-  return unbox([firstOperator], ([firstResult]) => ast.length === 1 ? firstResult : beginSF(ast.slice(1), ctx, options),
-  // Если один аргумент - возвращаем значение
-  error => {}, options === null || options === void 0 ? void 0 : options.streamAdapter);
+  return unbox([firstOperator], ([firstResult]) => ast.length === 1 ? firstResult : beginSF(ast.slice(1), ctx, options), // Если один аргумент - возвращаем значение
+  options === null || options === void 0 ? void 0 : options.streamAdapter);
 };
 const SPECIAL_FORMS = {
   // built-in special forms
@@ -1178,8 +1177,6 @@ const SPECIAL_FORMS = {
       } catch (err) {
         return value; // undefined when 'get'
       }
-    }, error => {
-      // ??
     }, options === null || options === void 0 ? void 0 : options.streamAdapter);
   }),
   '.': makeSF((ast, ctx, rs) => {
@@ -1549,10 +1546,9 @@ function env_bind(ast, ctx, exprs) {
  * Unwrap values if they are promise or stream
  * @param {any[]} args
  * @param {(arg: any[]) => any} resolve callback to run when all ready
- * @param {any} reject
  * @param {any?} streamAdapter
  */
-function unbox(args, resolve, reject, streamAdapter) {
+function unbox(args, resolve, streamAdapter) {
   const hasPromise = args.find(a => a instanceof Promise);
   const hasStreams = !!args.find(a => streamAdapter === null || streamAdapter === void 0 ? void 0 : streamAdapter.isStream(a));
   if (hasStreams) {
@@ -1619,13 +1615,9 @@ function unbox(args, resolve, reject, streamAdapter) {
     return outputStream;
   } else if (hasPromise) {
     // TODO: handle both streams and promises
-    return Promise.all(args).then(resolve).catch(reject);
+    return Promise.all(args).then(resolve);
   } else {
-    try {
-      return resolve(args); // TODO check if stream or promise returned
-    } catch (err) {
-      reject(err);
-    }
+    return resolve(args); // TODO check if stream or promise returned
   }
 }
 
@@ -1697,8 +1689,6 @@ function EVAL(ast, ctx, options) {
       return unbox(args, args => {
         const fnResult = op.apply(op, args);
         return fnResult;
-      }, error => {
-        // ??
       }, options === null || options === void 0 ? void 0 : options.streamAdapter);
     }
   }
