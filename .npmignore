@@ -1,0 +1,10 @@
+src/**
+!src/index.d.ts
+node_modules
+demo
+.idea
+test
+webpack.config.js
+.babelrc
+.travis.yml
+run.md
