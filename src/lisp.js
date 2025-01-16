@@ -12,6 +12,7 @@
  */
 
 import {parse} from './lpep';
+import {DATE_TIME} from './lib/datetime';
 
 /**
  * @typedef {Object} EvalOptions
@@ -317,6 +318,9 @@ export const STDLIB = {
   'Date': Date,
   'console': console,
   'JSON': JSON,
+
+  // datetime fn
+  ...DATE_TIME,
 
   // special forms
   ...SPECIAL_FORMS,
