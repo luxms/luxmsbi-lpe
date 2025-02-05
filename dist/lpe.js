@@ -93,7 +93,7 @@ module.exports = function (it) {
 /***/ 94:
 /***/ ((module) => {
 
-var core = module.exports = { version: '2.6.12' };
+var core = module.exports = { version: '2.6.5' };
 if (typeof __e == 'number') __e = core; // eslint-disable-line no-undef
 
 
@@ -692,7 +692,7 @@ var store = global[SHARED] || (global[SHARED] = {});
 })('versions', []).push({
   version: core.version,
   mode: __webpack_require__(750) ? 'pure' : 'global',
-  copyright: '© 2020 Denis Pushkarev (zloirock.ru)'
+  copyright: '© 2019 Denis Pushkarev (zloirock.ru)'
 });
 
 
@@ -976,7 +976,7 @@ for (var collections = getKeys(DOMIterables), i = 0; i < collections.length; i++
 /******/ 	
 /************************************************************************/
 var __webpack_exports__ = {};
-// This entry needs to be wrapped in an IIFE because it needs to be in strict mode.
+// This entry need to be wrapped in an IIFE because it need to be in strict mode.
 (() => {
 "use strict";
 // ESM COMPAT FLAG
@@ -1001,8 +1001,7 @@ __webpack_require__.d(__webpack_exports__, {
 
 // EXTERNAL MODULE: ./node_modules/core-js/modules/web.dom.iterable.js
 var web_dom_iterable = __webpack_require__(890);
-;// ./src/lib/datetime.js
-
+;// CONCATENATED MODULE: ./src/lib/datetime.js
 /**
  * @return {string}
  */
@@ -1611,7 +1610,7 @@ const _changeMonth = (period, delta) => {
   }
   return result;
 };
-;// ./src/lisp.js
+;// CONCATENATED MODULE: ./src/lisp.js
 
 /**
  *  miniMAL lisp interpreter
@@ -1631,7 +1630,7 @@ const _changeMonth = (period, delta) => {
 
 /**
  * @typedef {Object} EvalOptions
- * @property {boolean=} resolveString Would proceed variables to their names <br>`lpe 'x' -> string 'x' (if x is not defined)`
+ * @property {boolean=} resolveString Proceed variables to their names <br>`lpe 'x' -> string 'x' (if x is not defined)`
  * @property {any=} streamAdapter Is there any streaming library so lpe can use it
  * @property {boolean=} squareBrackets Should `[Square Brackets]` be interpreted as string
  */
@@ -2327,7 +2326,7 @@ function init_lisp(ctx) {
 function evaluate(ast, ctx) {
   return eval_lisp(ast, ctx);
 }
-;// ./src/lpel.js
+;// CONCATENATED MODULE: ./src/lpel.js
 // http://javascript.crockford.com/tdop/tdop.html
 
 // 2010-02-23
@@ -2597,7 +2596,7 @@ function tokenize(s, options) {
   return result;
 }
 /* harmony default export */ const lpel = ((/* unused pure expression or super */ null && (tokenize)));
-;// ./src/lpep.js
+;// CONCATENATED MODULE: ./src/lpep.js
 /**
  * LuxPath expressions parser
  *
@@ -3319,7 +3318,7 @@ function parse(str, options = {}) {
   }
 }
 
-;// ./src/lped.js
+;// CONCATENATED MODULE: ./src/lped.js
 const lped_isArray = arg => Object.prototype.toString.call(arg) === '[object Array]';
 const lped_isString = arg => typeof arg === 'string';
 const lped_isNumber = arg => typeof arg === 'number';
@@ -3406,7 +3405,7 @@ function deparse(lispExpr) {
     return String(lispExpr);
   }
 }
-;// ./src/index.js
+;// CONCATENATED MODULE: ./src/index.js
 
 
 

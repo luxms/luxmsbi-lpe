@@ -16,7 +16,7 @@ import {DATE_TIME} from './lib/datetime';
 
 /**
  * @typedef {Object} EvalOptions
- * @property {boolean=} resolveString Would proceed variables to their names <br>`lpe 'x' -> string 'x' (if x is not defined)`
+ * @property {boolean=} resolveString Proceed variables to their names <br>`lpe 'x' -> string 'x' (if x is not defined)`
  * @property {any=} streamAdapter Is there any streaming library so lpe can use it
  * @property {boolean=} squareBrackets Should `[Square Brackets]` be interpreted as string
  */
