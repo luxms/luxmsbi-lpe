@@ -1987,7 +1987,7 @@ const STDLIB = {
     throw a;
   },
   'identity': a => a,
-  'pluck': (c, k) => c.map(el => el[k]),
+  'pluck': (c, k) => isArray(c) ? c.map(el => el[k]) : [],
   // for each array element, get property value, present result as array.
   'read-string': a => JSON.parse(a),
   'rep': a => JSON.stringify(EVAL(JSON.parse(a), STDLIB)),
