@@ -3274,6 +3274,26 @@ const make_parse = function (options = {}) {
       return this;
     });
   }
+
+  // Array of form {1, 2, 3}: c, postgres, java, M
+  prefix('{', function () {
+    let a = [];
+    if (m_token.id !== '}') {
+      while (true) {
+        a.push(expression(0));
+        // a.push(statements());
+        if (m_token.id !== ",") {
+          break;
+        }
+        advance(",");
+      }
+    }
+    advance('}');
+    this.first = a;
+    this.arity = "unary";
+    this.sexpr = ["vector"].concat(a.map(el => el.sexpr));
+    return this;
+  });
   return function (source) {
     m_tokens = tokenize(source, {
       squareBrackets
