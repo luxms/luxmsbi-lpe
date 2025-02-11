@@ -2,8 +2,7 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-### [Unreleased]
-- Added `{ curly, brackets }` for array 
+### [1.4.5](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.4.3...v1.4.5) (2025-02-11)
 
 ### [1.4.3] - 2025-02-05
 - Fixed function pluck for wrong types of arguments
