@@ -2780,6 +2780,7 @@ const make_parse = function (options = {}) {
       } else if (m_token.value === ';') {
         // skip optional ;
         advance();
+        continue;
       }
       s = statement();
       //console.log("STATEMENT ", s);
