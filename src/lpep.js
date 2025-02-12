@@ -187,10 +187,10 @@ const make_parse = function (options = {}) {
         //console.log(token);
         if ( m_token.id === "(end)") {
             break;
-        } else if(m_token.value === ';'){
+        } /*else if(m_token.value === ';'){
           // skip optional ;
            advance();
-        }
+        }*/
         s = statement();
         //console.log("STATEMENT ", s);
         if (s) {
@@ -480,6 +480,24 @@ const make_parse = function (options = {}) {
 
     this.sexpr = [this.first.value].concat(a.map(function(el){return el.sexpr}));
     advance(")");
+    return this;
+  });
+
+
+  infix(";", 79, function (left) {
+    while (m_token.id === ";") {
+      advance();
+    }
+    if (["(end)", ")", "]", "}", ","].includes(m_token.id)) {
+      this.sexpr = left.sexpr;
+      m_expr_scope.pop();
+      return this;
+    }
+    
+    this.operands = [...(left.value === ";" ? left.operands : [left]), expression(79)];
+    this.arity = "binary";
+    this.sexpr = [";"].concat(this.operands.map(el => el.sexpr));
+    
     return this;
   });
 
