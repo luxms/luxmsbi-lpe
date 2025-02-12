@@ -184,10 +184,10 @@ const make_parse = function (options = {}) {
         //console.log(token);
         if ( m_token.id === "(end)") {
             break;
-        } else if(m_token.value === ';'){
+        } /*else if(m_token.value === ';'){
           // skip optional ;
            advance();
-        }
+        }*/
         s = statement();
         //console.log("STATEMENT ", s);
         if (s) {
@@ -481,9 +481,27 @@ const make_parse = function (options = {}) {
   });
 
 
-  function lift_funseq(node) {
-    if (node.value === "->") {
-      return lift_funseq(node.first).concat(lift_funseq(node.second));
+  infix(";", 1, function (left) {
+    while (m_token.id === ";") {
+      advance();
+    }
+    this.first = left;
+    if (m_token.id === "(end)") {
+      this.sexpr = left.sexpr;
+      return this;
+    }
+    this.second = expression(1);
+    this.arity = "binary";
+    this.sexpr = [";"].concat(lift_funseq(this, ";"));
+    return this;
+  });
+  prefix(";");
+
+
+
+  function lift_funseq(node, operation) {
+    if (node.value === operation) {
+      return lift_funseq(node.first, operation).concat(lift_funseq(node.second, operation));
     } else /*if (node.value === "(") {
       console.log("() DETECTED" + JSON.stringify(node))
       //if (node.first.value === "->"){
@@ -505,22 +523,22 @@ const make_parse = function (options = {}) {
     }
   }
 
-  function lift_funseq_2(node) {
-    if (node.value === "->>") {
-      return lift_funseq(node.first).concat(lift_funseq(node.second));
-    } else /*if (node.value === "()") {
-      //if (node.first.value === "->>"){
-        // если у нас в скобки взято выражение "->", то скобки можно удалить
-        // if (true).(frst().second()) === if(true) => [->> [first] [second]] скобки не нужны,
-        // так как seq уже группирует вызовы в цепочку
-        //  return [["->>"].concat(lift_funseq(node.first.first)).concat(lift_funseq(node.first.second))];
-      //} else {
-          return lift_funseq(node.first);
-      //}
-    } else */{
-      return [node.sexpr];
-    }
-  }
+  // function lift_funseq_2(node) {
+  //   if (node.value === "->>") {
+  //     return lift_funseq(node.first).concat(lift_funseq(node.second));
+  //   } else /*if (node.value === "()") {
+  //     //if (node.first.value === "->>"){
+  //       // если у нас в скобки взято выражение "->", то скобки можно удалить
+  //       // if (true).(frst().second()) === if(true) => [->> [first] [second]] скобки не нужны,
+  //       // так как seq уже группирует вызовы в цепочку
+  //       //  return [["->>"].concat(lift_funseq(node.first.first)).concat(lift_funseq(node.first.second))];
+  //     //} else {
+  //         return lift_funseq(node.first);
+  //     //}
+  //   } else */{
+  //     return [node.sexpr];
+  //   }
+  // }
 
   infix(".", 70, function (left) {
     this.first = left;
@@ -528,7 +546,7 @@ const make_parse = function (options = {}) {
     this.second = expression(70);
     this.arity = "binary";
     this.value = "->";
-    this.sexpr = ["->"].concat(lift_funseq(this));
+    this.sexpr = ["->"].concat(lift_funseq(this, "->"));
     return this;
   });
 
@@ -538,7 +556,7 @@ const make_parse = function (options = {}) {
     this.second = expression(70);
     this.arity = "binary";
     this.value = "->>";
-    this.sexpr = ["->>"].concat(lift_funseq_2(this));
+    this.sexpr = ["->>"].concat(lift_funseq(this, "->>"));
     return this;
   });
 
