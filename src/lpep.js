@@ -45,6 +45,7 @@ const make_parse = function (options = {}) {
   var m_token;
   var m_tokens;
   var m_token_nr;
+  var m_source;
 
   // стэк для типов выражений
   var m_expr_scope = { pop: function () {}};  // для разбора логических выражений типа (A and B or C)
@@ -152,6 +153,8 @@ const make_parse = function (options = {}) {
     m_token.to = t.to;
     m_token.value = v;
     m_token.arity = a;
+    m_token.src = m_source;
+    m_token.crs = m_source.split('').map((c, i) => i >= t.from && i < t.to ? "^" : "-").join("");
     if (a === "operator") {
       m_token.sexpr = m_operator_aliases[v];
     } else {
@@ -725,6 +728,7 @@ const make_parse = function (options = {}) {
   });
 
   return function (source) {
+    m_source = source;
     m_tokens = tokenize(source, {squareBrackets});
     m_token_nr = 0;
     new_expression_scope("logical");
