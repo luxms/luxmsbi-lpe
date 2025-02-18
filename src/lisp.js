@@ -473,6 +473,27 @@ export const STDLIB = {
     return eval_lisp(["begin"].concat(ast.slice(1)), ctx, rs);
   }),
 
+  "define": makeSF((ast, ctx, rs) => {
+    let context = {};
+    let ind = 0;
+    while (ind < ast.length && ast[ind][0] == "[") {
+      let last = ast[ind];
+      let body = last[last.length - 1][1];
+      context[last[1]] = makeSF((ast, ctx, rs) => {
+        if (!body) {
+          return false;
+        }
+        return eval_lisp(
+          ["let", [...last.slice(2, last.length - 1).map((x, i) => [x, ast[i]])], parse(body)],
+          ctx,
+          rs
+        );
+      });
+      ind++;// makeLetBindings(ast[0], ctx, rs)
+    }
+    return eval_lisp(['begin', ...ast.slice(ind)], {...context, ...ctx}, rs)
+  }),
+
   // system functions & objects
   // 'js': eval,
 
