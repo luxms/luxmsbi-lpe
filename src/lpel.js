@@ -63,6 +63,8 @@ const SUFFIX = '=<>&|:.';
  * @returns {*[]}
  */
 export function tokenize(s, options) {
+  if (typeof s !== "string")
+    throw `Tokenizer expects "string", encountered "${typeof s}". Value: ${s}`;
   if (s.startsWith('lpe:')) s = s.substr(4);
   if (s.startsWith('⚡'))  s = s.substr(1);
 
