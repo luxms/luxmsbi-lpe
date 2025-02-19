@@ -519,14 +519,19 @@ function macroexpand(ast, ctx, resolveString = true) {
  */
 function env_bind(ast, ctx, exprs) {
   let newCtx = {};
+  let k = 0;
   for (let i = 0; i < ast.length; i++) {
     if (ast[i] === "&") {
       // variable length arguments
       newCtx[ast[i + 1]] = Array.prototype.slice.call(exprs, i);
       break;
+    } else if (ast[i] === "[") {
+      continue;
     } else {
-      newCtx[ast[i]] = exprs[i];
+      newCtx[ast[i]] = exprs[k];
     }
+
+    k++;
   }
   return [newCtx, ctx];
 }
