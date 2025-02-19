@@ -1948,7 +1948,15 @@ const STDLIB = {
   ...SPECIAL_FORMS,
   // built-in functions
   '=': (...args) => args.every(v => v == args[0]),
-  '+': (...args) => args.reduce((a, b) => a + b),
+  '+': (...args) => args.reduce((a, b) => {
+    if (typeof a === "function") {
+      a = "undefined";
+    }
+    if (typeof b === "function") {
+      b = "undefined";
+    }
+    return a + b;
+  }),
   '-': (...args) => args.length === 1 ? -args[0] : args.reduce((a, b) => a - b),
   '*': (...args) => args.reduce((a, b) => a * b),
   '/': (...args) => args.length === 1 ? 1 / args[0] : args.reduce((a, b) => a / b),
@@ -2380,6 +2388,7 @@ const SUFFIX = '=<>&|:.';
  * @returns {*[]}
  */
 function tokenize(s, options) {
+  if (typeof s !== "string") throw `Tokenizer expects "string", encountered "${typeof s}". Value: ${s}`;
   if (s.startsWith('lpe:')) s = s.substr(4);
   if (s.startsWith('⚡')) s = s.substr(1);
   const {

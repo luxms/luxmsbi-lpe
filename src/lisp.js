@@ -328,11 +328,15 @@ export const STDLIB = {
   // built-in functions
   '=': (...args) => args.every(v => v == args[0]),
   '+': (...args) => args.reduce((a, b) => {
+    if (typeof a === "function") {
+      a = "undefined";
+    }
+
     if (typeof b === "function") {
       b = "undefined";
     }
     return a + b;
-  }, ""),
+  }),
   '-': (...args) => args.length === 1 ? -args[0] : args.reduce((a, b) => a - b),
   '*': (...args) => args.reduce((a, b) => a * b),
   '/': (...args) => args.length === 1 ? 1 / args[0] : args.reduce((a, b) => a / b),
