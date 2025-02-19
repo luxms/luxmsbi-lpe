@@ -146,6 +146,26 @@ const ifSF = (ast, ctx, options) => {
     options?.streamAdapter);
 }
 
+// do (condition, body)
+const doSF = (ast, ctx, options) => {
+  if (ast.length === 0) return undefined;
+  if (ast.length === 1) return EVAL(ast[0], ctx, options);                                          // one arg - by convention return the argument
+  return unbox(
+    [],
+    () => {
+      let last;
+      let condition;
+      
+      do {
+        last = EVAL(ast[1], ctx, options);
+        condition = EVAL(ast[0], ctx, {...options, resolveString: false});
+      } while (condition);
+
+      return last;
+    },
+    options?.streamAdapter);
+}
+
 /**
  * Рекурсивный begin
  */
@@ -164,7 +184,7 @@ const SPECIAL_FORMS = {                                                         
   '`': makeSF((ast, ctx) => ast[0]),                                            // quote
   'macroexpand': makeSF(macroexpand),
   'begin': makeSF(beginSF),
-  'do': makeSF((ast, ctx) => { throw new Error('DO not implemented') }),
+  'do': makeSF(doSF),
   'if': makeSF(ifSF),
   '~': makeSF((ast, ctx, rs) => {                                               // mark as macro
     const f = EVAL(ast[0], ctx, rs);                                            // eval regular function
