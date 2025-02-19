@@ -155,10 +155,22 @@ const doSF = (ast, ctx, options) => {
     () => {
       let last;
       let condition;
-      
+
+      let iter = 0;
+      let maxLoopIterations = 65536;
+
+      if (options?.maxLoopIterations !== undefined) {
+        maxLoopIterations = options?.maxLoopIterations;
+      }
+
       do {
+        if (iter >= maxLoopIterations) {
+          throw new Error(`The maximum number of iterations (${maxLoopIterations}) is exceeded. Check the condition or change the limit in the settings.`)
+        }
+
         last = EVAL(ast[1], ctx, options);
         condition = EVAL(ast[0], ctx, {...options, resolveString: false});
+        iter += 1;
       } while (condition);
 
       return last;
@@ -707,7 +719,7 @@ function EVAL(ast, ctx, options) {
 
 
 export function eval_lisp(ast, ctx, options) {
-  const result = EVAL(ast, [ctx || {}, STDLIB], options || {resolveString: true});
+  const result = EVAL(ast, [ctx || {}, STDLIB], options || {resolveString: true, maxLoopIterations: 65536});
   return result;
 }
 
