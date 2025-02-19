@@ -197,8 +197,8 @@ const SPECIAL_FORMS = {                                                         
     try {
       return EVAL(ast[0], ctx, rs);
     } catch (e) {
-      const errCtx = env_bind([ast[1][0]], ctx, [e]);
-      return EVAL(ast[1][1], errCtx, rs);
+      const errCtx = env_bind([ast[1]], ctx, [e]);
+      return EVAL(ast[2], errCtx, rs);
     }
   }),
   '||': makeSF((ast, ctx, rs) => ast.some(a => !!EVAL(a, ctx, rs))),            // logical or
