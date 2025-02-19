@@ -484,27 +484,27 @@ const make_parse = function (options = {}) {
   });
 
 
-  infix(";", 79, function (left) {
+  infix(";", 1, function (left) {
     while (m_token.id === ";") {
       advance();
     }
-    if (["(end)", ")", "]", "}", ","].includes(m_token.id)) {
+    this.first = left;
+    if (m_token.id === "(end)") {
       this.sexpr = left.sexpr;
-      m_expr_scope.pop();
       return this;
     }
-    
-    this.operands = [...(left.value === ";" ? left.operands : [left]), expression(79)];
+    this.second = expression(1);
     this.arity = "binary";
-    this.sexpr = [";"].concat(this.operands.map(el => el.sexpr));
-    
+    this.sexpr = [";"].concat(lift_funseq(this, ";"));
     return this;
   });
+  prefix(";");
 
 
-  function lift_funseq(node) {
-    if (node.value === "->") {
-      return lift_funseq(node.first).concat(lift_funseq(node.second));
+
+  function lift_funseq(node, operation) {
+    if (node.value === operation) {
+      return lift_funseq(node.first, operation).concat(lift_funseq(node.second, operation));
     } else /*if (node.value === "(") {
       console.log("() DETECTED" + JSON.stringify(node))
       //if (node.first.value === "->"){
@@ -526,22 +526,22 @@ const make_parse = function (options = {}) {
     }
   }
 
-  function lift_funseq_2(node) {
-    if (node.value === "->>") {
-      return lift_funseq(node.first).concat(lift_funseq(node.second));
-    } else /*if (node.value === "()") {
-      //if (node.first.value === "->>"){
-        // если у нас в скобки взято выражение "->", то скобки можно удалить
-        // if (true).(frst().second()) === if(true) => [->> [first] [second]] скобки не нужны,
-        // так как seq уже группирует вызовы в цепочку
-        //  return [["->>"].concat(lift_funseq(node.first.first)).concat(lift_funseq(node.first.second))];
-      //} else {
-          return lift_funseq(node.first);
-      //}
-    } else */{
-      return [node.sexpr];
-    }
-  }
+  // function lift_funseq_2(node) {
+  //   if (node.value === "->>") {
+  //     return lift_funseq(node.first).concat(lift_funseq(node.second));
+  //   } else /*if (node.value === "()") {
+  //     //if (node.first.value === "->>"){
+  //       // если у нас в скобки взято выражение "->", то скобки можно удалить
+  //       // if (true).(frst().second()) === if(true) => [->> [first] [second]] скобки не нужны,
+  //       // так как seq уже группирует вызовы в цепочку
+  //       //  return [["->>"].concat(lift_funseq(node.first.first)).concat(lift_funseq(node.first.second))];
+  //     //} else {
+  //         return lift_funseq(node.first);
+  //     //}
+  //   } else */{
+  //     return [node.sexpr];
+  //   }
+  // }
 
   infix(".", 70, function (left) {
     this.first = left;
@@ -549,7 +549,7 @@ const make_parse = function (options = {}) {
     this.second = expression(70);
     this.arity = "binary";
     this.value = "->";
-    this.sexpr = ["->"].concat(lift_funseq(this));
+    this.sexpr = ["->"].concat(lift_funseq(this, "->"));
     return this;
   });
 
@@ -559,7 +559,7 @@ const make_parse = function (options = {}) {
     this.second = expression(70);
     this.arity = "binary";
     this.value = "->>";
-    this.sexpr = ["->>"].concat(lift_funseq_2(this));
+    this.sexpr = ["->>"].concat(lift_funseq(this, "->>"));
     return this;
   });
 
