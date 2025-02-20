@@ -229,14 +229,14 @@ const SPECIAL_FORMS = {                                                         
     try {
       return EVAL(ast[0], ctx, rs);
     } catch (e) {
-      const errCtx = env_bind([ast[1]], ctx, [e]);
+      const errCtx = env_bind([ast[1]], ctx, [e], options);
       return EVAL(ast[2], errCtx, rs);
     }
   }),
   '||': makeSF((ast, ctx, rs) => ast.some(a => !!EVAL(a, ctx, rs))),            // logical or
   '&&': makeSF((ast, ctx, rs) => ast.every(a => !!EVAL(a, ctx, rs))),           // logical and
   'fn': makeSF((ast, ctx, rs) => {                                              // define new function (lambda)
-    const f = (...args) => EVAL(ast[1], env_bind(ast[0], ctx, args), rs);
+    const f = (...args) => EVAL(ast[1], env_bind(ast[0], ctx, args, rs), rs);
     f.ast = [ast[1], ctx, ast[0]];                                              // f.ast compresses more than f.data
     return f;
   }),
@@ -549,22 +549,36 @@ function macroexpand(ast, ctx, resolveString = true) {
  * @param exprs
  * @returns {*[]}
  */
-function env_bind(ast, ctx, exprs) {
+function env_bind(ast, ctx, exprs, opt) {
   let newCtx = {};
-  let k = 0;
-  for (let i = 0; i < ast.length; i++) {
+  
+  if (ast[0] == "[") {
+    ast = ast.slice(1)
+  }
+
+  for (let i = 0; i < exprs.length; i++) {
     if (ast[i] === "&") {
       // variable length arguments
       newCtx[ast[i + 1]] = Array.prototype.slice.call(exprs, i);
       break;
-    } else if (ast[i] === "[") {
-      continue;
     } else {
-      newCtx[ast[i]] = exprs[k];
+      // replace default value to expr
+      if (isArray(ast[i]) && ast[i][0] == "=") {
+        newCtx[ast[i][1]] = exprs[i];
+      } else {
+        newCtx[ast[i]] = exprs[i];
+      }
     }
-
-    k++;
   }
+
+  // set default arg values
+  for (let i = exprs.length; i < ast.length; i++) {
+    if (isArray(ast[i]) && ast[i][0] == "=") {
+      newCtx[ast[i][1]] = EVAL(ast[i][2], [newCtx, ctx], opt);
+    }
+  }
+
+
   return [newCtx, ctx];
 }
 
@@ -704,7 +718,7 @@ function EVAL(ast, ctx, options) {
 
     if (op.ast) {                                                                                   // Macro
       ast = op.ast[0];
-      ctx = env_bind(op.ast[2], op.ast[1], args);                                                   // TCO
+      ctx = env_bind(op.ast[2], op.ast[1], args, options);                                                   // TCO
     } else {
       return unbox(
           args,
