@@ -588,7 +588,7 @@ function env_bind(ast, ctx, exprs, opt) {
   if (named_arg_idx !== null) {
     for (let i = named_arg_idx; i < exprs.length; i++) {
       if (newCtx[exprs[i][1]] === undefined) {
-        newCtx[exprs[i][1]] = exprs[i][2];
+        newCtx[exprs[i][1]] = EVAL(exprs[i][2], [newCtx, ctx], opt);
       } else {
         console.warn(`name "${exprs[i][1]}" is already defined`);
       }
