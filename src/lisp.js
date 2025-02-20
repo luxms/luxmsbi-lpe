@@ -556,14 +556,27 @@ function env_bind(ast, ctx, exprs, opt) {
     ast = ast.slice(1)
   }
 
+  let named_arg_idx = null;
+
   for (let i = 0; i < exprs.length; i++) {
+    if (isArray(exprs[i])) {
+      if (exprs[i][0] === ":=") {
+        //newCtx[exprs[1]] = EVAL(exprs[2], [newCtx, ctx], opt);
+        named_arg_idx = i;
+        break;
+      } else {
+        // по идее эта ветка никогда не сработает
+        newCtx[ast[i]] = undefined;
+      }
+    }
+
     if (ast[i] === "&") {
       // variable length arguments
       newCtx[ast[i + 1]] = Array.prototype.slice.call(exprs, i);
       break;
     } else {
       // replace default value to expr
-      if (isArray(ast[i]) && ast[i][0] == "=") {
+      if (isArray(ast[i]) && ast[i][0] === ":=") {
         newCtx[ast[i][1]] = exprs[i];
       } else {
         newCtx[ast[i]] = exprs[i];
@@ -571,13 +584,24 @@ function env_bind(ast, ctx, exprs, opt) {
     }
   }
 
-  // set default arg values
-  for (let i = exprs.length; i < ast.length; i++) {
-    if (isArray(ast[i]) && ast[i][0] == "=") {
-      newCtx[ast[i][1]] = EVAL(ast[i][2], [newCtx, ctx], opt);
+  // apply named args
+  if (named_arg_idx !== null) {
+    for (let i = named_arg_idx; i < exprs.length; i++) {
+      if (newCtx[exprs[i][1]] === undefined) {
+        newCtx[exprs[i][1]] = exprs[i][2];
+      } else {
+        console.warn(`name "${exprs[i][1]}" is already defined`);
+      }
     }
   }
 
+  // set default arg values
+  for (let i = 0; i < ast.length; i++) {
+    if (isArray(ast[i]) && ast[i][0] == ":=" && newCtx[ast[i][1]] == undefined) {
+      newCtx[ast[i][1]] = EVAL(ast[i][2], [newCtx, ctx], opt);
+    }
+  }
+  
 
   return [newCtx, ctx];
 }
@@ -714,7 +738,13 @@ function EVAL(ast, ctx, options) {
       return sfResult;
     }
 
-    const args = argsAst.map(a => EVAL(a, ctx, options));                                           // evaluate arguments
+    const args = argsAst.map(a => { 
+      if (isArray(a) && a[0] === ":=") {
+        return a;
+      } 
+
+      return EVAL(a, ctx, options);
+    });                                           // evaluate arguments
 
     if (op.ast) {                                                                                   // Macro
       ast = op.ast[0];
