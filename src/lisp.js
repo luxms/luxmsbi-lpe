@@ -351,6 +351,7 @@ export const STDLIB = {
   'vector': makeSF((ast, ctx, rs) => {
     const evl = x => eval_lisp(x, ctx, rs);
     if (ast.length && isArray(ast[0]) && ast[0][0] == ":") {
+      let res = {};
       ast.forEach(x => { 
         let v = isArray(x) ? [evl(x[1]), evl(x[2])] : [x, evl(x)];
         res[v[0]] = v[1];
