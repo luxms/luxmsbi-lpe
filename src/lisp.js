@@ -480,6 +480,36 @@ for (const [key, val] of Object.entries(STDLIB)) {
   if (isFunction(val)) {val.lpeName = key}
 }
 
+function expandObject(obj) {
+  if (isArray(obj)) {
+    return obj;
+  }
+  if (isHash(obj)) {
+    return Object.entries(obj);
+  }
+  return [obj];
+}
+
+function expandComma(ast, ctx, rs) {
+  if (!isArray(ast)) return ast;
+  let res = [];
+
+  ast.forEach(a => {
+    if (isArray(a)) {
+      if (a[0] == ",") {
+        res = res.concat(expandComma(a.slice(1), ctx, rs));
+      } else if (a[0] == "...") {
+        res = res.concat(expandComma(expandObject(eval_lisp(a[1], ctx, rs)), ctx, rs));
+      } else {
+        res.push(a);
+      }
+    } else {
+      res.push(a);
+    }
+  });
+  return res;
+}
+
 
 function macroexpand(ast, ctx, resolveString = true) {
   //console.log("MACROEXPAND: " + JSON.stringify(ast))
@@ -491,8 +521,7 @@ function macroexpand(ast, ctx, resolveString = true) {
     if (!isFunction(v)) break;
 
     if (!isMacro(v)) break;
-
-    ast = v.apply(v, ast.slice(1));                                             // Это макрос! 3-й элемент макроса установлен в 1 через push
+    ast = v.apply(v, expandComma(ast.slice(1), ctx, {"resolveString": resolveString}));
   }
   //console.log("MACROEXPAND RETURN: " + JSON.stringify(ast))
 
@@ -641,7 +670,7 @@ function EVAL(ast, ctx, options) {
     if (ast.length === 0) return null;                                                              // TODO: [] => empty list (or, maybe return vector [])
 
     //console.log("EVAL1: ", JSON.stringify(resolveOptions),  JSON.stringify(ast))
-    const [opAst, ...argsAst] = ast;
+    const [opAst, argsAst] = [ast[0], expandComma(ast.slice(1), ctx, options)];
 
     const op = EVAL(opAst, ctx, {... options, wantCallable: true});                                 // evaluate operator
 
