@@ -481,7 +481,7 @@ const make_parse = function (options = {}) {
   });
 
 
-  infix(";", 1, function (left) {
+  infix(";", 2, function (left) {
     while (m_token.id === ";") {
       advance();
     }
