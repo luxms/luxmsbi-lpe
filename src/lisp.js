@@ -359,6 +359,21 @@ export const STDLIB = {
   '<=': (...args) => args.every((v, i) => i === 0 ? true : args[i-1] <= args[i]),
   '>=': (...args) => args.every((v, i) => i === 0 ? true : args[i-1] >= args[i]),
   '!=': (...args) => !args.every(v => v == args[0]),
+  ':=': makeSF((ast, ctx, rs) => {
+    if (isArray(ast[0])) {
+      if (ast[0][0] != "->") {
+        makeError(":=", ast, 'Left operand of ":=" must be lvalue!');
+      }
+      let val = isArray(ast[0][1]) ? eval_lisp(ast[0][1], ctx, rs) : $var$(ctx, ast[0][1]);
+      for (let i = 2; i < ast[0].length - 1; ++i) {
+        let key = eval_lisp(ast[0][i], ctx, rs);
+        val[key] = val[key] || {};
+        val = val[key];
+      }
+      return (val[eval_lisp(ast[0][ast[0].length - 1], ctx, rs)] = eval_lisp(ast[1], ctx, rs));
+    }
+    return $var$(ctx, ast[0], eval_lisp(ast[1], ctx, rs));
+  }), 
 //  "'": a => `'${a}'`,
   '[': (...args) => args,
   'RegExp': (...args) => RegExp.apply(RegExp, args),
