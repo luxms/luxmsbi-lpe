@@ -469,6 +469,10 @@ export const STDLIB = {
   }),
 
 
+  ';': makeSF((ast, ctx, rs) => {
+    return eval_lisp(["begin"].concat(ast.slice(1)), ctx, rs);
+  }),
+
   // system functions & objects
   // 'js': eval,
 
