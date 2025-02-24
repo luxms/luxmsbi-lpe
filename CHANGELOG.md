@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.4.6](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.4.5...v1.4.6) (2025-02-24)
+
+
+### Bug Fixes
+
+* changed right file ([a4116ce](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/a4116ce192e39905870ddeed23ab366035af99ae))
+* skip any number of semicolons during parsing ([63bd80f](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/63bd80fd834dfc02b06d74e1af6dd48be132e9e1))
+
 ### [1.4.5](https://github.com/luxms/luxmsbi-lpe/compare/v1.4.3...v1.4.5) (2025-02-11)
 - Added curly brackets for arrays
 
