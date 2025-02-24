@@ -150,32 +150,24 @@ const ifSF = (ast, ctx, options) => {
 const doSF = (ast, ctx, options) => {
   if (ast.length === 0) return undefined;
   if (ast.length === 1) return EVAL(ast[0], ctx, options);                                          // one arg - by convention return the argument
-  return unbox(
-    [],
-    () => {
-      let last;
-      let condition;
+  
+  let last;
+  let condition;
 
-      let iter = 0;
-      let maxLoopIterations = 65536;
+  let iter = 0;
+  const maxLoopIterations = options?.maxLoopIterations ?? 65536
 
-      if (options?.maxLoopIterations !== undefined) {
-        maxLoopIterations = options?.maxLoopIterations;
-      }
+  do {
+    if (iter >= maxLoopIterations) {
+      throw new Error(`The maximum number of iterations (${maxLoopIterations}) is exceeded. Check the condition or change the limit in the settings.`)
+    }
 
-      do {
-        if (iter >= maxLoopIterations) {
-          throw new Error(`The maximum number of iterations (${maxLoopIterations}) is exceeded. Check the condition or change the limit in the settings.`)
-        }
+    last = EVAL(ast[1], ctx, options);
+    condition = EVAL(ast[0], ctx, {...options, resolveString: false});
+    iter += 1;
+  } while (condition);
 
-        last = EVAL(ast[1], ctx, options);
-        condition = EVAL(ast[0], ctx, {...options, resolveString: false});
-        iter += 1;
-      } while (condition);
-
-      return last;
-    },
-    options?.streamAdapter);
+  return last;
 }
 
 /**
