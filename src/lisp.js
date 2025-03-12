@@ -12,6 +12,7 @@
  */
 
 import {parse} from './lpep';
+import {deparse} from './lped';
 import {DATE_TIME} from './lib/datetime';
 
 /**
@@ -29,6 +30,28 @@ export const isNumber = (arg) => (typeof arg === 'number');
 export const isBoolean = (arg) => arg === true || arg === false;
 export const isHash = (arg) => (typeof arg === 'object') && (arg !== null) && !isArray(arg);
 export const isFunction = (arg) => (typeof arg === 'function');
+
+
+function LPEEvalError(message) {
+  this.constructor.prototype.__proto__ = Error.prototype;
+  Error.call(this);
+  Error.captureStackTrace(this, this.constructor);
+  this.name = this.constructor.name;
+  this.message = message;
+  // this.stack = (new Error()).stack;
+}
+
+function makeError(name, ast, message) {
+  const errorDescription = JSON.stringify(
+      {name: name, message: message, args: deparse([name, ...ast])
+        //ast.map(
+        //x => x instanceof Array ? `['${x.map(y => y instanceof Array ? [y[0]] : y).join("','")}']` : x)
+        },
+      ['name', 'message', 'args'],
+      4);
+
+  throw new LPEEvalError(errorDescription);
+}
 
 
 /**
@@ -336,6 +359,21 @@ export const STDLIB = {
   '<=': (...args) => args.every((v, i) => i === 0 ? true : args[i-1] <= args[i]),
   '>=': (...args) => args.every((v, i) => i === 0 ? true : args[i-1] >= args[i]),
   '!=': (...args) => !args.every(v => v == args[0]),
+  ':=': makeSF((ast, ctx, rs) => {
+    if (isArray(ast[0])) {
+      if (ast[0][0] != "->") {
+        makeError(":=", ast, 'Left operand of ":=" must be lvalue!');
+      }
+      let val = isArray(ast[0][1]) ? eval_lisp(ast[0][1], ctx, rs) : $var$(ctx, ast[0][1]);
+      for (let i = 2; i < ast[0].length - 1; ++i) {
+        let key = eval_lisp(ast[0][i], ctx, rs);
+        val[key] = val[key] || {};
+        val = val[key];
+      }
+      return (val[eval_lisp(ast[0][ast[0].length - 1], ctx, rs)] = eval_lisp(ast[1], ctx, rs));
+    }
+    return $var$(ctx, ast[0], eval_lisp(ast[1], ctx, rs));
+  }), 
 //  "'": a => `'${a}'`,
   '[': (...args) => args,
   'RegExp': (...args) => RegExp.apply(RegExp, args),
@@ -469,6 +507,54 @@ export const STDLIB = {
   }),
 
 
+  "define": makeSF((ast, ctx, rs) => {
+    let context = {};
+    let ind = 0;
+    let statics = $var$(ctx, '##static') || {};
+    while (ind < ast.length && isArray(ast[ind]) && ast[ind][0] == "[") {
+      let last = ast[ind];
+      let body = last[last.length - 1];
+      if (!body instanceof Array || body[0] != '"') {
+        makeError(last[1], last.slice(2), 'Last argument of define must be <String> ("func body at quotes")');
+      }
+      body = body[1];
+      let fargs = [];
+      statics[last[1]] = {};
+      last.slice(2, last.length - 1).forEach((v) => {
+        let name = v;
+        let val = undefined;
+        if (v instanceof Array) {
+          if (v[0] != "[") {
+            makeError(last[1], last.slice(2), 'Argument of function must be <name> or <Array>');
+          }
+          name = v[1];
+          val = eval_lisp(v[2], ctx, rs);
+        }
+        if (name.startsWith("#")) {
+          statics[last[1]][name.slice(1)] = val;
+        } else {
+          fargs.push([ name, val ]);
+        }
+      });
+
+      context[last[1]] = makeSF((ast, ctx, rs) => {
+        if (!body) {
+          return false;
+        }
+        let ths = $var$(ctx, '##static');
+        if (ths) ths = ths[last[1]];
+        return eval_lisp(
+          ["let", 
+            [["this", ths || {}], ...fargs.map((x, i) => [x[0], ast[i] || x[1]])], 
+            parse(body)],
+          ctx,
+          rs
+        );
+      });
+      ind++;// makeLetBindings(ast[0], ctx, rs)
+    }
+    return eval_lisp(['let', [["##static", statics]], ...ast.slice(ind)], {...context, ...ctx}, rs)
+  }),
   // system functions & objects
   // 'js': eval,
 
