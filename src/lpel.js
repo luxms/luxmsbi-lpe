@@ -46,7 +46,7 @@ export function makeError(t, message) {
 
   const errorDescription = JSON.stringify(
       t,
-      ['name', 'message', 'from', 'to', 'key', 'value', 'arity', 'first', 'second', 'third', 'fourth'],
+      ['name', 'message', 'src', 'crs', 'from', 'to', 'key', 'value', 'arity', 'first', 'second', 'third', 'fourth'],
       4);
 
   throw new LPESyntaxError(errorDescription);
