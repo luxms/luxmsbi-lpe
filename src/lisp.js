@@ -240,6 +240,23 @@ const SPECIAL_FORMS = {                                                         
     const result = $var$(ctx, ast[0], undefined, rs);
     return result;
   }),
+  'set_options': makeSF((ast, ctx, rs) => {
+    const options = eval_lisp(ast[0], ctx, rs);
+    if (isArray(options)) {
+      // [["key1", "val1"], ["key2", "val2"]] => {key1: "val1", key2: "val2"}
+      options = Object.fromEntries(options);
+    }
+    const result = eval_lisp(ast[1], ctx, { ...rs, ...options });
+    return result;
+  }),
+  'json_parse': (jsonText) => {
+    return JSON.parse(jsonText);
+  },
+  'eval_ast': makeSF((ast, ctx, options) => {
+    const lisp = eval_lisp(ast[0], ctx, options);
+    const result = eval_lisp(lisp, ctx, options);
+    return result;
+  }),
   'eval_lpe': makeSF((ast, ctx, options) => {
     const lpeCode = eval_lisp(ast[0], ctx, options);
     const lisp = parse(lpeCode, options);
