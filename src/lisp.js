@@ -249,9 +249,11 @@ const SPECIAL_FORMS = {                                                         
     const result = eval_lisp(ast[1], ctx, { ...rs, ...options });
     return result;
   }),
+  'json_parse': (jsonText) => {
+    return JSON.parse(jsonText);
+  },
   'eval_ast': makeSF((ast, ctx, options) => {
-    const astString = eval_lisp(ast[0], ctx, options);
-    const lisp = JSON.parse(astString);
+    const lisp = eval_lisp(ast[0], ctx, options);
     const result = eval_lisp(lisp, ctx, options);
     return result;
   }),

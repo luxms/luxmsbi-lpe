@@ -79,9 +79,10 @@ describe('LISP tests', function () {
 
   it('eval_ast', function () {
     assert.deepEqual(lpe.eval_lisp(
-        lpe.parse(`eval_ast("[\\"+\\", 1, 2]")`)
+        lpe.parse(`eval_ast(json_parse("[\\"+\\", 1, 2]"))`)
       ), 3
     );
+    assert.deepEqual(lpe.eval_lisp(["eval_ast", ["[", "+", 1, 2]]), 3);
   });
 
   it('and or not', function () {
