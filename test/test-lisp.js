@@ -77,6 +77,13 @@ describe('LISP tests', function () {
     assert.deepEqual(lpe.eval_lisp(["max", ["[", 3, 2, 1]]), 3);
   });
 
+  it('eval_ast', function () {
+    assert.deepEqual(lpe.eval_lisp(
+        lpe.parse(`eval_ast("[\\"+\\", 1, 2]")`)
+      ), 3
+    );
+  });
+
   it('and or not', function () {
     assert.deepEqual(lpe.eval_lpe('a or b', {"a":123}, {resolveString: true}), 123);
     assert.deepEqual(lpe.eval_lpe('a or b', {"a":123}, {resolveString: false}), 123);
