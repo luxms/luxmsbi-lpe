@@ -402,7 +402,19 @@ export const STDLIB = {
   'new': (...args) => new (args[0].bind.apply(args[0], args)),
   'not': a => !a,
   'list': (...args) => args,
-  'vector': (...args) => args,
+  ':': (...args) => [args[0], args[1]],
+  'vector': makeSF((ast, ctx, rs) => {
+    const evl = x => eval_lisp(x, ctx, rs);
+    if (ast.length && isArray(ast[0]) && ast[0][0] == ":") {
+      let res = {};
+      ast.forEach(x => { 
+        let v = isArray(x) ? [evl(x[1]), evl(x[2])] : [x, evl(x)];
+        res[v[0]] = v[1];
+      });
+      return res;
+    }
+    return ast.map(x => evl(x));
+  }),
   'map': makeSF((ast, ctx, rs) => {
           let arr = eval_lisp(ast[0], ctx,  {...rs, wantCallable: false})
           rs.wantCallable = true
