@@ -241,7 +241,7 @@ const SPECIAL_FORMS = {                                                         
     return result;
   }),
   'set_options': makeSF((ast, ctx, rs) => {
-    const options = eval_lisp(ast[0], ctx, rs);
+    let options = eval_lisp(ast[0], ctx, rs);
     if (isArray(options)) {
       // [["key1", "val1"], ["key2", "val2"]] => {key1: "val1", key2: "val2"}
       options = Object.fromEntries(options);
