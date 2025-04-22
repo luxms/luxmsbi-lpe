@@ -126,6 +126,11 @@ describe('LPE tests', function() {
         assert.deepEqual(lpe.parse('if(a=b).if(x>4).(yexx().ye2()).(nox().no2()).(noab().noab)'), ["->",["if",["=","a","b"]],["if",[">","x",4]],["()",["->",["yexx"],["ye2"]]],["()",["->",["nox"],["no2"]]],["()",["->",["noab"],"noab"]]]);
     });
 
+    it('should parse :', function() {
+      assert.deepEqual(lpe.parse('test:__avg__'), [":", "test", "__avg__"]);
+      assert.deepEqual(lpe.parse('(min(5) + max(5)) / 2:__avg__'), [":", ["/",["()",["+",["min",5],["max",5]]],2], "__avg__"]);
+    });
+
     it('should eval if expressions', function() {
         assert.equal(lpe.eval_lpe('begin(1,2,3)', {}), '3');
 
