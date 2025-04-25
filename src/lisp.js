@@ -60,18 +60,29 @@ function makeError(name, ast, message) {
  * @param {*} varName - the name of variable
  * @param {*} value - optional value to set (undefined if get)
  * @param {EvalOptions=} resolveOptions - options on how to resolve. resolveString - must be checked by caller and is not handled here...
+ * @param {Map} evalOptions - current evaluate context and options for find endpoint
  */
-function $var$(ctx, varName, value, resolveOptions = {}) {
+function $var$(ctx, varName, value, resolveOptions = {}, evalOptions = undefined) {
+  if (!evalOptions) {
+    evalOptions = { evalFrom: 0, currentCtxElement: 0 }
+  }
+  evalOptions.currentCtxElement++;   // Инкрементируем шаг
   if (isArray(ctx)) {                                                           // contexts chain
     for (let theCtx of ctx) {
-      const result = $var$(theCtx, varName, value, resolveOptions);
+      const result = $var$(theCtx, varName, value, resolveOptions, evalOptions);
       if (result === undefined) continue;                                       // no such var in context
       if (value === undefined) return result;                                   // get => we've got a result
-      return $var$(theCtx, varName, value, resolveOptions);                     // set => redirect 'set' to context with variable.
+      // Повторный вызов той же функции с теми же аргументами точно нужен?
+      return $var$(theCtx, varName, value, resolveOptions, evalOptions);                     // set => redirect 'set' to context with variable.
     }
     if (value === undefined) return undefined;                                  // get => variable not found in all contexts
-    if (ctx.length) $var$(ctx[0], varName, value, resolveOptions);              // set => set variable to HEAD context
+    if (ctx.length) $var$(ctx[0], varName, value, resolveOptions, evalOptions);              // set => set variable to HEAD context
     return undefined;                                                           // ??? ctx.length = 0
+  }
+
+  // Если мы хотим выполнить функцию, которая лежит ниже, пропускаем эту
+  if (evalOptions.currentCtxElement < evalOptions.evalFrom) {
+    return undefined;
   }
 
   if (isFunction(ctx)) {
@@ -117,9 +128,25 @@ export function makeSF(fn) {
 }
 
 
+export function makeSkipForm(fn, overridedAst = undefined) {
+  fn.__isSkipForm = true;
+  if (overridedAst) {
+    // Запоминаем новое ast, если функция хочет его изменить для нижележащих функций
+    fn.__ast = overridedAst;
+  }
+  return fn;
+}
+
+
 function isSF(fn) {
   if (!isFunction(fn)) return false;
   return !!fn.__isSpecialForm;
+}
+
+
+function isSkip(fn) {
+  if (!isFunction(fn)) return false;
+  return !!fn.__isSkipForm;
 }
 
 
@@ -710,13 +737,46 @@ export function unbox(args, resolve, streamAdapter) {
  * @returns {Promise<Awaited<unknown>[] | void>|*|null|undefined}
  */
 function EVAL(ast, ctx, options) {
+  // В этой функции задаем параметры поиска и обрабатываем skip результат
+  // после чего перенаправляем в исходную функцию, которая теперь называется EVAL_IMPLEMENTATION
+  let evalOptions = { evalFrom: 0, currentCtxElement: 0 }
+  let skippedForms = []
+  let result = EVAL_IMPLEMENTATION(ast, ctx, options, evalOptions);
+  while (isSkip(result)) {
+    // Если в качестве результата вернулась функция с пометкой skip
+    // необходимо продолжить поиск с того же места в контексте
+    // после чего результат найденной функции передать в качестве аргумента
+    // в skip функцию
+
+    // Для этого в evalFrom передаём, на каком элементе в контексте мы сейчас остановились
+
+    // ВАЖНО! evalOptions не должен перезаписываться в другой объект для того, чтобы
+    // при изменении  currentCtxElement в нижележащий функциях здесь были видны изменеия
+    // Также из-за макросов эта логика может сломаться, т.к. после обработки макроса
+    // вместо рекурсивного вызова EVAL, который сбросит currentCtxElement, продолжается 
+    // обработка в том же EVAL в цикле с продолжением счетчика, но уже с другим деревом
+    skippedForms.push(result);
+    evalOptions.evalFrom = evalOptions.currentCtxElement + 1;
+    evalOptions.currentCtxElement = 0;
+    if (result.__ast) {
+      ast = [ast[0], ...result.__ast];
+    }
+    result = EVAL_IMPLEMENTATION(ast, ctx, options, evalOptions);
+  }
+  for (let i = skippedForms.length - 1; i >= 0; --i) {
+    result = skippedForms[i](result);
+  }
+  return result;
+}
+
+function EVAL_IMPLEMENTATION(ast, ctx, options, evalOptions) {
   //console.log(`EVAL CALLED FOR ${JSON.stringify(ast)}`)
   while (true) {
     ast = macroexpand(ast, ctx, options?.resolveString ?? false);                                   // by default do not resolve string
 
     if (!isArray(ast)) {                                                        // atom
       if (isString(ast)) {
-        const value = $var$(ctx, ast, undefined, options);
+        const value = $var$(ctx, ast, undefined, options, evalOptions);
         //console.log(`${JSON.stringify(resolveOptions)} var ${ast} resolved to ${isFunction(value)?'FUNCTION':''} ${JSON.stringify(value)}`)
         if (value !== undefined) {
           if (isFunction(value) && options["wantCallable"] !== true) {
@@ -746,7 +806,7 @@ function EVAL(ast, ctx, options) {
     //console.log("EVAL1: ", JSON.stringify(resolveOptions),  JSON.stringify(ast))
     const [opAst, ...argsAst] = ast;
 
-    const op = EVAL(opAst, ctx, {... options, wantCallable: true});                                 // evaluate operator
+    const op = EVAL_IMPLEMENTATION(opAst, ctx, {... options, wantCallable: true}, evalOptions);                                 // evaluate operator
 
     if (typeof op !== 'function') {
       throw new Error('Error: ' + String(op) + ' is not a function');
