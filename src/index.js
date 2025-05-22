@@ -1,6 +1,6 @@
 import {parse, LPESyntaxError} from './lpep';
 import {deparse} from './lped';
-import {eval_lisp, isString, isArray, isHash, isFunction, makeSF, isNumber, STDLIB, unbox} from './lisp';
+import {eval_lisp, isString, isArray, isHash, isFunction, makeSF, makeSkipForm, isNumber, STDLIB, unbox} from './lisp';
 
 function eval_lpe(lpe, ctx, options) {
   const ast = parse(lpe, options);
@@ -19,6 +19,7 @@ export {
   isFunction,
   isNumber,
   makeSF,
+  makeSkipForm,
   STDLIB,
   unbox
 };
