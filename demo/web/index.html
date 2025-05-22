@@ -121,7 +121,7 @@
 
       try {
         var lisp = JSON.parse(lispInput.value);
-        var result = lpe.eval_lisp(lisp, ctx, {resolveString: false, wantCallable: true});
+        var result = lpe.eval_lisp(lisp, ctx, {resolveString: false, wantCallable: true, maxLoopIterations: 65536});
         if (result instanceof Promise) {
           resultInput.value = '...';
           result.then(result => {

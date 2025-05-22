@@ -196,6 +196,30 @@ const ifSF = (ast, ctx, options) => {
     options?.streamAdapter);
 }
 
+// do (condition, body)
+const doSF = (ast, ctx, options) => {
+  if (ast.length === 0) return undefined;
+  if (ast.length === 1) return EVAL(ast[0], ctx, options);                                          // one arg - by convention return the argument
+  
+  let last;
+  let condition;
+
+  let iter = 0;
+  const maxLoopIterations = options?.maxLoopIterations ?? 65536
+
+  do {
+    if (iter >= maxLoopIterations) {
+      throw new Error(`The maximum number of iterations (${maxLoopIterations}) is exceeded. Check the condition or change the limit in the settings.`)
+    }
+
+    last = EVAL(ast[1], ctx, options);
+    condition = EVAL(ast[0], ctx, {...options, resolveString: false});
+    iter += 1;
+  } while (condition);
+
+  return last;
+}
+
 /**
  * Рекурсивный begin
  */
@@ -214,7 +238,7 @@ const SPECIAL_FORMS = {                                                         
   '`': makeSF((ast, ctx) => ast[0]),                                            // quote
   'macroexpand': makeSF(macroexpand),
   'begin': makeSF(beginSF),
-  'do': makeSF((ast, ctx) => { throw new Error('DO not implemented') }),
+  'do': makeSF(doSF),
   'if': makeSF(ifSF),
   '~': makeSF((ast, ctx, rs) => {                                               // mark as macro
     const f = EVAL(ast[0], ctx, rs);                                            // eval regular function
@@ -247,14 +271,14 @@ const SPECIAL_FORMS = {                                                         
     try {
       return EVAL(ast[0], ctx, rs);
     } catch (e) {
-      const errCtx = env_bind([ast[1][0]], ctx, [e]);
-      return EVAL(ast[1][1], errCtx, rs);
+      const errCtx = env_bind([ast[1]], ctx, [e], options);
+      return EVAL(ast[2], errCtx, rs);
     }
   }),
   '||': makeSF((ast, ctx, rs) => ast.some(a => !!EVAL(a, ctx, rs))),            // logical or
   '&&': makeSF((ast, ctx, rs) => ast.every(a => !!EVAL(a, ctx, rs))),           // logical and
   'fn': makeSF((ast, ctx, rs) => {                                              // define new function (lambda)
-    const f = (...args) => EVAL(ast[1], env_bind(ast[0], ctx, args), rs);
+    const f = (...args) => EVAL(ast[1], env_bind(ast[0], ctx, args, rs), rs);
     f.ast = [ast[1], ctx, ast[0]];                                              // f.ast compresses more than f.data
     return f;
   }),
@@ -394,7 +418,16 @@ export const STDLIB = {
 
   // built-in functions
   '=': (...args) => args.every(v => v == args[0]),
-  '+': (...args) => args.reduce((a, b) => a + b),
+  '+': (...args) => args.reduce((a, b) => {
+    if (typeof a === "function") {
+      a = "undefined";
+    }
+
+    if (typeof b === "function") {
+      b = "undefined";
+    }
+    return a + b;
+  }),
   '-': (...args) => args.length === 1 ? -args[0] : args.reduce((a, b) => a - b),
   '*': (...args) => args.reduce((a, b) => a * b),
   '/': (...args) => args.length === 1 ? 1 / args[0] : args.reduce((a, b) => a / b),
@@ -638,17 +671,60 @@ function macroexpand(ast, ctx, resolveString = true) {
  * @param exprs
  * @returns {*[]}
  */
-function env_bind(ast, ctx, exprs) {
+function env_bind(ast, ctx, exprs, opt) {
   let newCtx = {};
-  for (let i = 0; i < ast.length; i++) {
+  
+  if (ast[0] == "[") {
+    ast = ast.slice(1)
+  }
+
+  let named_arg_idx = null;
+
+  for (let i = 0; i < exprs.length; i++) {
+    if (isArray(exprs[i])) {
+      if (exprs[i][0] === ":=") {
+        //newCtx[exprs[1]] = EVAL(exprs[2], [newCtx, ctx], opt);
+        named_arg_idx = i;
+        break;
+      } else {
+        // по идее эта ветка никогда не сработает
+        newCtx[ast[i]] = undefined;
+      }
+    }
+
     if (ast[i] === "&") {
       // variable length arguments
       newCtx[ast[i + 1]] = Array.prototype.slice.call(exprs, i);
       break;
     } else {
-      newCtx[ast[i]] = exprs[i];
+      // replace default value to expr
+      if (isArray(ast[i]) && ast[i][0] === ":=") {
+        newCtx[ast[i][1]] = exprs[i];
+      } else {
+        newCtx[ast[i]] = exprs[i];
+      }
     }
   }
+
+  // apply named args
+  if (named_arg_idx !== null) {
+    for (let i = named_arg_idx; i < exprs.length; i++) {
+      if (newCtx[exprs[i][1]] === undefined) {
+        newCtx[exprs[i][1]] = EVAL(exprs[i][2], [newCtx, ctx], opt);
+      } else {
+        console.warn(`name "${exprs[i][1]}" is already defined`);
+      }
+    }
+  }
+
+  // set default arg values
+  for (let i = 0; i < ast.length; i++) {
+    if (isArray(ast[i]) && ast[i][0] == ":=" && newCtx[ast[i][1]] == undefined) {
+      newCtx[ast[i][1]] = EVAL(ast[i][2], [newCtx, ctx], opt);
+    }
+  }
+  
+
   return [newCtx, ctx];
 }
 
@@ -817,11 +893,17 @@ function EVAL_IMPLEMENTATION(ast, ctx, options, evalOptions) {
       return sfResult;
     }
 
-    const args = argsAst.map(a => EVAL(a, ctx, options));                                           // evaluate arguments
+    const args = argsAst.map(a => { 
+      if (isArray(a) && a[0] === ":=") {
+        return a;
+      } 
+
+      return EVAL(a, ctx, options);
+    });                                           // evaluate arguments
 
     if (op.ast) {                                                                                   // Macro
       ast = op.ast[0];
-      ctx = env_bind(op.ast[2], op.ast[1], args);                                                   // TCO
+      ctx = env_bind(op.ast[2], op.ast[1], args, options);                                                   // TCO
     } else {
       return unbox(
           args,
@@ -836,7 +918,7 @@ function EVAL_IMPLEMENTATION(ast, ctx, options, evalOptions) {
 
 
 export function eval_lisp(ast, ctx, options) {
-  const result = EVAL(ast, [ctx || {}, STDLIB], options || {resolveString: true});
+  const result = EVAL(ast, [ctx || {}, STDLIB], options || {resolveString: true, maxLoopIterations: 65536});
   return result;
 }
 
