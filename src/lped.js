@@ -78,12 +78,14 @@ function deparseSexpr(sexpr) {
   }
 
   if (op === 'begin') return args.map(deparse).join('; ');
+  if (op === 'tuple') return '(' + (args.length === 0 ? ',' : args.length === 1 ? deparse(args[0]) + ',' : args.map(deparse).join(', ')) + ')';
+
 
   return op + '(' + sexpr.slice(1).map(deparse).join(', ') + ')';
 }
 
 
-export function deparse(lispExpr) {
+export function deparse(lispExpr, options) {
   if (isString(lispExpr)) {
     return lispExpr;
 

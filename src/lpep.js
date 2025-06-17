@@ -656,7 +656,6 @@ const make_parse = function (options = {}) {
   });
 
   prefix("(", function () {
-    var e;
     if (m_token.value === ')'){
       // если это просто () две скобки, то возвращаем сразу кусок AST,генерим функцию с именем "()"
       // {"from":3,"to":4,"value":"(","arity":"operator","sexpr":"("}
@@ -666,22 +665,50 @@ const make_parse = function (options = {}) {
       advance(")");
       return this;
     }
-    e = expression(0);
-    //console.log('(), got e' + JSON.stringify(e))
+
     if (m_expr_scope.tp == "logical") {
-      // we should remember all brackets to restore original user expression
-      e.value = "(" // FIXME: why not make it '()' ?? and looks like function `()` call ?
-      e.sexpr = ["()", e.sexpr];
-    } else {
-      if (e.value === "->") {
-        // в скобки взято выражение из цепочки LPE вызовов, нужно запомнить скобки, делаем push "()" в текущий AST
-        e = {
-          first: e,
-          value: "(",
-          arity: "binary",
-          sexpr: ["()", e.sexpr]
-        };
+      //  В скобках может быть два типа выражений
+      //  - выражения:        2 + (3)             (1 + 1)             (1 + (1 + 2))
+      //  - тупли:            2 + (3, 4)          (1,)                (,)
+      //  попытаемся тут их разделить
+      let a = [];
+      if (m_token.id === ",") {                                                                     // обрабатываем (,)
+        advance(",");
+        a.push(undefined);                                                                          // симулируем туплу из двух элементов
+        a.push(undefined);
+      } else {
+        while (true) {
+          if (m_token.id === ")") {                                                                 // обрабатываем (1,)
+            a.push(undefined);
+            break;
+          }
+          a.push(expression(0));
+          if (m_token.id !== ",") {
+            break;
+          }
+          advance(",");
+        }
       }
+      advance(")");
+
+      const sexpr = [a.length > 1 ? "tuple" : "()"].concat(a.filter(Boolean).map((el) => el.sexpr));
+      return {
+        first: a,
+        value: "(",                              // FIXME: why not make it '()' ?? and looks like function `()` call ?
+        arity: "unary",
+        sexpr: sexpr,
+      };
+    }
+
+    var e = expression(0);
+    if (e.value === "->") {
+      // в скобки взято выражение из цепочки LPE вызовов, нужно запомнить скобки, делаем push "()" в текущий AST
+      e = {
+        first: e,
+        value: "(",
+        arity: "binary",
+        sexpr: ["()", e.sexpr]
+      };
     }
     advance(")");
     return e;

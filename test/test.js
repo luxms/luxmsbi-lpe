@@ -155,4 +155,14 @@ describe('LPE tests', function() {
         assert.equal(lpe.eval_lisp(lpe.parse('RegExp("delete","i").invoke(test, context.sql).not()')  ,{"context":{"sql":"deleTe"}}), false);
     });
 
+  it('should parse tuples and arrows', function() {
+    assert.deepEqual(lpe.parse('()'),['()']);
+    assert.deepEqual(lpe.parse('(,)'),['tuple']);
+    assert.deepEqual(lpe.parse('(1)'),['()', 1]);
+    assert.deepEqual(lpe.parse('(1,)'),['tuple', 1]);
+    assert.deepEqual(lpe.parse('(1+2)'),['()', ['+', 1, 2]]);
+    assert.deepEqual(lpe.parse('(1,2)'),['tuple', 1, 2]);
+  });
+
+
 });

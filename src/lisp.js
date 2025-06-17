@@ -200,7 +200,7 @@ const ifSF = (ast, ctx, options) => {
 const doSF = (ast, ctx, options) => {
   if (ast.length === 0) return undefined;
   if (ast.length === 1) return EVAL(ast[0], ctx, options);                                          // one arg - by convention return the argument
-  
+
   let last;
   let condition;
 
@@ -450,7 +450,7 @@ export const STDLIB = {
       return (val[eval_lisp(ast[0][ast[0].length - 1], ctx, rs)] = eval_lisp(ast[1], ctx, rs));
     }
     return $var$(ctx, ast[0], eval_lisp(ast[1], ctx, rs));
-  }), 
+  }),
 //  "'": a => `'${a}'`,
   '[': (...args) => args,
   'RegExp': (...args) => RegExp.apply(RegExp, args),
@@ -463,6 +463,7 @@ export const STDLIB = {
   'not': a => !a,
   'list': (...args) => args,
   'vector': (...args) => args,
+  'tuple': (...args) => args,
   'map': makeSF((ast, ctx, rs) => {
           let arr = eval_lisp(ast[0], ctx,  {...rs, wantCallable: false})
           rs.wantCallable = true
@@ -621,8 +622,8 @@ export const STDLIB = {
         let ths = $var$(ctx, '##static');
         if (ths) ths = ths[last[1]];
         return eval_lisp(
-          ["let", 
-            [["this", ths || {}], ...fargs.map((x, i) => [x[0], ast[i] || x[1]])], 
+          ["let",
+            [["this", ths || {}], ...fargs.map((x, i) => [x[0], ast[i] || x[1]])],
             parse(body)],
           ctx,
           rs
@@ -673,7 +674,7 @@ function macroexpand(ast, ctx, resolveString = true) {
  */
 function env_bind(ast, ctx, exprs, opt) {
   let newCtx = {};
-  
+
   if (ast[0] == "[") {
     ast = ast.slice(1)
   }
@@ -723,7 +724,7 @@ function env_bind(ast, ctx, exprs, opt) {
       newCtx[ast[i][1]] = EVAL(ast[i][2], [newCtx, ctx], opt);
     }
   }
-  
+
 
   return [newCtx, ctx];
 }
@@ -829,7 +830,7 @@ function EVAL(ast, ctx, options) {
     // ВАЖНО! evalOptions не должен перезаписываться в другой объект для того, чтобы
     // при изменении  currentCtxElement в нижележащий функциях здесь были видны изменеия
     // Также из-за макросов эта логика может сломаться, т.к. после обработки макроса
-    // вместо рекурсивного вызова EVAL, который сбросит currentCtxElement, продолжается 
+    // вместо рекурсивного вызова EVAL, который сбросит currentCtxElement, продолжается
     // обработка в том же EVAL в цикле с продолжением счетчика, но уже с другим деревом
     skippedForms.push(result);
     evalOptions.evalFrom = evalOptions.currentCtxElement + 1;
@@ -893,10 +894,10 @@ function EVAL_IMPLEMENTATION(ast, ctx, options, evalOptions) {
       return sfResult;
     }
 
-    const args = argsAst.map(a => { 
+    const args = argsAst.map(a => {
       if (isArray(a) && a[0] === ":=") {
         return a;
-      } 
+      }
 
       return EVAL(a, ctx, options);
     });                                           // evaluate arguments

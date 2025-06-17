@@ -42,6 +42,7 @@
       height: 40px;
       width: 120px;
       align-self: center;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -52,12 +53,18 @@
     <textarea id="lpe-input"></textarea>
 
     <label><input type="checkbox" id="square-brackets" checked>[Square Brackets]</label>
-    <button id="lpe-action">Parse</button>
+    <div style="display: flex; justify-content: space-between">
+      <button id="lpe-action">Parse</button>
+      <button id="lped-action">De-parse</button>
+    </div>
+
 
     <span id="lisp-input-title" class="input-title">LPE expression:</span>
     <textarea id="lisp-input"></textarea>
 
-    <button id="lisp-action">Execute</button>
+    <div style="display: flex; justify-content: space-between">
+      <button id="lisp-action">Execute</button>
+    </div>
 
     <span id="result-input-title" class="input-title">LPE expression:</span>
     <textarea id="result-input" readonly></textarea>
@@ -70,6 +77,7 @@
     var lispInput = document.getElementById('lisp-input');
     var resultInput = document.getElementById('result-input');
     var lpeAction = document.getElementById('lpe-action');
+    var lpedAction = document.getElementById('lped-action');
     var lispAction = document.getElementById('lisp-action');
     var squareBrackets = document.getElementById('square-brackets');
 
@@ -82,6 +90,25 @@
       try {
         lisp = lpe.parse(lpeInput.value, { squareBrackets: squareBrackets.checked });
         lispInput.value = JSON.stringify(lisp, null, 2);
+      } catch (err) {
+        console.error(err);
+        console.error(err.stack);
+        lispInput.value = err.message;
+      }
+      window.localStorage.setItem('lisp', lispInput.value);
+
+      try {
+        console.log(lpe.deparse(lisp));
+      } catch (err) {
+        console.error('deparse error', err);
+      }
+    }
+
+    function runLpedAction() {
+      try {
+        var lisp = JSON.parse(lispInput.value);
+        var result = lpe.deparse(lisp, { squareBrackets: squareBrackets.checked });
+        lpeInput.value = result;
       } catch (err) {
         console.error(err);
         console.error(err.stack);
@@ -176,6 +203,8 @@
     }, false);
 
     lpeAction.addEventListener('click', runLPEAction, false);
+
+    lpedAction.addEventListener('click', runLpedAction, false);
 
     lispAction.addEventListener('click', runLispAction, false);
 
