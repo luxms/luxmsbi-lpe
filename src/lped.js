@@ -12,6 +12,7 @@ const OPERATORS = {
   '*': true,
   '/': true,
   '=': true,
+  '@': true,
   'and': '&&',
   'or': '||',
 };

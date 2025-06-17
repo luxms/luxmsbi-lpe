@@ -412,6 +412,7 @@ const make_parse = function (options = {}) {
   infixr("≥", 40);
   operator_alias("≥",">=");
   infixr("<>", 40);
+  infixr("@", 40);
 
   infix("+", 50);
   infix("-", 50);
