@@ -4,16 +4,22 @@ var lpe = require('../dist/lpe');
 
 describe('LPE tests', function() {
 
-    it('should export parse function', function() {
-        assert(lpe.parse);
-        assert(typeof lpe.parse === 'function');
-    });
+  it('should export parse function', function() {
+    assert(lpe.parse);
+    assert(typeof lpe.parse === 'function');
+  });
 
-    it('should parse simple expressions', function() {
-        assert.deepEqual(lpe.parse('123'),  '123' );
-        assert.deepEqual(lpe.parse('"123"'), [ '"', '123' ]);
-        assert.deepEqual(lpe.parse('list'),  'list' );
-    });
+  it('should export parse unary operators', function() {
+    assert.deepEqual(lpe.parse('+123'),  ["+", 123] );
+    assert.deepEqual(lpe.parse('-123'),  ["-", 123] );
+    assert.deepEqual(lpe.parse('#123'),  ["#", 123] );
+  });
+
+  it('should parse simple expressions', function() {
+    assert.deepEqual(lpe.parse('123'),  '123' );
+    assert.deepEqual(lpe.parse('"123"'), [ '"', '123' ]);
+    assert.deepEqual(lpe.parse('list'),  'list' );
+  });
 
     it('should parse arithmetics', function() {
         assert.deepEqual(lpe.parse('1+2'), ['+', 1, 2]);

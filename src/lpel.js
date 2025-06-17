@@ -95,7 +95,7 @@ export function tokenize(s, options) {
       c = s.charAt(i);
 
     // name.
-    } else if (isLetter(c) || c === '_' || c === '$' || c === '#') {                         // first char of name. TODO: remove #
+    } else if (isLetter(c) || c === '_' || c === '$') {                                             // first char of name.
       str = c;
       i += 1;
       for (;;) {

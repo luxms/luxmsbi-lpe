@@ -21,7 +21,6 @@
 
 
 /*
-
 lbp = left binding power
 rbp = right binding power
 nud = null denotation
@@ -416,6 +415,7 @@ const make_parse = function (options = {}) {
 
   infix("+", 50);
   infix("-", 50);
+  infix("#", 50);
 
   infix("*", 60);
   infix("/", 60);
@@ -632,16 +632,12 @@ const make_parse = function (options = {}) {
     return this
   }; // will be used in logical scope
 
-
-
-
-
   prefix("¬");
   operator_alias("!", "not");
   operator_alias("¬", "not");
 
-  // trying to optimize, when we have negated -number
-  prefix("-");
+  prefix("-");                                                                                      // trying to optimize, when we have negated -number
+  prefix("#");
 
   prefix(".",function () {
     var v = expression(70);
