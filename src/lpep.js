@@ -419,6 +419,20 @@ const make_parse = function (options = {}) {
 
   infix("*", 60);
   infix("/", 60);
+  infix(",", 1, function (left) {
+    while (m_token.id === ",") {
+      advance();
+    }
+    this.first = left;
+    if (m_token.id === "(end)") {
+      this.sexpr = left.sexpr;
+      return this;
+    }
+    this.second = expression(1);
+    this.arity = "binary";
+    this.sexpr = [","].concat(lift_funseq(this, ","));
+    return this;
+  });
 
   infix("(", 80, function (left) {
     let a = [];
@@ -434,49 +448,19 @@ const make_parse = function (options = {}) {
 
     // dima support for missed function arguments...
     if (m_token.id !== ")") {
-      if (false && (left.value == "where" || left.value == "filter" || left.value == "expr" || left.value == "logexpr")) {
-        // специальный парсер для where - logical expression.
-        // тут у нас выражение с использованием скобок, and, or, not и никаких запятых...
-        // DIMA 2021: logexpr function will be generic name for logical things
-        // where && filter is used for SQL generation and should not be changed....
-        // expr is deprecated name for logexpr
-        // FIXME: make transition to the logexpr!
-        new_expression_scope("logical");
-        var e = expression(0);
-        //console.log("LOGICAL" +  left.value + " " + JSON.stringify(e));
-        m_expr_scope.pop();
-        a.push(e);
-      } else {
-        new_expression_scope("lpe");
-        while (true) {
-          // console.log(">" + token.arity + " NAME:" + left.value);
-          if (m_token.id === ',') {
-            a.push({
-              value: null,
-              arity: "literal"
-            });
-            advance();
-          } else if (m_token.id === ')') {
-            a.push({
-              value: null,
-              arity: "literal"
-            });
-            break;
-          } else {
-            new_expression_scope("logical");
-            var e = expression(0);
-            //console.log("LOGICAL????? " + JSON.stringify(e));
-            m_expr_scope.pop();
-            // var e = statements();
-            a.push(e);
-            if (m_token.id !== ",") {
-              break;
-            }
-            advance(",");
-          }
+      new_expression_scope("lpe");
+      while (true) {
+        if (m_token.id === ')') {
+          break;
+        } else {
+          new_expression_scope("logical");
+          var e = expression(0);
+          m_expr_scope.pop();
+          a.push(e);
         }
-        m_expr_scope.pop();
       }
+      m_expr_scope.pop();
+      
     }
 
     this.sexpr = [this.first.value].concat(a.map(function(el){return el.sexpr}));
@@ -485,9 +469,9 @@ const make_parse = function (options = {}) {
   });
 
 
-  function lift_funseq(node) {
-    if (node.value === "->") {
-      return lift_funseq(node.first).concat(lift_funseq(node.second));
+  function lift_funseq(node, val = "->") {
+    if (node.value === val) {
+      return lift_funseq(node.first, val).concat(lift_funseq(node.second, val));
     } else /*if (node.value === "(") {
       console.log("() DETECTED" + JSON.stringify(node))
       //if (node.first.value === "->"){
@@ -546,6 +530,8 @@ const make_parse = function (options = {}) {
     return this;
   });
 
+
+  prefix("...");
 
   // WARNING HACK FIXME DIMA - добавил чтобы писать order_by(+a)
   // А также замена /table на +table в htSQL
