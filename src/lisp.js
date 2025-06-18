@@ -917,8 +917,8 @@ function EVAL_IMPLEMENTATION(ast, ctx, options, evalOptions) {
 
     let op = EVAL_IMPLEMENTATION(opAst, ctx, {... options, wantCallable: true}, evalOptions);                                 // evaluate operator
 
-    if (isHash(op) && ('operator()' in op)) {
-      op = op['operator()'];
+    if (isHash(op) && ('operator()' in op)) {                                                       // Если в качестве функции нам дают хэшмап и у него есть operator()
+      op = op['operator()'].bind(op);                                                               // то используем его как callable (и сохраняем this)
     }
 
     if (typeof op !== 'function') {
