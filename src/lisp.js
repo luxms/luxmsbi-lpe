@@ -888,43 +888,38 @@ function EVAL(ast, ctx, options) {
  * @constructor
  */
 function EVAL_IMPLEMENTATION(ast, ctx, options, evalOptions) {
-  //console.log(`EVAL CALLED FOR ${JSON.stringify(ast)}`)
   while (true) {
     ast = macroexpand(ast, ctx, options?.resolveString ?? false);                                   // by default do not resolve string
 
-    if (!isArray(ast)) {                                                        // atom
+    if (!isArray(ast)) {                                                                            // atom
       if (isString(ast)) {
         const value = $var$(ctx, ast, undefined, options, evalOptions);
-        //console.log(`${JSON.stringify(resolveOptions)} var ${ast} resolved to ${isFunction(value)?'FUNCTION':''} ${JSON.stringify(value)}`)
         if (value !== undefined) {
           if (isFunction(value) && options["wantCallable"] !== true) {
             return ast
           } else {                                 // variable
-            //console.log(`EVAL RETURN resolved var ${JSON.stringify(ast)}`)
             return value;
           }
         }
-        //console.log(`EVAL RETURN resolved2 var ${resolveOptions && resolveOptions.resolveString ? ast : undefined}`)
         return options && options.resolveString ? ast : undefined;                                 // if string and not in ctx
       }
-      //console.log(`EVAL RETURN resolved3 var ${JSON.stringify(ast)}`)
       return ast;
     }
-
-    //console.log(`EVAL CONTINUE for ${JSON.stringify(ast)}`)
 
     // apply
     // c 2022 делаем macroexpand сначала, а не после
     // ast = macroexpand(ast, ctx, resolveOptions && resolveOptions.resolveString ? true: false);
 
-    //console.log(`EVAL CONTINUE after macroexpand: ${JSON.stringify(ast)}`)
     if (!Array.isArray(ast)) return ast;                                                            // TODO: do we need eval here?
     if (ast.length === 0) return null;                                                              // TODO: [] => empty list (or, maybe return vector [])
 
-    //console.log("EVAL1: ", JSON.stringify(resolveOptions),  JSON.stringify(ast))
     const [opAst, ...argsAst] = ast;
 
-    const op = EVAL_IMPLEMENTATION(opAst, ctx, {... options, wantCallable: true}, evalOptions);                                 // evaluate operator
+    let op = EVAL_IMPLEMENTATION(opAst, ctx, {... options, wantCallable: true}, evalOptions);                                 // evaluate operator
+
+    if (isHash(op) && ('operator()' in op)) {
+      op = op['operator()'];
+    }
 
     if (typeof op !== 'function') {
       throw new Error('Error: ' + String(op) + ' is not a function');

@@ -149,6 +149,11 @@
             return +RegExp.$1;
           }
         },
+        callable: {
+          'operator()': (...args) => {
+            return 'operator() is working: ' + JSON.stringify(args);
+          },
+        },
       };
 
       try {
