@@ -143,7 +143,12 @@
         p2: later(2),
         p3: later(3),
         p4: later(4),
-        t1: () => {throw 1}
+        t1: () => {throw 1},
+        [lpe.$VAR$]: (ctx, varName) => {
+          if (varName.match(/^\$(\d+)$/)) {
+            return +RegExp.$1;
+          }
+        },
       };
 
       try {

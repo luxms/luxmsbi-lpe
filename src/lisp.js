@@ -55,29 +55,42 @@ function makeError(name, ast, message) {
 
 
 /**
+ * Этот символ используется как ключ для хэшмапов-контекстов определения контекста.
+ * Еслди переменная не была найдена в хэшмаповом контексте, будет произведена попытка вызвать функцию
+ * с этим ключом.
+ * Функция может вернуть undefined (значение не найдено), либо действительное значение
+ *
+ * @type {symbol}
+ */
+export const $VAR$ = Symbol('$VAR$');
+
+
+/**
  * Get or Set variable in context
  * @param {*} ctx - array, hashmap or function that stores variables
- * @param {*} varName - the name of variable
+ * @param {string} varName - the name of variable
  * @param {*} value - optional value to set (undefined if get)
- * @param {EvalOptions=} resolveOptions - options on how to resolve. resolveString - must be checked by caller and is not handled here...
- * @param {Map} evalOptions - current evaluate context and options for find endpoint
+ * @param {EvalOptions=} options - options on how to resolve. resolveString - must be checked by caller and is not handled here...
+ * @param {Record<string, any>=} evalOptions - current evaluate context and options for find endpoint
  */
-function $var$(ctx, varName, value, resolveOptions = {}, evalOptions = undefined) {
+function $var$(ctx, varName, value, options = {}, evalOptions = undefined) {
+  let result = undefined;
   if (!evalOptions) {
     evalOptions = { evalFrom: 0, currentCtxElement: 0 }
   }
   evalOptions.currentCtxElement++;   // Инкрементируем шаг
-  if (isArray(ctx)) {                                                           // contexts chain
+  if (isArray(ctx)) {                                                                               // contexts chain
     for (let theCtx of ctx) {
-      const result = $var$(theCtx, varName, value, resolveOptions, evalOptions);
-      if (result === undefined) continue;                                       // no such var in context
-      if (value === undefined) return result;                                   // get => we've got a result
-      // Повторный вызов той же функции с теми же аргументами точно нужен?
-      return $var$(theCtx, varName, value, resolveOptions, evalOptions);                     // set => redirect 'set' to context with variable.
+      result = $var$(theCtx, varName, undefined, options, evalOptions);                             // Пытаемся получить значение из очередного контекста (выставив value=undefined - get-вариант)
+      if (result === undefined) continue;                                                           // не найдено - продолжаем искать
+      if (value === undefined) return result;                                                       // если вариант get => возвращаем результат
+      // Ранее функция вызывалась c value=undefined и мы нашли конекст, в котором есть переменная
+      // Значит, в этом контексте можно вызвать set-вариант функции, передав value
+      return $var$(theCtx, varName, value, options, evalOptions);
     }
-    if (value === undefined) return undefined;                                  // get => variable not found in all contexts
-    if (ctx.length) $var$(ctx[0], varName, value, resolveOptions, evalOptions);              // set => set variable to HEAD context
-    return undefined;                                                           // ??? ctx.length = 0
+    if (value === undefined) return undefined;                                                      // get => variable not found in all contexts
+    if (ctx.length) $var$(ctx[0], varName, value, options, evalOptions);                            // set => set variable to HEAD context
+    return undefined;                                                                               // ??? ctx.length = 0
   }
 
   // Если мы хотим выполнить функцию, которая лежит ниже, пропускаем эту
@@ -86,21 +99,28 @@ function $var$(ctx, varName, value, resolveOptions = {}, evalOptions = undefined
   }
 
   if (isFunction(ctx)) {
-      return ctx(varName, value, resolveOptions);
+      return ctx(varName, value, options);
   }
 
-  if (isHash(ctx)) {
-    if (value === undefined) {                                                  // get from hash
-      const result = ctx[varName];
-      //console.log(`$var: for ${varName} got ${isFunction(result)? 'FUNC' : result}`)
-      if (result !== undefined) {                                               // found value in hash
+  if (isHash(ctx)) {                                                                                // Контекст является хэшмапом
+    if (value === undefined) {                                                                      // получить значение
+      result = ctx[varName];
+      if (result !== undefined) {                                                                   // Нашлось в хэшмапе
         return result;
       }
-      if (varName.substr(0, 3) !== 'sf:' && isFunction(ctx['sf:' + varName])) { // user-defined special form
+      if (varName.substr(0, 3) !== 'sf:' && isFunction(ctx['sf:' + varName])) {                     // user-defined special form
         return makeSF(ctx['sf:' + varName]);
       }
+      if ($VAR$ in ctx) {                                                                           // На хэшмапе может быть определена функция
+        result = ctx[$VAR$](ctx, varName, value, options, evalOptions);                             // вызываем ее
+        if (result !== undefined) {                                                                 // Подходящее значение нашлось
+          return result;
+        }
+      }
+
       return undefined;
-    } else {
+    } else {                                                                                        // Установить значение
+      // Кажется, здесь надо еще подумать
       return (ctx[varName] = value);
     }
   }
@@ -121,7 +141,14 @@ function isMacro(fn) {
   return !!fn.ast[3];
 }
 
-
+/**
+ * Помечает функцию как "special form" - в этом случае аргументы
+ * функции не будут вычисляться, а вместо этого в функцию будут переданы (ast, ctx, options)
+ * Для вычисления аргументов придется вызывать EVAL (и оборачивать результаты в unbox)
+ *
+ * @param {(...args: ?[]) => ?} fn
+ * @returns {typeof fn}
+ */
 export function makeSF(fn) {
   fn.__isSpecialForm = true;
   return fn;
@@ -137,7 +164,12 @@ export function makeSkipForm(fn, overridedAst = undefined) {
   return fn;
 }
 
-
+/**
+ * Определяет, что функция является помеченной как "special form"
+ *
+ * @param fn
+ * @returns {boolean}
+ */
 function isSF(fn) {
   if (!isFunction(fn)) return false;
   return !!fn.__isSpecialForm;
@@ -846,6 +878,15 @@ function EVAL(ast, ctx, options) {
   return result;
 }
 
+/**
+ *
+ * @param ast
+ * @param ctx
+ * @param {EvalOptions=} options
+ * @param evalOptions
+ * @returns {*|fn|Stream<undefined>|Promise<Awaited<unknown>[]>|undefined|null}
+ * @constructor
+ */
 function EVAL_IMPLEMENTATION(ast, ctx, options, evalOptions) {
   //console.log(`EVAL CALLED FOR ${JSON.stringify(ast)}`)
   while (true) {
