@@ -14,6 +14,7 @@
 import {parse} from './lpep';
 import {deparse} from './lped';
 import {DATE_TIME} from './lib/datetime';
+import unbox from "./lisp.unbox";
 
 /**
  * @typedef {Object} EvalOptions
@@ -759,82 +760,6 @@ function env_bind(ast, ctx, exprs, opt) {
 
 
   return [newCtx, ctx];
-}
-
-/**
- * Unwrap values if they are promise or stream
- * @param {any[]} args
- * @param {(arg: any[]) => any} resolve callback to run when all ready
- * @param {any?} streamAdapter
- */
-export function unbox(args, resolve, streamAdapter) {
-  const hasPromise = args.find(a => a instanceof Promise);
-  const hasStreams = !!args.find(a => streamAdapter?.isStream(a));
-
-  if (hasStreams) {
-    // TODO: add loading state
-    const evaluatedArgs = args.map(a => streamAdapter.isStream(a) ? streamAdapter.getLastValue(a) : a);
-    let outputStream;                                                                               // what will be returned
-    const subscriptions = [];
-    let resultStream;
-    let resultStreamSubscription;
-
-    const disposeResultStream = () => {                                                             // handler - dispose resultStream if any
-      if (resultStreamSubscription) {
-        resultStreamSubscription.dispose?.();
-        resultStreamSubscription = null;
-      }
-      if (resultStream) {
-        streamAdapter.disposeStream(resultStream);
-        resultStream = null;
-      }
-    }
-
-    const dispose = () => {                                                                         // handler - dispose all dependencies
-      disposeResultStream();
-      subscriptions.forEach(subscription => subscription?.dispose?.());                             // unsubscribe all subscriptions
-      args.filter(a => streamAdapter?.isStream(a)).forEach(streamAdapter.disposeStream);            // and free services
-    };
-
-    const onNextValue = (value) => {                                                                // when we have extracted value from result
-      streamAdapter.next(outputStream, value);
-    }
-
-    const onNextResult = (result) => {                                                              // will be called on next result to be pushed into stream
-      if (streamAdapter.isStream(result)) {                                                         // when result is stream itself
-        if (resultStream !== result) {                                                              // and only when new stream is received
-          disposeResultStream();
-          resultStream = result;
-          onNextValue(streamAdapter.getLastValue(resultStream));
-          resultStreamSubscription = streamAdapter.subscribe(resultStream, onNextValue);
-        }
-      } else {                                                                                      // when result is just value (TODO: Promise)
-        disposeResultStream();                                                                      // we don't need stream any more if it was on previous result
-        onNextValue(result);
-      }
-    }
-
-    outputStream = streamAdapter.createStream(undefined, dispose);
-    onNextResult(resolve(evaluatedArgs));
-
-    args.forEach((a, idx) => {
-      if (streamAdapter.isStream(a)) {
-        subscriptions.push(                                                                         // save subscription in order to dispose later
-          streamAdapter.subscribe(a, (value) => {
-            evaluatedArgs[idx] = value;                                                             // update arguments
-            onNextResult(resolve(evaluatedArgs))
-          }));
-      }
-    });
-
-    return outputStream;
-
-  } else if (hasPromise) {                                                                          // TODO: handle both streams and promises
-    return Promise.all(args).then(resolve);
-
-  } else {
-    return resolve(args);                                                                           // TODO check if stream or promise returned
-  }
 }
 
 
