@@ -14,6 +14,7 @@
 import {parse} from './lpep';
 import {deparse} from './lped';
 import {DATE_TIME} from './lib/datetime';
+import unbox from "./lisp.unbox";
 
 /**
  * @typedef {Object} EvalOptions
@@ -55,41 +56,72 @@ function makeError(name, ast, message) {
 
 
 /**
+ * Этот символ используется как ключ для хэшмапов-контекстов определения контекста.
+ * Еслди переменная не была найдена в хэшмаповом контексте, будет произведена попытка вызвать функцию
+ * с этим ключом.
+ * Функция может вернуть undefined (значение не найдено), либо действительное значение
+ *
+ * @type {symbol}
+ */
+export const $VAR$ = Symbol('$VAR$');
+
+
+/**
  * Get or Set variable in context
  * @param {*} ctx - array, hashmap or function that stores variables
- * @param {*} varName - the name of variable
+ * @param {string} varName - the name of variable
  * @param {*} value - optional value to set (undefined if get)
- * @param {EvalOptions=} resolveOptions - options on how to resolve. resolveString - must be checked by caller and is not handled here...
+ * @param {EvalOptions=} options - options on how to resolve. resolveString - must be checked by caller and is not handled here...
+ * @param {Record<string, any>=} evalOptions - current evaluate context and options for find endpoint
  */
-function $var$(ctx, varName, value, resolveOptions = {}) {
-  if (isArray(ctx)) {                                                           // contexts chain
+function $var$(ctx, varName, value, options = {}, evalOptions = undefined) {
+  let result = undefined;
+  if (!evalOptions) {
+    evalOptions = { evalFrom: 0, currentCtxElement: 0 }
+  }
+  evalOptions.currentCtxElement++;   // Инкрементируем шаг
+  if (isArray(ctx)) {                                                                               // contexts chain
     for (let theCtx of ctx) {
-      const result = $var$(theCtx, varName, value, resolveOptions);
-      if (result === undefined) continue;                                       // no such var in context
-      if (value === undefined) return result;                                   // get => we've got a result
-      return $var$(theCtx, varName, value, resolveOptions);                     // set => redirect 'set' to context with variable.
+      result = $var$(theCtx, varName, undefined, options, evalOptions);                             // Пытаемся получить значение из очередного контекста (выставив value=undefined - get-вариант)
+      if (result === undefined) continue;                                                           // не найдено - продолжаем искать
+      if (value === undefined) return result;                                                       // если вариант get => возвращаем результат
+      // Ранее функция вызывалась c value=undefined и мы нашли конекст, в котором есть переменная
+      // Значит, в этом контексте можно вызвать set-вариант функции, передав value
+      return $var$(theCtx, varName, value, options, evalOptions);
     }
-    if (value === undefined) return undefined;                                  // get => variable not found in all contexts
-    if (ctx.length) $var$(ctx[0], varName, value, resolveOptions);              // set => set variable to HEAD context
-    return undefined;                                                           // ??? ctx.length = 0
+    if (value === undefined) return undefined;                                                      // get => variable not found in all contexts
+    if (ctx.length) $var$(ctx[0], varName, value, options, evalOptions);                            // set => set variable to HEAD context
+    return undefined;                                                                               // ??? ctx.length = 0
+  }
+
+  // Если мы хотим выполнить функцию, которая лежит ниже, пропускаем эту
+  if (evalOptions.currentCtxElement < evalOptions.evalFrom) {
+    return undefined;
   }
 
   if (isFunction(ctx)) {
-      return ctx(varName, value, resolveOptions);
+      return ctx(varName, value, options);
   }
 
-  if (isHash(ctx)) {
-    if (value === undefined) {                                                  // get from hash
-      const result = ctx[varName];
-      //console.log(`$var: for ${varName} got ${isFunction(result)? 'FUNC' : result}`)
-      if (result !== undefined) {                                               // found value in hash
+  if (isHash(ctx)) {                                                                                // Контекст является хэшмапом
+    if (value === undefined) {                                                                      // получить значение
+      result = ctx[varName];
+      if (result !== undefined) {                                                                   // Нашлось в хэшмапе
         return result;
       }
-      if (varName.substr(0, 3) !== 'sf:' && isFunction(ctx['sf:' + varName])) { // user-defined special form
+      if (varName.substr(0, 3) !== 'sf:' && isFunction(ctx['sf:' + varName])) {                     // user-defined special form
         return makeSF(ctx['sf:' + varName]);
       }
+      if ($VAR$ in ctx) {                                                                           // На хэшмапе может быть определена функция
+        result = ctx[$VAR$](ctx, varName, value, options, evalOptions);                             // вызываем ее
+        if (result !== undefined) {                                                                 // Подходящее значение нашлось
+          return result;
+        }
+      }
+
       return undefined;
-    } else {
+    } else {                                                                                        // Установить значение
+      // Кажется, здесь надо еще подумать
       return (ctx[varName] = value);
     }
   }
@@ -110,16 +142,44 @@ function isMacro(fn) {
   return !!fn.ast[3];
 }
 
-
+/**
+ * Помечает функцию как "special form" - в этом случае аргументы
+ * функции не будут вычисляться, а вместо этого в функцию будут переданы (ast, ctx, options)
+ * Для вычисления аргументов придется вызывать EVAL (и оборачивать результаты в unbox)
+ *
+ * @param {(...args: ?[]) => ?} fn
+ * @returns {typeof fn}
+ */
 export function makeSF(fn) {
   fn.__isSpecialForm = true;
   return fn;
 }
 
 
+export function makeSkipForm(fn, overridedAst = undefined) {
+  fn.__isSkipForm = true;
+  if (overridedAst) {
+    // Запоминаем новое ast, если функция хочет его изменить для нижележащих функций
+    fn.__ast = overridedAst;
+  }
+  return fn;
+}
+
+/**
+ * Определяет, что функция является помеченной как "special form"
+ *
+ * @param fn
+ * @returns {boolean}
+ */
 function isSF(fn) {
   if (!isFunction(fn)) return false;
   return !!fn.__isSpecialForm;
+}
+
+
+function isSkip(fn) {
+  if (!isFunction(fn)) return false;
+  return !!fn.__isSkipForm;
 }
 
 
@@ -169,6 +229,30 @@ const ifSF = (ast, ctx, options) => {
     options?.streamAdapter);
 }
 
+// do (condition, body)
+const doSF = (ast, ctx, options) => {
+  if (ast.length === 0) return undefined;
+  if (ast.length === 1) return EVAL(ast[0], ctx, options);                                          // one arg - by convention return the argument
+
+  let last;
+  let condition;
+
+  let iter = 0;
+  const maxLoopIterations = options?.maxLoopIterations ?? 65536
+
+  do {
+    if (iter >= maxLoopIterations) {
+      throw new Error(`The maximum number of iterations (${maxLoopIterations}) is exceeded. Check the condition or change the limit in the settings.`)
+    }
+
+    last = EVAL(ast[1], ctx, options);
+    condition = EVAL(ast[0], ctx, {...options, resolveString: false});
+    iter += 1;
+  } while (condition);
+
+  return last;
+}
+
 /**
  * Рекурсивный begin
  */
@@ -187,7 +271,7 @@ const SPECIAL_FORMS = {                                                         
   '`': makeSF((ast, ctx) => ast[0]),                                            // quote
   'macroexpand': makeSF(macroexpand),
   'begin': makeSF(beginSF),
-  'do': makeSF((ast, ctx) => { throw new Error('DO not implemented') }),
+  'do': makeSF(doSF),
   'if': makeSF(ifSF),
   '~': makeSF((ast, ctx, rs) => {                                               // mark as macro
     const f = EVAL(ast[0], ctx, rs);                                            // eval regular function
@@ -220,14 +304,14 @@ const SPECIAL_FORMS = {                                                         
     try {
       return EVAL(ast[0], ctx, rs);
     } catch (e) {
-      const errCtx = env_bind([ast[1][0]], ctx, [e]);
-      return EVAL(ast[1][1], errCtx, rs);
+      const errCtx = env_bind([ast[1]], ctx, [e], options);
+      return EVAL(ast[2], errCtx, rs);
     }
   }),
   '||': makeSF((ast, ctx, rs) => ast.some(a => !!EVAL(a, ctx, rs))),            // logical or
   '&&': makeSF((ast, ctx, rs) => ast.every(a => !!EVAL(a, ctx, rs))),           // logical and
   'fn': makeSF((ast, ctx, rs) => {                                              // define new function (lambda)
-    const f = (...args) => EVAL(ast[1], env_bind(ast[0], ctx, args), rs);
+    const f = (...args) => EVAL(ast[1], env_bind(ast[0], ctx, args, rs), rs);
     f.ast = [ast[1], ctx, ast[0]];                                              // f.ast compresses more than f.data
     return f;
   }),
@@ -241,7 +325,7 @@ const SPECIAL_FORMS = {                                                         
     return result;
   }),
   'set_options': makeSF((ast, ctx, rs) => {
-    const options = eval_lisp(ast[0], ctx, rs);
+    let options = eval_lisp(ast[0], ctx, rs);
     if (isArray(options)) {
       // [["key1", "val1"], ["key2", "val2"]] => {key1: "val1", key2: "val2"}
       options = Object.fromEntries(options);
@@ -367,7 +451,16 @@ export const STDLIB = {
 
   // built-in functions
   '=': (...args) => args.every(v => v == args[0]),
-  '+': (...args) => args.reduce((a, b) => a + b),
+  '+': (...args) => args.reduce((a, b) => {
+    if (typeof a === "function") {
+      a = "undefined";
+    }
+
+    if (typeof b === "function") {
+      b = "undefined";
+    }
+    return a + b;
+  }),
   '-': (...args) => args.length === 1 ? -args[0] : args.reduce((a, b) => a - b),
   '*': (...args) => args.reduce((a, b) => a * b),
   '/': (...args) => args.length === 1 ? 1 / args[0] : args.reduce((a, b) => a / b),
@@ -390,7 +483,7 @@ export const STDLIB = {
       return (val[eval_lisp(ast[0][ast[0].length - 1], ctx, rs)] = eval_lisp(ast[1], ctx, rs));
     }
     return $var$(ctx, ast[0], eval_lisp(ast[1], ctx, rs));
-  }), 
+  }),
 //  "'": a => `'${a}'`,
   '[': (...args) => args,
   'RegExp': (...args) => RegExp.apply(RegExp, args),
@@ -403,6 +496,7 @@ export const STDLIB = {
   'not': a => !a,
   'list': (...args) => args,
   'vector': (...args) => args,
+  'tuple': (...args) => args,
   'map': makeSF((ast, ctx, rs) => {
           let arr = eval_lisp(ast[0], ctx,  {...rs, wantCallable: false})
           rs.wantCallable = true
@@ -561,8 +655,8 @@ export const STDLIB = {
         let ths = $var$(ctx, '##static');
         if (ths) ths = ths[last[1]];
         return eval_lisp(
-          ["let", 
-            [["this", ths || {}], ...fargs.map((x, i) => [x[0], ast[i] || x[1]])], 
+          ["let",
+            [["this", ths || {}], ...fargs.map((x, i) => [x[0], ast[i] || x[1]])],
             parse(body)],
           ctx,
           rs
@@ -611,94 +705,61 @@ function macroexpand(ast, ctx, resolveString = true) {
  * @param exprs
  * @returns {*[]}
  */
-function env_bind(ast, ctx, exprs) {
+function env_bind(ast, ctx, exprs, opt) {
   let newCtx = {};
-  for (let i = 0; i < ast.length; i++) {
+
+  if (ast[0] == "[") {
+    ast = ast.slice(1)
+  }
+
+  let named_arg_idx = null;
+
+  for (let i = 0; i < exprs.length; i++) {
+    if (isArray(exprs[i])) {
+      if (exprs[i][0] === ":=") {
+        //newCtx[exprs[1]] = EVAL(exprs[2], [newCtx, ctx], opt);
+        named_arg_idx = i;
+        break;
+      } else {
+        // по идее эта ветка никогда не сработает
+        newCtx[ast[i]] = undefined;
+      }
+    }
+
     if (ast[i] === "&") {
       // variable length arguments
       newCtx[ast[i + 1]] = Array.prototype.slice.call(exprs, i);
       break;
     } else {
-      newCtx[ast[i]] = exprs[i];
+      // replace default value to expr
+      if (isArray(ast[i]) && ast[i][0] === ":=") {
+        newCtx[ast[i][1]] = exprs[i];
+      } else {
+        newCtx[ast[i]] = exprs[i];
+      }
     }
   }
+
+  // apply named args
+  if (named_arg_idx !== null) {
+    for (let i = named_arg_idx; i < exprs.length; i++) {
+      if (newCtx[exprs[i][1]] === undefined) {
+        newCtx[exprs[i][1]] = EVAL(exprs[i][2], [newCtx, ctx], opt);
+      } else {
+        console.warn(`name "${exprs[i][1]}" is already defined`);
+      }
+    }
+  }
+
+  // set default arg values
+  for (let i = 0; i < ast.length; i++) {
+    if (isArray(ast[i]) && ast[i][0] == ":=" && newCtx[ast[i][1]] == undefined) {
+      newCtx[ast[i][1]] = EVAL(ast[i][2], [newCtx, ctx], opt);
+    }
+  }
+
+
   return [newCtx, ctx];
-}
-
-/**
- * Unwrap values if they are promise or stream
- * @param {any[]} args
- * @param {(arg: any[]) => any} resolve callback to run when all ready
- * @param {any?} streamAdapter
- */
-export function unbox(args, resolve, streamAdapter) {
-  const hasPromise = args.find(a => a instanceof Promise);
-  const hasStreams = !!args.find(a => streamAdapter?.isStream(a));
-
-  if (hasStreams) {
-    // TODO: add loading state
-    const evaluatedArgs = args.map(a => streamAdapter.isStream(a) ? streamAdapter.getLastValue(a) : a);
-    let outputStream;                                                                               // what will be returned
-    const subscriptions = [];
-    let resultStream;
-    let resultStreamSubscription;
-
-    const disposeResultStream = () => {                                                             // handler - dispose resultStream if any
-      if (resultStreamSubscription) {
-        resultStreamSubscription.dispose?.();
-        resultStreamSubscription = null;
-      }
-      if (resultStream) {
-        streamAdapter.disposeStream(resultStream);
-        resultStream = null;
-      }
-    }
-
-    const dispose = () => {                                                                         // handler - dispose all dependencies
-      disposeResultStream();
-      subscriptions.forEach(subscription => subscription?.dispose?.());                             // unsubscribe all subscriptions
-      args.filter(a => streamAdapter?.isStream(a)).forEach(streamAdapter.disposeStream);            // and free services
-    };
-
-    const onNextValue = (value) => {                                                                // when we have extracted value from result
-      streamAdapter.next(outputStream, value);
-    }
-
-    const onNextResult = (result) => {                                                              // will be called on next result to be pushed into stream
-      if (streamAdapter.isStream(result)) {                                                         // when result is stream itself
-        if (resultStream !== result) {                                                              // and only when new stream is received
-          disposeResultStream();
-          resultStream = result;
-          onNextValue(streamAdapter.getLastValue(resultStream));
-          resultStreamSubscription = streamAdapter.subscribe(resultStream, onNextValue);
-        }
-      } else {                                                                                      // when result is just value (TODO: Promise)
-        disposeResultStream();                                                                      // we don't need stream any more if it was on previous result
-        onNextValue(result);
-      }
-    }
-
-    outputStream = streamAdapter.createStream(undefined, dispose);
-    onNextResult(resolve(evaluatedArgs));
-
-    args.forEach((a, idx) => {
-      if (streamAdapter.isStream(a)) {
-        subscriptions.push(                                                                         // save subscription in order to dispose later
-          streamAdapter.subscribe(a, (value) => {
-            evaluatedArgs[idx] = value;                                                             // update arguments
-            onNextResult(resolve(evaluatedArgs))
-          }));
-      }
-    });
-
-    return outputStream;
-
-  } else if (hasPromise) {                                                                          // TODO: handle both streams and promises
-    return Promise.all(args).then(resolve);
-
-  } else {
-    return resolve(args);                                                                           // TODO check if stream or promise returned
-  }
 }
 
 
@@ -710,43 +771,80 @@ export function unbox(args, resolve, streamAdapter) {
  * @returns {Promise<Awaited<unknown>[] | void>|*|null|undefined}
  */
 function EVAL(ast, ctx, options) {
-  //console.log(`EVAL CALLED FOR ${JSON.stringify(ast)}`)
+  // В этой функции задаем параметры поиска и обрабатываем skip результат
+  // после чего перенаправляем в исходную функцию, которая теперь называется EVAL_IMPLEMENTATION
+  let evalOptions = { evalFrom: 0, currentCtxElement: 0 }
+  let skippedForms = []
+  let result = EVAL_IMPLEMENTATION(ast, ctx, options, evalOptions);
+  while (isSkip(result)) {
+    // Если в качестве результата вернулась функция с пометкой skip
+    // необходимо продолжить поиск с того же места в контексте
+    // после чего результат найденной функции передать в качестве аргумента
+    // в skip функцию
+
+    // Для этого в evalFrom передаём, на каком элементе в контексте мы сейчас остановились
+
+    // ВАЖНО! evalOptions не должен перезаписываться в другой объект для того, чтобы
+    // при изменении  currentCtxElement в нижележащий функциях здесь были видны изменеия
+    // Также из-за макросов эта логика может сломаться, т.к. после обработки макроса
+    // вместо рекурсивного вызова EVAL, который сбросит currentCtxElement, продолжается
+    // обработка в том же EVAL в цикле с продолжением счетчика, но уже с другим деревом
+    skippedForms.push(result);
+    evalOptions.evalFrom = evalOptions.currentCtxElement + 1;
+    evalOptions.currentCtxElement = 0;
+    if (result.__ast) {
+      ast = [ast[0], ...result.__ast];
+    }
+    result = EVAL_IMPLEMENTATION(ast, ctx, options, evalOptions);
+  }
+  for (let i = skippedForms.length - 1; i >= 0; --i) {
+    result = skippedForms[i](result);
+  }
+  return result;
+}
+
+/**
+ *
+ * @param ast
+ * @param ctx
+ * @param {EvalOptions=} options
+ * @param evalOptions
+ * @returns {*|fn|Stream<undefined>|Promise<Awaited<unknown>[]>|undefined|null}
+ * @constructor
+ */
+function EVAL_IMPLEMENTATION(ast, ctx, options, evalOptions) {
   while (true) {
     ast = macroexpand(ast, ctx, options?.resolveString ?? false);                                   // by default do not resolve string
 
-    if (!isArray(ast)) {                                                        // atom
+    if (!isArray(ast)) {                                                                            // atom
       if (isString(ast)) {
-        const value = $var$(ctx, ast, undefined, options);
-        //console.log(`${JSON.stringify(resolveOptions)} var ${ast} resolved to ${isFunction(value)?'FUNCTION':''} ${JSON.stringify(value)}`)
+        const value = $var$(ctx, ast, undefined, options, evalOptions);
         if (value !== undefined) {
           if (isFunction(value) && options["wantCallable"] !== true) {
             return ast
           } else {                                 // variable
-            //console.log(`EVAL RETURN resolved var ${JSON.stringify(ast)}`)
             return value;
           }
         }
-        //console.log(`EVAL RETURN resolved2 var ${resolveOptions && resolveOptions.resolveString ? ast : undefined}`)
         return options && options.resolveString ? ast : undefined;                                 // if string and not in ctx
       }
-      //console.log(`EVAL RETURN resolved3 var ${JSON.stringify(ast)}`)
       return ast;
     }
-
-    //console.log(`EVAL CONTINUE for ${JSON.stringify(ast)}`)
 
     // apply
     // c 2022 делаем macroexpand сначала, а не после
     // ast = macroexpand(ast, ctx, resolveOptions && resolveOptions.resolveString ? true: false);
 
-    //console.log(`EVAL CONTINUE after macroexpand: ${JSON.stringify(ast)}`)
     if (!Array.isArray(ast)) return ast;                                                            // TODO: do we need eval here?
     if (ast.length === 0) return null;                                                              // TODO: [] => empty list (or, maybe return vector [])
 
-    //console.log("EVAL1: ", JSON.stringify(resolveOptions),  JSON.stringify(ast))
     const [opAst, ...argsAst] = ast;
 
-    const op = EVAL(opAst, ctx, {... options, wantCallable: true});                                 // evaluate operator
+    let op = EVAL_IMPLEMENTATION(opAst, ctx, {... options, wantCallable: true}, evalOptions);                                 // evaluate operator
+
+    if (isHash(op) && ('operator()' in op)) {                                                       // Если в качестве функции нам дают хэшмап и у него есть operator()
+      op = op['operator()'].bind(op);                                                               // то используем его как callable (и сохраняем this)
+    }
 
     if (typeof op !== 'function') {
       throw new Error('Error: ' + String(op) + ' is not a function');
@@ -757,11 +855,17 @@ function EVAL(ast, ctx, options) {
       return sfResult;
     }
 
-    const args = argsAst.map(a => EVAL(a, ctx, options));                                           // evaluate arguments
+    const args = argsAst.map(a => {
+      if (isArray(a) && a[0] === ":=") {
+        return a;
+      }
+
+      return EVAL(a, ctx, options);
+    });                                           // evaluate arguments
 
     if (op.ast) {                                                                                   // Macro
       ast = op.ast[0];
-      ctx = env_bind(op.ast[2], op.ast[1], args);                                                   // TCO
+      ctx = env_bind(op.ast[2], op.ast[1], args, options);                                                   // TCO
     } else {
       return unbox(
           args,
@@ -776,7 +880,7 @@ function EVAL(ast, ctx, options) {
 
 
 export function eval_lisp(ast, ctx, options) {
-  const result = EVAL(ast, [ctx || {}, STDLIB], options || {resolveString: true});
+  const result = EVAL(ast, [ctx || {}, STDLIB], options || {resolveString: true, maxLoopIterations: 65536});
   return result;
 }
 

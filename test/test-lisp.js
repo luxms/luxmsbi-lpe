@@ -1,6 +1,31 @@
 var assert = require('assert');
 var lpe = require('../dist/lpe');
 
+let skipFunctions = {
+  toStart1: (val) => {
+    return lpe.makeSkipForm(res => {
+      return `Start1 ${res}`
+    });
+  },
+  toStart2: (val) => {
+    return lpe.makeSkipForm(res => {
+      return `Start2 ${res}`
+    });
+  },
+  toStartAst1: lpe.makeSF((ast, ctx, rs) => {
+    return lpe.makeSkipForm(
+      res => { return `Ast1 ${res}`}, 
+      [ [ "'", '20250203' ], [ "'", 'w' ] ]
+    );
+  }),
+  toStartAst2: lpe.makeSF((ast, ctx, rs) => {
+    return lpe.makeSkipForm(res => {
+      return `Ast2 ${res}`
+    });
+  })
+}
+
+
 describe('LISP tests', function () {
   it('should resolve js-constants', function () {
     assert.deepEqual(lpe.eval_lisp(1), 1);
@@ -24,6 +49,15 @@ describe('LISP tests', function () {
     assert.deepEqual(lpe.eval_lisp( lpe.parse('let(foo(2), foo)')), 2);
     assert.deepEqual(lpe.eval_lisp( lpe.parse('let([foo,3], foo)')), 3);
     assert.deepEqual(lpe.eval_lisp( lpe.parse('let([[foo,3],[bar,4]], foo+bar)')), 7);
+  });
+
+  it('should skip current realization and run lower', function () {
+    const sf = skipFunctions;
+    //toStart('20240203', 'w')
+    assert.deepEqual(lpe.eval_lisp(
+      ["toStart", ["'", "20240203"], ["'", "w"]],
+      [{toStart: sf.toStart1}, [{toStart: sf.toStartAst1}, {toStart: sf.toStart2}], {toStart: sf.toStartAst2}]
+    ), "Start1 Ast1 Start2 Ast2 2025-02-03");
   });
 
   it('should allow hash changes declared with let', function () {
@@ -265,6 +299,78 @@ describe('LISP tests', function () {
   })
   });
 
+  it('named and default args', function () {
+    assert.deepEqual(
+      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + a * c)) a(2, c := 3)'), {}), 
+      11
+    );
+
+    assert.deepEqual(
+      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + a * c)) a(2)'), {}), 
+      NaN
+    );
+    
+    assert.deepEqual(
+      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + a * c)) a(2, b := 10, c := 3)'), {}), 
+      16
+    );
+
+    assert.deepEqual(
+      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + a * c)) a(b := 10, c := 3)'), {}),
+      NaN 
+    );
+
+    assert.deepEqual(
+      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + a * c)) a(2, c := 3, d := 4)'), {}),
+      11
+    );
+
+    assert.deepEqual(
+      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + a * c)) a(2, c := null)'), {}),
+      5
+    );
+    
+    assert.deepEqual(
+      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + a * c)) a(c := 3, a := 2)'), {}),
+      11
+    );
+    
+    assert.deepEqual(
+      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + a * c)) a()'), {}),
+      NaN 
+    );
+    
+    assert.deepEqual(
+      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + a * c)) a(2 + 3, c := 1 + 2)'), {}),
+      20
+    );
+    
+    assert.deepEqual(
+      lpe.eval_lisp(lpe.parse('def(a, fn([a := 1, b := 5, c := 2], b + a * c)) a()'), {}),
+      7
+    );
+    
+    assert.deepEqual(
+      lpe.eval_lisp(lpe.parse('def(a, fn([a := 1, b := 5, c := 2], b + a * c)) a(b := 10)'), {}),
+      12
+    );
+    
+    assert.deepEqual(
+      lpe.eval_lisp(lpe.parse('def(a, fn([a := 1, b := 5, c := 2], b + a * c)) a(a := 3, b := 10, c := 4)'), {}),
+      22
+    );
+    
+    assert.deepEqual(
+      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + a * c)) a(2, c := "string")'), {}),
+      NaN
+    );
+    
+    assert.deepEqual(
+      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + c(a))) a(2, c := fn(x, x + 1))'), {}),
+      8 
+    );
+  });
+  
 
   it('copy to new branch', function () {
   assert.deepEqual(lpe.eval_lisp(lpe.parse('begin(cp(  ["a", "3"], ["b", "5", 0, "newkey"] ), cp(  ["a", "3"], ["b", "5", 0, "newkey1"] ), ctx(b))'), { "b":{}, "a": { "3": [300, 600] } }),
@@ -284,6 +390,5 @@ describe('LISP tests', function () {
        ]
      }});
 });
-
 
 });

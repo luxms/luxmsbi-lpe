@@ -63,6 +63,8 @@ const SUFFIX = '=<>&|:.';
  * @returns {*[]}
  */
 export function tokenize(s, options) {
+  if (typeof s !== "string")
+    throw `Tokenizer expects "string", encountered "${typeof s}". Value: ${s}`;
   if (s.startsWith('lpe:')) s = s.substr(4);
   if (s.startsWith('⚡'))  s = s.substr(1);
 
@@ -93,7 +95,7 @@ export function tokenize(s, options) {
       c = s.charAt(i);
 
     // name.
-    } else if (isLetter(c) || c === '_' || c === '$' || c === '#') {                         // first char of name. TODO: remove #
+    } else if (isLetter(c) || c === '_' || c === '$') {                                             // first char of name.
       str = c;
       i += 1;
       for (;;) {

@@ -10,7 +10,9 @@ export interface StreamAdapter {
    */
   createStream<T>(initialValue: T, onDispose: () => unknown): Stream<T>;
 
-  disposeStream<T>(stream: Stream<T>): void;
+  retain<T>(stream: Stream<T>): void;
+
+  release<T>(stream: Stream<T>): void;
 
   /**
    * check if object provided is stream of any type

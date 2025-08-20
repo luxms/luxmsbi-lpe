@@ -1,6 +1,8 @@
 import {parse, LPESyntaxError} from './lpep';
 import {deparse} from './lped';
-import {eval_lisp, isString, isArray, isHash, isFunction, makeSF, isNumber, STDLIB, unbox} from './lisp';
+import {eval_lisp, isString, isArray, isHash, isFunction, makeSF, makeSkipForm, isNumber, STDLIB, $VAR$} from './lisp';
+import unbox from './lisp.unbox';
+
 
 function eval_lpe(lpe, ctx, options) {
   const ast = parse(lpe, options);
@@ -19,13 +21,8 @@ export {
   isFunction,
   isNumber,
   makeSF,
+  makeSkipForm,
   STDLIB,
-  unbox
+  $VAR$,
+  unbox,
 };
-
-
-// test:
-// var ast = parse('2+2*2');
-// console.log(ast);
-// var res = eval_lisp(ast, []);
-// console.log(res);
