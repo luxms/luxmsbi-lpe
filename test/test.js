@@ -8,7 +8,7 @@ describe('LPE tests', function() {
     assert(lpe.parse);
     assert(typeof lpe.parse === 'function');
   });
-
+  
   it('should export parse unary operators', function() {
     assert.deepEqual(lpe.parse('+123'),  ["+", 123] );
     assert.deepEqual(lpe.parse('-123'),  ["-", 123] );
@@ -20,7 +20,7 @@ describe('LPE tests', function() {
     assert.deepEqual(lpe.parse('"123"'), [ '"', '123' ]);
     assert.deepEqual(lpe.parse('list'),  'list' );
   });
-
+  
   it('should parse arithmetics', function() {
     assert.deepEqual(lpe.parse('1+2'), ['+', 1, 2]);
     assert.deepEqual(lpe.parse('1*2'), ['*', 1, 2]);
@@ -130,6 +130,11 @@ describe('LPE tests', function() {
     assert.deepEqual(lpe.parse('if(a=b).(yes().yes()).(no().no3())'), ["->", ["if", ["=", "a", "b"]], ["()", ["->", ["yes"], ["yes"]]], ["()", ["->", ["no"], ["no3"]]]]);
     assert.deepEqual(lpe.parse('if(a=b).if(x>4).yexx().nox().noab()'), ["->", ["if", ["=", "a", "b"]], ["if", [">", "x", "4"]], ["yexx"], ["nox"], ["noab"]]);
     assert.deepEqual(lpe.parse('if(a=b).if(x>4).(yexx().ye2()).(nox().no2()).(noab().noab)'), ["->", ["if", ["=", "a", "b"]], ["if", [">", "x", 4]], ["()", ["->", ["yexx"], ["ye2"]]], ["()", ["->", ["nox"], ["no2"]]], ["()", ["->", ["noab"], "noab"]]]);
+  });
+
+  it('should parse :', function() {
+    assert.deepEqual(lpe.parse('test:__avg__'), [":", "test", "__avg__"]);
+    assert.deepEqual(lpe.parse('(min(5) + max(5)) / 2:__avg__'), [":", ["/",["()",["+",["min",5],["max",5]]],2], "__avg__"]);
   });
 
   it('should eval if expressions', function() {
