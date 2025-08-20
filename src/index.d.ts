@@ -58,6 +58,7 @@ export function makeSF(v: any): any;
 
 export const STDLIB: any;
 
+export const $VAR$: Symbol;
 
 declare module 'lpe' {
   export function parse(lpeExpression: string, options?: EvalOptions): any;
@@ -75,4 +76,6 @@ declare module 'lpe' {
   export function makeSF(v: any): any;
 
   export const STDLIB: any;
+
+  export const $VAR$: Symbol;
 }

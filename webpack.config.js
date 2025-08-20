@@ -13,6 +13,9 @@ const isTest = (NODE_ENV === 'test');
 module.exports = {
   entry: "./src/index.js",
   // watch: true,
+  optimization: {
+    minimize: false,
+  },
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: "lpe.js",

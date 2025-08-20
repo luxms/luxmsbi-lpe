@@ -63,7 +63,7 @@ function makeError(name, ast, message) {
  *
  * @type {symbol}
  */
-export const $VAR$ = Symbol('$VAR$');
+export const $VAR$ = Symbol.for('$VAR$');
 
 
 /**
