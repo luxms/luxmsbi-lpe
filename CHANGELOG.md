@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.5.2](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.5.1...v1.5.2) (2025-08-20)
+
+
+### Bug Fixes
+
+* set colon precedence to 59 ([9650dee](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/9650deeb1a6623266f28435cd9947fb7246999a0))
+
 ### [1.5.1](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.5.0...v1.5.1) (2025-06-27)
 
 ## [1.5.0](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.4.7...v1.5.0) (2025-06-18)
