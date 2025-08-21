@@ -135,6 +135,8 @@ describe('LPE tests', function() {
   it('should parse :', function() {
     assert.deepEqual(lpe.parse('test:__avg__'), [":", "test", "__avg__"]);
     assert.deepEqual(lpe.parse('(min(5) + max(5)) / 2:__avg__'), [":", ["/",["()",["+",["min",5],["max",5]]],2], "__avg__"]);
+    assert.deepEqual(lpe.parse('(min(5) + max(5)) + 2:__avg__'), [":", ["+",["()",["+",["min",5],["max",5]]],2], "__avg__"]);
+    assert.deepEqual(lpe.parse('(min(5) + max(5)) > 2:__avg__'), [":", [">",["()",["+",["min",5],["max",5]]],2], "__avg__"]);
   });
 
   it('should eval if expressions', function() {
