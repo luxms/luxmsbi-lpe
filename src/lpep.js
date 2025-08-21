@@ -388,7 +388,7 @@ const make_parse = function (options = {}) {
   infixr("::", 90);
 
   // for SQL as
-  infixr(":", 59);
+  infixr(":", 2);
 
   infix(":=", 30);
 
