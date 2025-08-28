@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.5.3](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.5.2...v1.5.3) (2025-08-28)
+
+
+### Bug Fixes
+
+* ':' priority ([2db6272](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/2db627261cec11ce8a932779ef418d58932fc69a))
+
 ### [1.5.2](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.5.1...v1.5.2) (2025-08-20)
 
 
