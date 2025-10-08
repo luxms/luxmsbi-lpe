@@ -61,8 +61,9 @@ function deparseWithOptionalBrackets(sexpr, op) {
 function deparseSexpr(sexpr) {
   const op = sexpr[0];
   const args = sexpr.slice(1);
-  if (op === '"') return '"' + fixString(args[0]) + '"';
-  if (op === '\'') return '\'' + fixString(args[0]) + '\'';
+  if (op === '"') return (args[1] ?? '') + '"' + fixString(args[0]) + '"';
+  if (op === '\'') return (args[1] ?? '') + '\'' + fixString(args[0]) + '\'';
+  if (op === '[]') return (args[1] ?? '') + '[' + fixString(args[0]) + ']';
   if (op === '[') return '[' + args.map(deparse).join(', ') + ']';
   if (op === '()') return '(' + args.map(deparse).join(', ') + ')';
   if (op === '->') return args.map(deparse).join('.');

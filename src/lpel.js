@@ -27,7 +27,18 @@ const isDigit = (c) => (c >= '0' && c <= '9');
 //const isLetter = (c) => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
 // https://stackoverflow.com/questions/9862761/how-to-check-if-character-is-a-letter-in-javascript
 //const isLetter = (c) => RegExp(/^\p{L}$/,'u').test(c);
-const isLetter = (c) => c.toLowerCase() != c.toUpperCase()
+const isLetter = (c) => c.toLowerCase() !== c.toUpperCase();
+
+/**
+ * SINGLE QUOTE '
+ * @type {string}
+ */
+const SQUOT = '\'';
+/**
+ * DOUBLE QUOTE "
+ * @type {string}
+ */
+const DQUOT = '"';
 
 
 // Transform a token object into an exception object and throw it.
@@ -56,71 +67,150 @@ export function makeError(t, message) {
 const PREFIX = '=<>!+-*&|/%^:.';
 const SUFFIX = '=<>&|:.';
 
+
 /**
  *
- * @param s
+ * @param {string} s
  * @param {{squareBrackets: boolean}} options
  * @returns {*[]}
  */
 export function tokenize(s, options) {
   if (typeof s !== "string")
     throw `Tokenizer expects "string", encountered "${typeof s}". Value: ${s}`;
+  if (!s) return [];                                                                                // If the source string is empty, return nothing.
   if (s.startsWith('lpe:')) s = s.substr(4);
   if (s.startsWith('⚡'))  s = s.substr(1);
 
   const {squareBrackets} = options;
 
-  let c;                      // The current character.
   let from;                   // The index of the start of the token.
   let i = 0;                  // The index of the current character.
   let length = s.length;
   let n;                      // The number value.
   let str;                    // The string value.
   let result = [];            // An array to hold the results.
+
+  /**
+   *
+   * @param {'name' | 'number' | 'operator' | 'LF' | 'string_double' | 'string_single' | 'string_column'} type
+   * @param {*} value
+   * @returns {{from, to: number, type, value}}
+   */
   const make = (type, value) => ({type, value, from, to: i});                   // Make a token object.
 
-  // If the source string is empty, return nothing.
-  if (!s) {
-    return [];
-  }
+  /**
+   * When current character is one of opening quote, will proceed until closing qoute
+   * @returns {{str: string, type: ("string_double"|"string_single"|"string_column")}}
+   */
+  const nextString = () => {
+    let c = s.charAt(i);
+    /** @type {'string_double' | 'string_single' | 'string_column'}  */
+    const type =
+        c === DQUOT ? 'string_double' :
+        c === SQUOT ? 'string_single' :
+                      'string_column';
+    const closer = c === DQUOT ? DQUOT : c === SQUOT ? SQUOT : ']';
+    let str = '';
+    i += 1;                                                                                         // use global
+    for (;;) {
+      c = s.charAt(i);
+      if (c < ' ') {
+        makeError(make('', str) || make(type, str),
+            c === '\n' || c === '\r' || c === '' ?
+                "Unterminated string." :
+                "Control character in string.");
+      }
 
-  // Loop through this text, one character at a time.
-  c = s.charAt(i);
-  while (c) {
+      if (c === closer) {                                                                         // Look for the closing quote.
+        break;
+      }
+
+      if ((type === 'string_single' || type === 'string_double') && c === '\\') {                 // Look for escapement.
+        i += 1;
+        if (i >= length) {
+          makeError(make(type, str), "Unterminated string");
+        }
+        c = s.charAt(i);
+        switch (c) {
+          case 'b':
+            c = '\b';
+            break;
+          case 'f':
+            c = '\f';
+            break;
+          case 'n':
+            c = '\n';
+            break;
+          case 'r':
+            c = '\r';
+            break;
+          case 't':
+            c = '\t';
+            break;
+          case 'u':
+            if (i >= length) {
+              makeError(make(type, str), "Unterminated string");
+            }
+            c = parseInt(s.substr(i + 1, 4), 16);
+            if (!isFinite(c) || c < 0) {
+              makeError(make(type, str), "Unterminated string");
+            }
+            c = String.fromCharCode(c);
+            i += 4;
+            break;
+        }
+      }
+      str += c;
+      i += 1;
+    }
+    i += 1;
+    return {type, str};
+  };
+
+  let c;                                                                                            // The current character.
+  while ((c = s.charAt(i))) {                                                                       // Loop through this text, one character at a time.
     from = i;
 
-    // Ignore whitespace.
-    if (c <= ' ') {
+    if (c === '\n') {
+      i++;
+      // result.push(make('LF', c));
+
+    } else if (c <= ' ') {                                                                          // Ignore whitespace.
       i += 1;
       c = s.charAt(i);
 
-    // name.
-    } else if (isLetter(c) || c === '_' || c === '$') {                                             // first char of name.
-      str = c;
+    } else if (isLetter(c) || c === '_' || c === '$') {                                             // Name: first char of name.
+      let name = c;
       i += 1;
-      for (;;) {
+      for (; ;) {
         c = s.charAt(i);
         if (isLetter(c) || isDigit(c) || c === '_' || c === '$') {
-          str += c;
+          name += c;
           i += 1;
         } else {
           break;
         }
       }
 
-      result.push(make('name', str));
-    // number.
+      // Handle typed (D'2020-01-01') strings here because there MUST NOT be space between element and
+      // We handle only ' and " string, because xxx[...] are handled differently, ALLOWING space
+      if (c === SQUOT || c === DQUOT) {
+        const {str, type} = nextString();
+        result.push(make(type, [c, str, name]));                                                    // set the value [', str, strType]
+      } else {
+        result.push(make('name', name));
+      }
 
-    // A number cannot start with a decimal point. It must start with a digit,
-    // possibly '0'.
-
+      // number.
+      // A number cannot start with a decimal point. It must start with a digit,
+      // possibly '0'.
     } else if (c >= '0' && c <= '9') {
       str = c;
       i += 1;
 
       // Look for more digits.
 
-      for (;;) {
+      for (; ;) {
         c = s.charAt(i);
         if (c < '0' || c > '9') {
           break;
@@ -134,7 +224,7 @@ export function tokenize(s, options) {
       if (c === '.') {
         i += 1;
         str += c;
-        for (;;) {
+        for (; ;) {
           c = s.charAt(i);
           if (c < '0' || c > '9') {
             break;
@@ -167,13 +257,12 @@ export function tokenize(s, options) {
       // Make sure the next character is not a letter.
 
       if (c >= 'a' && c <= 'z') {
-                str += c;
-                i += 1;
-                makeError(make('number', str), "Bad number");
+        str += c;
+        i += 1;
+        makeError(make('number', str), "Bad number");
       }
 
-      // Don't convert the string value to a number. If it is finite, then it is a good
-      // token.
+      // Don't convert the string value to a number. If it is finite, then it is a good token.
       // result.push(make('number', parseFloat(str)));
       // result.push(make('number', str));
 
@@ -184,69 +273,15 @@ export function tokenize(s, options) {
         makeError(make('number', str), "Bad number");
       }
 
-    } else if (c === '\'' || c === '"' || (squareBrackets && c === '[')) {                          // 'string', "string", [string]
-      /** @type {'string_double' | 'string_single' | 'string_column'}  */
-      const type = c === '"' ? 'string_double' : c === '\'' ? 'string_single' : 'string_column';
-      const closer = c === '"' ? '"' : c === '\'' ? '\'' : ']';
-      str = '';
-      i += 1;
-      for (;;) {
-        c = s.charAt(i);
-        if (c < ' ') {
-          makeError(make('', str) || make(type, str),
-                    c === '\n' || c === '\r' || c === '' ?
-                         "Unterminated string." :
-                         "Control character in string.");
-        }
+    } else if (c === SQUOT || c === DQUOT) {                                                        // 'string', "string",
+      const {type, str} = nextString();
+      result.push(make(type, [c, str]));
 
-        if (c === closer) {                                                                         // Look for the closing quote.
-          break;
-        }
-
-        if ((type === 'string_single' || type === 'string_double') && c === '\\') {                 // Look for escapement.
-          i += 1;
-          if (i >= length) {
-            makeError(make(type, str), "Unterminated string");
-          }
-          c = s.charAt(i);
-          switch (c) {
-          case 'b':
-            c = '\b';
-            break;
-          case 'f':
-            c = '\f';
-            break;
-          case 'n':
-            c = '\n';
-            break;
-          case 'r':
-            c = '\r';
-            break;
-          case 't':
-            c = '\t';
-            break;
-          case 'u':
-            if (i >= length) {
-              makeError(make(type, str), "Unterminated string");
-            }
-            c = parseInt(s.substr(i + 1, 4), 16);
-            if (!isFinite(c) || c < 0) {
-              makeError(make(type, str), "Unterminated string");
-            }
-            c = String.fromCharCode(c);
-            i += 4;
-            break;
-          }
-        }
-        str += c;
-        i += 1;
-      }
-      i += 1;
+    } else if (squareBrackets && c === '[') {                                                       //  [string]
+      const {type, str} = nextString();
       result.push(make(type, str));
-      c = s.charAt(i);
 
-    // comment.
-    } else if (c === '/' && s.charAt(i + 1) === '/') {
+    } else if (c === '/' && s.charAt(i + 1) === '/') {                                              // comment
       i += 1;
       for (;;) {
         c = s.charAt(i);
@@ -256,9 +291,7 @@ export function tokenize(s, options) {
         i += 1;
       }
 
-    // combining
-
-    } else if (PREFIX.indexOf(c) >= 0) {
+    } else if (PREFIX.indexOf(c) >= 0) {                                                            // combining
       str = c;
       i += 1;
       while (true) {

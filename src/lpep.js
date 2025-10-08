@@ -87,15 +87,15 @@ const make_parse = function (options = {}) {
     tp: "lpe"
   };
 
-  var new_expression_scope = function (tp) {
-    var s = m_expr_scope;
+  const new_expression_scope = function (tp) {
+    const s = m_expr_scope;
     m_expr_scope = Object.create(tp === "logical" ? expr_logical_scope : expr_lpe_scope);
     m_expr_scope.parent = s;
     return m_expr_scope;
   };
 
-  var advance = function (id) {
-    var a, o, t, v;
+  const advance = function (id) {
+    var a, o, v;
     if (id && m_token.id !== id) {
       makeError(m_token, "Got " + m_token.value + " but expected '" + id + "'.");
     }
@@ -103,28 +103,32 @@ const make_parse = function (options = {}) {
       m_token = m_symbol_table["(end)"];
       return;
     }
-    t = m_tokens[m_token_nr];
-    m_token_nr += 1;
+    let t = m_tokens[m_token_nr];
+    m_token_nr++;
     v = t.value;
     a = t.type;
 
-    if (a === "name") {
+    if (a === 'name') {
+      if (m_tokens[m_token_nr]?.type === 'string_column') {                                         // Строки типа 'My Table'[My Column]
+        o = advance();                                                                              // Берем следующий
+        o.from = t.from;                                                                            // Фиксаем from, to
+        t = {...t, to: o.to}
+        v = o.sexpr = [...o.sexpr, v];                                                              // в v добавляется еще один аргумент
 
-      if (v === 'true' || v === 'false' || v === 'null') {
+      } else if (v === 'true' || v === 'false' || v === 'null') {
         o = m_symbol_table[v];
         a = "literal";
-      } else if (m_expr_scope.tp == "logical"){
+      } else if (m_expr_scope.tp === "logical") {
         if (v === "or" || v === "and" || v === "not" || v === "in" || v === "is") {
           //a = "operator";
           o = m_symbol_table[v];
-          //console.log("OPERATOR>", v , " ", JSON.stringify(o))
           if (!o) {
             makeError(t, "Unknown logical operator.");
           }
         } else {
           o = scope.find(v);
         }
-      }  else {
+      } else {
         o = scope.find(v);
       }
     } else if (a === "operator") {
@@ -132,20 +136,23 @@ const make_parse = function (options = {}) {
       if (!o) {
         makeError(t, "Unknown operator.");
       }
-    } else if (a === 'string_double') {                                                             // "строчка" в двойнгых кавычках
-      o = m_symbol_table['(string_literal_double)'];
-      a = 'literal';
-    } else if (a === 'string_single') {                                                             // 'строчка' в ординарных
+    } else if (a === 'string_single') {                                                             // 'строчка' в ординарных, v = [', ...]
       o = m_symbol_table['(string_literal_single)'];
+      a = 'literal';
+    } else if (a === 'string_double') {                                                             // "строчка" в двойных кавычках, v = [", ...]
+      o = m_symbol_table['(string_literal_double)'];
       a = 'literal';
     } else if (a === 'string_column') {                                                             // [строчка] в скобочках
       o = m_symbol_table['(string_literal_column)'];
       a = 'literal';
-    } else if (a === "number") {
+      v = ['[]', v];
+    } else if (a === 'number') {
       o = m_symbol_table["(number_literal)"];
-      a = "literal";
+      a = 'literal';
+    } else if (a === 'LF') {
+      o = m_symbol_table['LF'];
     } else {
-      makeError(t, "Unexpected token.");
+      makeError(t, 'Unexpected token.');
     }
     m_token = Object.create(o);
     m_token.from = t.from;
@@ -162,7 +169,7 @@ const make_parse = function (options = {}) {
     return m_token;
   };
 
-  var statement = function () {
+  const statement = function () {
     var n = m_token, v;
 
     if (n.std) {
@@ -176,35 +183,49 @@ const make_parse = function (options = {}) {
         console.log(v);
         v.error("Bad expression statement.");
     }*/
-    //advance(";");
+    //advance(';');
     return v;
   };
 
-  var statements = function () {
-    var a = [], s;
+  const statements = function () {
+    const program = [];                                                                             // collect statements here
+    let thereWasSeparatorBefore = true;                                                             // Был ли разделитель операторов
+
     while (true) {
-        //console.log(token);
-        if ( m_token.id === "(end)") {
-            break;
-        } else if(m_token.value === ';'){
-          // skip optional ;
-           advance();
-           continue;
-        }
-        s = statement();
-        //console.log("STATEMENT ", s);
-        if (s) {
-            a.push(s);
-        }
+      if (m_token.id === "(end)") {
+        break;
+      } else if (m_token.value === ';' || m_token.value === '\n') {                                                           // skip optional ;
+        thereWasSeparatorBefore = true;
+        advance();
+        continue;
+      }
+      // if (!thereWasSeparatorBefore) {                                                               //
+      //   makeError(m_token, "Statement expected");
+      // }
+
+      const s = statement();
+      if (s) {
+        program.push(s);
+        thereWasSeparatorBefore = false;
+      }
     }
-    return a.length === 0 ? null : a.length === 1 ? a[0]: {"sexpr": ["begin"].concat(a.map(function(el){return el["sexpr"];}))};
+
+    return (
+        program.length === 0 ?
+          null :
+        program.length === 1 ?
+          program[0] :
+          {sexpr: ['begin', ...program.map(el => el.sexpr)]});
   };
 
-  var expression = function (rbp) {
-    var left;
-    var t = m_token;
+  const expression = function (rbp) {
+    let t = m_token;
     advance();
-    left = t.nud();
+    while (t.arity === 'LF') {
+      t = m_token;
+      advance();
+    }
+    let left = t.nud();
     while (rbp < m_token.lbp) {
       t = m_token;
       advance();
@@ -213,7 +234,7 @@ const make_parse = function (options = {}) {
     return left;
   };
 
-  var original_symbol = {
+  const original_symbol = {
     nud: function () {
       makeError(this, "Undefined.");
     },
@@ -222,8 +243,8 @@ const make_parse = function (options = {}) {
     }
   };
 
-  var symbol = function (id, bp) {
-    var s = m_symbol_table[id];
+  const symbol = function (id, bp) {
+    let s = m_symbol_table[id];
     bp = bp || 0;
     if (s) {
       if (bp >= s.lbp) {
@@ -290,8 +311,9 @@ const make_parse = function (options = {}) {
   symbol("(end)");
   symbol("(name)");
   symbol("(null)");
-  symbol(":");
-  symbol(";");
+  symbol(':');
+  symbol(';');
+  symbol('LF');
   symbol(")");
   symbol("]");
   symbol("}");
@@ -301,27 +323,26 @@ const make_parse = function (options = {}) {
   symbol("null").nud = function () { this.sexpr = null; return this; };
 
   // allow to skip values in function calls....
-  var comma = symbol(",");
+  symbol(",");
 
+  symbol('(string_literal_single)').nud = function() {
+    this.first = "'";
+    this.arity = "unary";
+    this.sexpr = Array.isArray(this.sexpr) ? this.sexpr : ["'", this.sexpr];                        // when string is typed D'2020-01-01' then we will have here s-expr
+    return this;
+  };
 
   symbol("(string_literal_double)").nud = function() {
     this.first = '"';
     this.arity = "unary";
-    this.sexpr = ['"', this.sexpr];
-    return this;
-  };
-
-  symbol("(string_literal_single)").nud = function() {
-    this.first = "'";
-    this.arity = "unary";
-    this.sexpr = ["'", this.sexpr];
+    this.sexpr = Array.isArray(this.sexpr) ? this.sexpr : ['"', this.sexpr];
     return this;
   };
 
   symbol("(string_literal_column)").nud = function() {
     this.first = "'";
     this.arity = "unary";
-    this.sexpr = ["[]", this.sexpr];
+    // this.sexpr = ["[]", this.sexpr];                                                             // It is already S-form
     return this;
   };
 
@@ -354,13 +375,13 @@ const make_parse = function (options = {}) {
 
   infixr("&&", 30);
   infixr("∧", 30);
-  operator_alias("&&","and");
-  operator_alias("∧","and");
+  operator_alias("&&", "and");
+  operator_alias("∧", "and");
 
-  infixr("||", 30);
-  infixr("∨", 30);
-  operator_alias("||","or");
-  operator_alias("∨","or");
+  infixr('||', 30);
+  infixr('∨', 30);
+  operator_alias('||', 'or');
+  operator_alias('∨', 'or');
 
   infixr('⍱', 30); operator_alias('⍱', 'nor');
   infixr('⍲', 30); operator_alias('⍲', 'nand');
@@ -444,13 +465,11 @@ const make_parse = function (options = {}) {
         // FIXME: make transition to the logexpr!
         new_expression_scope("logical");
         var e = expression(0);
-        //console.log("LOGICAL" +  left.value + " " + JSON.stringify(e));
         m_expr_scope.pop();
         a.push(e);
       } else {
         new_expression_scope("lpe");
         while (true) {
-          // console.log(">" + token.arity + " NAME:" + left.value);
           if (m_token.id === ',') {
             a.push({
               value: null,
@@ -555,81 +574,36 @@ const make_parse = function (options = {}) {
   prefix("!");
 
   // allow func().not(a)   а также f(a is not null)
-  var n = prefix("not", function () {
-    // it is nud function
+  let n = prefix("not", function () {                                                               // it is nud function
     var expr = expression(70);
-    //console.log("AHTUNG expr is " + JSON.stringify(expr))
     if (isArray(expr.sexpr) && expr.sexpr[0] === '()') {
-      /* выражение not() выдаёт вот такое:
-        {
-          from: 0,
-          to: 3,
-          value: 'not',
-          arity: 'unary',
-          sexpr: [ 'not', [ '()' ] ],
-          first: {from: 3,to: 4,value: '(',arity: 'binary',sexpr: [ '()' ],
-                  first: { from: 3, to: 4, value: '()', arity: 'name', sexpr: ['()'] }
-          }
-        }
-        not(1) даёт такое, a not(1,2) нельзя написать = ошибка !!!
-          {
-            from: 0,
-            to: 3,
-            value: 'not',
-            arity: 'unary',
-            sexpr: [ 'not', [ '()', 1 ] ],
-            first: { from: 4, to: 5, value: 1, arity: 'literal', sexpr: [ '()', 1 ] }
-          }
-        надо его преобразовать в
-          {
-            from: 1,
-            to: 2,
-            value: '(',
-            arity: 'binary',
-            sexpr: [ 'f' ],
-            first: { from: 0, to: 1, value: 'f', arity: 'name', sexpr: 'f' },
-            second: []
-          }
-        или с параметром (одним!)
-          {
-            from: 1,
-            to: 2,
-            value: '(',
-            arity: 'binary',
-            sexpr: [ 'f', 1 ],
-            first: { from: 0, to: 1, value: 'f', arity: 'name', sexpr: 'f' },
-            second: [ { from: 2, to: 3, value: 1, arity: 'literal', sexpr: 1 } ]
-          }
-      */
-          this.arity = 'name';
-          this.value = 'not'
-          this.sexpr = 'not'
-          var e = {
-            from: 0,
-            to: 2,
-            value: '(',
-            arity: 'binary',
-            sexpr: [ 'not' ],
-            first: this
-          }
-          if (expr.sexpr.length > 1) {
-            e.second = [ { from: 4, to: 5, value: expr.sexpr[1], arity: 'literal', sexpr: expr.sexpr[1] } ]
-            e.sexpr.push(expr.sexpr)  // keep () in the parsed AST
-            //e.sexpr = e.sexpr.concat(expr.sexpr) // keep () in the parsed AST
-          }
-          return e;
+      this.arity = 'name';
+      this.value = 'not';
+      this.sexpr = 'not';
+      const e = {
+        from: 0,
+        to: 2,
+        value: '(',
+        arity: 'binary',
+        sexpr: ['not'],
+        first: this,
+      };
+      if (expr.sexpr.length > 1) {
+        e.second = [{from: 4, to: 5, value: expr.sexpr[1], arity: 'literal', sexpr: expr.sexpr[1]}]
+        e.sexpr.push(expr.sexpr)  // keep () in the parsed AST
+        // e.sexpr = e.sexpr.concat(expr.sexpr) // keep () in the parsed AST
+      }
+      return e;
     }
 
     // simple operator `not expr`
     this.first = expr;
     this.arity = "unary";
     this.sexpr = [this.sexpr, expr.sexpr];
-    //console.log("2NOT nud:" + JSON.stringify(this))
     return this;
   })
 
   n.led = function (left) {
-    //console.log("NOT led left:" + JSON.stringify(left))
     return this
   }; // will be used in logical scope
 
@@ -663,7 +637,7 @@ const make_parse = function (options = {}) {
       return this;
     }
 
-    if (m_expr_scope.tp == "logical") {
+    if (m_expr_scope.tp === "logical") {
       //  В скобках может быть два типа выражений
       //  - выражения:        2 + (3)             (1 + 1)             (1 + (1 + 2))
       //  - тупли:            2 + (3, 4)          (1,)                (,)

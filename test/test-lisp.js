@@ -14,7 +14,7 @@ let skipFunctions = {
   },
   toStartAst1: lpe.makeSF((ast, ctx, rs) => {
     return lpe.makeSkipForm(
-      res => { return `Ast1 ${res}`}, 
+      res => { return `Ast1 ${res}`},
       [ [ "'", '20250203' ], [ "'", 'w' ] ]
     );
   }),
@@ -123,7 +123,7 @@ describe('LISP tests', function () {
     assert.deepEqual(lpe.eval_lpe('a or b', {"a":123}, {resolveString: true}), 123);
     assert.deepEqual(lpe.eval_lpe('a or b', {"a":123}, {resolveString: false}), 123);
     assert.deepEqual(lpe.eval_lpe('a or b', {"aaa":123}, {resolveString: true}), "a");
-    assert.deepEqual(lpe.eval_lpe('a or b', {"aaa":123}, {resolveString: false}), null);   
+    assert.deepEqual(lpe.eval_lpe('a or b', {"aaa":123}, {resolveString: false}), null);
   });
 
   /*
@@ -301,76 +301,76 @@ describe('LISP tests', function () {
 
   it('named and default args', function () {
     assert.deepEqual(
-      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + a * c)) a(2, c := 3)'), {}), 
+      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + a * c)); a(2, c := 3)'), {}),
       11
     );
 
     assert.deepEqual(
-      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + a * c)) a(2)'), {}), 
+      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + a * c)); a(2)'), {}),
       NaN
     );
-    
+
     assert.deepEqual(
-      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + a * c)) a(2, b := 10, c := 3)'), {}), 
+      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + a * c)); a(2, b := 10, c := 3)'), {}),
       16
     );
 
     assert.deepEqual(
-      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + a * c)) a(b := 10, c := 3)'), {}),
-      NaN 
-    );
-
-    assert.deepEqual(
-      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + a * c)) a(2, c := 3, d := 4)'), {}),
-      11
-    );
-
-    assert.deepEqual(
-      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + a * c)) a(2, c := null)'), {}),
-      5
-    );
-    
-    assert.deepEqual(
-      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + a * c)) a(c := 3, a := 2)'), {}),
-      11
-    );
-    
-    assert.deepEqual(
-      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + a * c)) a()'), {}),
-      NaN 
-    );
-    
-    assert.deepEqual(
-      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + a * c)) a(2 + 3, c := 1 + 2)'), {}),
-      20
-    );
-    
-    assert.deepEqual(
-      lpe.eval_lisp(lpe.parse('def(a, fn([a := 1, b := 5, c := 2], b + a * c)) a()'), {}),
-      7
-    );
-    
-    assert.deepEqual(
-      lpe.eval_lisp(lpe.parse('def(a, fn([a := 1, b := 5, c := 2], b + a * c)) a(b := 10)'), {}),
-      12
-    );
-    
-    assert.deepEqual(
-      lpe.eval_lisp(lpe.parse('def(a, fn([a := 1, b := 5, c := 2], b + a * c)) a(a := 3, b := 10, c := 4)'), {}),
-      22
-    );
-    
-    assert.deepEqual(
-      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + a * c)) a(2, c := "string")'), {}),
+      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + a * c)); a(b := 10, c := 3)'), {}),
       NaN
     );
-    
+
     assert.deepEqual(
-      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + c(a))) a(2, c := fn(x, x + 1))'), {}),
-      8 
+      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + a * c)); a(2, c := 3, d := 4)'), {}),
+      11
+    );
+
+    assert.deepEqual(
+      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + a * c)); a(2, c := null)'), {}),
+      5
+    );
+
+    assert.deepEqual(
+      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + a * c)); a(c := 3, a := 2)'), {}),
+      11
+    );
+
+    assert.deepEqual(
+      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + a * c)); a()'), {}),
+      NaN
+    );
+
+    assert.deepEqual(
+      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + a * c)); a(2 + 3, c := 1 + 2)'), {}),
+      20
+    );
+
+    assert.deepEqual(
+      lpe.eval_lisp(lpe.parse('def(a, fn([a := 1, b := 5, c := 2], b + a * c)); a()'), {}),
+      7
+    );
+
+    assert.deepEqual(
+      lpe.eval_lisp(lpe.parse('def(a, fn([a := 1, b := 5, c := 2], b + a * c)); a(b := 10)'), {}),
+      12
+    );
+
+    assert.deepEqual(
+      lpe.eval_lisp(lpe.parse('def(a, fn([a := 1, b := 5, c := 2], b + a * c)); a(a := 3, b := 10, c := 4)'), {}),
+      22
+    );
+
+    assert.deepEqual(
+      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + a * c)); a(2, c := "string")'), {}),
+      NaN
+    );
+
+    assert.deepEqual(
+      lpe.eval_lisp(lpe.parse('def(a, fn([a, b := 5, c], b + c(a))); a(2, c := fn(x, x + 1))'), {}),
+      8
     );
   });
-  
+
 
   it('copy to new branch', function () {
   assert.deepEqual(lpe.eval_lisp(lpe.parse('begin(cp(  ["a", "3"], ["b", "5", 0, "newkey"] ), cp(  ["a", "3"], ["b", "5", 0, "newkey1"] ), ctx(b))'), { "b":{}, "a": { "3": [300, 600] } }),

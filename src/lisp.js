@@ -63,8 +63,10 @@ function makeError(name, ast, message) {
  *
  * @type {symbol}
  */
-export const $VAR$ = Symbol.for('$VAR$');
+export const $VAR$ = Symbol.for('__getitem__');
 
+export const __call__ = Symbol.for('__call__');
+export const __getitem__ = Symbol.for('__getitem__');
 
 /**
  * Get or Set variable in context
@@ -840,10 +842,10 @@ function EVAL_IMPLEMENTATION(ast, ctx, options, evalOptions) {
 
     const [opAst, ...argsAst] = ast;
 
-    let op = EVAL_IMPLEMENTATION(opAst, ctx, {... options, wantCallable: true}, evalOptions);                                 // evaluate operator
+    let op = EVAL_IMPLEMENTATION(opAst, ctx, {... options, wantCallable: true}, evalOptions);       // evaluate operator
 
-    if (isHash(op) && ('operator()' in op)) {                                                       // Если в качестве функции нам дают хэшмап и у него есть operator()
-      op = op['operator()'].bind(op);                                                               // то используем его как callable (и сохраняем this)
+    if (isHash(op) && (__call__ in op)) {                                                           // Если в качестве функции нам дают хэшмап и у него есть __call__
+      op = op[__call__].bind(op);                                                                   // то используем его как callable (и сохраняем this)
     }
 
     if (typeof op !== 'function') {

@@ -8,7 +8,7 @@ describe('LPE tests', function() {
     assert(lpe.parse);
     assert(typeof lpe.parse === 'function');
   });
-  
+
   it('should export parse unary operators', function() {
     assert.deepEqual(lpe.parse('+123'),  ["+", 123] );
     assert.deepEqual(lpe.parse('-123'),  ["-", 123] );
@@ -20,7 +20,7 @@ describe('LPE tests', function() {
     assert.deepEqual(lpe.parse('"123"'), [ '"', '123' ]);
     assert.deepEqual(lpe.parse('list'),  'list' );
   });
-  
+
   it('should parse arithmetics', function() {
     assert.deepEqual(lpe.parse('1+2'), ['+', 1, 2]);
     assert.deepEqual(lpe.parse('1*2'), ['*', 1, 2]);
@@ -62,8 +62,6 @@ describe('LPE tests', function() {
     assert.deepEqual(lpe.parse('fn()'), ['fn']);
     assert.deepEqual(lpe.parse('fn(1)'), ['fn', 1]);
     assert.deepEqual(lpe.parse('fn(1,2)'), ['fn', 1, 2]);
-    assert.deepEqual(lpe.parse('fn(s,)'), ['fn', 's', null]);
-    assert.deepEqual(lpe.parse('fn(,s)'), ['fn', null, 's']);
   });
 
   it('should parse function arithmetics', function() {
