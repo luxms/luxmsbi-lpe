@@ -853,7 +853,7 @@ function EVAL_IMPLEMENTATION(ast, ctx, options, evalOptions) {
     }
 
     if (isSF(op)) {                                                                                 // special form
-      const sfResult = op(argsAst, ctx, options);
+      const sfResult = op(argsAst, ctx, options, ast);
       return sfResult;
     }
 
