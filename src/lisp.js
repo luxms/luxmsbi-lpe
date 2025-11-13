@@ -382,9 +382,9 @@ const SPECIAL_FORMS = {                                                         
       array = eval_lisp(a, ctx, rs);
     }
 
-    // но вообще-то вот так ещё круче ["->","a",3,1]
+    // но вообще-то вот так ещё круче ["->","a",3,1] // "->" изменён на "."
     // const m = ["->"].concat( array.slice(1).reduce((a, b) => {a.push([".-",b]); return a}, [[".-", ast[0], array[0]]]) );
-    const m = ["->", hashname].concat( array );
+    const m = [".", hashname].concat( array );
     //console.log('get_in', JSON.stringify(m))
     return eval_lisp(m, ctx, rs);
   }),
@@ -473,7 +473,7 @@ export const STDLIB = {
   '!=': (...args) => !args.every(v => v == args[0]),
   ':=': makeSF((ast, ctx, rs) => {
     if (isArray(ast[0])) {
-      if (ast[0][0] != "->") {
+      if (ast[0][0] !== ".") {
         makeError(":=", ast, 'Left operand of ":=" must be lvalue!');
       }
       let val = isArray(ast[0][1]) ? eval_lisp(ast[0][1], ctx, rs) : $var$(ctx, ast[0][1]);

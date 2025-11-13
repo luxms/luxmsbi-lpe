@@ -505,66 +505,26 @@ const make_parse = function (options = {}) {
   });
 
 
-  function lift_funseq(node) {
-    if (node.value === "->") {
-      return lift_funseq(node.first).concat(lift_funseq(node.second));
-    } else /*if (node.value === "(") {
-      console.log("() DETECTED" + JSON.stringify(node))
-      //if (node.first.value === "->"){
-        // если у нас в скобки взято выражение "->", то скобки можно удалить
-        // if (true).(frst().second()) === if(true) => [->> [first] [second]] скобки не нужны,
-        // так как seq уже группирует вызовы в цепочку
-        // DIMA 2022 на самом деле нет для
-        // if(a=b).(yes().yes()).(no().no3())
-        // получаем
-        // ["->",["if",["=","a","b"]],["yes"],["yes"],["no"],["no3"]]
-        // что выглядит странно со вснх сторон
-        //  return [["->"].concat(lift_funseq(node.first.first)).concat(lift_funseq(node.first.second))];
-      //} else {
-          return lift_funseq(node.first);
-      //}
-    } else */{
-      //console.log("?? DETECTED" + JSON.stringify(node))
+  function lifting(node, op) {
+    if (node.value === op) {
+      return lifting(node.first, op).concat(lifting(node.second, op));
+    } else {
       return [node.sexpr];
     }
   }
 
-  function lift_funseq_2(node) {
-    if (node.value === "->>") {
-      return lift_funseq(node.first).concat(lift_funseq(node.second));
-    } else /*if (node.value === "()") {
-      //if (node.first.value === "->>"){
-        // если у нас в скобки взято выражение "->", то скобки можно удалить
-        // if (true).(frst().second()) === if(true) => [->> [first] [second]] скобки не нужны,
-        // так как seq уже группирует вызовы в цепочку
-        //  return [["->>"].concat(lift_funseq(node.first.first)).concat(lift_funseq(node.first.second))];
-      //} else {
-          return lift_funseq(node.first);
-      //}
-    } else */{
-      return [node.sexpr];
-    }
+  for (const op of [".", "..", "->", "->>"]) {
+    infix(op, 70, function (left) {
+      this.first = left;
+      // this.second = expression(0);
+      this.second = expression(70);
+      this.arity = "binary";
+      this.value = op;
+      this.sexpr = [op].concat(lifting(this, op));
+      return this;
+    });
   }
 
-  infix(".", 70, function (left) {
-    this.first = left;
-    // this.second = expression(0);
-    this.second = expression(70);
-    this.arity = "binary";
-    this.value = "->";
-    this.sexpr = ["->"].concat(lift_funseq(this));
-    return this;
-  });
-
-  infix("..", 70, function (left) {
-    this.first = left;
-    // this.second = expression(0);
-    this.second = expression(70);
-    this.arity = "binary";
-    this.value = "->>";
-    this.sexpr = ["->>"].concat(lift_funseq_2(this));
-    return this;
-  });
 
 
   // WARNING HACK FIXME DIMA - добавил чтобы писать order_by(+a)
@@ -672,7 +632,7 @@ const make_parse = function (options = {}) {
     }
 
     var e = expression(0);
-    if (e.value === "->") {
+    if ([".", "->"].includes(e.value)) {
       // в скобки взято выражение из цепочки LPE вызовов, нужно запомнить скобки, делаем push "()" в текущий AST
       e = {
         first: e,
