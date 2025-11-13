@@ -7,15 +7,15 @@ const isFunction = (arg) => (typeof arg === 'function');
 
 
 const OPERATORS = {
-  '+': true,
-  '-': true,
-  '*': true,
-  '/': true,
-  '=': true,
-  '@': true,
+  // ...
   'and': '&&',
   'or': '||',
 };
+
+// simpleOperators
+['+', '-', '*', '=', '@',
+  '->', ':=',
+  '<', '>', '<=', '>='].forEach(op => OPERATORS[op] = true);
 
 const PRIORITY = {
   '=': 40,
