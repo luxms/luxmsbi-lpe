@@ -297,7 +297,7 @@ const SPECIAL_FORMS = {                                                         
         },
         options?.streamAdapter);
   }),
-  '.': makeSF((ast, ctx, rs) => {                                               // call object method
+  '_call_obj_meth_': makeSF((ast, ctx, rs) => {                                               // call object method
     const [obj, methodName, ...args] = ast.map(a => EVAL(a, ctx, rs));
     const fn = obj[methodName];
     return fn.apply(obj, args);
@@ -382,9 +382,9 @@ const SPECIAL_FORMS = {                                                         
       array = eval_lisp(a, ctx, rs);
     }
 
-    // но вообще-то вот так ещё круче ["->","a",3,1]
+    // но вообще-то вот так ещё круче ["->","a",3,1] // "->" изменён на "."
     // const m = ["->"].concat( array.slice(1).reduce((a, b) => {a.push([".-",b]); return a}, [[".-", ast[0], array[0]]]) );
-    const m = ["->", hashname].concat( array );
+    const m = [".", hashname].concat( array );
     //console.log('get_in', JSON.stringify(m))
     return eval_lisp(m, ctx, rs);
   }),
@@ -473,7 +473,7 @@ export const STDLIB = {
   '!=': (...args) => !args.every(v => v == args[0]),
   ':=': makeSF((ast, ctx, rs) => {
     if (isArray(ast[0])) {
-      if (ast[0][0] != "->") {
+      if (ast[0][0] !== ".") {
         makeError(":=", ast, 'Left operand of ":=" must be lvalue!');
       }
       let val = isArray(ast[0][1]) ? eval_lisp(ast[0][1], ctx, rs) : $var$(ctx, ast[0][1]);
@@ -559,7 +559,7 @@ export const STDLIB = {
   // macros
  // '()': makeMacro((...args) => ['begin', ...args]), from 2022 It is just grouping of expressions
   '()': makeMacro(args => args),
-  '->': makeMacro((acc, ...ast) => {                                            // thread first macro
+  '.': makeMacro((acc, ...ast) => {                                            // thread first macro
     // императивная лапша для макроса ->
     // надо вот так: https://clojuredocs.org/clojure.core/-%3E%3E
     // AST[["filterit",[">",1,0]]]
@@ -586,7 +586,7 @@ export const STDLIB = {
     }
     return acc;
   }),
-  '->>': makeMacro((acc, ...ast) => {                                           // thread last macro
+  '..': makeMacro((acc, ...ast) => {                                           // thread last macro
     // императивная лапша для макроса ->>
     // надо вот так: https://clojuredocs.org/clojure.core/-%3E%3E
     for (let arr of ast) {
@@ -599,7 +599,7 @@ export const STDLIB = {
     /// мы не можем использовать точку в LPE для вызова метода объекта, так как она уже замаплена на ->
     /// поэтому для фанатов ООП пришлось добавить макрос invoke - вызов метода по его текстовому названию.
     /// invoke хорошо стыкуется с ->
-    ast.splice(0, 0, ".");
+    ast.splice(0, 0, "_call_obj_meth_");
     return ast;
   }),
   'and': makeMacro((...ast) => {

@@ -100,9 +100,9 @@ describe('LPE tests', function() {
   it('should parse UI stack expressions', function() {
     assert.deepEqual(lpe.parse('mlp(filter(id=[12,3]||title~"abc"),filter(id=2),filter(id=3241324132))'), ["mlp",["filter",["or",["=","id",["[","12","3"]],["~","title",['"',"abc"]]]],["filter",["=","id","2"]],["filter",["=","id","3241324132"]]]);
 
-    assert.deepEqual(lpe.parse('mlp(filter(id=[12,3]),filter(id=2),filter(pt=7&&qty=1)).ddl(234)'), ["->",["mlp",["filter",["=","id",["[","12","3"]]],["filter",["=","id","2"]],["filter",["and",["=","pt","7"],["=","qty","1"]]]],["ddl","234"]] );
+    assert.deepEqual(lpe.parse('mlp(filter(id=[12,3]),filter(id=2),filter(pt=7&&qty=1)).ddl(234)'), [".",["mlp",["filter",["=","id",["[","12","3"]]],["filter",["=","id","2"]],["filter",["and",["=","pt","7"],["=","qty","1"]]]],["ddl","234"]] );
 
-    assert.deepEqual(lpe.parse("mlp([1,2,3],[3,4,5],[20,33,4422274183274832676487168124214]).djl(3,title~'по названиям')"), ["->",["mlp",["[","1","2","3"],["[","3","4","5"],["[","20","33","4422274183274832676487168124214"]],["djl","3",["~","title",["'","по названиям"]]]] );
+    assert.deepEqual(lpe.parse("mlp([1,2,3],[3,4,5],[20,33,4422274183274832676487168124214]).djl(3,title~'по названиям')"), [".",["mlp",["[","1","2","3"],["[","3","4","5"],["[","20","33","4422274183274832676487168124214"]],["djl","3",["~","title",["'","по названиям"]]]] );
   });
 
   it('should parse named logical expressions a.k.a. where expressions', function() {
@@ -113,21 +113,21 @@ describe('LPE tests', function() {
     assert.deepEqual(lpe.parse('where( 6 and not (3 or (5 and not (4-5))) or not (a and (b or c)) and not (x or not y))'), ["where",["and","6",["or",["not",["()",["or","3",["()",["and","5",["not",["()",["-","4","5"]]]]]]]],["and",["not",["()",["and","a",["()",["or","b","c"]]]]],["not",["()",["or","x",["not","y"]]]]]]]]);
 
     assert.deepEqual(lpe.parse('where((a and b or c) or (avg(d) < avg(e)) or (e = 20 and parse_kv(locations.src_id)))'),
-    ["where",["or",["()",["and","a",["or","b","c"]]],["or",["()",["<",["avg","d"],["avg","e"]]],["()",["and",["=","e","20"],["parse_kv",["->","locations","src_id"]]]]]]]
+    ["where",["or",["()",["and","a",["or","b","c"]]],["or",["()",["<",["avg","d"],["avg","e"]]],["()",["and",["=","e","20"],["parse_kv",[".","locations","src_id"]]]]]]]
     );
 
     assert.deepEqual(lpe.parse('where((a && b || c) or (avg(d) < avg(e)) || (e = 20 and parse_kv(locations.src_id)))'),
-    ["where",["or",["()",["and","a",["or","b","c"]]],["or",["()",["<",["avg","d"],["avg","e"]]],["()",["and",["=","e","20"],["parse_kv",["->","locations","src_id"]]]]]]]
+    ["where",["or",["()",["and","a",["or","b","c"]]],["or",["()",["<",["avg","d"],["avg","e"]]],["()",["and",["=","e","20"],["parse_kv",[".","locations","src_id"]]]]]]]
     );
   });
 
   it('should parse if expressions with grouping', function() {
     // if evaluation works as in LISP !!! Here is just tests for parser
-    assert.deepEqual(lpe.parse('if(a=b).yes().no()'), ["->", ["if", ["=", "a", "b"]], ["yes"], ["no"]]);
-    assert.deepEqual(lpe.parse('if(a=b).(yes()).(no())'), ["->", ["if", ["=", "a", "b"]], ["()", ["yes"]], ["()", ["no"]]]);
-    assert.deepEqual(lpe.parse('if(a=b).(yes().yes()).(no().no3())'), ["->", ["if", ["=", "a", "b"]], ["()", ["->", ["yes"], ["yes"]]], ["()", ["->", ["no"], ["no3"]]]]);
-    assert.deepEqual(lpe.parse('if(a=b).if(x>4).yexx().nox().noab()'), ["->", ["if", ["=", "a", "b"]], ["if", [">", "x", "4"]], ["yexx"], ["nox"], ["noab"]]);
-    assert.deepEqual(lpe.parse('if(a=b).if(x>4).(yexx().ye2()).(nox().no2()).(noab().noab)'), ["->", ["if", ["=", "a", "b"]], ["if", [">", "x", 4]], ["()", ["->", ["yexx"], ["ye2"]]], ["()", ["->", ["nox"], ["no2"]]], ["()", ["->", ["noab"], "noab"]]]);
+    assert.deepEqual(lpe.parse('if(a=b).yes().no()'), [".", ["if", ["=", "a", "b"]], ["yes"], ["no"]]);
+    assert.deepEqual(lpe.parse('if(a=b).(yes()).(no())'), [".", ["if", ["=", "a", "b"]], ["()", ["yes"]], ["()", ["no"]]]);
+    assert.deepEqual(lpe.parse('if(a=b).(yes().yes()).(no().no3())'), [".", ["if", ["=", "a", "b"]], ["()", [".", ["yes"], ["yes"]]], ["()", [".", ["no"], ["no3"]]]]);
+    assert.deepEqual(lpe.parse('if(a=b).if(x>4).yexx().nox().noab()'), [".", ["if", ["=", "a", "b"]], ["if", [">", "x", "4"]], ["yexx"], ["nox"], ["noab"]]);
+    assert.deepEqual(lpe.parse('if(a=b).if(x>4).(yexx().ye2()).(nox().no2()).(noab().noab)'), [".", ["if", ["=", "a", "b"]], ["if", [">", "x", 4]], ["()", [".", ["yexx"], ["ye2"]]], ["()", [".", ["nox"], ["no2"]]], ["()", [".", ["noab"], "noab"]]]);
   });
 
   it('should parse :', function() {
@@ -155,10 +155,10 @@ describe('LPE tests', function() {
   });
 
   it('should eval Javascript RegExp with context', function() {
-    assert.equal(lpe.eval_lisp(['.', ['RegExp', 'delete', 'i'], 'test', [".-", "context", "sql"]], {"context": {"sql": "deleTe"}}), true);
-    assert.equal(lpe.eval_lisp(['.', ['RegExp', 'delete', 'i'], 'test', [".-", "context", "sql"]], {"context": {"sql": "abc\nselect or update or deleTe"}}), true);
-    assert.equal(lpe.eval_lisp(['false?', ['.', ['RegExp', 'update|drop|truncate|insert|alter|grant|delete', 'i'], 'test', [".-", "context", "sql"]]], {"context": {"sql": "abc\nselect or update or deleTe"}}), false);
-    assert.equal(lpe.eval_lisp(['false?', ['.', ['RegExp', 'update|drop|truncate|insert|alter|grant|delete', 'i'], 'test', [".-", "context", "sql"]]], {"context": {"sql": "abc\nselect * from table where a is not null"}}), true);
+    assert.equal(lpe.eval_lisp(['_call_obj_meth_', ['RegExp', 'delete', 'i'], 'test', [".-", "context", "sql"]], {"context": {"sql": "deleTe"}}), true);
+    assert.equal(lpe.eval_lisp(['_call_obj_meth_', ['RegExp', 'delete', 'i'], 'test', [".-", "context", "sql"]], {"context": {"sql": "abc\nselect or update or deleTe"}}), true);
+    assert.equal(lpe.eval_lisp(['false?', ['_call_obj_meth_', ['RegExp', 'update|drop|truncate|insert|alter|grant|delete', 'i'], 'test', [".-", "context", "sql"]]], {"context": {"sql": "abc\nselect or update or deleTe"}}), false);
+    assert.equal(lpe.eval_lisp(['false?', ['_call_obj_meth_', ['RegExp', 'update|drop|truncate|insert|alter|grant|delete', 'i'], 'test', [".-", "context", "sql"]]], {"context": {"sql": "abc\nselect * from table where a is not null"}}), true);
   });
 
   it('should eval Javascript RegExp with context (LPE)', function() {
