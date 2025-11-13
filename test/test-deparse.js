@@ -27,10 +27,10 @@ describe('LPE deparse', function() {
   it('should deparse complex expressions', function () {
     assert.equal(deparse(
       ['between',
-        ['->',
+        ['.',
           ['dateShift', ['-', 1], ['"', 'm']],
           ['toStart', ['"', 'm']]],
-        ['->',
+        ['.',
           ['dateShift', ['-', 1], ['"', 'm']],
           ['toEnd', ['"', 'm']]]]),
       'between(dateShift(-1, "m").toStart("m"), dateShift(-1, "m").toEnd("m"))')

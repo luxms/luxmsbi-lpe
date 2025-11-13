@@ -155,10 +155,10 @@ describe('LPE tests', function() {
   });
 
   it('should eval Javascript RegExp with context', function() {
-    assert.equal(lpe.eval_lisp(['.', ['RegExp', 'delete', 'i'], 'test', [".-", "context", "sql"]], {"context": {"sql": "deleTe"}}), true);
-    assert.equal(lpe.eval_lisp(['.', ['RegExp', 'delete', 'i'], 'test', [".-", "context", "sql"]], {"context": {"sql": "abc\nselect or update or deleTe"}}), true);
-    assert.equal(lpe.eval_lisp(['false?', ['.', ['RegExp', 'update|drop|truncate|insert|alter|grant|delete', 'i'], 'test', [".-", "context", "sql"]]], {"context": {"sql": "abc\nselect or update or deleTe"}}), false);
-    assert.equal(lpe.eval_lisp(['false?', ['.', ['RegExp', 'update|drop|truncate|insert|alter|grant|delete', 'i'], 'test', [".-", "context", "sql"]]], {"context": {"sql": "abc\nselect * from table where a is not null"}}), true);
+    assert.equal(lpe.eval_lisp(['_call_obj_meth_', ['RegExp', 'delete', 'i'], 'test', [".-", "context", "sql"]], {"context": {"sql": "deleTe"}}), true);
+    assert.equal(lpe.eval_lisp(['_call_obj_meth_', ['RegExp', 'delete', 'i'], 'test', [".-", "context", "sql"]], {"context": {"sql": "abc\nselect or update or deleTe"}}), true);
+    assert.equal(lpe.eval_lisp(['false?', ['_call_obj_meth_', ['RegExp', 'update|drop|truncate|insert|alter|grant|delete', 'i'], 'test', [".-", "context", "sql"]]], {"context": {"sql": "abc\nselect or update or deleTe"}}), false);
+    assert.equal(lpe.eval_lisp(['false?', ['_call_obj_meth_', ['RegExp', 'update|drop|truncate|insert|alter|grant|delete', 'i'], 'test', [".-", "context", "sql"]]], {"context": {"sql": "abc\nselect * from table where a is not null"}}), true);
   });
 
   it('should eval Javascript RegExp with context (LPE)', function() {
