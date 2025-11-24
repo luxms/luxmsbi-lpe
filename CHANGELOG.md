@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.6.1](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.6.0...v1.6.1) (2025-11-24)
+
+
+### Bug Fixes
+
+* support of -> as . ([add0efa](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/add0efa30fb10e63ab211d2e57632065b764aed5))
+
 ## [1.6.0](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.5.5...v1.6.0) (2025-11-13)
 
 ### [1.5.5](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.5.4...v1.5.5) (2025-10-13)
