@@ -586,6 +586,10 @@ export const STDLIB = {
     }
     return acc;
   }),
+  '->': makeMacro((...args) => {
+    // Для обратной совместимости с версиями до 1.6.0 "->" эквивалентен "." 
+    return [".", ...args];
+  }),
   '..': makeMacro((acc, ...ast) => {                                           // thread last macro
     // императивная лапша для макроса ->>
     // надо вот так: https://clojuredocs.org/clojure.core/-%3E%3E
