@@ -150,10 +150,13 @@
           }
         },
         callable: {
-          'operator()': (...args) => {
-            return 'operator() is working: ' + JSON.stringify(args);
+          '__call__': (...args) => {
+            return '__call__ is working: ' + JSON.stringify(args);
           },
         },
+        varArgExample: lpe.makeVararg(['a:int', 'b'], (a, b, args, kwargs) => {
+          return {a, b, args, kwargs};
+        })
       };
 
       try {
