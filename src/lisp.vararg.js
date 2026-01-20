@@ -12,6 +12,7 @@
  */
 
 import {EVAL} from "./lisp";
+import unbox from "./lisp.unbox";
 
 /**
  * Разберет template
@@ -41,7 +42,6 @@ function parseTemplate(template) {
       // И тогда можно добавить тип в определения для типов typeCast
       const mdt = t.match(/^(.*):\s*(\w+)$/);
       if (mdt) {
-        debugger;
         varnames.push(mdt[1]);                                                                // Имя переменной
         typesCast[mdt[1].trim()] = mdt[2].trim().toLowerCase();
       } else {
@@ -63,7 +63,7 @@ function parseTemplate(template) {
     // Теперь поиск по шаблону - в объекте typeCast может быть задан шаблон в ключе { "on.*" : "fn" }
     for (const [pattern, type] of Object.entries(typesCast)) {
       try {
-        if (new RegExp(`^${pattern}$`).test(value)) {
+        if (new RegExp(`^${pattern}$`).test(varname)) {
           return type;
         }
       } catch (err) {
@@ -75,7 +75,10 @@ function parseTemplate(template) {
 
   return (args, kwargs, ctx, opt) => {
     // Собираем реальные аргументы по template
+    // Возвращаем структуру с информацией о том, какие аргументы вычислены, а какие - AST (fn type)
     const realArgs = [];
+    const realArgsTypes = [];  // 'fn' или undefined для каждого аргумента
+
     for (let t of varnames) {
       let ast;
       if (t in kwargs) {                                                                            // Если аргумент найден в kwargs - удаляем его оттуда
@@ -84,16 +87,21 @@ function parseTemplate(template) {
       } else {                                                                                      // Иначе берем первый из args, удаляя его
         ast = args.shift();
       }
-      // Теперь надо вычислить ast учитывая его тип
+
       const type = getType(t);
-      let value;
-      if (!type) {
+      realArgsTypes.push(type);
 
+      if (type === 'fn') {
+        // Для типа fn оборачиваем AST в функцию, которая вычислит его при вызове
+        const capturedAst = ast;
+        realArgs.push(() => EVAL(capturedAst, ctx, opt));
+      } else {
+        // Для остальных типов вычисляем значение
+        realArgs.push(EVAL(ast, ctx, opt));
       }
-
-      realArgs.push(kwargs[t]);
     }
-    return realArgs
+
+    return { realArgs, realArgsTypes };
   }
 }
 
@@ -132,10 +140,60 @@ export default function makeVararg(template, fn) {
     }
 
     // Вытаскиваем реальные аргументы по template
-    const realArgs = templateSplit(args, kwargs, ctx, opt);
+    const { realArgs, realArgsTypes } = templateSplit(args, kwargs, ctx, opt);
 
-    // Вызываем. |realArgs| = |template| так что они пойдут первыми
-    return fn.apply(this, [...realArgs, args, kwargs]);
+    // Вычисляем оставшиеся args (те что не попали в template)
+    const evaluatedArgs = args.map(a => EVAL(a, ctx, opt));
+
+    // Вычисляем оставшиеся kwargs (те что не попали в template)
+    const kwargsKeys = Object.keys(kwargs);
+    const evaluatedKwargsValues = kwargsKeys.map(key => EVAL(kwargs[key], ctx, opt));
+
+    // Собираем все вычисленные значения для unbox
+    // (fn-type аргументы не вычисляются, это AST - их не надо unbox'ить)
+    const toUnbox = [];
+    const realArgsEvaluatedIndices = [];  // индексы в realArgs которые были вычислены (не fn type)
+
+    for (let i = 0; i < realArgs.length; i++) {
+      if (realArgsTypes[i] !== 'fn') {
+        realArgsEvaluatedIndices.push(i);
+        toUnbox.push(realArgs[i]);
+      }
+    }
+
+    const evaluatedArgsStartIndex = toUnbox.length;
+    toUnbox.push(...evaluatedArgs);
+
+    const kwargsValuesStartIndex = toUnbox.length;
+    toUnbox.push(...evaluatedKwargsValues);
+
+    // Используем unbox для обработки Promise/Stream значений
+    return unbox(
+      toUnbox,
+      (unboxedValues) => {
+        // Восстанавливаем realArgs с unbox'нутыми значениями
+        const finalRealArgs = [...realArgs];
+        for (let i = 0; i < realArgsEvaluatedIndices.length; i++) {
+          finalRealArgs[realArgsEvaluatedIndices[i]] = unboxedValues[i];
+        }
+
+        // Восстанавливаем evaluatedArgs
+        const finalEvaluatedArgs = unboxedValues.slice(
+          evaluatedArgsStartIndex,
+          evaluatedArgsStartIndex + evaluatedArgs.length
+        );
+
+        // Восстанавливаем kwargs
+        const finalKwargs = {};
+        for (let i = 0; i < kwargsKeys.length; i++) {
+          finalKwargs[kwargsKeys[i]] = unboxedValues[kwargsValuesStartIndex + i];
+        }
+
+        // Вызываем. |realArgs| = |template| так что они пойдут первыми
+        return fn.apply(this, [...finalRealArgs, finalEvaluatedArgs, finalKwargs]);
+      },
+      opt?.streamAdapter
+    );
   };
   resultSF.__isSpecialForm = true;                              // Помечаем как special form чтоб получать ast а не аргументы
   return resultSF;
