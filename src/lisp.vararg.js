@@ -1,200 +1,255 @@
 /**
- * Возможность задать variadic arguments
- *  контект задается с вызовом
- *  ctx = {
- *    myfunc: makeVararg(["a:int", "b:fn"], (a, b, args, kwargs) => {
- *      // Будут доступны переменные, заданные в template а также дополнительные переменные
- *    }),
- * }
+ * Variadic argument support for LPE functions.
  *
- * Доступн также дополнительный аргумент
- *
+ * Usage:
+ *   ctx = {
+ *     myfunc: makeVararg(["a:int", "b:fn"], (a, b, args, kwargs) => {
+ *       // Template args (a, b) come first, then remaining args[] and kwargs{}
+ *     }),
+ *   }
  */
 
-import {EVAL} from "./lisp";
+import { EVAL } from "./lisp";
 import unbox from "./lisp.unbox";
 
-/**
- * Разберет template
- * Вернет функцию, которой можно передать массив args и хэшмап kwargs
- * template это массив строк которые обозначают названия аргументов
- *
- *
- * @param template
- * @returns {function(*, *): *[]}
- */
 function parseTemplate(template) {
   if (!Array.isArray(template)) {
-    throw new Error('LPE vararg template must be array');
+    throw new Error("LPE vararg template must be array");
   }
-  let varnames = [];
-  // Хэшмап определяет тип, в который будем кастовать аргументы
+
+  const varnames = [];
   let typesCast = {};
-  // После последнего элемента не должно быть ничего
-  let foundLastTemplateEntry = false;
-  for (let t of template) {
-    if (foundLastTemplateEntry) {
-      // Ранее встретился шаблон для типов, но после него еще что-то пришло
-      throw new Error(`LPE vararg template definition error: must be no arguments after type declaration`);
+  let foundTypeObject = false;
+
+  for (const entry of template) {
+    if (foundTypeObject) {
+      throw new Error(
+        "LPE vararg template definition error: must be no arguments after type declaration"
+      );
     }
-    if (typeof t === 'string') {
-      // Переменная может иметь формат `varname:type`
-      // И тогда можно добавить тип в определения для типов typeCast
-      const mdt = t.match(/^(.*):\s*(\w+)$/);
-      if (mdt) {
-        varnames.push(mdt[1]);                                                                // Имя переменной
-        typesCast[mdt[1].trim()] = mdt[2].trim().toLowerCase();
+
+    if (typeof entry === "string") {
+      const match = entry.match(/^(.*):\s*(\w+)$/);
+      if (match) {
+        varnames.push(match[1]);
+        typesCast[match[1].trim()] = match[2].trim().toLowerCase();
       } else {
-        varnames.push(t);
+        varnames.push(entry);
       }
-    } else if ((typeof t === 'object') && t !== null) {
-      foundLastTemplateEntry = true;
-      typesCast = {...typesCast, ...t};                           // Обогащаем объект с типами пришедшими определениями
+    } else if (typeof entry === "object" && entry !== null) {
+      foundTypeObject = true;
+      typesCast = { ...typesCast, ...entry };
     } else {
-      throw new Error(`LPE vararg template definition error: type ${typeof t} is not supported`);
+      throw new Error(
+        `LPE vararg template definition error: type ${typeof entry} is not supported`
+      );
     }
   }
 
-  // Получаем тип у переменной (необязательно)
   function getType(varname) {
     if (varname in typesCast) {
       return typesCast[varname];
     }
-    // Теперь поиск по шаблону - в объекте typeCast может быть задан шаблон в ключе { "on.*" : "fn" }
     for (const [pattern, type] of Object.entries(typesCast)) {
       try {
         if (new RegExp(`^${pattern}$`).test(varname)) {
           return type;
         }
-      } catch (err) {
-        // Что-то плохое с регвыром
+      } catch {
+        // Invalid regex pattern - skip
       }
     }
     return undefined;
   }
 
-  return (args, kwargs, ctx, opt) => {
-    // Собираем реальные аргументы по template
-    // Возвращаем структуру с информацией о том, какие аргументы вычислены, а какие - AST (fn type)
-    const realArgs = [];
-    const realArgsTypes = [];  // 'fn' или undefined для каждого аргумента
-
-    for (let t of varnames) {
-      let ast;
-      if (t in kwargs) {                                                                            // Если аргумент найден в kwargs - удаляем его оттуда
-        ast = kwargs[t];
-        delete kwargs[t];
-      } else {                                                                                      // Иначе берем первый из args, удаляя его
-        ast = args.shift();
-      }
-
-      const type = getType(t);
-      realArgsTypes.push(type);
-
-      if (type === 'fn') {
-        // Для типа fn оборачиваем AST в функцию, которая вычислит его при вызове
-        const capturedAst = ast;
-        realArgs.push(() => EVAL(capturedAst, ctx, opt));
-      } else {
-        // Для остальных типов вычисляем значение
-        realArgs.push(EVAL(ast, ctx, opt));
-      }
-    }
-
-    return { realArgs, realArgsTypes };
-  }
+  return { varnames, getType };
 }
 
-
 /**
- * Определяет функцию как имеющую непостоянный набор аргументое
- * Например, в контексте объявлено
- *   somefunc = makeVararg(["a", "b"], (a, b, args, kwargs) => {
- *     // переменные a и b - по порядку
- *     // args - массив остальных переменных
- *     // kwargs - хэшмап
- *   })
+ * Creates a variadic function with named template arguments.
  *
- * В дальнейшем вызовы в LPE приведут к результату
- * - somefunc(3, 4)             // a = 3, b = 4, args = [], kwargs = {}
- * - somefunc(b=4, 3)          // a = 3, b = 4, args = [], kwargs = {}
- * - somefunc(b=4, с=5, 3)          // a = 3, b = 4, args = [], kwargs = {c: 5}
- * - somefunc(3, 4, 5)          // a = 3, b = 4, args = [5], kwargs = {}
+ * Template format: ["argName", "argName:type", { "pattern": "type" }]
+ * - Type "fn" wraps the AST in a thunk (lazy evaluation)
+ * - Other types evaluate immediately
  *
- * @param template
- * @param fn
+ * The wrapped function receives: ...templateArgs, remainingArgs[], remainingKwargs{}
  */
 export default function makeVararg(template, fn) {
+  const { varnames, getType } = parseTemplate(template);
 
-  const templateSplit = parseTemplate(template);
+  function varargHandler(ast, ctx, opt) {
+    // Step 1: Collect all arguments with their original indices
+    // Each entry: { originalIndex, ast, name?, kind: "positional" | "kwarg" }
+    const allArgs = [];
+    let positionalIndex = 0;
 
-  const resultSF = function (ast, ctx, opt) {
-    const args = [];
-    const kwargs = {};
-    for (let argAst of ast) {
-      if (Array.isArray(argAst) && argAst.length === 3 && argAst[0] === '=' && (typeof argAst[1] === 'string')) {  // Если похож на ["=", "variable name", ...] - вычисляем значение и кладем в kwargs
-        kwargs[argAst[1]] = argAst[2];
-      } else {                                                                                      // Если не похож - то кладем в аргументы
-        args.push(argAst);
+    for (let i = 0; i < ast.length; i++) {
+      const argAst = ast[i];
+      const isKwarg =
+        Array.isArray(argAst) &&
+        argAst.length === 3 &&
+        argAst[0] === "=" &&
+        typeof argAst[1] === "string";
+
+      if (isKwarg) {
+        allArgs.push({
+          originalIndex: i,
+          kind: "kwarg",
+          name: argAst[1],
+          ast: argAst[2],
+        });
+      } else {
+        allArgs.push({
+          originalIndex: i,
+          kind: "positional",
+          positionalIndex: positionalIndex++,
+          ast: argAst,
+        });
       }
     }
 
-    // Вытаскиваем реальные аргументы по template
-    const { realArgs, realArgsTypes } = templateSplit(args, kwargs, ctx, opt);
+    // Step 2: Match template varnames to arguments
+    // Build: templateSlots[i] = reference to allArgs entry (or undefined if missing)
+    const templateSlots = [];
+    const usedIndices = new Set();
 
-    // Вычисляем оставшиеся args (те что не попали в template)
-    const evaluatedArgs = args.map(a => EVAL(a, ctx, opt));
-
-    // Вычисляем оставшиеся kwargs (те что не попали в template)
-    const kwargsKeys = Object.keys(kwargs);
-    const evaluatedKwargsValues = kwargsKeys.map(key => EVAL(kwargs[key], ctx, opt));
-
-    // Собираем все вычисленные значения для unbox
-    // (fn-type аргументы не вычисляются, это AST - их не надо unbox'ить)
-    const toUnbox = [];
-    const realArgsEvaluatedIndices = [];  // индексы в realArgs которые были вычислены (не fn type)
-
-    for (let i = 0; i < realArgs.length; i++) {
-      if (realArgsTypes[i] !== 'fn') {
-        realArgsEvaluatedIndices.push(i);
-        toUnbox.push(realArgs[i]);
-      }
-    }
-
-    const evaluatedArgsStartIndex = toUnbox.length;
-    toUnbox.push(...evaluatedArgs);
-
-    const kwargsValuesStartIndex = toUnbox.length;
-    toUnbox.push(...evaluatedKwargsValues);
-
-    // Используем unbox для обработки Promise/Stream значений
-    return unbox(
-      toUnbox,
-      (unboxedValues) => {
-        // Восстанавливаем realArgs с unbox'нутыми значениями
-        const finalRealArgs = [...realArgs];
-        for (let i = 0; i < realArgsEvaluatedIndices.length; i++) {
-          finalRealArgs[realArgsEvaluatedIndices[i]] = unboxedValues[i];
-        }
-
-        // Восстанавливаем evaluatedArgs
-        const finalEvaluatedArgs = unboxedValues.slice(
-          evaluatedArgsStartIndex,
-          evaluatedArgsStartIndex + evaluatedArgs.length
+    for (const name of varnames) {
+      // First try to find by kwarg name
+      const kwargMatch = allArgs.find(
+        (a) => a.kind === "kwarg" && a.name === name && !usedIndices.has(a.originalIndex)
+      );
+      if (kwargMatch) {
+        templateSlots.push({ ...kwargMatch, templateName: name });
+        usedIndices.add(kwargMatch.originalIndex);
+      } else {
+        // Take next unused positional
+        const positionalMatch = allArgs.find(
+          (a) => a.kind === "positional" && !usedIndices.has(a.originalIndex)
         );
+        if (positionalMatch) {
+          templateSlots.push({ ...positionalMatch, templateName: name });
+          usedIndices.add(positionalMatch.originalIndex);
+        } else {
+          // Missing argument
+          templateSlots.push({ templateName: name, ast: undefined, originalIndex: -1 });
+        }
+      }
+    }
 
-        // Восстанавливаем kwargs
+    // Step 3: Remaining args (positional not used by template)
+    const remainingPositional = allArgs.filter(
+      (a) => a.kind === "positional" && !usedIndices.has(a.originalIndex)
+    );
+
+    // Step 4: Remaining kwargs (not used by template)
+    const remainingKwargs = allArgs.filter(
+      (a) => a.kind === "kwarg" && !usedIndices.has(a.originalIndex)
+    );
+
+    // Step 5: Determine type for each argument and collect items to evaluate
+    // We need to evaluate in original order, so collect all non-fn items with their originalIndex
+    const toEvaluate = []; // { originalIndex, ast, target, targetKey }
+
+    // Mark template slots
+    for (let i = 0; i < templateSlots.length; i++) {
+      const slot = templateSlots[i];
+      const type = getType(slot.templateName);
+      slot.type = type;
+
+      if (type !== "fn" && slot.ast !== undefined) {
+        toEvaluate.push({
+          originalIndex: slot.originalIndex,
+          ast: slot.ast,
+          target: "template",
+          targetIndex: i,
+        });
+      }
+    }
+
+    // Mark remaining positional
+    for (let i = 0; i < remainingPositional.length; i++) {
+      const arg = remainingPositional[i];
+      toEvaluate.push({
+        originalIndex: arg.originalIndex,
+        ast: arg.ast,
+        target: "remaining",
+        targetIndex: i,
+      });
+    }
+
+    // Mark remaining kwargs
+    for (let i = 0; i < remainingKwargs.length; i++) {
+      const arg = remainingKwargs[i];
+      const type = getType(arg.name);
+      arg.type = type;
+
+      if (type !== "fn") {
+        toEvaluate.push({
+          originalIndex: arg.originalIndex,
+          ast: arg.ast,
+          target: "kwarg",
+          targetIndex: i,
+        });
+      }
+    }
+
+    // Step 6: Sort by originalIndex and evaluate in order
+    toEvaluate.sort((a, b) => a.originalIndex - b.originalIndex);
+
+    const evaluatedValues = [];
+    for (let i = 0; i < toEvaluate.length; i++) {
+      const item = toEvaluate[i];
+      item.evalIndex = i;
+      evaluatedValues.push(EVAL(item.ast, ctx, opt));
+    }
+
+    // Step 7: Use unbox to handle Promises/Streams
+    return unbox(
+      evaluatedValues,
+      (unboxed) => {
+        // Rebuild template args
+        const finalTemplateArgs = templateSlots.map((slot) => {
+          if (slot.type === "fn") {
+            const capturedAst = slot.ast;
+            return () => EVAL(capturedAst, ctx, opt);
+          }
+          if (slot.ast === undefined) {
+            return undefined;
+          }
+          const evalItem = toEvaluate.find(
+            (e) => e.target === "template" && e.targetIndex === templateSlots.indexOf(slot)
+          );
+          return unboxed[evalItem.evalIndex];
+        });
+
+        // Rebuild remaining args
+        const finalRemainingArgs = remainingPositional.map((arg) => {
+          const evalItem = toEvaluate.find(
+            (e) => e.target === "remaining" && e.targetIndex === remainingPositional.indexOf(arg)
+          );
+          return unboxed[evalItem.evalIndex];
+        });
+
+        // Rebuild kwargs
         const finalKwargs = {};
-        for (let i = 0; i < kwargsKeys.length; i++) {
-          finalKwargs[kwargsKeys[i]] = unboxedValues[kwargsValuesStartIndex + i];
+        for (const arg of remainingKwargs) {
+          if (arg.type === "fn") {
+            const capturedAst = arg.ast;
+            finalKwargs[arg.name] = () => EVAL(capturedAst, ctx, opt);
+          } else {
+            const evalItem = toEvaluate.find(
+              (e) => e.target === "kwarg" && e.targetIndex === remainingKwargs.indexOf(arg)
+            );
+            finalKwargs[arg.name] = unboxed[evalItem.evalIndex];
+          }
         }
 
-        // Вызываем. |realArgs| = |template| так что они пойдут первыми
-        return fn.apply(this, [...finalRealArgs, finalEvaluatedArgs, finalKwargs]);
+        return fn.apply(this, [...finalTemplateArgs, finalRemainingArgs, finalKwargs]);
       },
       opt?.streamAdapter
     );
-  };
-  resultSF.__isSpecialForm = true;                              // Помечаем как special form чтоб получать ast а не аргументы
-  return resultSF;
+  }
+
+  varargHandler.__isSpecialForm = true;
+  return varargHandler;
 }

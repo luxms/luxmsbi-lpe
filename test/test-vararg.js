@@ -171,6 +171,54 @@ describe('makeVararg tests', function () {
       assert.strictEqual(result.onClickResult, 12);       // 3*4
       assert.strictEqual(result.onHoverResult, -1);       // 5-6
     });
+
+    it('should apply fn pattern to extra kwargs not in template', function () {
+      const ctx = {
+        testFunc: lpe.makeVararg(['value', { 'on.*': 'fn' }],
+          (value, args, kwargs) => {
+            return {
+              value,
+              onClickIsFunction: typeof kwargs.onClick === 'function',
+              onHoverIsFunction: typeof kwargs.onHover === 'function',
+              onClickResult: kwargs.onClick(),
+              onHoverResult: kwargs.onHover(),
+              // regular kwarg should be evaluated
+              other: kwargs.other
+            };
+          })
+      };
+
+      // value=5, onClick and onHover match 'on.*' pattern so should be functions
+      // other doesn't match so should be evaluated
+      const result = lpe.eval_lisp([
+        'testFunc',
+        5,
+        ['=', 'onClick', ['+', 1, 2]],
+        ['=', 'onHover', ['*', 3, 4]],
+        ['=', 'other', ['-', 10, 3]]
+      ], ctx);
+
+      assert.strictEqual(result.value, 5);
+      assert.strictEqual(result.onClickIsFunction, true);
+      assert.strictEqual(result.onHoverIsFunction, true);
+      assert.strictEqual(result.onClickResult, 3);    // 1+2
+      assert.strictEqual(result.onHoverResult, 12);   // 3*4
+      assert.strictEqual(result.other, 7);            // evaluated: 10-3
+    });
+
+    it('should allow calling fn-type kwargs multiple times', function () {
+      let counter = 0;
+      const ctx = {
+        inc: () => ++counter,
+        testFunc: lpe.makeVararg([{ 'on.*': 'fn' }],
+          (args, kwargs) => {
+            return [kwargs.onTick(), kwargs.onTick(), kwargs.onTick()];
+          })
+      };
+
+      const result = lpe.eval_lisp(['testFunc', ['=', 'onTick', ['inc']]], ctx);
+      assert.deepEqual(result, [1, 2, 3]);
+    });
   });
 
   describe('inline type syntax', function () {
@@ -218,6 +266,78 @@ describe('makeVararg tests', function () {
       assert.strictEqual(result.a, 100);             // evaluated immediately -> 100
       assert.strictEqual(result.bIsFunction, true);  // wrapped in function
       assert.strictEqual(result.bResult, 100);       // evaluated when called -> 100
+    });
+  });
+
+  describe('evaluation order', function () {
+    it('should evaluate arguments in the order they appear in the call', function () {
+      const evalOrder = [];
+      const ctx = {
+        track: (n) => { evalOrder.push(n); return n; },
+        testFunc: lpe.makeVararg(['a', 'b'], (a, b, args, kwargs) => {
+          return { a, b, args, kwargs, evalOrder: [...evalOrder] };
+        })
+      };
+
+      // Call: testFunc(track(1), b=track(2), track(3), x=track(4))
+      // Should evaluate in order: 1, 2, 3, 4
+      const result = lpe.eval_lisp([
+        'testFunc',
+        ['track', 1],
+        ['=', 'b', ['track', 2]],
+        ['track', 3],
+        ['=', 'x', ['track', 4]]
+      ], ctx);
+
+      assert.deepEqual(result.evalOrder, [1, 2, 3, 4]);
+      assert.strictEqual(result.a, 1);
+      assert.strictEqual(result.b, 2);
+      assert.deepEqual(result.args, [3]);
+      assert.deepEqual(result.kwargs, { x: 4 });
+    });
+
+    it('should not evaluate fn-type args but still preserve order for others', function () {
+      const evalOrder = [];
+      const ctx = {
+        track: (n) => { evalOrder.push(n); return n; },
+        testFunc: lpe.makeVararg(['a', 'b:fn', 'c'], (a, b, c, args, kwargs) => {
+          return { a, c, evalOrder: [...evalOrder] };
+        })
+      };
+
+      // Call: testFunc(track(1), track(2), track(3))
+      // b is fn type, so only 1 and 3 should be evaluated, in that order
+      const result = lpe.eval_lisp([
+        'testFunc',
+        ['track', 1],
+        ['track', 2],
+        ['track', 3]
+      ], ctx);
+
+      assert.deepEqual(result.evalOrder, [1, 3]); // 2 skipped (fn type)
+      assert.strictEqual(result.a, 1);
+      assert.strictEqual(result.c, 3);
+    });
+
+    it('should preserve order with mixed positional and kwargs', function () {
+      const evalOrder = [];
+      const ctx = {
+        track: (n) => { evalOrder.push(n); return n; },
+        testFunc: lpe.makeVararg(['x'], (x, args, kwargs) => {
+          return { evalOrder: [...evalOrder] };
+        })
+      };
+
+      // Call: testFunc(a=track(1), track(2), b=track(3))
+      // Order should be: 1, 2, 3
+      const result = lpe.eval_lisp([
+        'testFunc',
+        ['=', 'a', ['track', 1]],
+        ['track', 2],
+        ['=', 'b', ['track', 3]]
+      ], ctx);
+
+      assert.deepEqual(result.evalOrder, [1, 2, 3]);
     });
   });
 
