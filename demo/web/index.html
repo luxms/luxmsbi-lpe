@@ -154,7 +154,13 @@
             return '__call__ is working: ' + JSON.stringify(args);
           },
         },
-        varArgExample: lpe.makeVararg(['a:int', 'b'], (a, b, args, kwargs) => {
+        varArgExample: lpe.makeVararg(['a', 'b', {'on.*': 'fn'}], (a, b, args, kwargs) => {
+          console.log('NOW call all the kwargs fn()');
+          for (let key in kwargs) {
+            if (typeof kwargs[key] === 'function') {
+              kwargs[key](a, args, kwargs[key]);
+            }
+          }
           return {a, b, args, kwargs};
         })
       };

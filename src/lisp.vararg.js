@@ -78,176 +78,82 @@ export default function makeVararg(template, fn) {
   const { varnames, getType } = parseTemplate(template);
 
   function varargHandler(ast, ctx, opt) {
-    // Step 1: Collect all arguments with their original indices
-    // Each entry: { originalIndex, ast, name?, kind: "positional" | "kwarg" }
-    const allArgs = [];
-    let positionalIndex = 0;
+    /**
+     * Индексы позиционных аргументов
+     * @type {number[]}
+     */
+    const positionalIndices = [];
+    /**
+     * Индексы аргументов, которые улетят в *args
+     * @type {number[]}
+     * */
+    const argsIndices = [];
+    /**
+     * Индексы аргументов, которые улетят в **kwargs
+     * @type {{[varname: string]: number}}
+     * */
+    const kwargIndices = {};
 
-    for (let i = 0; i < ast.length; i++) {
+    /**
+     * Количество входящих аргументов
+     */
+    const N = ast.length;
+    /**
+     * Массив длины N - имя для входящих аргументов
+     * @type {string[]}
+     */
+    const varNameForPosition = new Array(N).fill('');
+
+    for (let i = 0; i < N; i++) {
       const argAst = ast[i];
-      const isKwarg =
-        Array.isArray(argAst) &&
-        argAst.length === 3 &&
-        argAst[0] === "=" &&
-        typeof argAst[1] === "string";
 
-      if (isKwarg) {
-        allArgs.push({
-          originalIndex: i,
-          kind: "kwarg",
-          name: argAst[1],
-          ast: argAst[2],
-        });
+      if (Array.isArray(argAst) && argAst.length === 3 && argAst[0] === "=" && typeof argAst[1] === "string") {
+        const [_,  varname, valueAst] = argAst;
+        kwargIndices[varname] = i;
+        ast[i] = valueAst;                                // Мы меняем ast (можно!) потому что часть с именем нам уже не нужна "a=..." => "..."
+        varNameForPosition[i] = varname;                  // И прихраниваем имя переменной
       } else {
-        allArgs.push({
-          originalIndex: i,
-          kind: "positional",
-          positionalIndex: positionalIndex++,
-          ast: argAst,
-        });
+        argsIndices.push(i);                              // просто сохраняем индекс
       }
     }
 
-    // Step 2: Match template varnames to arguments
-    // Build: templateSlots[i] = reference to allArgs entry (or undefined if missing)
-    const templateSlots = [];
-    const usedIndices = new Set();
-
-    for (const name of varnames) {
-      // First try to find by kwarg name
-      const kwargMatch = allArgs.find(
-        (a) => a.kind === "kwarg" && a.name === name && !usedIndices.has(a.originalIndex)
-      );
-      if (kwargMatch) {
-        templateSlots.push({ ...kwargMatch, templateName: name });
-        usedIndices.add(kwargMatch.originalIndex);
+    for (const varname of varnames) {                     // Раскидываем args и kwargs в позиционные аргументы
+      if (varname in kwargIndices) {
+        positionalIndices.push(kwargIndices[varname]);
+        delete kwargIndices[varname]
       } else {
-        // Take next unused positional
-        const positionalMatch = allArgs.find(
-          (a) => a.kind === "positional" && !usedIndices.has(a.originalIndex)
-        );
-        if (positionalMatch) {
-          templateSlots.push({ ...positionalMatch, templateName: name });
-          usedIndices.add(positionalMatch.originalIndex);
-        } else {
-          // Missing argument
-          templateSlots.push({ templateName: name, ast: undefined, originalIndex: -1 });
-        }
+        const i = argsIndices.shift();
+        positionalIndices.push(i);
+        varNameForPosition[i] = varname;
       }
     }
 
-    // Step 3: Remaining args (positional not used by template)
-    const remainingPositional = allArgs.filter(
-      (a) => a.kind === "positional" && !usedIndices.has(a.originalIndex)
-    );
-
-    // Step 4: Remaining kwargs (not used by template)
-    const remainingKwargs = allArgs.filter(
-      (a) => a.kind === "kwarg" && !usedIndices.has(a.originalIndex)
-    );
-
-    // Step 5: Determine type for each argument and collect items to evaluate
-    // We need to evaluate in original order, so collect all non-fn items with their originalIndex
-    const toEvaluate = []; // { originalIndex, ast, target, targetKey }
-
-    // Mark template slots
-    for (let i = 0; i < templateSlots.length; i++) {
-      const slot = templateSlots[i];
-      const type = getType(slot.templateName);
-      slot.type = type;
-
-      if (type !== "fn" && slot.ast !== undefined) {
-        toEvaluate.push({
-          originalIndex: slot.originalIndex,
-          ast: slot.ast,
-          target: "template",
-          targetIndex: i,
-        });
+    const evaluatedASTs = varNameForPosition.map((varname, i) => {    // вычисляем AST ориентируясь на тип переменной
+      const type = getType(varname), myAst = ast[i];
+      if (!type) {                                      // Тип не определен
+        return EVAL(myAst, ctx, opt);                   // Просто вычисляем
+      } else if (type === 'fn') {                       // тип "функция" - обернем
+        return () => {
+          return EVAL(myAst, ctx, opt);                 // Оборачиваем в функцию, это ни капли не смутит unbox. Тут где-то надо поиграться с контекстом чтоб передать эти аргументы
+        };
+      } else {                                          // некий известный тип
+        return EVAL(['->' + type, myAst], ctx, opt);    // Обернем в функцию "->type", например, ["->int", ...]
       }
-    }
+    });
 
-    // Mark remaining positional
-    for (let i = 0; i < remainingPositional.length; i++) {
-      const arg = remainingPositional[i];
-      toEvaluate.push({
-        originalIndex: arg.originalIndex,
-        ast: arg.ast,
-        target: "remaining",
-        targetIndex: i,
-      });
-    }
+    const self = this;
 
-    // Mark remaining kwargs
-    for (let i = 0; i < remainingKwargs.length; i++) {
-      const arg = remainingKwargs[i];
-      const type = getType(arg.name);
-      arg.type = type;
-
-      if (type !== "fn") {
-        toEvaluate.push({
-          originalIndex: arg.originalIndex,
-          ast: arg.ast,
-          target: "kwarg",
-          targetIndex: i,
-        });
-      }
-    }
-
-    // Step 6: Sort by originalIndex and evaluate in order
-    toEvaluate.sort((a, b) => a.originalIndex - b.originalIndex);
-
-    const evaluatedValues = [];
-    for (let i = 0; i < toEvaluate.length; i++) {
-      const item = toEvaluate[i];
-      item.evalIndex = i;
-      evaluatedValues.push(EVAL(item.ast, ctx, opt));
-    }
-
-    // Step 7: Use unbox to handle Promises/Streams
     return unbox(
-      evaluatedValues,
-      (unboxed) => {
-        // Rebuild template args
-        const finalTemplateArgs = templateSlots.map((slot) => {
-          if (slot.type === "fn") {
-            const capturedAst = slot.ast;
-            return () => EVAL(capturedAst, ctx, opt);
-          }
-          if (slot.ast === undefined) {
-            return undefined;
-          }
-          const evalItem = toEvaluate.find(
-            (e) => e.target === "template" && e.targetIndex === templateSlots.indexOf(slot)
-          );
-          return unboxed[evalItem.evalIndex];
-        });
-
-        // Rebuild remaining args
-        const finalRemainingArgs = remainingPositional.map((arg) => {
-          const evalItem = toEvaluate.find(
-            (e) => e.target === "remaining" && e.targetIndex === remainingPositional.indexOf(arg)
-          );
-          return unboxed[evalItem.evalIndex];
-        });
-
-        // Rebuild kwargs
-        const finalKwargs = {};
-        for (const arg of remainingKwargs) {
-          if (arg.type === "fn") {
-            const capturedAst = arg.ast;
-            finalKwargs[arg.name] = () => EVAL(capturedAst, ctx, opt);
-          } else {
-            const evalItem = toEvaluate.find(
-              (e) => e.target === "kwarg" && e.targetIndex === remainingKwargs.indexOf(arg)
-            );
-            finalKwargs[arg.name] = unboxed[evalItem.evalIndex];
-          }
-        }
-
-        return fn.apply(this, [...finalTemplateArgs, finalRemainingArgs, finalKwargs]);
-      },
-      opt?.streamAdapter
-    );
+        evaluatedASTs,
+        (values) => {
+          // Вычислились все аргументы, теперь их надо разложить по трем структурам данных
+          const positionalArgs = positionalIndices.map(i => values[i]);
+          const args = argsIndices.map(i => values[i]);
+          const kwargs = Object.fromEntries(Object.entries(kwargIndices).map(([varname, i]) => [varname, values[i]]));
+          // и запускаем
+          return fn.apply(self, [...positionalArgs, args, kwargs]);
+        },
+        opt?.streamAdapter);
   }
 
   varargHandler.__isSpecialForm = true;

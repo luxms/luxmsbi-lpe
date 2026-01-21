@@ -618,7 +618,8 @@ export const STDLIB = {
                           "__or",
                           ["or"].concat(ast.slice(1))]];
   }),
-
+  '->int': v => +v,
+  '->str': v => String(v),
 
   "define": makeSF((ast, ctx, rs) => {
     let context = {};
