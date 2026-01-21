@@ -618,7 +618,8 @@ export const STDLIB = {
                           "__or",
                           ["or"].concat(ast.slice(1))]];
   }),
-
+  '->int': v => +v,
+  '->str': v => String(v),
 
   "define": makeSF((ast, ctx, rs) => {
     let context = {};
@@ -772,7 +773,7 @@ function env_bind(ast, ctx, exprs, opt) {
  * @param {EvalOptions=} options
  * @returns {Promise<Awaited<unknown>[] | void>|*|null|undefined}
  */
-function EVAL(ast, ctx, options) {
+export function EVAL(ast, ctx, options) {
   // В этой функции задаем параметры поиска и обрабатываем skip результат
   // после чего перенаправляем в исходную функцию, которая теперь называется EVAL_IMPLEMENTATION
   let evalOptions = { evalFrom: 0, currentCtxElement: 0 }
