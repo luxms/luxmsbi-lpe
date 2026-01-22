@@ -23,9 +23,7 @@ function parseTemplate(template) {
 
   for (const entry of template) {
     if (foundTypeObject) {
-      throw new Error(
-        "LPE vararg template definition error: must be no arguments after type declaration"
-      );
+      throw new Error("LPE vararg template definition error: must be no arguments after type declaration");
     }
 
     if (typeof entry === "string") {
@@ -40,12 +38,15 @@ function parseTemplate(template) {
       foundTypeObject = true;
       typesCast = { ...typesCast, ...entry };
     } else {
-      throw new Error(
-        `LPE vararg template definition error: type ${typeof entry} is not supported`
-      );
+      throw new Error(`LPE vararg template definition error: type ${typeof entry} is not supported`);
     }
   }
 
+  /**
+   * Вернет тип переменной, вычисляя его по шаблону. Вернет `any` если тип не найден
+   * @param {string} varname
+   * @returns {string}
+   */
   function getType(varname) {
     if (varname in typesCast) {
       return typesCast[varname];
@@ -59,7 +60,7 @@ function parseTemplate(template) {
         // Invalid regex pattern - skip
       }
     }
-    return undefined;
+    return 'any';
   }
 
   return { varnames, getType };
@@ -79,7 +80,7 @@ export default function makeVararg(template, fn) {
 
   function varargHandler(ast, ctx, opt) {
     /**
-     * Индексы позиционных аргументов
+     * Индексы позиционных аргументов в массиве реально пришедших аргементов
      * @type {number[]}
      */
     const positionalIndices = [];
@@ -95,11 +96,11 @@ export default function makeVararg(template, fn) {
     const kwargIndices = {};
 
     /**
-     * Количество входящих аргументов
+     * Количество реально пришедших аргументов
      */
     const N = ast.length;
     /**
-     * Массив длины N - имя для входящих аргументов
+     * Массив длины N - вычисленные имена переменных для пришедших аргументов
      * @type {string[]}
      */
     const varNameForPosition = new Array(N).fill('');
@@ -130,15 +131,7 @@ export default function makeVararg(template, fn) {
 
     const evaluatedASTs = varNameForPosition.map((varname, i) => {    // вычисляем AST ориентируясь на тип переменной
       const type = getType(varname), myAst = ast[i];
-      if (!type) {                                      // Тип не определен
-        return EVAL(myAst, ctx, opt);                   // Просто вычисляем
-      } else if (type === 'fn') {                       // тип "функция" - обернем
-        return () => {
-          return EVAL(myAst, ctx, opt);                 // Оборачиваем в функцию, это ни капли не смутит unbox. Тут где-то надо поиграться с контекстом чтоб передать эти аргументы
-        };
-      } else {                                          // некий известный тип
-        return EVAL(['->' + type, myAst], ctx, opt);    // Обернем в функцию "->type", например, ["->int", ...]
-      }
+      return EVAL(['->' + type, myAst], ctx, opt);    // Обернем в функцию "->type", например, ["->int", ...] (или ["->any", ...] если тип явно не указан)
     });
 
     const self = this;

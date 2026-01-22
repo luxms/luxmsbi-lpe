@@ -13,8 +13,9 @@
 
 import {parse} from './lpep';
 import {deparse} from './lped';
-import {DATE_TIME} from './lib/datetime';
 import unbox from "./lisp.unbox";
+import STD from './lib/std';
+import {DATE_TIME} from './lib/datetime';
 
 /**
  * @typedef {Object} EvalOptions
@@ -446,6 +447,7 @@ export const STDLIB = {
   'JSON': JSON,
 
   // datetime fn
+  ...STD,
   ...DATE_TIME,
 
   // special forms
@@ -618,8 +620,6 @@ export const STDLIB = {
                           "__or",
                           ["or"].concat(ast.slice(1))]];
   }),
-  '->int': v => +v,
-  '->str': v => String(v),
 
   "define": makeSF((ast, ctx, rs) => {
     let context = {};

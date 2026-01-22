@@ -154,6 +154,11 @@
             return '__call__ is working: ' + JSON.stringify(args);
           },
         },
+        setTimeout: lpe.makeVararg(['callback:fn', 'ms:int'], (callback, ms) => {
+          setTimeout(callback, ms);
+        }),
+        'tuple': lpe.makeVararg([], (args, kwargs) => Object.assign(args, kwargs)),
+        alert: a => alert(a),
         varArgExample: lpe.makeVararg(['a', 'b', {'on.*': 'fn'}], (a, b, args, kwargs) => {
           console.log('NOW call all the kwargs fn()');
           for (let key in kwargs) {
