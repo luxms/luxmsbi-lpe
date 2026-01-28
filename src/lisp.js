@@ -13,8 +13,10 @@
 
 import {parse} from './lpep';
 import {deparse} from './lped';
-import {DATE_TIME} from './lib/datetime';
 import unbox from "./lisp.unbox";
+import STD from './lib/std';
+import {DATE_TIME} from './lib/datetime';
+import makeVararg from "./lisp.vararg";
 
 /**
  * @typedef {Object} EvalOptions
@@ -76,7 +78,7 @@ export const __getitem__ = Symbol.for('__getitem__');
  * @param {EvalOptions=} options - options on how to resolve. resolveString - must be checked by caller and is not handled here...
  * @param {Record<string, any>=} evalOptions - current evaluate context and options for find endpoint
  */
-function $var$(ctx, varName, value, options = {}, evalOptions = undefined) {
+ export function $var$(ctx, varName, value, options = {}, evalOptions = undefined) {
   let result = undefined;
   if (!evalOptions) {
     evalOptions = { evalFrom: 0, currentCtxElement: 0 }
@@ -446,6 +448,7 @@ export const STDLIB = {
   'JSON': JSON,
 
   // datetime fn
+  ...STD,
   ...DATE_TIME,
 
   // special forms
@@ -498,7 +501,7 @@ export const STDLIB = {
   'not': a => !a,
   'list': (...args) => args,
   'vector': (...args) => args,
-  'tuple': (...args) => args,
+  'tuple': makeVararg([], (args, kwargs) => Object.assign(args, kwargs)),
   'map': makeSF((ast, ctx, rs) => {
           let arr = eval_lisp(ast[0], ctx,  {...rs, wantCallable: false})
           rs.wantCallable = true
@@ -622,7 +625,6 @@ export const STDLIB = {
                           "__or",
                           ["or"].concat(ast.slice(1))]];
   }),
-
 
   "define": makeSF((ast, ctx, rs) => {
     let context = {};
@@ -776,7 +778,7 @@ function env_bind(ast, ctx, exprs, opt) {
  * @param {EvalOptions=} options
  * @returns {Promise<Awaited<unknown>[] | void>|*|null|undefined}
  */
-function EVAL(ast, ctx, options) {
+export function EVAL(ast, ctx, options) {
   // В этой функции задаем параметры поиска и обрабатываем skip результат
   // после чего перенаправляем в исходную функцию, которая теперь называется EVAL_IMPLEMENTATION
   let evalOptions = { evalFrom: 0, currentCtxElement: 0 }

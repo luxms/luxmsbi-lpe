@@ -1,6 +1,7 @@
 import {parse, LPESyntaxError} from './lpep';
 import {deparse} from './lped';
-import {eval_lisp, isString, isArray, isHash, isFunction, makeSF, makeSkipForm, isNumber, STDLIB, $VAR$} from './lisp';
+import makeVararg from './lisp.vararg';
+import {eval_lisp, isString, isArray, isHash, isFunction, makeSF, makeSkipForm, isNumber, $var$, STDLIB, $VAR$} from './lisp';
 import unbox from './lisp.unbox';
 
 
@@ -20,7 +21,9 @@ export {
   isHash,
   isFunction,
   isNumber,
+  $var$,
   makeSF,
+  makeVararg,
   makeSkipForm,
   STDLIB,
   $VAR$,

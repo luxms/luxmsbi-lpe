@@ -5,7 +5,7 @@
  * @param {StreamAdapter?} streamAdapter
  */
 export default function unbox(args, resolve, streamAdapter) {
-  const hasPromise = args.find(a => a instanceof Promise);
+  const hasPromise = args.find(a => a instanceof Promise || a?.whenReady);      // Стримы некоторых видов могут делать вид, что они промисы, имея метод whenReady
   const hasStreams = !!streamAdapter && !!args.find(streamAdapter.isStream);
 
   if (hasStreams) {
@@ -83,8 +83,9 @@ export default function unbox(args, resolve, streamAdapter) {
 
     return outputStream;
 
-  } else if (hasPromise) {                                                                          // TODO: handle both streams and promises
-    return Promise.all(args).then(resolve);
+  } else if (hasPromise) {
+    // Возможно, пришли стримы. Постулируем что может быть метод whenReady у стримов, который работает как пропим
+    return Promise.all(args.map(r => r?.whenReady?.() ?? r)).then(resolve);
 
   } else {
     return resolve(args);                                                                           // TODO check if stream or promise returned

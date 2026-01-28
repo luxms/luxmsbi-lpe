@@ -150,10 +150,25 @@
           }
         },
         callable: {
-          'operator()': (...args) => {
-            return 'operator() is working: ' + JSON.stringify(args);
+          '__call__': (...args) => {
+            return '__call__ is working: ' + JSON.stringify(args);
           },
         },
+        setTimeout: lpe.makeVararg(['callback:fn', 'ms:int'], (callback, ms) => {
+          setTimeout(callback, ms);
+        }),
+        'tuple': lpe.makeVararg([], (args, kwargs) => Object.assign(args, kwargs)),
+        alert: a => alert(a),
+        promise: () => { return new Promise(() => {}); },
+        varArgExample: lpe.makeVararg(['a', 'b', {'on.*': 'fn'}], (a, b, args, kwargs) => {
+          console.log('NOW call all the kwargs fn()');
+          for (let key in kwargs) {
+            if (typeof kwargs[key] === 'function') {
+              kwargs[key](a, args, kwargs[key]);
+            }
+          }
+          return {a, b, args, kwargs};
+        })
       };
 
       try {
