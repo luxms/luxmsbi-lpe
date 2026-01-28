@@ -159,6 +159,7 @@
         }),
         'tuple': lpe.makeVararg([], (args, kwargs) => Object.assign(args, kwargs)),
         alert: a => alert(a),
+        promise: () => { return new Promise(() => {}); },
         varArgExample: lpe.makeVararg(['a', 'b', {'on.*': 'fn'}], (a, b, args, kwargs) => {
           console.log('NOW call all the kwargs fn()');
           for (let key in kwargs) {

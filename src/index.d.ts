@@ -54,28 +54,12 @@ export function unbox(args: any[], unboxFn: (values: any[]) => any, streamAdapte
 
 export const LPESyntaxError: any;
 
+export function $var$(ctx: any, varname: string, value?: any, options?: any): any;
+
 export function makeSF(v: any): any;
+
+export function makeVararg(template: (string | {[pattern: string]: string})[], callback: (...args: any[]) => unknown): any;
 
 export const STDLIB: any;
 
 export const $VAR$: Symbol;
-
-declare module 'lpe' {
-  export function parse(lpeExpression: string, options?: EvalOptions): any;
-
-  export function deparse(lispExpression: any): string;
-
-  export function eval_lisp(prog: any, ctx?: any, options?: EvalOptions): any;
-
-  export function eval_lpe(prog: string, ctx?: any, options?: EvalOptions): any;
-
-  export function unbox(args: any[], unboxFn: (values: any[]) => any, streamAdapter?: any): any;
-
-  export const LPESyntaxError: any;
-
-  export function makeSF(v: any): any;
-
-  export const STDLIB: any;
-
-  export const $VAR$: Symbol;
-}

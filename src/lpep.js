@@ -400,7 +400,6 @@ const make_parse = function (options = {}) {
     return this
   };
 
-
   // required for SQL logical scope where a in (1,2,3)
   infixr("in", 30);
   infixr("is", 30);
@@ -411,7 +410,9 @@ const make_parse = function (options = {}) {
   // for SQL as
   infixr(":", 2);
 
-  infix(":=", 30);
+  // Присваивание должно быть весьма высокоприоритетное
+  infix(":=", 20);
+  infix("<-", 20);
 
   infixr('~', 40);
   infixr('!~', 40);

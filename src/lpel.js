@@ -64,8 +64,13 @@ export function makeError(t, message) {
 }
 
 
-const PREFIX = '=<>!+-*&|/%^:.';
+const PREFIX = '=>!+-*&|/%^:.';
 const SUFFIX = '=<>&|:.';
+
+// Наверное более правильно перечислять явно какой оператор за кем может идти а не вот это вот все
+const OPSEQ = {
+  '<': '-=<>',                                               // <-  <=  <<  <>
+}
 
 
 /**
@@ -283,13 +288,24 @@ export function tokenize(s, options) {
 
     } else if (c === '/' && s.charAt(i + 1) === '/') {                                              // comment
       i += 1;
-      for (;;) {
+      for (; ;) {
         c = s.charAt(i);
         if (c === '\n' || c === '\r' || c === '') {
           break;
         }
         i += 1;
       }
+
+    } else if (OPSEQ[c]) {                                                                          // Только для операторов из двух символов - более строгие правила
+      const nextOp = OPSEQ[c];
+      str = c;
+      i += 1;
+      c = s.charAt(i);
+      if (nextOp.includes(c)) {
+        str += c;
+        i += 1;
+      }
+      result.push(make('operator', str));
 
     } else if (PREFIX.indexOf(c) >= 0) {                                                            // combining
       str = c;

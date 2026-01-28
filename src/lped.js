@@ -14,7 +14,7 @@ const OPERATORS = {
 
 // simpleOperators
 ['+', '-', '*', '=', '@',
-  '->', ':=',
+  '->', ':=', '<-',
   '<', '>', '<=', '>='].forEach(op => OPERATORS[op] = true);
 
 const PRIORITY = {
