@@ -555,8 +555,14 @@ export const STDLIB = {
   re_match: (t,r,o) => t.match(new RegExp(r,o)),
   // not implemented yet
   // 'hash-table->alist'
-  '"' : makeSF((ast, ctx, rs) => String(ast[0])),
-  '\'' : makeSF((ast, ctx, rs) => String(ast[0])),
+  '"' : makeSF((ast, ctx, rs) => {
+    if (ast[1] === '_') return $var$(ctx, ast[0]);
+    else return String(ast[0])
+  }),
+  '\'' : makeSF((ast, ctx, rs) => {
+    if (ast[1] === '_') return $var$(ctx, ast[0]);
+    else return String(ast[0])
+  }),
   '[]' : makeSF((ast, ctx, rs) => String(ast[0])),
 
   // macros
@@ -851,7 +857,7 @@ function EVAL_IMPLEMENTATION(ast, ctx, options, evalOptions) {
     }
 
     if (typeof op !== 'function') {
-      throw new Error('Error: ' + String(op) + ' is not a function');
+      throw new Error('Error: ' + String(op ?? opAst) + ' is not a function');
     }
 
     if (isSF(op)) {                                                                                 // special form

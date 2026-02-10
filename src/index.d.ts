@@ -44,7 +44,7 @@ export interface EvalOptions {
 
 export function parse(lpeExpression: string, options?: EvalOptions): any;
 
-export function deparse(lispExpression: any): string;
+export function deparse(lispExpression: any, options?: any): string;
 
 export function eval_lisp(prog: any, ctx?: any, options?: EvalOptions): any;
 

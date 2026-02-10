@@ -73,6 +73,8 @@
 
   <script src="../../dist/lpe.js"></script>
   <script>
+    var LINT = {};
+
     var lpeInput = document.getElementById('lpe-input');
     var lispInput = document.getElementById('lisp-input');
     var resultInput = document.getElementById('result-input');
@@ -98,7 +100,7 @@
       window.localStorage.setItem('lisp', lispInput.value);
 
       try {
-        console.log(lpe.deparse(lisp));
+        console.log(lpe.deparse(lisp, {lint: LINT}));
       } catch (err) {
         console.error('deparse error', err);
       }
@@ -107,7 +109,7 @@
     function runLpedAction() {
       try {
         var lisp = JSON.parse(lispInput.value);
-        var result = lpe.deparse(lisp, { squareBrackets: squareBrackets.checked });
+        var result = lpe.deparse(lisp, { squareBrackets: squareBrackets.checked, lint: LINT });
         lpeInput.value = result;
       } catch (err) {
         console.error(err);
@@ -117,7 +119,7 @@
       window.localStorage.setItem('lisp', lispInput.value);
 
       try {
-        console.log(lpe.deparse(lisp));
+        console.log(lpe.deparse(lisp, {lint: LINT}));
       } catch (err) {
         console.error('deparse error', err);
       }
@@ -143,6 +145,7 @@
         p2: later(2),
         p3: later(3),
         p4: later(4),
+        'x x': 'the variable x x',
         t1: () => {throw 1},
         [lpe.$VAR$]: (ctx, varName) => {
           if (varName.match(/^\$(\d+)$/)) {

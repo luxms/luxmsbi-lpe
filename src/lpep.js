@@ -260,14 +260,23 @@ const make_parse = function (options = {}) {
     return s;
   };
 
+  const LIFT_OPERATORS = '+';
+
   var infix = function (id, bp, led) {
     var s = symbol(id, bp);
     s.led = led || function (left) {
       this.first = left;
       var right = expression(bp);
       this.second = right;
-      this.arity = "binary";
-      this.sexpr = [this.sexpr, left.sexpr, right.sexpr];
+      this.arity = 'binary';
+      if (LIFT_OPERATORS.includes(this.sexpr) && left.arity === 'binary' && left.sexpr[0] === this.sexpr) {
+        // Соединяет a + b + c, которые здесь соберутся в left=[+ a b], right=c
+        // в единую [+ a b c]
+        this.sexpr = [...left.sexpr, right.sexpr];
+        // Тут, может быть, надо поправить позиции исходников
+      } else {
+        this.sexpr = [this.sexpr, left.sexpr, right.sexpr];
+      }
       return this;
     };
     return s;
@@ -413,6 +422,9 @@ const make_parse = function (options = {}) {
   // Присваивание должно быть весьма высокоприоритетное
   infix(":=", 20);
   infix("<-", 20);
+
+  // Стрелочка функции f := a => print(a)
+  infix("=>", 40);
 
   infixr('~', 40);
   infixr('!~', 40);
