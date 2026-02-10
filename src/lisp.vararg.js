@@ -78,7 +78,7 @@ function parseTemplate(template) {
 export default function makeVararg(template, fn) {
   const { varnames, getType } = parseTemplate(template);
 
-  function varargHandler(ast, ctx, opt) {
+  function varargHandler(astArgs, ctx, opt, ast) {
     /**
      * Индексы позиционных аргументов в массиве реально пришедших аргементов
      * @type {number[]}
@@ -98,7 +98,7 @@ export default function makeVararg(template, fn) {
     /**
      * Количество реально пришедших аргументов
      */
-    const N = ast.length;
+    const N = astArgs.length;
     /**
      * Массив длины N - вычисленные имена переменных для пришедших аргументов
      * @type {string[]}
@@ -106,12 +106,12 @@ export default function makeVararg(template, fn) {
     const varNameForPosition = new Array(N).fill('');
 
     for (let i = 0; i < N; i++) {
-      const argAst = ast[i];
+      const argAst = astArgs[i];
 
       if (Array.isArray(argAst) && argAst.length === 3 && argAst[0] === "=" && typeof argAst[1] === "string") {
         const [_,  varname, valueAst] = argAst;
         kwargIndices[varname] = i;
-        ast[i] = valueAst;                                // Мы меняем ast (можно!) потому что часть с именем нам уже не нужна "a=..." => "..."
+        astArgs[i] = valueAst;                                // Мы меняем ast (можно!) потому что часть с именем нам уже не нужна "a=..." => "..."
         varNameForPosition[i] = varname;                  // И прихраниваем имя переменной
       } else {
         argsIndices.push(i);                              // просто сохраняем индекс
@@ -130,11 +130,13 @@ export default function makeVararg(template, fn) {
     }
 
     const evaluatedASTs = varNameForPosition.map((varname, i) => {    // вычисляем AST ориентируясь на тип переменной
-      const type = getType(varname), myAst = ast[i];
+      const type = getType(varname), myAst = astArgs[i];
       return EVAL(['->' + type, myAst], ctx, opt);    // Обернем в функцию "->type", например, ["->int", ...] (или ["->any", ...] если тип явно не указан)
     });
 
-    const self = this;
+    const self = {
+      ast,
+    };
 
     return unbox(
         evaluatedASTs,

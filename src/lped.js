@@ -14,7 +14,7 @@ const OPERATORS = {
 
 // simpleOperators
 ['+', '-', '*', '=', '@',
-  '->', ':=', '<-',
+  '->', ':=', '<-', '=>',
   '<', '>', '<=', '>='].forEach(op => OPERATORS[op] = true);
 
 const PRIORITY = {
@@ -37,76 +37,106 @@ function fixString(s) {
   return s.split('').map(char => char in safeReplace ? safeReplace[char] : char).join('');
 }
 
-function deparseWithOptionalBrackets(sexpr, op) {
-  const res = deparse(sexpr);
-  if (isArray(sexpr) && sexpr.length && OPERATORS[sexpr[0]]) {
 
-    if (op === sexpr[0]) {
+export function deparse(lispExpr, opts) {
+  const lint = opts?.lint;
+
+  // Если включен lint и аргументы получаются довольно длинными, будем рисовать их на разных строках с отступом
+  function makeMultilineArgs(args, joiner, indentation) {
+    const INDENT = ''.padEnd(indentation ?? 2, ' ');
+    let oneliner = args.join(joiner + ' ');
+    if (lint && (oneliner.includes('\n') || oneliner.length > 120)) {
+      const result = args.map((arg, i) => {
+        // Сдвигаем на пробелы всех кроме первой строки первого аргумента
+        if (i === 0) return arg.split('\n').map((l, i) => (i ? INDENT : '') + l).join('\n');
+        return arg.split('\n').map(l => INDENT + l).join('\n');
+      }).join(joiner + '\n');
+      return result;
+    }
+    return oneliner;
+  }
+
+  function deparseWithOptionalBrackets(sexpr, op) {
+    const res = deparse(sexpr);
+    if (isArray(sexpr) && sexpr.length && OPERATORS[sexpr[0]]) {
+
+      if (op === sexpr[0]) {
+        return res;
+      }
+
+      const priority1 = PRIORITY[op];
+      const priority2 = PRIORITY[sexpr[0]];
+
+      if (priority1 && priority2 && priority1 < priority2) {                                          // no need on brackets
+        return res;
+      }
+
+      return '(' + res + ')';
+    } else {
       return res;
     }
+  }
 
-    const priority1 = PRIORITY[op];
-    const priority2 = PRIORITY[sexpr[0]];
-
-    if (priority1 && priority2 && priority1 < priority2) {                                          // no need on brackets
-      return res;
+  function deparseSexpr(sexpr) {
+    const op = sexpr[0];
+    const args = sexpr.slice(1);
+    if (op === '"') return (args[1] ?? '') + '"' + fixString(args[0]) + '"';
+    if (op === '\'') return (args[1] ?? '') + '\'' + fixString(args[0]) + '\'';
+    if (op === '[]') return (args[1] ?? '') + '[' + fixString(args[0]) + ']';
+    if (op === '[') return '[' + args.map(deparse).join(', ') + ']';
+    if (op === '()') return '(' + args.map(deparse).join(', ') + ')';
+    if (op === '.') return args.map(deparse).join('.');
+    if ((op === '-' || op === '+' || op === '#') && args.length === 1) {                            // Унарные операторы
+      if (isNumber(args[0]) || isString(args[0])) return op + String(args[0]);
+      else return op + deparseWithOptionalBrackets(args[0], op);
     }
 
-    return '(' + res + ')';
-  } else {
-    return res;
-  }
-}
+    if (OPERATORS[op] === true) {                                                                   // Мультинарные операторы
+      return makeMultilineArgs(args.map(arg => deparseWithOptionalBrackets(arg, op)), ' ' + op, 0); // тут отступ 0
+    }
+    if (isString(OPERATORS[op])) {
+      return args.map(arg => deparseWithOptionalBrackets(arg, OPERATORS[op])).join(' ' + OPERATORS[op] + ' ');
+    }
 
-function deparseSexpr(sexpr) {
-  const op = sexpr[0];
-  const args = sexpr.slice(1);
-  if (op === '"') return (args[1] ?? '') + '"' + fixString(args[0]) + '"';
-  if (op === '\'') return (args[1] ?? '') + '\'' + fixString(args[0]) + '\'';
-  if (op === '[]') return (args[1] ?? '') + '[' + fixString(args[0]) + ']';
-  if (op === '[') return '[' + args.map(deparse).join(', ') + ']';
-  if (op === '()') return '(' + args.map(deparse).join(', ') + ')';
-  if (op === '.') return args.map(deparse).join('.');
-  if ((op === '-' || op === '+' || op === '#') && args.length === 1) {
-    if (isNumber(args[0]) || isString(args[0])) return op + String(args[0]);
-    else return op + deparseWithOptionalBrackets(args[0], op);
+    if (op === 'tuple') return '(' + (args.length === 0 ? ',' : args.length === 1 ? deparse(args[0]) + ',' : args.map(deparse).join(', ')) + ')';
+
+    // Функция
+    const strArgJoined = makeMultilineArgs(args.map(deparse), ',', op.length + 1);                  // отступ в пробелах
+    return op + '(' + strArgJoined + ')';
   }
 
-  if (OPERATORS[op] === true) {
-    return args.map(arg => deparseWithOptionalBrackets(arg, op)).join(' ' + op + ' ');
+  function deparse(value) {
+    if (isString(value)) {
+      return value;
+
+    } else if (isNumber(value)) {
+      return value.toString();
+
+    } else if (isBoolean(value)) {
+      return value.toString();
+
+    } else if (isArray(value) && value.length === 0) {
+      return '[]';
+
+    } else if (value === null) {
+      return 'null';
+
+    } else if (isArray(value)) {
+      return deparseSexpr(value, opts?.lint);
+
+    } else {
+      return String(value);
+    }
   }
-  if (isString(OPERATORS[op])) {
-    return args.map(arg => deparseWithOptionalBrackets(arg, OPERATORS[op])).join(' ' + OPERATORS[op] + ' ');
+
+  // Если begin идет первым оператором, то его депарсим особенным образом
+  function deBegin(expr) {
+    if (Array.isArray(expr) && expr[0] === 'begin') {
+      return expr.slice(1).map(deparse).join(';' + (lint ? '\n' : ' '));
+    } else {
+      return deparse(expr);
+    }
   }
 
-  if (op === 'begin') return args.map(deparse).join('; ');
-  if (op === 'tuple') return '(' + (args.length === 0 ? ',' : args.length === 1 ? deparse(args[0]) + ',' : args.map(deparse).join(', ')) + ')';
-
-
-  return op + '(' + sexpr.slice(1).map(deparse).join(', ') + ')';
-}
-
-
-export function deparse(lispExpr, options) {
-  if (isString(lispExpr)) {
-    return lispExpr;
-
-  } else if (isNumber(lispExpr)) {
-    return lispExpr.toString();
-
-  } else if (isBoolean(lispExpr)) {
-    return lispExpr.toString();
-
-  } else if (isArray(lispExpr) && lispExpr.length === 0) {
-    return '[]';
-
-  } else if (lispExpr === null) {
-    return 'null';
-
-  } else if (isArray(lispExpr)) {
-    return deparseSexpr(lispExpr);
-
-  } else {
-    return String(lispExpr);
-  }
+  return deBegin(lispExpr);
 }
