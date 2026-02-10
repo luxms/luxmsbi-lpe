@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.5.8](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.5.7...v1.5.8) (2026-02-10)
+
 ## [1.6.0](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.5.6...v1.6.0) (2026-01-28)
 
 ### [1.5.6](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.5.5...v1.5.6) (2025-12-22)
