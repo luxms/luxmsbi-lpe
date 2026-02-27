@@ -500,7 +500,7 @@ export const STDLIB = {
   'new': (...args) => new (args[0].bind.apply(args[0], args)),
   'not': a => !a,
   'list': (...args) => args,
-  'vector': (...args) => args,
+  'vector': makeVararg([], (args, kwargs) => Object.keys(kwargs).length ? args.length ? Object.assign(args, kwargs) : kwargs : args),
   'tuple': makeVararg([], (args, kwargs) => Object.assign(args, kwargs)),
   // Qk functions
   'pick': makeVararg(['n:int'], (n, args) => args[n - 1]),                                          // The pick function returns the n:th expression in the list. n is an integer between 1 and N.
