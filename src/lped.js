@@ -101,7 +101,18 @@ export function deparse(lispExpr, opts) {
     if (op === 'tuple') return '(' + (args.length === 0 ? ',' : args.length === 1 ? deparse(args[0]) + ',' : args.map(deparse).join(', ')) + ')';
 
     // Функция
-    const strArgJoined = makeMultilineArgs(args.map(deparse), ',', op.length + 1);                  // отступ в пробелах
+    // For word operators like "not" that can be used prefix without brackets (e.g. "not a"),
+    // collapse a single '()' argument to avoid double parens:
+    //   ["not", ["()", "a"]] → not(a)  (not not((a)))
+    // Regular functions preserve explicit brackets:
+    //   ["f", ["()", "a"]] → f((a))
+    let argsForCall = args;
+    if (op in OPERATORS || op === 'not') {
+      if (args.length === 1 && isArray(args[0]) && args[0][0] === '()') {
+        argsForCall = args[0].slice(1);
+      }
+    }
+    const strArgJoined = makeMultilineArgs(argsForCall.map(deparse), ',', op.length + 1);          // отступ в пробелах
     return op + '(' + strArgJoined + ')';
   }
 
