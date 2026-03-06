@@ -2117,14 +2117,6 @@ export const STDLIB = {
 };
 
 
-for (const [key, val] of Object.entries(STDLIB)) {
-  if (isFunction(val)) {val.lpeName = key}
-  if (isFunction(val) && val._doc === undefined) {
-    makeDoc(val);
-  }
-}
-
-
 const contextAliases = {
   "=": ["eq", "equal"],
   "+": ["add", "plus"],
@@ -2199,6 +2191,28 @@ for (const [name, aliases] of Object.entries(contextAliases)) {
   });
 }
 
+
+
+for (const [key, val] of Object.entries(STDLIB)) {
+  if (isFunction(val)) {
+    if (val.lpeName === undefined) {
+      val.lpeName = key;
+    } else {
+      const cntUnWordPrev = val.lpeName.replaceAll(/\w/g, "").length;
+      const cntUnWordNew = key.replaceAll(/\w/g, "").length;
+      if (cntUnWordNew < cntUnWordPrev || (cntUnWordNew === cntUnWordPrev && key.length < val.lpeName.length)) {
+        val.lpeName = key;
+      }
+    }
+  }
+  if (isFunction(val) && val._doc === undefined) {
+    if (val.__docFunction === undefined) {
+      makeDoc(val);
+    } else {
+      makeDoc(val.__docFunction, val);
+    }
+  }
+}
 
 
 function macroexpand(ast, ctx, resolveString = true) {
