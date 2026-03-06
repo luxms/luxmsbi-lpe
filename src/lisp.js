@@ -338,7 +338,7 @@ const ifSF = (ast, ctx, options) => {
    * @example if(5 > 3, "больше", 5 < 3, "меньше", "равны") => "больше"
    *          if(5 > 5, "больше", 5 < 5, "меньше", "равны") => "равны"
    *          if(5 > 5, "больше", 5 < 5, "меньше") => undefined
-   * @category Специальные формы | 5
+   * @category Управление выполнением | 5
    */
   if (ast.length === 0) return undefined;
   if (ast.length === 1) return EVAL(ast[0], ctx, options);                                          // one arg - by convention return the argument
@@ -373,7 +373,7 @@ const doSF = (ast, ctx, options) => {
    * @example begin(x := 0,\
    *         |      do(x < 10, x := x + 1)\
    *         |) => 10
-   * @category Специальные формы | 4
+   * @category Управление выполнением | 10
    */
   if (ast.length === 0) return undefined;
   if (ast.length === 1) return EVAL(ast[0], ctx, options);                                          // one arg - by convention return the argument
@@ -409,7 +409,7 @@ const beginSF = (ast, ctx, options) => {
    *
    * @example begin(println("Hello"), println("World"), 1 + 2) => 3
    *          ## Выведет "Hello", "World" в консоль
-   * @category Специальные формы | 3
+   * @category Управление выполнением | 1
    */
   if (ast.length === 0) return null;
   const firstOperator = EVAL(ast[0], ctx, options);
@@ -431,7 +431,7 @@ const SPECIAL_FORMS = {                                                         
      *
      * @example let({{"x", 10}, {"y", 20}}, x + y) => 30
      *          let({{"name", "Alice"}}, println("Hello,", name)) => Hello, Alice
-     * @category Специальные формы | 1
+     * @category Работа с переменными | 1
      */
     return EVAL(['begin', ...ast.slice(1)], [makeLetBindings(ast[0], ctx, rs), ctx], rs);
   }),
@@ -464,7 +464,7 @@ const SPECIAL_FORMS = {                                                         
      *
      * @example property({a = 1}, "a") => 1
      *          property({a = 1}, "b", 2) => 2 ## Значение объекта: { a:1, b:2 }
-     * @category Работа с объектами | 1
+     * @category Работа с переменными | 12
      */                                                          // get or set attribute
     let [obj, propertyName, value] = ast.map(a => EVAL(a, ctx, options));
     // hack
@@ -538,7 +538,7 @@ const SPECIAL_FORMS = {                                                         
      * @usage logical-or(...exprs)
      * @param exprs [list] Выражения для проверки
      *
-     * @category Логические операторы | 2
+     * @category Базовые операторы | 23
      */
     return ast.some(a => !!EVAL(a, ctx, rs))
   }),            // logical or
@@ -555,7 +555,7 @@ const SPECIAL_FORMS = {                                                         
      * @usage logical-and(...exprs)
      * @param exprs [list] Выражения для проверки
      *
-     * @category Логические операторы | 3
+     * @category Базовые операторы | 24
      */
     return ast.every(a => !!EVAL(a, ctx, rs));
   }),           // logical and
@@ -571,7 +571,7 @@ const SPECIAL_FORMS = {                                                         
      *
      * @example fn({x}, x * x) => функция возведения в квадрат
      *          {1, 2, 3}.map(fn({x}, x * 2)) => [2, 4, 6]
-     * @category Определения функций | 2
+     * @category Создание объектов | 10
      */
     // define new function (lambda)
     const f = (...args) => EVAL(ast[1], env_bind(ast[0], ctx, args, rs), rs);
@@ -590,7 +590,7 @@ const SPECIAL_FORMS = {                                                         
      *
      * @example def(x, 42) => 42
      * @example begin(def(pi, 3.14159), 2*pi) => 6.28318
-     * @category Определения | 2
+     * @category Работа с переменными | 2
      */
     // update current environment
     const value = EVAL(ast[1], ctx, rs);
@@ -607,7 +607,7 @@ const SPECIAL_FORMS = {                                                         
      * @param name [string] Имя переменной
      *
      * @example resolve(x) => значение переменной x
-     * @category Работа с контекстом | 1
+     * @category Работа с переменными | 10
      */
     const result = $var$(ctx, ast[0], undefined, rs);
     return result;
@@ -624,7 +624,7 @@ const SPECIAL_FORMS = {                                                         
      *
      * @example set_options({wantCallable = true}, minus) => LPE функция "minus"
      *          set_options({{wantCallable, true}}, minus) => LPE функция "minus"
-     * @category Управление выполнением | 1
+     * @category Управление выполнением | 15
      */
     let options = eval_lisp(ast[0], ctx, rs);
     if (isArray(options)) {
@@ -664,7 +664,7 @@ const SPECIAL_FORMS = {                                                         
      * @param condition [boolean] Условие
      *
      * @example filterit({1, 2, 3, 4}, it > 2 || idx = 0) => [1, 3, 4]
-     * @category Функции высшего порядка | 4
+     * @category Работа с объектами | 24
      */
     //console.log("FILTERIT: " + JSON.stringify(ast))
     const array = eval_lisp(ast[0], ctx, rs);
@@ -686,7 +686,7 @@ const SPECIAL_FORMS = {                                                         
      *
      * @example mapit({1, 2, 3}, it * 2) => [2, 4, 6]
      * @example mapit({"a", "b", "c"}, it + idx) => ["a0", "b1", "c2"]
-     * @category Функции высшего порядка | 5
+     * @category Работа с объектами | 23
      */
     const array = eval_lisp(ast[0], ctx, rs);
     const conditionAST = ast[1];
@@ -710,7 +710,7 @@ const SPECIAL_FORMS = {                                                         
      *
      * @example get_in({a = {b = {c = 42}}}, {"a", "b"}) => { c: 42 }
      * @example get_in({a = {b = {10, 11, 12}}}, a, b, 2) => 12
-     * @category Работа с данными | 21
+     * @category Работа с переменными | 22
      */
     let array = [];
     let hashname;
@@ -753,7 +753,7 @@ const SPECIAL_FORMS = {                                                         
      *          |  assoc_in({}, {"a", "b", "c"}, 42),\
      *          |) => {c: 42}
      *          ## x == {a: {b: {c: 42}}}
-     * @category Работа с данными | 22
+     * @category Работа с переменными | 23
      */
     const array = eval_lisp(ast[1], ctx, {...rs, wantCallable: false});
     // удивительно, но работает set(a . 3 , 2, "Hoy")
@@ -796,7 +796,7 @@ const SPECIAL_FORMS = {                                                         
      *          |  cp({ x, "a", "b" }, { y, "c", "f"})\
      *          |) => { d: 12, f: 10 }
      *          ## y = { c: { d: 12, f: 10 } }
-     * @category Работа с данными | 23
+     * @category Работа с переменными | 24
      */
     const from = EVAL(ast[0], ctx, {...rs, wantCallable: false})
     const to = EVAL(ast[1], ctx, {...rs, wantCallable: false})
@@ -816,7 +816,7 @@ const SPECIAL_FORMS = {                                                         
      *
      * @example begin(x := 10,y := 4, ctx(x, y, z)) => { x: 10, y: 4, z: undefined }
      *          ctx("x") ## Ошибка: в функции ctx нельзя использовать выражения
-     * @category Работа с контекстом | 2
+     * @category Работа с переменными | 5
      */
     //FIXME will work only for single keys, we want: ctx(k1,k2,k3.df)
     let ret = {}
@@ -859,7 +859,7 @@ export const STDLIB = {
      * @example eq(1, 2, 1) => false
      *          eq(1, 1, 1, 1) => true
      *          1 = 3 => false
-     * @category Функции сравнения | 1
+     * @category Базовые операторы | 6
      */
     return args.every(v => v == args[0]);
   },
@@ -873,7 +873,7 @@ export const STDLIB = {
      * @example add(1, 2, 1) => 4
      *          add(1, '1', 1, 1) => '1111'
      *          1 + 3 => 4
-     * @category Математические функции | 1
+     * @category Базовые операторы | 2
      */
     return args.reduce((a, b) => {
       if (typeof a === "function") {
@@ -901,7 +901,7 @@ export const STDLIB = {
      * @example minus(1, 2, 1) => -2
      *          minus(5) => -5
      *          1 - 3 => -2
-     * @category Математические функции | 2
+     * @category Базовые операторы | 3
      */
     return args.length === 1 ? -args[0] : args.reduce((a, b) => a - b);
   },
@@ -915,7 +915,7 @@ export const STDLIB = {
      * @param args [number] Число для умножения
      * @example multiply(2, 3, 4) => 24
      *          2 * 3 * 4 => 24
-     * @category Математические функции | 3
+     * @category Базовые операторы | 4
      */
     return args.reduce((a, b) => a * b);
   },
@@ -936,7 +936,7 @@ export const STDLIB = {
      * @example div(10, 2, 5) => 1
      *          div(5) => 0.2
      *          10 / 2 / 5 => 1
-     * @category Математические функции | 4
+     * @category Базовые операторы | 5
      */
     return args.length === 1 ? 1 / args[0] : args.reduce((a, b) => a / b);
   },
@@ -952,7 +952,7 @@ export const STDLIB = {
      * @example lt(1, 2, 3) => true
      *          lt(1, 3, 2) => false
      *          1 < 2 < 3 => true
-     * @category Функции сравнения | 2
+     * @category Базовые операторы | 8
      */
     return args.every((v, i) => i === 0 ? true : args[i-1] < args[i]);
   },
@@ -968,7 +968,7 @@ export const STDLIB = {
      * @example gt(3, 2, 1) => true
      *          gt(3, 1, 2) => false
      *          3 > 2 > 1 => true
-     * @category Функции сравнения | 3
+     * @category Базовые операторы | 9
      */
     return args.every((v, i) => i === 0 ? true : args[i-1] > args[i]);
   },
@@ -984,7 +984,7 @@ export const STDLIB = {
      * @example le(1, 2, 2, 3) => true
      *          le(1, 3, 2) => false
      *          1 <= 2 <= 2 <= 3 => true
-     * @category Функции сравнения | 4
+     * @category Базовые операторы | 10
      */
     return args.every((v, i) => i === 0 ? true : args[i-1] <= args[i]);
   },
@@ -1000,7 +1000,7 @@ export const STDLIB = {
      * @example ge(3, 2, 2, 1) => true
      *          ge(3, 1, 2) => false
      *          3 >= 2 >= 2 >= 1 => true
-     * @category Функции сравнения | 5
+     * @category Базовые операторы | 11
      */
     return args.every((v, i) => i === 0 ? true : args[i-1] >= args[i]);
   },
@@ -1018,7 +1018,7 @@ export const STDLIB = {
      *          ne(1, 1, 2) => true
      *          ne(1, 1, 1) => false
      *          1 != 2 => true
-     * @category Функции сравнения | 6
+     * @category Базовые операторы | 7
      */
     return !args.every(v => v == args[0]);
   },
@@ -1037,7 +1037,7 @@ export const STDLIB = {
      * @example assign(x, 10) => 10
      *          assign(obj.key, 20) => 20  ## obj ==> { key: 20 }
      *          obj.a := (obj.b := 10) => 10  ## obj ==> { a: 10, b: 10 }
-     * @category Операторы | 1
+     * @category Базовые операторы | 1
      */
     if (isArray(ast[0])) {
       if (ast[0][0] !== ".") {
@@ -1065,7 +1065,7 @@ export const STDLIB = {
      * @param flags [string] Флаги регулярного выражения
      *
      * @example regexp("[0-9]+", "g") => /[0-9]+/g
-     * @category Работа с данными | 2
+     * @category Создание объектов | 30
      */
     return RegExp.apply(RegExp, args);
   },
@@ -1080,7 +1080,7 @@ export const STDLIB = {
      *
      * @example count([1, 2, 3]) => 3
      *          count("hello") => 5
-     * @category Работа с данными | 3
+     * @category Работа с объектами | 30
      */
     return a.length;
   },
@@ -1095,7 +1095,7 @@ export const STDLIB = {
      * @param key [string] Ключ для удаления
      *
      * @example del({"a"=1, "b"=2}, "a") => true
-     * @category Работа с данными | 4
+     * @category Работа с переменными | 13
      */
     return delete a[b];
   },
@@ -1141,7 +1141,7 @@ export const STDLIB = {
      * @param args [any] Аргументы конструктора
      *
      * @example new(Date, 2023, 0, 1) => Date object (2023-01-01)
-     * @category Объектно-ориентированное программирование | 1
+     * @category Создание объектов | 20
      */
     return new (args[0].bind.apply(args[0], args));
   },
@@ -1157,7 +1157,7 @@ export const STDLIB = {
      * @example not true => false
      *          not(false) => true
      *          not 0 => true
-     * @category Логические функции | 1
+     * @category Базовые операторы | 20
      */
     return !a;
   },
@@ -1172,7 +1172,7 @@ export const STDLIB = {
      *
      * @example list(1, 2, 3) => [1, 2, 3]
      *          list(1, 2, 3, a = 1, b = 2) => [1, 2, 3, false, false]
-     * @category Работа с данными | 5
+     * @category Создание объектов | 1
      */
     return args;
   },
@@ -1193,7 +1193,7 @@ export const STDLIB = {
      * @example vector(1, 2, 3) => [1, 2, 3]
      *          vector(1, 2, a = 3, b = 4) => [1, 2, a: 3, b: 4]
      *          vector(a = 3, b = 4) => {a: 3, b: 4}
-     * @category Работа с данными | 6
+     * @category Создание объектов | 3
      */
     return Object.keys(kwargs).length ? args.length ? Object.assign(args, kwargs) : kwargs : args;
   }),
@@ -1211,7 +1211,8 @@ export const STDLIB = {
      * @example tuple(1, 2, 3, a=1, b=2) => [1, 2, 3, a: 1, b: 2]
      *          tuple(1, 2, 3) => [1, 2, 3]
      *          tuple(a=1, b=2) => [a: 1, b: 2] ## Является массивом
-     * @category Работа с данными | 7
+     *          (1, 2, 3) => [1, 2, 3] ## Перечисление в скобказ является вызовом функции tuple
+     * @category Создание объектов | 2
      */
     return Object.assign(args, kwargs);
   }),
@@ -1232,7 +1233,7 @@ export const STDLIB = {
      *
      * @example map([1, 2, 3], fn({a}, a * 2)) => [2, 4, 6]
      *          map([1, 2, 3], minus) => [-1, -2, -3]
-     * @category Функции высшего порядка | 1
+     * @category Работа с объектами | 20
      */
       let arr = eval_lisp(ast[0], ctx,  {...rs, wantCallable: false});
       rs.wantCallable = true;
@@ -1250,7 +1251,7 @@ export const STDLIB = {
      * @param predicate [function] Функция-предикат
      *
      * @example filter([1, 2, 3, 4], fn({a}, a > 2)) => [3, 4]
-     * @category Функции высшего порядка | 2
+     * @category Работа с объектами | 21
      */
     return isArray(arr) ? arr.filter(it => fn(it)) : [];
   },
@@ -1278,7 +1279,7 @@ export const STDLIB = {
      * @param value [any] Значение
      *
      * @example identity(5) => 5
-     * @category Базовые функции | 1
+     * @category Работа с объектами | 1
      */
     return a;
   },
@@ -1293,7 +1294,7 @@ export const STDLIB = {
      * @param key [string] Ключ свойства
      *
      * @example pluck({{a=1}, {a=2}}, "a") => [1, 2]
-     * @category Работа с данными | 8
+     * @category Работа с объектами | 26
      */
     // for each array element, get property value, present result as array.
     return isArray(c) ? c.map(el => el[k]) : [];
@@ -1308,7 +1309,7 @@ export const STDLIB = {
      * @param str [string] JSON-строка
      *
      * @example json_parse('{"a": 1}') => {a: 1}
-     * @category Преобразование типов | 1
+     * @category Преобразование типов | 13
      */
     return JSON.parse(a);
   },
@@ -1389,7 +1390,7 @@ export const STDLIB = {
      * @param key [string] Ключ
      *
      * @example contains({a = 1}, "a") => true
-     * @category Проверки | 1
+     * @category Работа с переменными | 11
      */
     return a.hasOwnProperty(b);
   },
@@ -1405,7 +1406,7 @@ export const STDLIB = {
      * @example str(1, 2, 3) => "123"
      *          str("a", 1) => "a1"
      *          str("a", {1,2,3}) => "a[1,2,3]"
-     * @category Преобразование типов | 2
+     * @category Преобразование типов | 12
      */
     return args.map(x => isString(x) ? x : isFunction(x) ? x.lpeName : JSON.stringify(x)).join('');
   },
@@ -1420,7 +1421,7 @@ export const STDLIB = {
      * @param key [string | number] Ключ
      *
      * @example get({a: 1}, "a") => 1
-     * @category Работа с данными | 9
+     * @category Работа с переменными | 20
      */
     return a.hasOwnProperty(b) ? a[b] : undefined;
   },
@@ -1437,7 +1438,7 @@ export const STDLIB = {
      *
      * @example set(Hashmap, "a", 1) => {a: 1}
      *          set({}, 0, 1) => [1]
-     * @category Работа с данными | 11
+     * @category Работа с переменными | 21
      */
     return (a[b] = c, a);
   },
@@ -1452,7 +1453,7 @@ export const STDLIB = {
      *
      * @example keys({a = 1, b = 2}) => ["a", "b"]
      *          keys((1, 2, a = 1, b = 2)) => [0, 1, "a", "b"]
-     * @category Работа с данными | 12
+     * @category Работа с объектами | 27
      */
     return Object.keys(a);
   },
@@ -1466,7 +1467,7 @@ export const STDLIB = {
      * @param obj [object] Объект
      *
      * @example vals({1, 2, a = 3, b = 4}) => [1, 2, 3, 4]
-     * @category Работа с данными | 13
+     * @category Работа с объектами | 28
      */
     return Object.values(a);
   },
@@ -1481,7 +1482,7 @@ export const STDLIB = {
      *
      * @example rest({1, 2, 3}) => [2, 3]
      *          rest({1, 2, 3, a = 1}) => [2, 3] ## Исключает именованые аргументы
-     * @category Работа с данными | 14
+     * @category Работа с объектами | 32
      */
     return a.slice(1);
   },
@@ -1496,7 +1497,7 @@ export const STDLIB = {
      * @param separator [string] Разделитель
      *
      * @example split("a,b,c", ",") => ["a", "b", "c"]
-     * @category Работа со строками | 1
+     * @category Работа с объектами | 10
      */
     let str = eval_lisp(ast[0], ctx,  {...rs, wantCallable: false});
     let sep = eval_lisp(ast[1], ctx,  {...rs, wantCallable: false});
@@ -1541,7 +1542,7 @@ export const STDLIB = {
      *
      * @example empty([]) => true
      *          empty([1, 2]) => false
-     * @category Проверки | 2
+     * @category Работа с объектами | 31
      */
     return isArray(a) ? a.length === 0 : false;
   },
@@ -1556,7 +1557,7 @@ export const STDLIB = {
      * @param array [array] Массив
      *
      * @example cons(1, {2, 3}) => [1, 2, 3]
-     * @category Работа с данными | 15
+     * @category Работа с объектами | 33
      */
     return [].concat([a], b);
   },
@@ -1577,7 +1578,7 @@ export const STDLIB = {
      *
      * @example slice({1, 2, 3, 4}, 1, 3) => [2, 3]
      *          slice({1, 2, 3, 4}, 1) => [2, 3, 4]
-     * @category Работа с данными | 16
+     * @category Работа с объектами | 34
      */
     return isArray(a) ? a.slice(b, end.length > 0 ? end[0] : a.length) : [];
   },
@@ -1592,7 +1593,7 @@ export const STDLIB = {
      *
      * @example first({1, 2, 3}) => 1
      *          first({}) => null
-     * @category Работа с данными | 17
+     * @category Работа с объектами | 37
      */
     return a.length > 0 ? a[0] : null;
   },
@@ -1607,7 +1608,7 @@ export const STDLIB = {
      *
      * @example last({1, 2, 3}) => 3
      *          last({}) => undefined
-     * @category Работа с данными | 18
+     * @category Работа с объектами | 38
      */
     return a[a.length - 1];
   },
@@ -1651,7 +1652,7 @@ export const STDLIB = {
    *          |  { {name = 'Ben'}, {name = 'Alice'}, {name = 'Duncan'} },\
    *          |  (a, b) => if(a.name > b.name, 1, a.name < b.name, -1, 0)\
    *          |) => [ { name: 'Alice' }, { name: 'Ben' }, { name: 'Duncan' } ]
-   * @category Работа с данными | 19
+   * @category Работа с объектами | 25
    */
     return isArray(a) ? a.sort(fn) : [];
   },
@@ -1667,7 +1668,7 @@ export const STDLIB = {
      * @param array [array] Массив чисел
      *
      * @example max({1, 5, 2, 8, 3}) => 8
-     * @category Математические функции | 5
+     * @category Математические функции | 10
      */
     return isArray(a) ? a.reduce(function (p, v) {return ( p > v ? p : v );}) : [];
   },
@@ -1681,7 +1682,7 @@ export const STDLIB = {
      * @param array [array] Массив чисел
      *
      * @example min([1, 5, 2, 8, 3]) => 1
-     * @category Математические функции | 6
+     * @category Математические функции | 11
      */
     return isArray(a) ? a.reduce(function (p, v) {return ( p < v ? p : v );}) : [];
   },
@@ -1696,7 +1697,7 @@ export const STDLIB = {
      * @param args [array] Аргументы функции
      *
      * @example apply(fn({a,b,c}, a + b * c), 1, 2, 3) => 7
-     * @category Функции высшего порядка | 3
+     * @category Базовые операторы | 41
      */
     return f.apply(f, b)
   },
@@ -1712,7 +1713,7 @@ export const STDLIB = {
      * @example concat({1, 2}, {3, 4}) => [1, 2, 3, 4]
      *          concat({1, b = 1}, {3, a = 3}) => [1, 3]
      *          ## Исключает именованные элементы
-     * @category Работа с данными | 20
+     * @category Работа с объектами | 35
      */
     return [].concat.apply([], a)
   },
@@ -1726,7 +1727,7 @@ export const STDLIB = {
      * @param args [any] Значения
      *
      * @example pr_str(1, 'a', {1, 2, 3}) => '1 "a" [1,2,3]'
-     * @category Преобразование типов | 3
+     * @category Преобразование типов | 11
      */
     return a.map(x => JSON.stringify(x)).join(' ');
   },
@@ -1755,7 +1756,7 @@ export const STDLIB = {
      * @param separator [string] Разделитель
      *
      * @example join({1, 2, 3}, "-") => "1-2-3"
-     * @category Работа со строками | 2
+     * @category Работа с объектами | 11
      */
     return isArray(a) ? Array.prototype.join.call(a, sep) : '';
   },
@@ -1784,7 +1785,7 @@ export const STDLIB = {
      * @param values [any] Значения для заполнения
      *
      * @example reshape(5, 1, 2) => [1, 2, 1, 2, 1]
-     * @category Специальные функции | 1
+     * @category Создание объектов | 4
      */
     return Array.apply(null, Array(len)).map((a, idx) => values[idx % values.length]);
   },
@@ -1830,23 +1831,23 @@ export const STDLIB = {
      * @example "hello" => "hello"
      *          begin(x := 12, _"x") => 12
      *          begin(x := 12, q("x", "_")) => 12
-     * @category Специальные операторы | 1
+     * @category Базовые операторы | 29
      */
     if (ast[1] === '_') return $var$(ctx, ast[0]);
     else return String(ast[0]);
   }),
 
 
-  'toString' : makeSF((ast, ctx, rs) => {
+  '[]': makeSF((ast, ctx, rs) => {
     /**
-     * Преобразовать в строку
+     * Преобразовать в строку AST дерево выражения
      *
-     * @usage toString(value)
+     * @usage astToString(value)
      * @param value [any] Значение
      *
-     * @example toString(123) => "123"
-     *          toString({1,2,3,a=1,b=2}) => "1,2,3"
-     * @category Преобразование типов | 4
+     * @example astToString(123) => "123"
+     *          astToString({1,2,3,a=1,b=2}) => "vector,1,2,3,=,a,1,=,b,2"
+     * @category Преобразование типов | 10
      */
     return String(ast[0]);
   }),
@@ -1887,7 +1888,7 @@ export const STDLIB = {
      * @example date.dateShift(-1, "m").toStart("m") => Дата начала предыдущего месяца
      * @example {1, 2, 3}.1 => 2
      *          {a = 2, b = 3}.b => 3
-     * @category Макросы | 2
+     * @category Базовые операторы | 30
      */
     // thread first macro
     // императивная лапша для макроса ->
@@ -1931,7 +1932,7 @@ export const STDLIB = {
      *
      * @example fn({a}, a * 2)->>map({1, 2, 3}) => [2, 4, 6]
      *          ## Выполняется аналогично "map({1, 2, 3}, fn({a}, a * 2))"
-     * @category Макросы | 4
+     * @category Базовые операторы | 31
      */
     // thread last macro
     // императивная лапша для макроса ->>
@@ -1956,7 +1957,7 @@ export const STDLIB = {
      * @example invoke({1, 2, 3}, "toString") => "1,2,3"
      *          invoke({1, 2, 3}, concat, {4, 5, 6}) => [1,2,3,4,5,6]
      *          invoke({1, 2, 3}, "con" + "cat", {4, 5, 6}) => [1,2,3,4,5,6]
-     * @category Макросы | 5
+     * @category Базовые операторы | 40
      */
     /// мы не можем использовать точку в LPE для вызова метода объекта, так как она уже замаплена на ->
     /// поэтому для фанатов ООП пришлось добавить макрос invoke - вызов метода по его текстовому названию.
@@ -1979,7 +1980,7 @@ export const STDLIB = {
      *
      * @example and(5 > 3, 2 < 4) => true
      *          5 > 3 and 2 < 4 and 10 => 10
-     * @category Макросы | 6
+     * @category Базовые операторы | 21
      */
     if (ast.length === 0) return true;
     if (ast.length === 1) return ast[0];
@@ -2003,7 +2004,7 @@ export const STDLIB = {
      *
      * @example or(5 > 3, 10 < 4) => true
      *          1 < 0 or false or 2 * 2 => 4
-     * @category Макросы | 7
+     * @category Базовые операторы | 22
      */
     if (ast.length === 0) return false;
     if (ast.length === 1) return ast[0];
@@ -2050,7 +2051,7 @@ export const STDLIB = {
      *          |  },\
      *          |  func(1, 2) + func(3)\
      *          |) => 16
-     * @category Определения | 1
+     * @category Работа с переменными | 3
      */
     let context = {};
     let ind = 0;
@@ -2131,6 +2132,9 @@ const contextAliases = {
   ">=": ["gte", "ge"],
   "!=": ["neq", "ne"],
 
+  "||": ["logical_or"],
+  "&&": ["logical_and"],
+
   // Оператор присваивания
   ":=": ["assign"],
 
@@ -2151,7 +2155,7 @@ const contextAliases = {
   "get": ["nth"],
 
 
-  "contains?": ["has", "includes", "contains"],
+  "contains?": ["containsKey"],
   "empty?": ["empty"],
 
   "cons": ["pushStart"],
@@ -2160,7 +2164,7 @@ const contextAliases = {
 
   "\"": ["'", "q"],
 
-  "toString": ["[]"],
+  "[]": ["astToString"],
   "->any": ["toAny"],
   "->bool": ["toBool"],
   "->int": ["toInt", "toNumber"],

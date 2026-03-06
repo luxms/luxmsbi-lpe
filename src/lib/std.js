@@ -19,7 +19,7 @@ const convertAstToFunction = makeSF((ast, ctx, opt) => {
    * @param argNames [string] Имена аргументов функции
    *
    * @example {1, 2, 3}.map(toFn(x * 2, x)) => [2, 4, 6]
-   * @category Создание функций | 3
+   * @category Создание объектов | 11
    */
   return (...args) => {
     const argsCtx = {};
@@ -53,7 +53,7 @@ const STD = {
      *
      * @example toAny(42) => 42
      *          toAny("hello") => "hello"
-     * @category Преобразование типов | 4
+     * @category Преобразование типов | 1
      */
     return v;
   },
@@ -70,7 +70,7 @@ const STD = {
      *          toBool(0) => false
      *          toBool("") => false
      *          toBool("text") => true
-     * @category Преобразование типов | 5
+     * @category Преобразование типов | 2
      */
     return !!v;
   },
@@ -86,7 +86,7 @@ const STD = {
      *          toInt(3.14) => 3.14
      *          toInt(true) => 1
      *          toInt(false) => 0
-     * @category Преобразование типов | 6
+     * @category Преобразование типов | 3
      */
     return +v;
   },
@@ -102,7 +102,7 @@ const STD = {
      * @example toStr(42) => "42"
      *          toStr(true) => "true"
      *          toStr({1, 2, 3}) => "1,2,3"
-     * @category Преобразование типов | 7
+     * @category Преобразование типов | 4
      */
     return String(v)
   },
@@ -127,7 +127,7 @@ const STD = {
      * @example {1, 2, 3}.map(x => x * 2) => [2, 4, 6]
      *          (x, y) => x + y => Функция сложения
      *          lambda((x, y), x + y) => Функция сложения
-     * @category Создание функций | 5
+     * @category Создание объектов | 12
      */
     let argNames = [];
     if (ast[0]?.[0] === 'tuple') argNames = ast[0].slice(1);

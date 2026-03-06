@@ -15,7 +15,7 @@ export function today() {
    * @usage today()
    *
    * @example today() => "2024-01-15" (зависит от текущей даты)
-   * @category Получение дат | 1
+   * @category Календарные функции | 1
    */
   return new Date().toISOString().slice(0, 10);
 }
@@ -52,7 +52,7 @@ export function dateShift(one, two, three) {
    *          dateShift("2024-01-15", -1, 'm') => "2023-12-15"
    *          dateShift(3, 'd') => сдвигает сегодняшнюю дату на 3 дня
    *          dateShift(["2024-01-01", "2024-01-31"], 1, 'm') => ["2024-02-01", "2024-02-29"]
-   * @category Манипуляции с датами | 1
+   * @category Календарные функции | 7
    */
   let start = one;
   let delta = two;
@@ -108,7 +108,7 @@ export function toStart(one, two) {
    * @example toStart("2024-01-15", 'm') => "2024-01-01"
    *          toStart("2024-01-15", 'q') => "2024-01-01"
    *          toStart('y') => начало текущего года
-   * @category Работа с периодами | 3
+   * @category Календарные функции | 5
    */
   let start = one;
   let unit = two;
@@ -153,7 +153,7 @@ export function toEnd(one, two) {
    * @example toEnd("2024-01-15", 'm') => "2024-01-31"
    *          toEnd("2024-01-15", 'q') => "2024-03-31"
    *          toEnd('y') => конец текущего года
-   * @category Работа с периодами | 4
+   * @category Календарные функции | 6
    */
   let start = one;
   let unit = two;
@@ -198,7 +198,7 @@ export function bound(one, two) {
    * @example bound("2024-01-15", 'm') => ["2024-01-01", "2024-01-31"]
    *          bound("2024-01-15", 'q') => ["2024-01-01", "2024-03-31"]
    *          bound('w') => границы текущей недели
-   * @category Работа с периодами | 1
+   * @category Календарные функции | 10
    */
   let start = one;
   let unit = two;
@@ -235,7 +235,7 @@ export function extend(one, two, three) {
    *
    * @example extend("2024-01-01", 5, 'd') => ["2024-01-01", "2024-01-06"]
    * @example extend(["2024-01-01", "2024-01-31"], 1, 'm') => ["2024-01-01", "2024-02-29"]
-   * @category Работа с периодами | 2
+   * @category Календарные функции | 11
    */
   let start = one;
   let delta = two;
@@ -268,7 +268,7 @@ export function year(dt) {
    * @param date [string] Дата
    *
    * @example year("2024-01-15") => 2024
-   * @category Числовые компоненты | 1
+   * @category Календарные функции | 30
    */
   const [y] = getSplitPeriod(getRawPeriod(dt));
   return y;
@@ -287,7 +287,7 @@ export function hoty(dt) {
    *
    * @example hoty("2024-01-15") => 1
    *          hoty("2024-07-15") => 2
-   * @category Числовые компоненты | 2
+   * @category Календарные функции | 31
    */
   return getHalfYearNumber(getRawPeriod(dt));
 }
@@ -305,7 +305,7 @@ export function qoty(dt) {
    *
    * @example qoty("2024-01-15") => 1
    *          qoty("2024-10-15") => 4
-   * @category Числовые компоненты | 3
+   * @category Календарные функции | 32
    */
   return getQuarter(getRawPeriod(dt));
 }
@@ -323,7 +323,7 @@ export function moty(dt) {
    *
    * @example moty("2024-01-15") => 1
    *          moty("2024-12-15") => 12
-   * @category Числовые компоненты | 4
+   * @category Календарные функции | 33
    */
   const [, m] = getSplitPeriod(getRawPeriod(dt));
   return m;
@@ -341,7 +341,7 @@ export function woty(dt) {
    * @param date [string] Дата
    *
    * @example woty("2024-01-15") => 3
-   * @category Числовые компоненты | 5
+   * @category Календарные функции | 34
    */
   return getWeekNumber(getRawPeriod(dt));
 }
@@ -359,7 +359,7 @@ export function doty(dt) {
    *
    * @example doty("2024-01-15") => 15
    * @example doty("2024-12-31") => 366 (високосный год)
-   * @category Числовые компоненты | 6
+   * @category Календарные функции | 35
    */
   return getDayNumber(getRawPeriod(dt));
 }
@@ -376,7 +376,7 @@ export function isoy(dt) {
    * @param date [string] Дата
    *
    * @example isoy("2024-01-15") => "2024"
-   * @category Извлечение компонентов | 1
+   * @category Календарные функции | 20
    */
   return `${year(dt)}`;
 }
@@ -393,7 +393,7 @@ export function isom(dt) {
    * @param date [string] Дата
    *
    * @example isom("2024-01-15") => "2024-01"
-   * @category Извлечение компонентов | 3
+   * @category Календарные функции | 22
    */
   return `${year(dt)}-${l2(moty(dt))}`;
 }
@@ -411,7 +411,7 @@ export function isoq(dt) {
    *
    * @example isoq("2024-01-15") => "2024-Q1"
    *          isoq("2024-05-15") => "2024-Q2"
-   * @category Извлечение компонентов | 2
+   * @category Календарные функции | 21
    */
   return `${year(dt)}-Q${qoty(dt)}`;
 }
@@ -428,7 +428,7 @@ export function isow(dt) {
    * @param date [string] Дата
    *
    * @example isow("2024-01-15") => "2024-W03"
-   * @category Извлечение компонентов | 4
+   * @category Календарные функции | 23
    */
   return `${year(dt)}-W${l2(woty(dt))}`;
 }
@@ -445,7 +445,7 @@ export function isod(dt) {
    * @param date [string] Дата
    *
    * @example isod("2024-01-15") => "2024-015"
-   * @category Извлечение компонентов | 5
+   * @category Календарные функции | 24
    */
   return `${year(dt)}-${doty(dt)}`;
 }
