@@ -9,6 +9,14 @@ export function now() {
  * @return {string}
  */
 export function today() {
+  /**
+   * Возвращает текущую дату в формате YYYY-MM-DD
+   *
+   * @usage today()
+   *
+   * @example today() => "2024-01-15" (зависит от текущей даты)
+   * @category Получение дат | 1
+   */
   return new Date().toISOString().slice(0, 10);
 }
 
@@ -18,6 +26,34 @@ export function today() {
  * @param three
  */
 export function dateShift(one, two, three) {
+  /**
+   * Сдвигает дату на указанное количество единиц времени
+   *
+   * Поддерживает несколько вариантов вызова:
+   * 1. С указанием начальной даты: dateShift(start, delta, unit)
+   * 2. С начальной датой по умолчанию (сегодня): dateShift(delta, unit)
+   * 3. С массивом дат: dateShift([start1, start2], delta, unit) сдвигает обе даты
+   *
+   * @usage dateShift(start, delta, unit)
+   * @param start [string] Начальная дата (YYYY-MM-DD)
+   * @param delta [number] Величина сдвига (положительная или отрицательная)
+   * @param unit [dateUnit] Единица измерения: 'd'/'day', 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
+   *
+   * @usage dateShift(delta, unit)
+   * @param delta [number] Величина сдвига
+   * @param unit [dateUnit] Единица измерения
+   *
+   * @usage dateShift([start1, start2], delta, unit)
+   * @param dates [array] Массив дат
+   * @param delta [number] Величина сдвига
+   * @param unit [dateUnit] Единица измерения
+   *
+   * @example dateShift("2024-01-15", 5, 'd') => "2024-01-20"
+   *          dateShift("2024-01-15", -1, 'm') => "2023-12-15"
+   *          dateShift(3, 'd') => сдвигает сегодняшнюю дату на 3 дня
+   *          dateShift(["2024-01-01", "2024-01-31"], 1, 'm') => ["2024-02-01", "2024-02-29"]
+   * @category Манипуляции с датами | 1
+   */
   let start = one;
   let delta = two;
   let unit = three;
@@ -59,6 +95,21 @@ export function dateShift(one, two, three) {
  * @return string
  */
 export function toStart(one, two) {
+  /**
+   * Возвращает начало периода
+   *
+   * @usage toStart(date, unit)
+   * @param date [string] Дата
+   * @param unit [dateUnit] Период: 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
+   *
+   * @usage toStart(unit)
+   * @param unit [dateUnit] Период (для текущей даты)
+   *
+   * @example toStart("2024-01-15", 'm') => "2024-01-01"
+   *          toStart("2024-01-15", 'q') => "2024-01-01"
+   *          toStart('y') => начало текущего года
+   * @category Работа с периодами | 3
+   */
   let start = one;
   let unit = two;
   if (two === undefined) {
@@ -89,6 +140,21 @@ export function toStart(one, two) {
  * @return string
  */
 export function toEnd(one, two) {
+  /**
+   * Возвращает конец периода
+   *
+   * @usage toEnd(date, unit)
+   * @param date [string] Дата
+   * @param unit [dateUnit] Период: 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
+   *
+   * @usage toEnd(unit)
+   * @param unit [string] Период (для текущей даты)
+   *
+   * @example toEnd("2024-01-15", 'm') => "2024-01-31"
+   *          toEnd("2024-01-15", 'q') => "2024-03-31"
+   *          toEnd('y') => конец текущего года
+   * @category Работа с периодами | 4
+   */
   let start = one;
   let unit = two;
   if (two === undefined) {
@@ -119,6 +185,21 @@ export function toEnd(one, two) {
  * @return string[]
  */
 export function bound(one, two) {
+  /**
+   * Возвращает границы периода (начало и конец)
+   *
+   * @usage bound(date, unit)
+   * @param date [string] Дата (YYYY-MM-DD)
+   * @param unit [dateUnit] Период: 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
+   *
+   * @usage bound(unit)
+   * @param unit [dateUnit] Период (для текущей даты)
+   *
+   * @example bound("2024-01-15", 'm') => ["2024-01-01", "2024-01-31"]
+   *          bound("2024-01-15", 'q') => ["2024-01-01", "2024-03-31"]
+   *          bound('w') => границы текущей недели
+   * @category Работа с периодами | 1
+   */
   let start = one;
   let unit = two;
   if (two === undefined) {
@@ -135,6 +216,27 @@ export function bound(one, two) {
  * @return string[]
  */
 export function extend(one, two, three) {
+  /**
+   * Расширяет период, сдвигая конечную дату
+   *
+   * @usage extend(start, delta, unit)
+   * @param start [string] Начальная дата
+   * @param delta [number] Величина расширения
+   * @param unit [dateUnit] Единица измерения: 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
+   *
+   * @usage extend(delta, unit)
+   * @param delta [number] Величина расширения
+   * @param unit [dateUnit] Единица измерения (от текущей даты)
+   *
+   * @usage extend([start, end], delta, unit)
+   * @param period [array] Период [начало, конец]
+   * @param delta [number] Величина расширения
+   * @param unit [dateUnit] Единица измерения
+   *
+   * @example extend("2024-01-01", 5, 'd') => ["2024-01-01", "2024-01-06"]
+   * @example extend(["2024-01-01", "2024-01-31"], 1, 'm') => ["2024-01-01", "2024-02-29"]
+   * @category Работа с периодами | 2
+   */
   let start = one;
   let delta = two;
   let unit = three;
@@ -153,11 +255,21 @@ export function extend(one, two, three) {
   return [start, dateShift(start, delta, unit)];
 }
 
+
 /**
  * @param {string} dt
  * @return number
  */
 export function year(dt) {
+  /**
+   * Возвращает год как число
+   *
+   * @usage year(date)
+   * @param date [string] Дата
+   *
+   * @example year("2024-01-15") => 2024
+   * @category Числовые компоненты | 1
+   */
   const [y] = getSplitPeriod(getRawPeriod(dt));
   return y;
 }
@@ -167,6 +279,16 @@ export function year(dt) {
  * @return number
  */
 export function hoty(dt) {
+  /**
+   * Возвращает номер полугодия (1 или 2)
+   *
+   * @usage hoty(date)
+   * @param date [string] Дата
+   *
+   * @example hoty("2024-01-15") => 1
+   *          hoty("2024-07-15") => 2
+   * @category Числовые компоненты | 2
+   */
   return getHalfYearNumber(getRawPeriod(dt));
 }
 
@@ -175,6 +297,16 @@ export function hoty(dt) {
  * @return number
  */
 export function qoty(dt) {
+  /**
+   * Возвращает номер квартала (1-4)
+   *
+   * @usage qoty(date)
+   * @param date [string] Дата
+   *
+   * @example qoty("2024-01-15") => 1
+   *          qoty("2024-10-15") => 4
+   * @category Числовые компоненты | 3
+   */
   return getQuarter(getRawPeriod(dt));
 }
 
@@ -183,6 +315,16 @@ export function qoty(dt) {
  * @return number
  */
 export function moty(dt) {
+  /**
+   * Возвращает номер месяца (1-12)
+   *
+   * @usage moty(date)
+   * @param date [string] Дата
+   *
+   * @example moty("2024-01-15") => 1
+   *          moty("2024-12-15") => 12
+   * @category Числовые компоненты | 4
+   */
   const [, m] = getSplitPeriod(getRawPeriod(dt));
   return m;
 }
@@ -192,6 +334,15 @@ export function moty(dt) {
  * @return number
  */
 export function woty(dt) {
+  /**
+   * Возвращает номер недели в году (1-53)
+   *
+   * @usage woty(date)
+   * @param date [string] Дата
+   *
+   * @example woty("2024-01-15") => 3
+   * @category Числовые компоненты | 5
+   */
   return getWeekNumber(getRawPeriod(dt));
 }
 
@@ -200,6 +351,16 @@ export function woty(dt) {
  * @return number
  */
 export function doty(dt) {
+  /**
+   * Возвращает номер дня в году (1-366)
+   *
+   * @usage doty(date)
+   * @param date [string] Дата
+   *
+   * @example doty("2024-01-15") => 15
+   * @example doty("2024-12-31") => 366 (високосный год)
+   * @category Числовые компоненты | 6
+   */
   return getDayNumber(getRawPeriod(dt));
 }
 
@@ -208,6 +369,15 @@ export function doty(dt) {
  * @return string
  */
 export function isoy(dt) {
+  /**
+   * Возвращает год в формате ISO
+   *
+   * @usage isoy(date)
+   * @param date [string] Дата
+   *
+   * @example isoy("2024-01-15") => "2024"
+   * @category Извлечение компонентов | 1
+   */
   return `${year(dt)}`;
 }
 
@@ -216,6 +386,15 @@ export function isoy(dt) {
  * @return string
  */
 export function isom(dt) {
+  /**
+   * Возвращает месяц в формате ISO (YYYY-MM)
+   *
+   * @usage isom(date)
+   * @param date [string] Дата
+   *
+   * @example isom("2024-01-15") => "2024-01"
+   * @category Извлечение компонентов | 3
+   */
   return `${year(dt)}-${l2(moty(dt))}`;
 }
 
@@ -224,6 +403,16 @@ export function isom(dt) {
  * @return string
  */
 export function isoq(dt) {
+  /**
+   * Возвращает квартал в формате ISO (YYYY-Qx)
+   *
+   * @usage isoq(date)
+   * @param date [string] Дата
+   *
+   * @example isoq("2024-01-15") => "2024-Q1"
+   *          isoq("2024-05-15") => "2024-Q2"
+   * @category Извлечение компонентов | 2
+   */
   return `${year(dt)}-Q${qoty(dt)}`;
 }
 
@@ -232,6 +421,15 @@ export function isoq(dt) {
  * @return string
  */
 export function isow(dt) {
+  /**
+   * Возвращает неделю в формате ISO (YYYY-Www)
+   *
+   * @usage isow(date)
+   * @param date [string] Дата
+   *
+   * @example isow("2024-01-15") => "2024-W03"
+   * @category Извлечение компонентов | 4
+   */
   return `${year(dt)}-W${l2(woty(dt))}`;
 }
 
@@ -240,13 +438,22 @@ export function isow(dt) {
  * @return string
  */
 export function isod(dt) {
+  /**
+   * Возвращает день года в формате ISO (YYYY-ddd)
+   *
+   * @usage isod(date)
+   * @param date [string] Дата
+   *
+   * @example isod("2024-01-15") => "2024-015"
+   * @category Извлечение компонентов | 5
+   */
   return `${year(dt)}-${doty(dt)}`;
 }
 
 export const DATE_TIME = {
   'dateShift': dateShift,
   'today': today,
-  'now': now,
+  'now': today,
   'bound': bound,
   'extend': extend,
   'toStart': toStart,
