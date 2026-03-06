@@ -130,6 +130,16 @@ export const isFunction = (arg) => {
 };
 
 
+/**
+ * Является ли это алиасом функции создания Array-like объекта
+ * @param {string} funcName
+ * @returns
+ */
+function isArrayFunction(funcName) {
+  return ["[", "list", "array", "vector" /* {} = vector */, "tuple"].includes(funcName)
+}
+
+
 function LPEEvalError(message) {
   this.constructor.prototype.__proto__ = Error.prototype;
   Error.call(this);
@@ -289,18 +299,18 @@ function makeLetBindings(ast, ctx, rs) {
       result[varName] = EVAL(ast[varName], ctx, rs);
     }
   } else if (isArray(ast) && isString(ast[0])) {
-    if(ast[0] === '[') {
+    if(isArrayFunction(ast[0])) {
       ast = ast.slice(1)
     }
     if (isString(ast[0])) {
       result[ast[0]] = EVAL(ast[1], ctx, rs);
     } else if (isArray(ast[0])){
-      ast.forEach(pair => pair[0] === '[' ? result[pair[1]] = EVAL(pair[2], ctx, rs) : result[pair[0]] = EVAL(pair[1], ctx, rs));
+      ast.forEach(pair => isArrayFunction(pair[0]) ? result[pair[1]] = EVAL(pair[2], ctx, rs) : result[pair[0]] = EVAL(pair[1], ctx, rs));
     } else {
       throw new Error('LISP: let expression (1) invalid form in ' + ast);
     }
   } else if (isArray(ast)) {
-    ast.forEach(pair => pair[0] === '[' ? result[pair[1]] = EVAL(pair[2], ctx, rs) : result[pair[0]] = EVAL(pair[1], ctx, rs));
+    ast.forEach(pair => isArrayFunction(pair[0]) ? result[pair[1]] = EVAL(pair[2], ctx, rs) : result[pair[0]] = EVAL(pair[1], ctx, rs));
   } else if (isFunction(ast)) {
     return ast;
   } else {
@@ -711,7 +721,7 @@ const SPECIAL_FORMS = {                                                         
       hashname = ast[0]
     }
 
-    if (isArray(ast[1]) && ast[1][0] === '[') {
+    if (isArray(ast[1]) && isArrayFunction(ast[1][0])) {
         // массив аргументов, ка в классическом get_in в Clojure
         array = eval_lisp(ast[1], ctx, rs);
     } else {
@@ -2045,7 +2055,7 @@ export const STDLIB = {
     let context = {};
     let ind = 0;
     let statics = $var$(ctx, '##static') || {};
-    while (ind < ast.length && isArray(ast[ind]) && ast[ind][0] == "[") {
+    while (ind < ast.length && isArray(ast[ind]) && isArrayFunction(ast[ind][0])) {
       let last = ast[ind];
       let body = last[last.length - 1];
       if (!(isArray(body) && ['"', "'"].includes(body[0]))) {
@@ -2229,7 +2239,7 @@ function macroexpand(ast, ctx, resolveString = true) {
 function env_bind(ast, ctx, exprs, opt) {
   let newCtx = {};
 
-  if (ast[0] == "[") {
+  if (isArrayFunction(ast[0])) {
     ast = ast.slice(1)
   }
 
