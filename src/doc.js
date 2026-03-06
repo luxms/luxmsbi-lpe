@@ -60,6 +60,8 @@
  */
 
 
+import { LOCALE_DOC } from "./localization/localization";
+
 
 
 /**
@@ -70,7 +72,8 @@
  * @property {string} description
  * @property {ContextDocUsage[]} usages
  * @property {string[]} results
- * @property {string[]} examples
+ * @property {Array<ExampleObject[]>} examples
+ * @property {string[]} examplesSources
  * @property {string[]} tags
  * @property {string[]} category
  * @property {Flavor[]} support
@@ -102,6 +105,31 @@
  * @property {Array<boolean>} argsType
  * @property {boolean} returnType
  */
+
+/**
+ * @typedef {Object} ExampleObject
+ *
+ * @property {string} body
+ * @property {string} result
+ * @property {string[]} comments
+ */
+
+
+/**
+ * Сгенерировать числовой хэш строки
+ * @param {string} str
+ * @returns
+ */
+function generateHash(str) {
+  let hash = 0;
+  if (str.length === 0) return hash;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char; // Simple bit shift operations
+    hash |= 0; // Convert to a 32bit integer (ensures consistency)
+  }
+  return hash > 0 ? hash : -hash;
+}
 
 
 
@@ -191,10 +219,7 @@ function addLineForDocParam(paramName, newLine, doc) {
       break;
 
     case "example":
-            const cur = doc.examples[doc.examples.length - 1];
-      doc.examples[doc.examples.length - 1] =
-          newLine.startsWith("##") ? `${cur} ${newLine}`
-        : cur.endsWith("\\") ? `${cur.slice(0, -1)}{\\n}${newLine}` : `${cur}\n${newLine}`
+      doc.examplesSources[doc.examplesSources.length - 1] += "\n" + newLine;
       break;
 
     case "tags":
@@ -244,7 +269,7 @@ function setDocParam(paramName, value, doc, fullComment) {
       break;
 
     case "example":
-      doc.examples.push(value);
+      doc.examplesSources.push(value);
       break;
 
     case "tags":
@@ -269,13 +294,65 @@ function setDocParam(paramName, value, doc, fullComment) {
 }
 
 
+/**
+ * Разбор текста примера
+ * @param {string} text
+ * @returns {Array<ExampleObject>}
+ */
+function parseExpmple (text) {
+  /** @type {Array<ExampleObject>} */
+  const res = [];
+  let br = false; // Есть ли \ в конце предыдущей строки
+  text.split("\n").forEach(line => {
+    const nextBr = line.endsWith("\\");
+    if (nextBr) {
+      line = line.slice(0, -1);
+    }
+    let [body, comment] = [line, ""];
+    const commentStart = line.lastIndexOf("##");
+    if (commentStart >= 0) {
+      body = line.slice(0, commentStart);
+      comment = line.slice(commentStart + 2).trim();
+    }
+
+    let currentObj = res[res.length - 1];
+    if (!(br || line.startsWith("##")) || currentObj === undefined) {
+      res.push(currentObj = {
+        body: "",
+        comments: [],
+        result: "",
+      });
+    }
+    currentObj.body += `\n${body}`;
+    if (comment !== "") {
+      currentObj.comments.push(comment);
+    }
+    br = nextBr;
+  });
+
+
+  return res.map(obj => {
+    const resStart = obj.body.lastIndexOf("=>");
+    if (resStart > 0) {
+      obj.result = obj.body.slice(resStart + 2).trim();
+      obj.body = obj.body.slice(0, resStart);
+    }
+    obj.body = obj.body.trim();
+    return obj;
+  });
+}
+
+
 
 /**
  * Парсит весь комментарий документации
  * @param {string} docComment
- * @returns {ContextDocData}
+ * @returns {ContextDocData | undefined}
  */
 function parseDocstring(docComment) {
+  if (docComment === undefined || docComment === null) {
+    return undefined;
+  }
   let index = 0;
   if (parseDocstring.index === undefined) {
     parseDocstring.index = 0;
@@ -294,6 +371,7 @@ function parseDocstring(docComment) {
     usages: [],
     results: [],
     examples: [],
+    examplesSources: [],
     tags: [],
     category: [],
     support: [],
@@ -315,7 +393,7 @@ function parseDocstring(docComment) {
 
   doc.description = doc.description.trim();
   doc.results = doc.results.map(el => el.trim());
-  doc.examples = doc.examples.map(el => el.trim());
+  doc.examples = doc.examplesSources.map(el => parseExpmple(el));
   doc.usages.forEach(usg => {
     usg.usage = usg.usage.trim();
     usg.params.forEach(prm => {
@@ -334,16 +412,32 @@ function parseDocstring(docComment) {
  * Вычисляет комментарий из первого аргумента-функции и подставляет его как `_doc` параметр во второй аргумент.
  *
  * Если второй аргумент отсутствует, документация подставляется к первой функции.
+ * @param {string} contextName Контекст функции
  * @param {Function} docSource Функция, в начале тела которой находится комментарий к функции
  * @param {Function} [func] Функция, которую необходимо вернуть в качестве результата
  * @returns {any}
  */
-export function makeDoc(docSource, func) {
-  let docValue = docSource.toString().match(/\{\s*\/\*\*([\s\S]*?)\*\//);
+export function makeDoc(contextName, docSource, func) {
+  let ruDocValue = docSource.toString().match(/\{\s*\/\*\*([\s\S]*?)\*\//);
   let res = func === undefined ? docSource : func;
-  if (docValue !== null) {
-    // @ts-ignore
-    res._doc = parseDocstring(docValue[1]);
+  const lpeName = docSource.lpeName || func?.lpeName;
+  if (lpeName === undefined) {
+    console.log("DOC: WARNING: lpeName undefined");
+  }
+
+  const localize = lpeName === undefined ? undefined : (LOCALE_DOC[contextName] || {})[lpeName];
+  if (localize === undefined && lpeName !== undefined && ruDocValue !== null) {
+    console.log(`DOC: WARNING: localization for function ${contextName}.${lpeName} undefined`);
+  };
+  const hash = ruDocValue === null ? undefined : generateHash(ruDocValue[1].replaceAll(/\n\s+/g, "\n"));
+  if (hash !== undefined && localize !== undefined && localize.hash !== hash) {
+    console.log(`DOC: WARNING: localization for ${contextName}.${lpeName} was outdated. Current hash: ${hash}`);
+  }
+  if (ruDocValue !== null || localize !== undefined) {
+    res._doc = {
+      ru: parseDocstring((ruDocValue||[])[1] || localize?.ru),
+      en: parseDocstring(localize?.en),
+    };
   }
   return res;
 }
