@@ -17,7 +17,7 @@ import unbox from "./lisp.unbox";
 import STD from './lib/std';
 import {DATE_TIME} from './lib/datetime';
 import makeVararg from "./lisp.vararg";
-import { makeDoc } from "./doc";
+import { makeDoc, selectPerfectFunctionName } from "./doc";
 
 /**
  * @typedef {Object} EvalOptions
@@ -2199,15 +2199,7 @@ for (const [name, aliases] of Object.entries(contextAliases)) {
 
 for (const [key, val] of Object.entries(STDLIB)) {
   if (isFunction(val)) {
-    if (val.lpeName === undefined) {
-      val.lpeName = key;
-    } else {
-      const cntUnWordPrev = val.lpeName.replaceAll(/\w/g, "").length;
-      const cntUnWordNew = key.replaceAll(/\w/g, "").length;
-      if (cntUnWordNew < cntUnWordPrev || (cntUnWordNew === cntUnWordPrev && key.length < val.lpeName.length)) {
-        val.lpeName = key;
-      }
-    }
+    val.lpeName = selectPerfectFunctionName(val.lpeName, key);
   }
 }
 

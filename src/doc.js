@@ -407,6 +407,30 @@ function parseDocstring(docComment) {
 }
 
 
+/**
+ * Выбирает наиболее подходящее имя функции
+ * @param {string | undefined} name1
+ * @param {string | undefined} name2
+ * @return {string}
+ */
+export function selectPerfectFunctionName(name1, name2) {
+  if (name1 === undefined || name2 === undefined) {
+    return name1 || name2 || "";
+  }
+  const cntUnWord1 = name1.replaceAll(/\w/g, "").length;
+  const cntUnWord2 = name2.replaceAll(/\w/g, "").length;
+  if (cntUnWord2 < cntUnWord1) {
+    return name2;
+  } else if (cntUnWord2 > cntUnWord1) {
+    return name1;
+  } else if (name1.length !== name2.length) {
+    return name1.length < name2.length ? name1 : name2;
+  } else {
+    return name1 < name2 ? name1 : name2;
+  }
+}
+
+
 
 /**
  * Вычисляет комментарий из первого аргумента-функции и подставляет его как `_doc` параметр во второй аргумент.
