@@ -1101,7 +1101,6 @@ export const STDLIB = {
   },
   // 'del': (a, b) => Reflect.deleteProperty(a, b),
 
-
   'isa': (a, b) => {
     /**
      * Проверяет, является ли объект экземпляром класса
@@ -1221,7 +1220,6 @@ export const STDLIB = {
   // Qk functions
   'pick': makeVararg(['n:int'], (n, args) => args[n - 1]),                                          // The pick function returns the n:th expression in the list. n is an integer between 1 and N.
   //
-
 
   'map': makeSF((ast, ctx, rs) => {
     /**
