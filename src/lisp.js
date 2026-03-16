@@ -521,7 +521,7 @@ const SPECIAL_FORMS = {                                                         
     try {
       return EVAL(ast[0], ctx, rs);
     } catch (e) {
-      const errCtx = env_bind([ast[1]], ctx, [e], options);
+      const errCtx = env_bind([ast[1]], ctx, [e], rs);
       return EVAL(ast[2], errCtx, rs);
     }
   }),
