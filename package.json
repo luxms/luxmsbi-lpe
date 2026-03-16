@@ -1,13 +1,9 @@
 {
   "name": "@luxms/lpe",
-  "version": "1.5.9",
+  "version": "1.5.10",
   "description": "Lux Path Expressions Lexer and Parser implementation in Javascript",
   "main": "./dist/lpe.js",
   "types": "./src/index.d.ts",
-  "publishConfig": {
-    "access": "public",
-    "registry": "https://download.luxms.com/repository/npm-luxms/"
-  },
   "repository": {
     "type": "git",
     "url": "git@gito.luxms.com:luxmsbi/luxmsbi-lpe.git"

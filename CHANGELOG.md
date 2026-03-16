@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.5.10](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.5.9...v1.5.10) (2026-03-16)
+
+
+### Bug Fixes
+
+* now '.-' function not evaluate property name as varable ([93eee63](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/93eee63b6b2324ee28fd3db0c98808c09d8d7bdd))
+
 ### [1.5.9](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.5.8...v1.5.9) (2026-02-27)
 
 ### [1.5.8](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.5.7...v1.5.8) (2026-02-10)
