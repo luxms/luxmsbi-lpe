@@ -120,7 +120,7 @@ import { LOCALE_DOC } from "./localization/localization";
  * @param {string} str
  * @returns
  */
-function generateHash(str) {
+export function generateSimpleHash(str) {
   let hash = 0;
   if (str.length === 0) return hash;
   for (let i = 0; i < str.length; i++) {
@@ -437,14 +437,14 @@ export function selectPerfectFunctionName(name1, name2) {
  *
  * Если второй аргумент отсутствует, документация подставляется к первой функции.
  * @param {string} contextName Контекст функции
- * @param {Function} docSource Функция, в начале тела которой находится комментарий к функции
- * @param {Function} [func] Функция, которую необходимо вернуть в качестве результата
+ * @param {Function} func Функция, которую необходимо вернуть в качестве результата
+ * @param {Function} [docSource] Функция, в начале тела которой находится комментарий к функции
  * @returns {any}
  */
-export function makeDoc(contextName, docSource, func) {
-  let ruDocValue = docSource.toString().match(/\{\s*\/\*\*([\s\S]*?)\*\//);
-  let res = func === undefined ? docSource : func;
-  const lpeName = docSource.lpeName || func?.lpeName;
+export function makeDoc(contextName, func, docSource) {
+  let ruDocValue = (docSource || func).toString().match(/\{\s*\/\*\*([\s\S]*?)\*\//);
+  let res = func;
+  const lpeName = func.lpeName || docSource?.lpeName;
   if (lpeName === undefined) {
     console.log("DOC: WARNING: lpeName undefined");
   }
@@ -453,7 +453,7 @@ export function makeDoc(contextName, docSource, func) {
   if (localize === undefined && lpeName !== undefined && ruDocValue !== null) {
     console.log(`DOC: WARNING: localization for function ${contextName}.${lpeName} undefined`);
   };
-  const hash = ruDocValue === null ? undefined : generateHash(ruDocValue[1].replaceAll(/\n\s+/g, "\n"));
+  const hash = ruDocValue === null ? undefined : generateSimpleHash(ruDocValue[1].replaceAll(/\n\s+/g, "\n"));
   if (hash !== undefined && localize !== undefined && localize.hash !== hash) {
     console.log(`DOC: WARNING: localization for ${contextName}.${lpeName} was outdated. Current hash: ${hash}`);
   }
@@ -462,6 +462,13 @@ export function makeDoc(contextName, docSource, func) {
       ru: parseDocstring((ruDocValue||[])[1] || localize?.ru),
       en: parseDocstring(localize?.en),
     };
+  }
+
+  const docTags = func.__docTags || docSource?.__docTags;
+  if (docTags !== undefined) {
+    Object.values(res._doc || {}).forEach(doc => {
+      doc?.tags.push(...docTags);
+    });
   }
   return res;
 }

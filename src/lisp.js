@@ -2205,11 +2205,7 @@ for (const [key, val] of Object.entries(STDLIB)) {
 
 for (const [key, val] of Object.entries(STDLIB)) {
   if (isFunction(val) && val._doc === undefined) {
-    if (val.__docFunction === undefined) {
-      makeDoc("STDLIB", val);
-    } else {
-      makeDoc("STDLIB", val.__docFunction, val);
-    }
+    makeDoc("STDLIB", val, val.__docFunction);
   }
 }
 
