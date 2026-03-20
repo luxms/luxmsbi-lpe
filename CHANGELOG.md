@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.6.2](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.5.10...v1.6.2) (2026-03-20)
+
+
+### Bug Fixes
+
+* 'try' function variable not found exception ([89ee98e](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/89ee98e5e6fd9b2aafe4becc773a6a0e619e1e94))
+* doc comments ([c4e33b9](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/c4e33b95979d67fb6faf93d1163f7fb5e09e223f))
+* now '.-' function not evaluate property name as varable ([fe7d13b](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/fe7d13b5c17c7e54f5bfbe653a512bf17b0d3452))
+
+### [1.6.1](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.6.0...v1.6.1) (2025-11-24)
+
+
+### Bug Fixes
+
+* support of -> as . ([add0efa](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/add0efa30fb10e63ab211d2e57632065b764aed5))
+
+## [1.6.0](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.5.5...v1.6.0) (2025-11-13)
+
 ### [1.5.10](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.5.9...v1.5.10) (2026-03-16)
 
 
