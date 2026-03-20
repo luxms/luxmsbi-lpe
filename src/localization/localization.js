@@ -515,7 +515,7 @@ export const LOCALE_DOC = {
             * > Текстовый оператор \`||\` парсится в \`or\`, из-за чего при выполнении \`1 || 2\` будет вызываться функция \`or\`.
             * <is-warning />
             * @usage logical-or(...exprs)
-            * @param exprs [list] Выражения для проверки
+            * @param exprs [boolean] Выражения для проверки
             *
             * @category Базовые операторы | 23
             */`,
@@ -527,11 +527,11 @@ export const LOCALE_DOC = {
             * > The text operator \`||\` is parsed as \`or\`, so when executing \`1 || 2\`, the \`or\` function will be called.
             * <is-warning />
             * @usage logical-or(...exprs)
-            * @param exprs [list] Expressions to check
+            * @param exprs [boolean] Expressions to check
             *
             * @category Basic Operators | 23
             */`,
-      hash: 522351791,
+      hash: 1172969,
     },
 //#endregion logical_or
 
@@ -547,7 +547,7 @@ export const LOCALE_DOC = {
             * > Текстовый оператор \`&&\` парсится в \`and\`, из-за чего при выполнении \`1 && 2\` будет вызываться функция \`and\`.
             * <is-warning />
             * @usage logical-and(...exprs)
-            * @param exprs [list] Выражения для проверки
+            * @param exprs [boolean] Выражения для проверки
             *
             * @category Базовые операторы | 24
             */`,
@@ -559,11 +559,11 @@ export const LOCALE_DOC = {
             * > The text operator \`&&\` is parsed as \`and\`, so when executing \`1 && 2\`, the \`and\` function will be called.
             * <is-warning />
             * @usage logical-and(...exprs)
-            * @param exprs [list] Expressions to check
+            * @param exprs [boolean] Expressions to check
             *
             * @category Basic Operators | 24
             */`,
-      hash: 895966715,
+      hash: 763742261,
     },
 //#endregion logical_and
 
@@ -734,7 +734,7 @@ export const LOCALE_DOC = {
             *
             * @usage apply(fn, ...args)
             * @param fn [function] Функция
-            * @param args [array] Аргументы функции
+            * @param args [any] Аргументы функции
             *
             * @example apply(fn({a,b,c}, a + b * c), 1, 2, 3) => 7
             * @category Базовые операторы | 41
@@ -744,12 +744,12 @@ export const LOCALE_DOC = {
             *
             * @usage apply(fn, ...args)
             * @param fn [function] Function
-            * @param args [array] Function arguments
+            * @param args [any] Function arguments
             *
             * @example apply(fn({a,b,c}, a + b * c), 1, 2, 3) => 7
             * @category Basic Operators | 41
             */`,
-      hash: 1353212097,
+      hash: 1581126420,
     },
 //#endregion apply
 
@@ -985,7 +985,7 @@ export const LOCALE_DOC = {
             * Выбрасывает исключение
             *
             * @usage throw(error)
-            * @param error [any] Ошибка для выбрасывания
+            * @param error [string] Ошибка для выбрасывания
             *
             * @example throw("Error message")
             * @category Исключения | 1
@@ -994,12 +994,12 @@ export const LOCALE_DOC = {
             * Throws an exception
             *
             * @usage throw(error)
-            * @param error [any] Error to throw
+            * @param error [string] Error to throw
             *
             * @example throw("Error message")
             * @category Exceptions | 1
             */`,
-      hash: 632374692,
+      hash: 402427087,
     },
 //#endregion throw
 
@@ -1074,10 +1074,10 @@ export const LOCALE_DOC = {
             *
             * @usage toStart(date, unit)
             * @param date [string] Дата
-            * @param unit [dateUnit] Период: 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
+            * @param unit [DateUnit] Период: 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
             *
             * @usage toStart(unit)
-            * @param unit [dateUnit] Период (для текущей даты)
+            * @param unit [DateUnit] Период (для текущей даты)
             *
             * @example toStart("2024-01-15", 'm') => "2024-01-01"
             *          toStart("2024-01-15", 'q') => "2024-01-01"
@@ -1089,17 +1089,17 @@ export const LOCALE_DOC = {
             *
             * @usage toStart(date, unit)
             * @param date [string] Date
-            * @param unit [dateUnit] Period: 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
+            * @param unit [DateUnit] Period: 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
             *
             * @usage toStart(unit)
-            * @param unit [dateUnit] Period (for current date)
+            * @param unit [DateUnit] Period (for current date)
             *
             * @example toStart("2024-01-15", 'm') => "2024-01-01"
             *          toStart("2024-01-15", 'q') => "2024-01-01"
             *          toStart('y') => start of current year
             * @category Calendar Functions | 5
             */`,
-      hash: 449723670,
+      hash: 1005613334,
     },
 //#endregion toStart
 
@@ -1112,7 +1112,7 @@ export const LOCALE_DOC = {
             *
             * @usage toEnd(date, unit)
             * @param date [string] Дата
-            * @param unit [dateUnit] Период: 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
+            * @param unit [DateUnit] Период: 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
             *
             * @usage toEnd(unit)
             * @param unit [string] Период (для текущей даты)
@@ -1127,7 +1127,7 @@ export const LOCALE_DOC = {
             *
             * @usage toEnd(date, unit)
             * @param date [string] Date
-            * @param unit [dateUnit] Period: 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
+            * @param unit [DateUnit] Period: 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
             *
             * @usage toEnd(unit)
             * @param unit [string] Period (for current date)
@@ -1137,7 +1137,7 @@ export const LOCALE_DOC = {
             *          toEnd('y') => end of current year
             * @category Calendar Functions | 6
             */`,
-      hash: 1484133673,
+      hash: 2037337847,
     },
 //#endregion toEnd
 
@@ -1156,16 +1156,16 @@ export const LOCALE_DOC = {
             * @usage dateShift(start, delta, unit)
             * @param start [string] Начальная дата (YYYY-MM-DD)
             * @param delta [number] Величина сдвига (положительная или отрицательная)
-            * @param unit [dateUnit] Единица измерения: 'd'/'day', 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
+            * @param unit [DateUnit] Единица измерения: 'd'/'day', 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
             *
             * @usage dateShift(delta, unit)
             * @param delta [number] Величина сдвига
-            * @param unit [dateUnit] Единица измерения
+            * @param unit [DateUnit] Единица измерения
             *
             * @usage dateShift([start1, start2], delta, unit)
             * @param dates [array] Массив дат
             * @param delta [number] Величина сдвига
-            * @param unit [dateUnit] Единица измерения
+            * @param unit [DateUnit] Единица измерения
             *
             * @example dateShift("2024-01-15", 5, 'd') => "2024-01-20"
             *          dateShift("2024-01-15", -1, 'm') => "2023-12-15"
@@ -1184,16 +1184,16 @@ export const LOCALE_DOC = {
             * @usage dateShift(start, delta, unit)
             * @param start [string] Start date (YYYY-MM-DD)
             * @param delta [number] Shift amount (positive or negative)
-            * @param unit [dateUnit] Time unit: 'd'/'day', 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
+            * @param unit [DateUnit] Time unit: 'd'/'day', 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
             *
             * @usage dateShift(delta, unit)
             * @param delta [number] Shift amount
-            * @param unit [dateUnit] Time unit
+            * @param unit [DateUnit] Time unit
             *
             * @usage dateShift([start1, start2], delta, unit)
             * @param dates [array] Array of dates
             * @param delta [number] Shift amount
-            * @param unit [dateUnit] Time unit
+            * @param unit [DateUnit] Time unit
             *
             * @example dateShift("2024-01-15", 5, 'd') => "2024-01-20"
             *          dateShift("2024-01-15", -1, 'm') => "2023-12-15"
@@ -1201,7 +1201,7 @@ export const LOCALE_DOC = {
             *          dateShift(["2024-01-01", "2024-01-31"], 1, 'm') => ["2024-02-01", "2024-02-29"]
             * @category Calendar Functions | 7
             */`,
-      hash: 2001658675,
+      hash: 1010561875,
     },
 //#endregion dateShift
 
@@ -1214,10 +1214,10 @@ export const LOCALE_DOC = {
             *
             * @usage bound(date, unit)
             * @param date [string] Дата (YYYY-MM-DD)
-            * @param unit [dateUnit] Период: 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
+            * @param unit [DateUnit] Период: 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
             *
             * @usage bound(unit)
-            * @param unit [dateUnit] Период (для текущей даты)
+            * @param unit [DateUnit] Период (для текущей даты)
             *
             * @example bound("2024-01-15", 'm') => ["2024-01-01", "2024-01-31"]
             *          bound("2024-01-15", 'q') => ["2024-01-01", "2024-03-31"]
@@ -1229,17 +1229,17 @@ export const LOCALE_DOC = {
             *
             * @usage bound(date, unit)
             * @param date [string] Date (YYYY-MM-DD)
-            * @param unit [dateUnit] Period: 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
+            * @param unit [DateUnit] Period: 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
             *
             * @usage bound(unit)
-            * @param unit [dateUnit] Period (for current date)
+            * @param unit [DateUnit] Period (for current date)
             *
             * @example bound("2024-01-15", 'm') => ["2024-01-01", "2024-01-31"]
             *          bound("2024-01-15", 'q') => ["2024-01-01", "2024-03-31"]
             *          bound('w') => boundaries of current week
             * @category Calendar Functions | 10
             */`,
-      hash: 1855414555,
+      hash: 1065710309,
     },
 //#endregion bound
 
@@ -1253,16 +1253,16 @@ export const LOCALE_DOC = {
             * @usage extend(start, delta, unit)
             * @param start [string] Начальная дата
             * @param delta [number] Величина расширения
-            * @param unit [dateUnit] Единица измерения: 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
+            * @param unit [DateUnit] Единица измерения: 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
             *
             * @usage extend(delta, unit)
             * @param delta [number] Величина расширения
-            * @param unit [dateUnit] Единица измерения (от текущей даты)
+            * @param unit [DateUnit] Единица измерения (от текущей даты)
             *
             * @usage extend([start, end], delta, unit)
             * @param period [array] Период [начало, конец]
             * @param delta [number] Величина расширения
-            * @param unit [dateUnit] Единица измерения
+            * @param unit [DateUnit] Единица измерения
             *
             * @example extend("2024-01-01", 5, 'd') => ["2024-01-01", "2024-01-06"]
             * @example extend(["2024-01-01", "2024-01-31"], 1, 'm') => ["2024-01-01", "2024-02-29"]
@@ -1274,22 +1274,22 @@ export const LOCALE_DOC = {
             * @usage extend(start, delta, unit)
             * @param start [string] Start date
             * @param delta [number] Extension amount
-            * @param unit [dateUnit] Time unit: 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
+            * @param unit [DateUnit] Time unit: 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
             *
             * @usage extend(delta, unit)
             * @param delta [number] Extension amount
-            * @param unit [dateUnit] Time unit (from current date)
+            * @param unit [DateUnit] Time unit (from current date)
             *
             * @usage extend([start, end], delta, unit)
             * @param period [array] Period [start, end]
             * @param delta [number] Extension amount
-            * @param unit [dateUnit] Time unit
+            * @param unit [DateUnit] Time unit
             *
             * @example extend("2024-01-01", 5, 'd') => ["2024-01-01", "2024-01-06"]
             * @example extend(["2024-01-01", "2024-01-31"], 1, 'm') => ["2024-01-01", "2024-02-29"]
             * @category Calendar Functions | 11
             */`,
-      hash: 935692002,
+      hash: 1468477186,
     },
 //#endregion extend
 
@@ -2304,26 +2304,28 @@ export const LOCALE_DOC = {
       ru: `/**
             * Применяет функцию к каждому элементу массива
             *
+            * В качестве функции можно использовать имя LPE функции
             * @usage map(arr, fn)
             * @param arr [array] Массив
             * @param fn [function] Функция для применения
             *
-            * @example map([1, 2, 3], fn({a}, a * 2)) => [2, 4, 6]
-            *          map([1, 2, 3], minus) => [-1, -2, -3]
+            * @example map({1, 2, 3}, fn({a}, a * 2)) => [2, 4, 6]
+            *          map({1, 2, 3}, minus) => [-1, -2, -3]
             * @category Работа с объектами | 20
             */`,
       en: `/**
             * Applies a function to each element of an array
             *
+            * You can use LPE function name as the function argument
             * @usage map(arr, fn)
             * @param arr [array] Array
             * @param fn [function] Function to apply
             *
-            * @example map([1, 2, 3], fn({a}, a * 2)) => [2, 4, 6]
-            *          map([1, 2, 3], minus) => [-1, -2, -3]
+            * @example map({1, 2, 3}, fn({a}, a * 2)) => [2, 4, 6]
+            *          map({1, 2, 3}, minus) => [-1, -2, -3]
             * @category Working with Objects | 20
             */`,
-      hash: 791828956,
+      hash: 844956379,
     },
 //#endregion map
 
@@ -2847,7 +2849,8 @@ export const LOCALE_DOC = {
             * @param exprs [any] Выражения для выполнения в контексте привязок
             *
             * @example let({{"x", 10}, {"y", 20}}, x + y) => 30
-            *          let({{"name", "Alice"}}, println("Hello,", name)) => Hello, Alice
+            *          let({{"name", "Alice"}}, println("Hello,", name), name) => Alice
+            *          ## Вывод в консоль: "Hello, Alice"
             * @category Работа с переменными | 1
             */`,
       en: `/**
@@ -2858,10 +2861,11 @@ export const LOCALE_DOC = {
             * @param exprs [any] Expressions to execute in the binding context
             *
             * @example let({{"x", 10}, {"y", 20}}, x + y) => 30
-            *          let({{"name", "Alice"}}, println("Hello,", name)) => Hello, Alice
+            *          let({{"name", "Alice"}}, println("Hello,", name), name) => Alice
+            *          ## Console output: "Hello, Alice"
             * @category Working with Variables | 1
             */`,
-      hash: 1381831429,
+      hash: 1308939040,
     },
 //#endregion let
 
@@ -3241,7 +3245,7 @@ export const LOCALE_DOC = {
             *
             * @example begin(\
             *          |  x := Hashmap,\
-            *          |  assoc_in({}, {"a", "b", "c"}, 42),\
+            *          |  assoc_in(x, {"a", "b", "c"}, 42),\
             *          |) => {c: 42}
             *          ## x == {a: {b: {c: 42}}}
             * @category Работа с переменными | 23
@@ -3256,12 +3260,12 @@ export const LOCALE_DOC = {
             *
             * @example begin(\
             *          |  x := Hashmap,\
-            *          |  assoc_in({}, {"a", "b", "c"}, 42),\
+            *          |  assoc_in(x, {"a", "b", "c"}, 42),\
             *          |) => {c: 42}
             *          ## x == {a: {b: {c: 42}}}
             * @category Working with Variables | 23
             */`,
-      hash: 1558190930,
+      hash: 1138430016,
     },
 //#endregion assoc_in
 
@@ -3659,12 +3663,12 @@ export const LOCALE_DOC = {
             * Получение выражения по условию
             *
             * @usage if(cond1, then1, cond2, then2, ..., else)
-            * @param cond [any] Условие
+            * @param cond [boolean] Условие
             * @param then [any] Выражение, выполняемое если условие истинно
             * @param else [any] Выражение, выполняемое если все условия ложны
             *
             * @usage if(cond1, then1, cond2, then2, ...)
-            * @param cond [any] Условие
+            * @param cond [boolean] Условие
             * @param then [any] Выражение, выполняемое если условие истинно
             *
             * @example if(5 > 3, "больше", 5 < 3, "меньше", "равны") => "больше"
@@ -3676,12 +3680,12 @@ export const LOCALE_DOC = {
             * Conditional expression
             *
             * @usage if(cond1, then1, cond2, then2, ..., else)
-            * @param cond [any] Condition
+            * @param cond [boolean] Condition
             * @param then [any] Expression to execute if condition is true
             * @param else [any] Expression to execute if all conditions are false
             *
             * @usage if(cond1, then1, cond2, then2, ...)
-            * @param cond [any] Condition
+            * @param cond [boolean] Condition
             * @param then [any] Expression to execute if condition is true
             *
             * @example if(5 > 3, "greater", 5 < 3, "less", "equal") => "greater"
@@ -3689,7 +3693,7 @@ export const LOCALE_DOC = {
             *          if(5 > 5, "greater", 5 < 5, "less") => undefined
             * @category Execution Control | 5
             */`,
-      hash: 818536353,
+      hash: 265405151,
     },
 //#endregion if
 
