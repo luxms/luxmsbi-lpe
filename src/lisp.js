@@ -327,12 +327,12 @@ const ifSF = (ast, ctx, options) => {
    * Получение выражения по условию
    *
    * @usage if(cond1, then1, cond2, then2, ..., else)
-   * @param cond [any] Условие
+   * @param cond [boolean] Условие
    * @param then [any] Выражение, выполняемое если условие истинно
    * @param else [any] Выражение, выполняемое если все условия ложны
    *
    * @usage if(cond1, then1, cond2, then2, ...)
-   * @param cond [any] Условие
+   * @param cond [boolean] Условие
    * @param then [any] Выражение, выполняемое если условие истинно
    *
    * @example if(5 > 3, "больше", 5 < 3, "меньше", "равны") => "больше"
@@ -430,7 +430,8 @@ const SPECIAL_FORMS = {                                                         
      * @param exprs [any] Выражения для выполнения в контексте привязок
      *
      * @example let({{"x", 10}, {"y", 20}}, x + y) => 30
-     *          let({{"name", "Alice"}}, println("Hello,", name)) => Hello, Alice
+     *          let({{"name", "Alice"}}, println("Hello,", name), name) => Alice
+     *          ## Вывод в консоль: "Hello, Alice"
      * @category Работа с переменными | 1
      */
     return EVAL(['begin', ...ast.slice(1)], [makeLetBindings(ast[0], ctx, rs), ctx], rs);
@@ -536,7 +537,7 @@ const SPECIAL_FORMS = {                                                         
      * > Текстовый оператор `||` парсится в `or`, из-за чего при выполнении `1 || 2` будет вызываться функция `or`.
      * <is-warning />
      * @usage logical-or(...exprs)
-     * @param exprs [list] Выражения для проверки
+     * @param exprs [boolean] Выражения для проверки
      *
      * @category Базовые операторы | 23
      */
@@ -553,7 +554,7 @@ const SPECIAL_FORMS = {                                                         
      * > Текстовый оператор `&&` парсится в `and`, из-за чего при выполнении `1 && 2` будет вызываться функция `and`.
      * <is-warning />
      * @usage logical-and(...exprs)
-     * @param exprs [list] Выражения для проверки
+     * @param exprs [boolean] Выражения для проверки
      *
      * @category Базовые операторы | 24
      */
@@ -750,7 +751,7 @@ const SPECIAL_FORMS = {                                                         
      *
      * @example begin(\
      *          |  x := Hashmap,\
-     *          |  assoc_in({}, {"a", "b", "c"}, 42),\
+     *          |  assoc_in(x, {"a", "b", "c"}, 42),\
      *          |) => {c: 42}
      *          ## x == {a: {b: {c: 42}}}
      * @category Работа с переменными | 23
@@ -1225,12 +1226,13 @@ export const STDLIB = {
     /**
      * Применяет функцию к каждому элементу массива
      *
+     * В качестве функции можно использовать имя LPE функции
      * @usage map(arr, fn)
      * @param arr [array] Массив
      * @param fn [function] Функция для применения
      *
-     * @example map([1, 2, 3], fn({a}, a * 2)) => [2, 4, 6]
-     *          map([1, 2, 3], minus) => [-1, -2, -3]
+     * @example map({1, 2, 3}, fn({a}, a * 2)) => [2, 4, 6]
+     *          map({1, 2, 3}, minus) => [-1, -2, -3]
      * @category Работа с объектами | 20
      */
       let arr = eval_lisp(ast[0], ctx,  {...rs, wantCallable: false});
@@ -1260,7 +1262,7 @@ export const STDLIB = {
      * Выбрасывает исключение
      *
      * @usage throw(error)
-     * @param error [any] Ошибка для выбрасывания
+     * @param error [string] Ошибка для выбрасывания
      *
      * @example throw("Error message")
      * @category Исключения | 1
@@ -1692,7 +1694,7 @@ export const STDLIB = {
      *
      * @usage apply(fn, ...args)
      * @param fn [function] Функция
-     * @param args [array] Аргументы функции
+     * @param args [any] Аргументы функции
      *
      * @example apply(fn({a,b,c}, a + b * c), 1, 2, 3) => 7
      * @category Базовые операторы | 41

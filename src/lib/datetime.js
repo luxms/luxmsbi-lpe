@@ -37,16 +37,16 @@ export function dateShift(one, two, three) {
    * @usage dateShift(start, delta, unit)
    * @param start [string] Начальная дата (YYYY-MM-DD)
    * @param delta [number] Величина сдвига (положительная или отрицательная)
-   * @param unit [dateUnit] Единица измерения: 'd'/'day', 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
+   * @param unit [DateUnit] Единица измерения: 'd'/'day', 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
    *
    * @usage dateShift(delta, unit)
    * @param delta [number] Величина сдвига
-   * @param unit [dateUnit] Единица измерения
+   * @param unit [DateUnit] Единица измерения
    *
    * @usage dateShift([start1, start2], delta, unit)
    * @param dates [array] Массив дат
    * @param delta [number] Величина сдвига
-   * @param unit [dateUnit] Единица измерения
+   * @param unit [DateUnit] Единица измерения
    *
    * @example dateShift("2024-01-15", 5, 'd') => "2024-01-20"
    *          dateShift("2024-01-15", -1, 'm') => "2023-12-15"
@@ -100,10 +100,10 @@ export function toStart(one, two) {
    *
    * @usage toStart(date, unit)
    * @param date [string] Дата
-   * @param unit [dateUnit] Период: 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
+   * @param unit [DateUnit] Период: 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
    *
    * @usage toStart(unit)
-   * @param unit [dateUnit] Период (для текущей даты)
+   * @param unit [DateUnit] Период (для текущей даты)
    *
    * @example toStart("2024-01-15", 'm') => "2024-01-01"
    *          toStart("2024-01-15", 'q') => "2024-01-01"
@@ -145,7 +145,7 @@ export function toEnd(one, two) {
    *
    * @usage toEnd(date, unit)
    * @param date [string] Дата
-   * @param unit [dateUnit] Период: 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
+   * @param unit [DateUnit] Период: 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
    *
    * @usage toEnd(unit)
    * @param unit [string] Период (для текущей даты)
@@ -190,10 +190,10 @@ export function bound(one, two) {
    *
    * @usage bound(date, unit)
    * @param date [string] Дата (YYYY-MM-DD)
-   * @param unit [dateUnit] Период: 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
+   * @param unit [DateUnit] Период: 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
    *
    * @usage bound(unit)
-   * @param unit [dateUnit] Период (для текущей даты)
+   * @param unit [DateUnit] Период (для текущей даты)
    *
    * @example bound("2024-01-15", 'm') => ["2024-01-01", "2024-01-31"]
    *          bound("2024-01-15", 'q') => ["2024-01-01", "2024-03-31"]
@@ -222,16 +222,16 @@ export function extend(one, two, three) {
    * @usage extend(start, delta, unit)
    * @param start [string] Начальная дата
    * @param delta [number] Величина расширения
-   * @param unit [dateUnit] Единица измерения: 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
+   * @param unit [DateUnit] Единица измерения: 'w'/'week', 'm'/'month', 'q'/'quarter', 'y'/'year'
    *
    * @usage extend(delta, unit)
    * @param delta [number] Величина расширения
-   * @param unit [dateUnit] Единица измерения (от текущей даты)
+   * @param unit [DateUnit] Единица измерения (от текущей даты)
    *
    * @usage extend([start, end], delta, unit)
    * @param period [array] Период [начало, конец]
    * @param delta [number] Величина расширения
-   * @param unit [dateUnit] Единица измерения
+   * @param unit [DateUnit] Единица измерения
    *
    * @example extend("2024-01-01", 5, 'd') => ["2024-01-01", "2024-01-06"]
    * @example extend(["2024-01-01", "2024-01-31"], 1, 'm') => ["2024-01-01", "2024-02-29"]
