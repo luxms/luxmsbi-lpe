@@ -265,6 +265,23 @@ export function makeSF(fn) {
 }
 
 
+/**
+ * Помечает функцию как "literal function" - в этом случае
+ * функция не будет считаться функцией
+ * и AST ["new", "Date"] будет работать как задумано
+ *
+ *
+ * @param {(...args: ?[]) => ?} fn
+ * @returns {typeof fn}
+ */
+export function makeLF(fn) {
+  if (isFunction(fn)) {
+    fn.__literalFunction = true;
+  }
+  return fn;
+}
+
+
 export function makeSkipForm(fn, overridedAst = undefined) {
   fn.__isSkipForm = true;
   if (overridedAst) {
@@ -835,13 +852,13 @@ export const STDLIB = {
   'null': null,                                                                // js specific
   'true': true,
   'false': false,
-  'Array': Array,                                                               // TODO: consider removing these properties
-  'Object': Object,
+  'Array': makeLF(Array),                                                               // TODO: consider removing these properties
+  'Object': makeLF(Object),
   'Hashmap': {},
-  'Date': Date,
+  'Date': makeLF(Date),
 
   'console': console,
-  'JSON': JSON,
+  'JSON': makeLF(JSON),
 
   // datetime fn
   ...STD,
@@ -2360,7 +2377,7 @@ function EVAL_IMPLEMENTATION(ast, ctx, options, evalOptions) {
       if (isString(ast)) {
         const value = $var$(ctx, ast, undefined, options, evalOptions);
         if (value !== undefined) {
-          if (isFunction(value) && options["wantCallable"] !== true) {
+          if (isFunction(value) && options["wantCallable"] !== true && !value.__literalFunction) {
             return ast
           } else {                                 // variable
             return value;
