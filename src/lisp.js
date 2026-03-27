@@ -2105,7 +2105,7 @@ export const STDLIB = {
 
   eval: (a) => {
     /**
-     * Вычисляет LPE-AST
+     * Вычисляет LPE-AST в контексте STDLIB
      *
      * @usage eval(expr)
      * @param expr [ast] LPE-выражение
@@ -2115,6 +2115,22 @@ export const STDLIB = {
      */
     return EVAL(a, STDLIB)
   },
+
+
+  'eval_ast': makeSF((ast, ctx, options) => {
+    /**
+     * Вычисляет LPE-AST
+     *
+     * @usage eval_ast(expr)
+     * @param expr [ast] LPE-выражение
+     *
+     * @example eval({"+", 1, 2}) => 3
+     * @category Интерпретатор | 3
+     */
+    const lisp = eval_lisp(ast[0], ctx, options);
+    const result = eval_lisp(lisp, ctx, options);
+    return result;
+  }),
 };
 
 
@@ -2180,8 +2196,6 @@ const contextAliases = {
   "do": ["doWhile"],
 
   ".-": ["property"],
-
-  "eval": ["eval_ast"],
 
   "=>": ["lambda"],
 }
