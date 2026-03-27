@@ -922,7 +922,7 @@ export const LOCALE_DOC = {
 //#region eval
     "eval": {
       ru: `/**
-            * Вычисляет LPE-AST
+            * Вычисляет LPE-AST в контексте STDLIB
             *
             * @usage eval(expr)
             * @param expr [ast] LPE-выражение
@@ -931,7 +931,7 @@ export const LOCALE_DOC = {
             * @category Интерпретатор | 2
             */`,
       en: `/**
-            * Evaluates LPE-AST
+            * Evaluates LPE-AST with STDLIB context
             *
             * @usage eval(expr)
             * @param expr [ast] LPE expression
@@ -939,7 +939,33 @@ export const LOCALE_DOC = {
             * @example eval({"+", 1, 2}) => 3
             * @category Interpreter | 2
             */`,
-      hash: 1888864872,
+      hash: 1566833786,
+    },
+//#endregion eval
+
+
+
+//#region eval
+    "eval_ast": {
+      ru: `/**
+            * Вычисляет LPE-AST
+            *
+            * @usage eval(expr)
+            * @param expr [ast] LPE-выражение
+            *
+            * @example eval({"+", 1, 2}) => 3
+            * @category Интерпретатор | 3
+            */`,
+      en: `/**
+            * Evaluates LPE-AST
+            *
+            * @usage eval(expr)
+            * @param expr [ast] LPE expression
+            *
+            * @example eval({"+", 1, 2}) => 3
+            * @category Interpreter | 3
+            */`,
+      hash: 1693133156,
     },
 //#endregion eval
 
