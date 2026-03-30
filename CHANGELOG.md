@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.6.3](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.6.2...v1.6.3) (2026-03-30)
+
+
+### Bug Fixes
+
+* add eval_ast logig with custom context ([d92fbac](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/d92fbacad2c87106e3f094f04cb5b75f2e504194))
+
 ### [1.6.2](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.5.10...v1.6.2) (2026-03-20)
 
 
