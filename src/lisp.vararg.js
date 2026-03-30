@@ -131,7 +131,7 @@ export default function makeVararg(template, fn) {
 
     const evaluatedASTs = varNameForPosition.map((varname, i) => {    // вычисляем AST ориентируясь на тип переменной
       const type = getType(varname), myAst = astArgs[i];
-      return EVAL(['->' + type, myAst], ctx, opt);    // Обернем в функцию "->type", например, ["->int", ...] (или ["->any", ...] если тип явно не указан)
+      return EVAL(type === "any" ? myAst : ['->' + type, myAst], ctx, opt);    // Обернем в функцию "->type", например, ["->int", ...] (или ["->any", ...] если тип явно не указан)
     });
 
     const self = {
@@ -153,5 +153,6 @@ export default function makeVararg(template, fn) {
 
   varargHandler.__isSpecialForm = true;
   varargHandler.__docFunction = fn;
+  varargHandler.__isVarargs = true;
   return varargHandler;
 }
