@@ -3385,7 +3385,7 @@ export const LOCALE_DOC = {
             *          re_match("test(aaa)", "\\((.*)\\)").0 => '(aaa)'
             *          re_match("test(aaa)", "\\((.*)\\)").1 => 'aaa'
             *          re_match("hello123", "[!]+") => null
-            * @category Working with Strings | 3
+            * @category Working with strings | 3
             */`,
       hash: 1312072238,
     },
