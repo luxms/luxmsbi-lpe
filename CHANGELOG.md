@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.6.4](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.6.3...v1.6.4) (2026-04-16)
+
+
+### Bug Fixes
+
+* en localization text ([a734dbd](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/a734dbd862853febec4994a35eb8c2e06d167e3f))
+* literal functions as variables ([11c4196](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/11c41961a19d83d78967670ad14ff43c582ec646))
+
 ### [1.6.3](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.6.2...v1.6.3) (2026-03-30)
 
 
