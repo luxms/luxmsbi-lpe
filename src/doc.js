@@ -353,6 +353,9 @@ function parseDocstring(docComment) {
   if (docComment === undefined || docComment === null) {
     return undefined;
   }
+  if (docComment.startsWith("/*") && docComment.endsWith("*/")) {
+    docComment = docComment.slice(2, -2);
+  }
   let index = 0;
   if (parseDocstring.index === undefined) {
     parseDocstring.index = 0;
