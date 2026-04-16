@@ -13,7 +13,7 @@ export default function unbox(args, resolve, streamAdapter) {
     args.filter(streamAdapter.isStream).map(streamAdapter.retain);
 
     // TODO: add loading state
-    const evaluatedArgs = args.map(a => streamAdapter.isStream(a) ? streamAdapter.getLastValue(a) : a);
+    let evaluatedArgs = args.map(a => streamAdapter.isStream(a) ? streamAdapter.getLastValue(a) : a);
 
     /**
      * The stream that will be returned
@@ -75,7 +75,8 @@ export default function unbox(args, resolve, streamAdapter) {
       if (streamAdapter.isStream(a)) {
         subscriptions.push(                                                                         // save subscription in order to dispose later
             streamAdapter.subscribe(a, (value) => {
-              evaluatedArgs[idx] = value;                                                             // update arguments
+              evaluatedArgs = [...evaluatedArgs];                                                   // We pass this array to user function, and want it to be immutable
+              evaluatedArgs[idx] = value;                                                           // update arguments
               onNextResult(resolve(evaluatedArgs))
             }));
       }

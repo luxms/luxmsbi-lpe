@@ -24,7 +24,7 @@ export interface StreamAdapter {
 
   next<T>(stream: Stream<T>, v: T): void;
 
-  subscribe<T>(stream: Stream<T>, callback: (value: T) => unknown): void;
+  subscribe<T>(stream: Stream<T>, callback: (value: T) => unknown): {dispose: () => void};
 }
 
 export interface EvalOptions {
