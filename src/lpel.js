@@ -179,7 +179,7 @@ export function tokenize(s, options) {
 
     if (c === '\n') {
       i++;
-      // result.push(make('LF', c));
+      result.push(make('LF', c));
 
     } else if (c <= ' ') {                                                                          // Ignore whitespace.
       i += 1;

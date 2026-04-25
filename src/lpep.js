@@ -199,9 +199,9 @@ const make_parse = function (options = {}) {
         advance();
         continue;
       }
-      // if (!thereWasSeparatorBefore) {                                                               //
-      //   makeError(m_token, "Statement expected");
-      // }
+      if (!thereWasSeparatorBefore) {
+        makeError(m_token, "Statement separator expected (';' or newline).");
+      }
 
       const s = statement();
       if (s) {

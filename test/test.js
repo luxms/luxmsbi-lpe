@@ -174,4 +174,39 @@ describe('LPE tests', function() {
     assert.deepEqual(lpe.parse('(1+2)'),['()', ['+', 1, 2]]);
     assert.deepEqual(lpe.parse('(1,2)'),['tuple', 1, 2]);
   });
+
+  describe('statement separators', function() {
+    it('should accept ; as statement separator', function() {
+      assert.deepEqual(lpe.parse('a()'), ['a']);
+      assert.deepEqual(lpe.parse('a(); b()'), ['begin', ['a'], ['b']]);
+      assert.deepEqual(lpe.parse('a();b()'), ['begin', ['a'], ['b']]);
+      assert.deepEqual(lpe.parse('a();b();c()'), ['begin', ['a'], ['b'], ['c']]);
+    });
+
+    it('should accept newline as statement separator', function() {
+      assert.deepEqual(lpe.parse('a()\nb()'), ['begin', ['a'], ['b']]);
+      assert.deepEqual(lpe.parse('a()\nb()\nc()'), ['begin', ['a'], ['b'], ['c']]);
+      assert.deepEqual(lpe.parse('a()\n\nb()'), ['begin', ['a'], ['b']]);
+      assert.deepEqual(lpe.parse('\na()\nb()\n'), ['begin', ['a'], ['b']]);
+      assert.deepEqual(lpe.parse('a()\n;\nb()'), ['begin', ['a'], ['b']]);
+    });
+
+    it('should reject space-separated statements', function() {
+      assert.throws(() => lpe.parse('a() b()'), lpe.LPESyntaxError);
+      assert.throws(() => lpe.parse('a()  b()'), lpe.LPESyntaxError);
+      assert.throws(() => lpe.parse('a\tb'), lpe.LPESyntaxError);
+    });
+
+    it('should reject adjacent statements with no separator', function() {
+      assert.throws(() => lpe.parse('a()b()'), lpe.LPESyntaxError);
+      assert.throws(() => lpe.parse('a()b()c()'), lpe.LPESyntaxError);
+    });
+
+    it('should still allow whitespace within an expression', function() {
+      assert.deepEqual(lpe.parse('1 + 2'), ['+', 1, 2]);
+      assert.deepEqual(lpe.parse('a + b'), ['+', 'a', 'b']);
+      assert.deepEqual(lpe.parse('fn(1, 2)'), ['fn', 1, 2]);
+      assert.deepEqual(lpe.parse('a +\nb'), ['+', 'a', 'b']);
+    });
+  });
 });
