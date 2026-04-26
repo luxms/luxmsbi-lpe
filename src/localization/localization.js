@@ -2896,6 +2896,37 @@ export const LOCALE_DOC = {
 //#endregion let
 
 
+//#region let*
+    "let*": {
+      ru: `/**
+            * Создаёт локальные привязки переменных последовательно: каждая следующая привязка
+            * видит предыдущие (в отличие от let, где привязки независимы).
+            * Это форма, в которую компилируется VAR ... RETURN.
+            *
+            * @usage let*(bindings, ...exprs)
+            * @param bindings [array] Список привязок [[имя, значение], ...]
+            * @param exprs [any] Выражения для выполнения в контексте привязок
+            *
+            * @example let*({{"x", 10}, {"y", x * 2}}, y) => 20
+            * @category Работа с переменными | 1
+            */`,
+      en: `/**
+            * Creates local variable bindings sequentially: each subsequent binding
+            * sees the previous ones (unlike let, where bindings are independent).
+            * This is the form that VAR ... RETURN compiles to.
+            *
+            * @usage let*(bindings, ...exprs)
+            * @param bindings [array] List of bindings [[name, value], ...]
+            * @param exprs [any] Expressions to execute in the binding context
+            *
+            * @example let*({{"x", 10}, {"y", x * 2}}, y) => 20
+            * @category Working with Variables | 1
+            */`,
+      hash: 211280403,
+    },
+//#endregion let*
+
+
 
 //#region def
     "def": {

@@ -456,7 +456,7 @@ export function makeDoc(contextName, func, docSource) {
   if (localize === undefined && lpeName !== undefined && ruDocValue !== null) {
     console.log(`DOC: WARNING: localization for function ${contextName}.${lpeName} undefined`);
   };
-  const hash = ruDocValue === null ? undefined : generateSimpleHash(ruDocValue[1].replaceAll(/\n\s+/g, "\n"));
+  const hash = ruDocValue === null ? undefined : generateSimpleHash(ruDocValue[1].replaceAll(/\r\n/g, "\n").replaceAll(/\n\s+/g, "\n"));
   if (hash !== undefined && localize !== undefined && localize.hash !== hash) {
     console.log(`DOC: WARNING: localization for ${contextName}.${lpeName} was outdated. Current hash: ${hash}`);
   }

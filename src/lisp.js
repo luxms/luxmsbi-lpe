@@ -425,10 +425,14 @@ const doSF = (ast, ctx, options) => {
  */
 const letStarSF = (ast, ctx, rs) => {
   /**
-   * Sequential bindings: each binding's RHS sees previous bindings.
-   * Promise/stream-aware via unbox. Used by VAR ... RETURN.
+   * Создаёт локальные привязки переменных последовательно: каждая следующая привязка
+   * видит предыдущие (в отличие от let, где привязки независимы).
+   * Это форма, в которую компилируется VAR ... RETURN.
    *
    * @usage let*(bindings, ...exprs)
+   * @param bindings [array] Список привязок [[имя, значение], ...]
+   * @param exprs [any] Выражения для выполнения в контексте привязок
+   *
    * @example let*({{"x", 10}, {"y", x * 2}}, y) => 20
    * @category Работа с переменными | 1
    */
