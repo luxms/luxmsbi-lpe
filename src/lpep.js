@@ -118,6 +118,8 @@ const make_parse = function (options = {}) {
       } else if (v === 'true' || v === 'false' || v === 'null') {
         o = m_symbol_table[v];
         a = "literal";
+      } else if (v === 'VAR' || v === 'RETURN') {                                                    // DAX-style block keywords
+        o = m_symbol_table[v];
       } else if (m_expr_scope.tp === "logical") {
         if (v === "or" || v === "and" || v === "not" || v === "in" || v === "is") {
           //a = "operator";
@@ -678,6 +680,44 @@ const make_parse = function (options = {}) {
       return this;
     });
   }
+
+  // DAX-style block:  VAR name = expr  (one or more)  RETURN expr
+  // Compiles to ["let*", ["[", ["[", n1, v1], ...], body]
+  // Bindings are sequential — each VAR may reference earlier VARs.
+  symbol("RETURN").nud = function () {
+    makeError(this, "RETURN without preceding VAR.");
+  };
+  prefix("VAR", function () {
+    // m_token is the variable name (we've just consumed VAR)
+    const bindings = [];
+    while (true) {
+      if (m_token.arity !== 'name') {
+        makeError(m_token, "Variable name expected after VAR.");
+      }
+      const name = m_token.value;
+      advance();                                                                                     // past name
+      if (m_token.value !== '=' && m_token.value !== ':=') {
+        makeError(m_token, "Expected '=' or ':=' after VAR " + name + ".");
+      }
+      advance();                                                                                     // past = or :=
+      const value = expression(0);
+      bindings.push(['[', name, value.sexpr]);
+      while (m_token.value === '\n' || m_token.value === ';') advance();                             // skip separators between bindings
+      if (m_token.value === 'VAR') {
+        advance();
+        continue;
+      }
+      if (m_token.value === 'RETURN') {
+        advance();
+        break;
+      }
+      makeError(m_token, "Expected VAR or RETURN.");
+    }
+    const body = expression(0);
+    this.arity = "binary";
+    this.sexpr = ['let*', ['[', ...bindings], body.sexpr];
+    return this;
+  });
 
   // Array of form {1, 2, 3}: c, postgres, java, M
   prefix('{', function () {

@@ -51,6 +51,90 @@ describe('LISP tests', function () {
     assert.deepEqual(lpe.eval_lisp( lpe.parse('let([[foo,3],[bar,4]], foo+bar)')), 7);
   });
 
+  describe('let* (sequential bindings, used by VAR ... RETURN)', function () {
+    it('should evaluate let* with single binding', function () {
+      assert.deepEqual(lpe.eval_lisp(["let*", ["[", ["[", "x", 10]], "x"]), 10);
+    });
+
+    it('should make later bindings see earlier ones', function () {
+      assert.deepEqual(
+        lpe.eval_lisp(["let*", ["[", ["[", "x", 10], ["[", "y", ["*", "x", 2]]], "y"]),
+        20
+      );
+      assert.deepEqual(
+        lpe.eval_lisp(["let*", [["x", 10], ["y", ["+", "x", 5]]], ["+", "x", "y"]]),
+        25
+      );
+    });
+
+    it('should support multiple body exprs (begin semantics)', function () {
+      assert.deepEqual(
+        lpe.eval_lisp(["let*", ["[", ["[", "x", 1]], "x", ["+", "x", 1]]),
+        2
+      );
+    });
+  });
+
+  describe('VAR ... RETURN', function () {
+    it('parses single VAR to let* form', function () {
+      assert.deepEqual(
+        lpe.parse('VAR x = 10\nRETURN x'),
+        ["let*", ["[", ["[", "x", 10]], "x"]
+      );
+    });
+
+    it('parses multiple VARs', function () {
+      assert.deepEqual(
+        lpe.parse('VAR x = 10\nVAR y = 20\nRETURN x + y'),
+        ["let*", ["[", ["[", "x", 10], ["[", "y", 20]], ["+", "x", "y"]]
+      );
+    });
+
+    it('accepts ; as separator between VARs', function () {
+      assert.deepEqual(
+        lpe.parse('VAR x = 1; VAR y = 2; RETURN x + y'),
+        ["let*", ["[", ["[", "x", 1], ["[", "y", 2]], ["+", "x", "y"]]
+      );
+    });
+
+    it('accepts := as well as = inside VAR', function () {
+      assert.deepEqual(
+        lpe.parse('VAR x := 10\nRETURN x'),
+        ["let*", ["[", ["[", "x", 10]], "x"]
+      );
+    });
+
+    it('evaluates with sequential semantics', function () {
+      assert.equal(lpe.eval_lisp(lpe.parse('VAR x = 10\nRETURN x')), 10);
+      assert.equal(lpe.eval_lisp(lpe.parse('VAR x = 10\nVAR y = 20\nRETURN x + y')), 30);
+      assert.equal(lpe.eval_lisp(lpe.parse('VAR x = 10\nVAR y = x * 2\nRETURN y')), 20);
+      assert.equal(lpe.eval_lisp(lpe.parse('VAR x = 10\nVAR y = x + 5\nRETURN x + y')), 25);
+    });
+
+    it('works nested inside an expression', function () {
+      assert.equal(
+        lpe.eval_lisp(lpe.parse('1 + (VAR x = 5\nRETURN x * 3)')),
+        16
+      );
+    });
+
+    it('rejects RETURN without VAR', function () {
+      assert.throws(() => lpe.parse('RETURN x'), lpe.LPESyntaxError);
+    });
+
+    it('rejects VAR without RETURN', function () {
+      assert.throws(() => lpe.parse('VAR x = 10'), lpe.LPESyntaxError);
+    });
+
+    it('rejects VAR with missing =', function () {
+      assert.throws(() => lpe.parse('VAR x 10\nRETURN x'), lpe.LPESyntaxError);
+    });
+
+    it('rejects VAR with missing name', function () {
+      assert.throws(() => lpe.parse('VAR = 10\nRETURN 1'), lpe.LPESyntaxError);
+    });
+  });
+
   it('should skip current realization and run lower', function () {
     const sf = skipFunctions;
     //toStart('20240203', 'w')

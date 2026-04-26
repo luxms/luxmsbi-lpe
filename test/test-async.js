@@ -29,4 +29,23 @@ describe('async tests', function () {
     const r = await pr;
     assert.equal(r, 5);
   });
+
+  describe('VAR ... RETURN with promises', function () {
+    it('unboxes a promise binding before later VARs see it', async function () {
+      const r = await eval_lpe('VAR x = p2\nVAR y = x * 10\nRETURN y', createCtx());
+      assert.equal(r, 20);
+    });
+
+    it('chains multiple promise bindings sequentially', async function () {
+      const r = await eval_lpe(
+        'VAR a = p1\nVAR b = p2\nVAR c = a + b\nRETURN c * 10',
+        createCtx());
+      assert.equal(r, 30);
+    });
+
+    it('handles a promise in the RETURN body', async function () {
+      const r = await eval_lpe('VAR x = 7\nRETURN p3 + x', createCtx());
+      assert.equal(r, 10);
+    });
+  });
 });

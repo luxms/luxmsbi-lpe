@@ -415,6 +415,56 @@ const doSF = (ast, ctx, options) => {
 }
 
 /**
+ * Sequential bindings: each binding sees the previous ones. The form produced by
+ * VAR ... RETURN. Walks the bindings recursively (mirrors ifSF):
+ *   - normalize the LPE array shape (strip "[" wrappers, accept single-pair shape)
+ *   - empty bindings -> eval body
+ *   - otherwise: EVAL first value, unbox it, then recurse with one fewer binding
+ *     and a new context frame {[name]: resolved} on top.
+ * Only values go through unbox — names are plain strings.
+ */
+const letStarSF = (ast, ctx, rs) => {
+  /**
+   * Sequential bindings: each binding's RHS sees previous bindings.
+   * Promise/stream-aware via unbox. Used by VAR ... RETURN.
+   *
+   * @usage let*(bindings, ...exprs)
+   * @example let*({{"x", 10}, {"y", x * 2}}, y) => 20
+   * @category Работа с переменными | 1
+   */
+  let bindings = ast[0];
+  if (!isArray(bindings)) {
+    throw new Error('LISP: let* expression invalid bindings form');
+  }
+  if (isString(bindings[0]) && isArrayFunction(bindings[0])) {                                       // strip outer "[" array constructor
+    return letStarSF([bindings.slice(1), ...ast.slice(1)], ctx, rs);
+  }
+  if (bindings.length > 0 && isString(bindings[0])) {                                                // single-pair shape ["name", valueAst]
+    return letStarSF([[bindings], ...ast.slice(1)], ctx, rs);
+  }
+  if (bindings.length === 0) {
+    return EVAL(['begin', ...ast.slice(1)], ctx, rs);
+  }
+  let pair = bindings[0];
+  if (isArray(pair) && isString(pair[0]) && isArrayFunction(pair[0])) {                              // strip "[" off this pair
+    pair = pair.slice(1);
+  }
+  if (!isArray(pair) || !isString(pair[0])) {
+    throw new Error('LISP: let* binding must be a [name, value] pair');
+  }
+  const [name, valueAst] = pair;
+  const value = EVAL(valueAst, ctx, rs);
+  return unbox(
+    [value],
+    ([resolved]) => letStarSF(
+      [bindings.slice(1), ...ast.slice(1)],
+      [{[name]: resolved}, ctx],
+      rs),
+    rs?.streamAdapter);
+};
+
+
+/**
  * Рекурсивный begin
  */
 const beginSF = (ast, ctx, options) => {
@@ -453,6 +503,8 @@ const SPECIAL_FORMS = {                                                         
      */
     return EVAL(['begin', ...ast.slice(1)], [makeLetBindings(ast[0], ctx, rs), ctx], rs);
   }),
+
+  'let*': makeSF(letStarSF),
 
 
   '`': makeSF((ast, ctx) => ast[0]),                                            // quote
