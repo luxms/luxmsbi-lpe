@@ -1,4 +1,21 @@
 /**
+ * Unwrap an LPE quoted-string AST value back to a plain string:
+ *   ["'", "2024-01-15"]      -> "2024-01-15"   (plain quoted)
+ *   ["'", "2024-01-15", "D"] -> "2024-01-15"   (D-tagged date — Oracle-friendly)
+ *   ['"', "2024-01-15"]      -> "2024-01-15"   (double-quoted)
+ * Anything that isn't this shape — already a string, a real [start, end] date pair,
+ * a number, etc. — is returned unchanged. This protects the [start, end] branches
+ * in dateShift/extend from misfiring on a D-tagged AST that happens to be a 3-array.
+ */
+function unwrapQuotedString(v) {
+  if (Array.isArray(v) && (v[0] === "'" || v[0] === '"') && typeof v[1] === 'string') {
+    return v[1];
+  }
+  return v;
+}
+
+
+/**
  * @return {string}
  */
 export function now() {
@@ -54,6 +71,9 @@ export function dateShift(one, two, three) {
    *          dateShift(["2024-01-01", "2024-01-31"], 1, 'm') => ["2024-02-01", "2024-02-29"]
    * @category Календарные функции | 7
    */
+  one   = unwrapQuotedString(one);
+  two   = unwrapQuotedString(two);
+  three = unwrapQuotedString(three);
   let start = one;
   let delta = two;
   let unit = three;
@@ -110,6 +130,8 @@ export function toStart(one, two) {
    *          toStart('y') => начало текущего года
    * @category Календарные функции | 5
    */
+  one = unwrapQuotedString(one);
+  two = unwrapQuotedString(two);
   let start = one;
   let unit = two;
   if (two === undefined) {
@@ -155,6 +177,8 @@ export function toEnd(one, two) {
    *          toEnd('y') => конец текущего года
    * @category Календарные функции | 6
    */
+  one = unwrapQuotedString(one);
+  two = unwrapQuotedString(two);
   let start = one;
   let unit = two;
   if (two === undefined) {
@@ -200,6 +224,8 @@ export function bound(one, two) {
    *          bound('w') => границы текущей недели
    * @category Календарные функции | 10
    */
+  one = unwrapQuotedString(one);
+  two = unwrapQuotedString(two);
   let start = one;
   let unit = two;
   if (two === undefined) {
@@ -237,6 +263,9 @@ export function extend(one, two, three) {
    * @example extend(["2024-01-01", "2024-01-31"], 1, 'm') => ["2024-01-01", "2024-02-29"]
    * @category Календарные функции | 11
    */
+  one   = unwrapQuotedString(one);
+  two   = unwrapQuotedString(two);
+  three = unwrapQuotedString(three);
   let start = one;
   let delta = two;
   let unit = three;
@@ -270,6 +299,7 @@ export function year(dt) {
    * @example year("2024-01-15") => 2024
    * @category Календарные функции | 30
    */
+  dt = unwrapQuotedString(dt);
   const [y] = getSplitPeriod(getRawPeriod(dt));
   return y;
 }
@@ -289,6 +319,7 @@ export function hoty(dt) {
    *          hoty("2024-07-15") => 2
    * @category Календарные функции | 31
    */
+  dt = unwrapQuotedString(dt);
   return getHalfYearNumber(getRawPeriod(dt));
 }
 
@@ -307,6 +338,7 @@ export function qoty(dt) {
    *          qoty("2024-10-15") => 4
    * @category Календарные функции | 32
    */
+  dt = unwrapQuotedString(dt);
   return getQuarter(getRawPeriod(dt));
 }
 
@@ -325,6 +357,7 @@ export function moty(dt) {
    *          moty("2024-12-15") => 12
    * @category Календарные функции | 33
    */
+  dt = unwrapQuotedString(dt);
   const [, m] = getSplitPeriod(getRawPeriod(dt));
   return m;
 }
@@ -343,6 +376,7 @@ export function woty(dt) {
    * @example woty("2024-01-15") => 3
    * @category Календарные функции | 34
    */
+  dt = unwrapQuotedString(dt);
   return getWeekNumber(getRawPeriod(dt));
 }
 
@@ -361,6 +395,7 @@ export function doty(dt) {
    * @example doty("2024-12-31") => 366 (високосный год)
    * @category Календарные функции | 35
    */
+  dt = unwrapQuotedString(dt);
   return getDayNumber(getRawPeriod(dt));
 }
 

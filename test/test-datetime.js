@@ -613,3 +613,108 @@ describe('Calendar function: isod', () => {
   });
 });
 
+
+// D-tagged strings (e.g. D'2024-01-15') parse to the AST shape ["'", "2024-01-15", "D"].
+// They are used so SQL generation can emit Oracle-friendly DATE literals. The runtime
+// must accept them anywhere a plain date string is accepted — both via parse (the SF
+// for "'" unwraps them) and via context (where the array shape reaches the function).
+describe('Datetime functions accept D-tagged strings', () => {
+  // The exact AST a parser would produce for D'2024-01-15' / 'm' / etc.
+  const dDate = ["'", '2024-01-15', 'D'];
+  const qDate = ["'", '2024-01-15'];           // plain quoted, no tag
+  const qUnit = ["'", 'm'];                    // unit also quoted
+
+  describe('via the parser (D-string in source)', () => {
+    it('dateShift accepts D-string', () => {
+      assert.strictEqual(
+        lpe.eval_lisp(lpe.parse("dateShift(D'2024-01-15', 5, 'd')")),
+        '2024-01-20'
+      );
+    });
+    it('toStart accepts D-string', () => {
+      assert.strictEqual(
+        lpe.eval_lisp(lpe.parse("toStart(D'2024-01-15', 'm')")),
+        '2024-01-01'
+      );
+    });
+    it('year accepts D-string', () => {
+      assert.strictEqual(
+        lpe.eval_lisp(lpe.parse("year(D'2024-01-15')")),
+        2024
+      );
+    });
+    it('isom accepts D-string', () => {
+      assert.strictEqual(
+        lpe.eval_lisp(lpe.parse("isom(D'2024-01-15')")),
+        '2024-01'
+      );
+    });
+  });
+
+  describe('via context (D-array bound as a value)', () => {
+    it('dateShift unwraps D-array context value (no longer treated as [start,end] pair)', () => {
+      assert.strictEqual(
+        lpe.eval_lisp(['dateShift', 'd', 5, ["'", 'd']], { d: dDate }),
+        '2024-01-20'
+      );
+    });
+    it('extend unwraps D-array context value', () => {
+      assert.deepStrictEqual(
+        lpe.eval_lisp(['extend', 'd', 5, ["'", 'd']], { d: dDate }),
+        ['2024-01-15', '2024-01-20']
+      );
+    });
+    it('toStart unwraps D-array context value', () => {
+      assert.strictEqual(
+        lpe.eval_lisp(['toStart', 'd', ["'", 'm']], { d: dDate }),
+        '2024-01-01'
+      );
+    });
+    it('toEnd unwraps D-array context value', () => {
+      assert.strictEqual(
+        lpe.eval_lisp(['toEnd', 'd', ["'", 'm']], { d: dDate }),
+        '2024-01-31'
+      );
+    });
+    it('bound unwraps D-array context value', () => {
+      assert.deepStrictEqual(
+        lpe.eval_lisp(['bound', 'd', ["'", 'm']], { d: dDate }),
+        ['2024-01-01', '2024-01-31']
+      );
+    });
+    it('year/qoty/moty/isom unwrap D-array context values', () => {
+      assert.strictEqual(lpe.eval_lisp(['year', 'd'], { d: dDate }), 2024);
+      assert.strictEqual(lpe.eval_lisp(['qoty', 'd'], { d: dDate }), 1);
+      assert.strictEqual(lpe.eval_lisp(['moty', 'd'], { d: dDate }), 1);
+      assert.strictEqual(lpe.eval_lisp(['isom', 'd'], { d: dDate }), '2024-01');
+    });
+    it('also handles plain quoted-string context values (no D tag)', () => {
+      assert.strictEqual(
+        lpe.eval_lisp(['dateShift', 'd', 5, ["'", 'd']], { d: qDate }),
+        '2024-01-20'
+      );
+    });
+    it('also handles a quoted-string unit passed via context', () => {
+      assert.strictEqual(
+        lpe.eval_lisp(['toStart', 'd', 'u'], { d: '2024-01-15', u: qUnit }),
+        '2024-01-01'
+      );
+    });
+  });
+
+  describe('legitimate [start, end] pairs are NOT mistakenly unwrapped', () => {
+    it('dateShift treats a real date pair as [start, end]', () => {
+      assert.deepStrictEqual(
+        lpe.eval_lisp(['dateShift', 'r', 1, ["'", 'm']], { r: ['2024-01-01', '2024-01-31'] }),
+        ['2024-02-01', '2024-02-29']
+      );
+    });
+    it('extend treats a real date pair as [start, end]', () => {
+      assert.deepStrictEqual(
+        lpe.eval_lisp(['extend', 'r', 1, ["'", 'm']], { r: ['2024-01-01', '2024-01-31'] }),
+        ['2024-01-01', '2024-02-29']
+      );
+    });
+  });
+});
+
