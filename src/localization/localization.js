@@ -2734,38 +2734,42 @@ export const LOCALE_DOC = {
 //#region slice
     "slice": {
       ru: `/**
-            * Возвращает срез массива
+            * Возвращает срез массива или подстроку
             *
-            * @usage slice(array, start)
-            * @param array [array] Массив
+            * @usage slice(arrayOrString, start)
+            * @param arrayOrString [array | string] Массив или строка
             * @param start [number] Начальный индекс
             *
-            * @usage slice(array, start, end)
-            * @param array [array] Массив
+            * @usage slice(arrayOrString, start, end)
+            * @param arrayOrString [array | string] Массив или строка
             * @param start [number] Начальный индекс
             * @param end [number] Конечный индекс
             *
             * @example slice({1, 2, 3, 4}, 1, 3) => [2, 3]
             *          slice({1, 2, 3, 4}, 1) => [2, 3, 4]
+            *          slice("hello world", 0, 5) => "hello"
+            *          slice("hello", 1) => "ello"
             * @category Работа с объектами | 34
             */`,
       en: `/**
-            * Returns a slice of an array
+            * Returns a slice of an array or a substring
             *
-            * @usage slice(array, start)
-            * @param array [array] Array
+            * @usage slice(arrayOrString, start)
+            * @param arrayOrString [array | string] Array or string
             * @param start [number] Start index
             *
-            * @usage slice(array, start, end)
-            * @param array [array] Array
+            * @usage slice(arrayOrString, start, end)
+            * @param arrayOrString [array | string] Array or string
             * @param start [number] Start index
             * @param end [number] End index
             *
             * @example slice({1, 2, 3, 4}, 1, 3) => [2, 3]
             *          slice({1, 2, 3, 4}, 1) => [2, 3, 4]
+            *          slice("hello world", 0, 5) => "hello"
+            *          slice("hello", 1) => "ello"
             * @category Working with Objects | 34
             */`,
-      hash: 266688245,
+      hash: 197658129,
     },
 //#endregion slice
 

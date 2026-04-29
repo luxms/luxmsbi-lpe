@@ -475,4 +475,27 @@ describe('LISP tests', function () {
      }});
 });
 
+  describe('slice', function () {
+    it('slices arrays (existing behavior)', function () {
+      assert.deepEqual(lpe.eval_lisp(lpe.parse('slice({1, 2, 3, 4}, 1, 3)')), [2, 3]);
+      assert.deepEqual(lpe.eval_lisp(lpe.parse('slice({1, 2, 3, 4}, 1)')),    [2, 3, 4]);
+    });
+
+    it('slices strings (substring)', function () {
+      assert.equal(lpe.eval_lisp(lpe.parse('slice("hello world", 0, 5)')), 'hello');
+      assert.equal(lpe.eval_lisp(lpe.parse('slice("hello world", 6)')),    'world');
+      assert.equal(lpe.eval_lisp(lpe.parse('slice("hello", 1, 2)')),       'e');
+    });
+
+    it('works with dot notation (s.slice(...) is invoke-style)', function () {
+      assert.equal(lpe.eval_lisp(lpe.parse('s.slice(1, 2)'), { s: 'hello world' }), 'e');
+      assert.equal(lpe.eval_lisp(lpe.parse('s.slice(6)'),    { s: 'hello world' }), 'world');
+    });
+
+    it('returns [] for non-array/non-string inputs', function () {
+      assert.deepEqual(lpe.eval_lisp(lpe.parse('slice(42, 0, 2)')), []);
+      assert.deepEqual(lpe.eval_lisp(lpe.parse('slice(null, 0, 2)')), []);
+    });
+  });
+
 });

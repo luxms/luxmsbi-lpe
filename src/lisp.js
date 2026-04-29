@@ -1638,22 +1638,25 @@ export const STDLIB = {
 
   'slice': (a, b, ...end) => {
     /**
-     * Возвращает срез массива
+     * Возвращает срез массива или подстроку
      *
-     * @usage slice(array, start)
-     * @param array [array] Массив
+     * @usage slice(arrayOrString, start)
+     * @param arrayOrString [array | string] Массив или строка
      * @param start [number] Начальный индекс
      *
-     * @usage slice(array, start, end)
-     * @param array [array] Массив
+     * @usage slice(arrayOrString, start, end)
+     * @param arrayOrString [array | string] Массив или строка
      * @param start [number] Начальный индекс
      * @param end [number] Конечный индекс
      *
      * @example slice({1, 2, 3, 4}, 1, 3) => [2, 3]
      *          slice({1, 2, 3, 4}, 1) => [2, 3, 4]
+     *          slice("hello world", 0, 5) => "hello"
+     *          slice("hello", 1) => "ello"
      * @category Работа с объектами | 34
      */
-    return isArray(a) ? a.slice(b, end.length > 0 ? end[0] : a.length) : [];
+    if (!isArray(a) && !isString(a)) return [];
+    return a.slice(b, end.length > 0 ? end[0] : a.length);
   },
 
 
