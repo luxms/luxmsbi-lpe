@@ -760,7 +760,15 @@ const make_parse = function (options = {}) {
   });
 
   // Array of form {1, 2, 3}: c, postgres, java, M
+  // Special case: {=} is the empty-hash literal (vs {} which is an empty array).
   prefix('{', function () {
+    if (m_token.value === '=' && m_tokens[m_token_nr]?.value === '}') {                              // {=}  -> empty hash
+      advance();                                                                                     // past =
+      advance('}');
+      this.arity = "unary";
+      this.sexpr = ["hash"];
+      return this;
+    }
     let a = [];
     if (m_token.id !== '}') {
       while (true) {

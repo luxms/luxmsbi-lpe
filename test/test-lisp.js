@@ -475,6 +475,44 @@ describe('LISP tests', function () {
      }});
 });
 
+  describe('hash and {=} empty-hash literal', function () {
+    it('{=} produces an empty hash (not array)', function () {
+      const r = lpe.eval_lisp(lpe.parse('{=}'));
+      assert.deepEqual(r, {});
+      assert.strictEqual(Array.isArray(r), false);
+    });
+
+    it('{} still produces an empty array', function () {
+      const r = lpe.eval_lisp(lpe.parse('{}'));
+      assert.deepEqual(r, []);
+      assert.strictEqual(Array.isArray(r), true);
+    });
+
+    it('{=} parses to ["hash"]', function () {
+      assert.deepEqual(lpe.parse('{=}'), ['hash']);
+    });
+
+    it('hash() builtin returns an empty hash', function () {
+      const r = lpe.eval_lisp(lpe.parse('hash()'));
+      assert.deepEqual(r, {});
+      assert.strictEqual(Array.isArray(r), false);
+    });
+
+    it('hash(a=1, b=2) builds a hash from kwargs', function () {
+      assert.deepEqual(lpe.eval_lisp(lpe.parse('hash(a=1, b=2)')), { a: 1, b: 2 });
+    });
+
+    it('does not affect existing {a=1} / {1,2} / {a=1, 2} forms', function () {
+      assert.deepEqual(lpe.eval_lisp(lpe.parse('{a=1}')),    { a: 1 });
+      assert.deepEqual(lpe.eval_lisp(lpe.parse('{1, 2}')),   [1, 2]);
+      const hybrid = lpe.eval_lisp(lpe.parse('{a=1, 2}'));
+      assert.strictEqual(Array.isArray(hybrid), true);
+      assert.strictEqual(hybrid.length, 1);
+      assert.strictEqual(hybrid[0], 2);                               // array part
+      assert.strictEqual(hybrid.a, 1);                                // kwarg side-property
+    });
+  });
+
   describe('~> JS method dispatch', function () {
     it('calls a method on the receiver with this bound', function () {
       assert.equal(lpe.eval_lisp(lpe.parse("'sss' ~> charCodeAt(1)")), 115);

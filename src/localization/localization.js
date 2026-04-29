@@ -3539,6 +3539,47 @@ export const LOCALE_DOC = {
 //#endregion vector
 
 
+//#region hash
+    "hash": {
+      ru: `/**
+            * Создаёт хэш-таблицу из именованных аргументов.
+            *
+            * Без аргументов возвращает пустой хэш {}.
+            * Позиционные аргументы игнорируются — для смешанных структур используйте vector.
+            *
+            * Литерал \`{=}\` в исходнике компилируется в вызов hash() и тоже даёт пустой хэш —
+            * это удобно, потому что \`{}\` означает пустой массив.
+            *
+            * @usage hash(...kwargs)
+            * @param kwargs [any] Именованные элементы
+            *
+            * @example hash() => {}
+            *          hash(a = 1, b = 2) => {a: 1, b: 2}
+            *          {=} => {} ## то же, что hash()
+            * @category Создание объектов | 4
+            */`,
+      en: `/**
+            * Creates a hashmap from named arguments.
+            *
+            * With no arguments, returns an empty hash {}.
+            * Positional arguments are ignored — for mixed structures use vector.
+            *
+            * The literal \`{=}\` in source compiles to a call of hash() and also gives an
+            * empty hash — useful, because \`{}\` means an empty array.
+            *
+            * @usage hash(...kwargs)
+            * @param kwargs [any] Named elements
+            *
+            * @example hash() => {}
+            *          hash(a = 1, b = 2) => {a: 1, b: 2}
+            *          {=} => {} ## same as hash()
+            * @category Creating Objects | 4
+            */`,
+      hash: 1444867549,
+    },
+//#endregion hash
+
+
 
 //#region reshape
     "reshape": {
