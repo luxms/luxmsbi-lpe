@@ -540,6 +540,46 @@ const make_parse = function (options = {}) {
     });
   }
 
+  // ~> operator: JS-style member access / method dispatch on the left-hand receiver.
+  //   obj ~> name          -> obj.name           (functions returned bound to obj)
+  //   obj ~> "name"        -> obj["name"]        (same as above; explicit string form)
+  //   obj ~> (expr)        -> obj[EVAL(expr)]    (dynamic — key computed at runtime)
+  //   obj ~> name(args)    -> obj.name(args)     (call with this=obj)
+  // Compiles to _get_obj_meth_ / _call_obj_meth_ — separate from `.` (thread-first),
+  // so existing dot semantics are untouched.
+  infix("~>", 70, function (left) {
+    this.first = left;
+    this.arity = "binary";
+    this.value = "~>";
+
+    // Dynamic key:  obj ~> (expr)   — peek so the parens aren't silently erased
+    // by the prefix '(' before we can see them.
+    if (m_token.id === '(') {
+      advance('(');
+      const keyExpr = expression(0);
+      advance(')');
+      this.sexpr = ['_get_obj_meth_', left.sexpr, keyExpr.sexpr];
+      return this;
+    }
+
+    this.second = expression(70);
+    const right = this.second;
+    if (right.value === '(') {                                                                       // call form: method(args)
+      const [methodName, ...args] = right.sexpr;
+      if (typeof methodName !== 'string') {
+        makeError(right, "~> right side must be a named method call.");
+      }
+      this.sexpr = ['_call_obj_meth_', left.sexpr, ['"', methodName], ...args];
+    } else if (right.arity === 'name') {                                                             // bare name -> property/bound-method
+      this.sexpr = ['_get_obj_meth_', left.sexpr, ['"', right.sexpr]];
+    } else if (Array.isArray(right.sexpr) && (right.sexpr[0] === '"' || right.sexpr[0] === "'")) {   // string literal "name"
+      this.sexpr = ['_get_obj_meth_', left.sexpr, right.sexpr];
+    } else {
+      makeError(right, "~> expects a name, a string, (expr), or a method call (e.g. s ~> name, s ~> \"name\", s ~> (key), s ~> name(args)).");
+    }
+    return this;
+  });
+
 
 
   // WARNING HACK FIXME DIMA - добавил чтобы писать order_by(+a)

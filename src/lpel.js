@@ -71,6 +71,7 @@ const SUFFIX = '=<>&|:.';
 const OPSEQ = {
   '<': '-=<>',                                               // <-  <=  <<  <>
   '=': '=>',                                                  //  == =>
+  '~': '>',                                                   // ~ alone (regex match) or ~> (JS method dispatch)
 }
 
 

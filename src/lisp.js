@@ -558,6 +558,21 @@ const SPECIAL_FORMS = {                                                         
   }),
 
 
+  // Internal SF used by the ~> operator (no docstring on purpose so it doesn't
+  // need a localization entry — it is never user-callable by name).
+  // Returns obj[name]. If the value is a function, it is bound to obj so the
+  // call site can invoke it standalone with `this` preserved. Non-functions
+  // (objects, primitives, undefined) pass through unchanged so property chains
+  // like  window ~> document ~> location ~> replace  compose naturally.
+  '_get_obj_meth_': makeSF((ast, ctx, rs) => {
+    const [obj, propName] = ast.map(a => EVAL(a, ctx, rs));
+    if (obj == null) {
+      throw new Error(`~> receiver is ${obj}; cannot read '${propName}'`);
+    }
+    const v = obj[propName];
+    return (typeof v === 'function') ? v.bind(obj) : v;
+  }),
+
   '_call_obj_meth_': makeSF((ast, ctx, rs) => {
     /**
      * Вызывает метод объекта (внутренняя функция для макроса invoke)

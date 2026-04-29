@@ -475,6 +475,100 @@ describe('LISP tests', function () {
      }});
 });
 
+  describe('~> JS method dispatch', function () {
+    it('calls a method on the receiver with this bound', function () {
+      assert.equal(lpe.eval_lisp(lpe.parse("'sss' ~> charCodeAt(1)")), 115);
+      assert.equal(lpe.eval_lisp(lpe.parse("'hello world' ~> slice(1, 4)")), 'ell');
+      assert.equal(lpe.eval_lisp(lpe.parse("'  spaces  ' ~> trim()")), 'spaces');
+      assert.equal(lpe.eval_lisp(lpe.parse("'AbC' ~> toLowerCase()")), 'abc');
+    });
+
+    it('works with the receiver coming from context', function () {
+      assert.equal(lpe.eval_lisp(lpe.parse("s ~> charCodeAt(0)"), { s: 'A' }), 65);
+    });
+
+    it('without parens returns a method bound to the receiver', function () {
+      const fn = lpe.eval_lisp(lpe.parse("'abc' ~> charCodeAt"));
+      assert.equal(typeof fn, 'function');
+      assert.equal(fn(0), 97);
+      assert.equal(fn(2), 99);
+    });
+
+    it('chains: each ~> sees the previous result as the new receiver', function () {
+      assert.equal(
+        lpe.eval_lisp(lpe.parse("'hello world' ~> slice(1, 4) ~> toUpperCase()")),
+        'ELL'
+      );
+    });
+
+    it('works on arrays too (plain JS objects)', function () {
+      assert.deepEqual(
+        lpe.eval_lisp(lpe.parse("a ~> concat({4, 5})"), { a: [1, 2, 3] }),
+        [1, 2, 3, 4, 5]
+      );
+    });
+
+    it('rejects non-method/non-name on the right side', function () {
+      assert.throws(() => lpe.parse("'hello' ~> 5"), lpe.LPESyntaxError);
+    });
+
+    it('throws when method does not exist on the receiver', function () {
+      assert.throws(() => lpe.eval_lisp(lpe.parse("'hi' ~> noSuchMethod()")));
+    });
+
+    it('bound-form returns undefined for missing properties (JS-like)', function () {
+      assert.strictEqual(lpe.eval_lisp(lpe.parse("'hi' ~> noSuchMethod")), undefined);
+    });
+
+    it('walks plain JS objects through property chains', function () {
+      const ctx = { o: { a: { b: { c: 42, greet: function () { return 'hi from ' + this.c; } } } } };
+      assert.strictEqual(lpe.eval_lisp(lpe.parse("o ~> a ~> b ~> c"), ctx), 42);
+      // last step is a function — it comes back bound to the inner object
+      const greet = lpe.eval_lisp(lpe.parse("o ~> a ~> b ~> greet"), ctx);
+      assert.strictEqual(typeof greet, 'function');
+      assert.strictEqual(greet(), 'hi from 42');
+    });
+
+    it('explains clearly when a chain hits null/undefined mid-way', function () {
+      const ctx = { o: { a: null } };
+      assert.throws(() => lpe.eval_lisp(lpe.parse("o ~> a ~> b"), ctx), /receiver is null/i);
+    });
+
+    it('accepts a string literal on the right (same as bare name)', function () {
+      const ctx = { o: { greeting: 'hi' } };
+      assert.equal(lpe.eval_lisp(lpe.parse('o ~> "greeting"'), ctx), 'hi');
+      // bound charCodeAt: this='sss', so charCodeAt(1) returns 115 ('s')
+      const fn = lpe.eval_lisp(lpe.parse("'sss' ~> 'charCodeAt'"), ctx);
+      assert.equal(fn(1), 115);
+    });
+
+    it('accepts (expr) on the right for a runtime-computed key', function () {
+      const ctx = { o: { greeting: 'hi', farewell: 'bye' }, k: 'greeting' };
+      // variable as key
+      assert.equal(lpe.eval_lisp(lpe.parse('o ~> (k)'), ctx), 'hi');
+      // expression as key
+      assert.equal(lpe.eval_lisp(lpe.parse('o ~> ("fare" + "well")'), ctx), 'bye');
+    });
+
+    it('mixes static and dynamic keys in a chain', function () {
+      const ctx = { o: { a: { b: { c: 42 } } }, key: 'a' };
+      assert.equal(lpe.eval_lisp(lpe.parse('o ~> (key) ~> b ~> c'), ctx), 42);
+    });
+
+    it("user's pattern: x := 'document'; window~>(x)", function () {
+      const fakeWindow = { document: { title: 'demo' } };
+      assert.deepEqual(
+        lpe.eval_lisp(lpe.parse("x := 'document'; window ~> (x)"), { window: fakeWindow }),
+        { title: 'demo' }
+      );
+    });
+
+    it('does not interfere with the existing ~ regex-match operator', function () {
+      // 'a ~ b' is still parsed as ["~", "a", "b"], not as ~>.
+      assert.deepEqual(lpe.parse('a ~ b'), ['~', 'a', 'b']);
+    });
+  });
+
   describe('slice', function () {
     it('slices arrays (existing behavior)', function () {
       assert.deepEqual(lpe.eval_lisp(lpe.parse('slice({1, 2, 3, 4}, 1, 3)')), [2, 3]);
