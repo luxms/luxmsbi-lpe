@@ -484,8 +484,14 @@ const make_parse = function (options = {}) {
         a.push(e);
       } else {
         new_expression_scope("lpe");
+        // ',' and ';' are both accepted as argument separators. DAX (and Excel/
+        // Power BI) uses ';' as the list separator in locales where ',' is the
+        // decimal separator (most of Europe, Russia). Inside (...) there is no
+        // ambiguity — ';' as a statement terminator never made sense here, it
+        // was only ever a parse error.
+        const isArgSep = (id) => id === ',' || id === ';';
         while (true) {
-          if (m_token.id === ',') {
+          if (isArgSep(m_token.id)) {
             a.push({
               value: null,
               arity: "literal"
@@ -504,10 +510,10 @@ const make_parse = function (options = {}) {
             m_expr_scope.pop();
             // var e = statements();
             a.push(e);
-            if (m_token.id !== ",") {
+            if (!isArgSep(m_token.id)) {
               break;
             }
-            advance(",");
+            advance();
           }
         }
         m_expr_scope.pop();

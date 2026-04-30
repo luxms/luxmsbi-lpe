@@ -209,4 +209,39 @@ describe('LPE tests', function() {
       assert.deepEqual(lpe.parse('a +\nb'), ['+', 'a', 'b']);
     });
   });
+
+  describe('argument separator: ; accepted (DAX-Euro locale compat)', function () {
+    it('parses ; identically to , inside function calls', function () {
+      assert.deepEqual(lpe.parse('f(a, b, c)'),  lpe.parse('f(a; b; c)'));
+      assert.deepEqual(lpe.parse('IF(a > b, 1, 2)'),  lpe.parse('IF(a > b; 1; 2)'));
+      assert.deepEqual(lpe.parse('SUM(x; y)'), ['SUM', 'x', 'y']);
+    });
+
+    it('handles mixed , and ; in the same call', function () {
+      assert.deepEqual(lpe.parse('f(a, b; c)'), ['f', 'a', 'b', 'c']);
+      assert.deepEqual(lpe.parse('f(a; b, c)'), ['f', 'a', 'b', 'c']);
+    });
+
+    it('handles missing-arg edge cases like , does', function () {
+      // Same shape as f(,), f(a,), etc. — internally the missing slots are
+      // pushed with sexpr=undefined; this is the existing , behavior preserved.
+      assert.deepEqual(lpe.parse('f(;)'),    lpe.parse('f(,)'));
+      assert.deepEqual(lpe.parse('f(a;)'),   lpe.parse('f(a,)'));
+      assert.deepEqual(lpe.parse('f(;a)'),   lpe.parse('f(,a)'));
+      assert.deepEqual(lpe.parse('f(a;;b)'), lpe.parse('f(a,,b)'));
+    });
+
+    it('does not affect ; as a top-level statement separator', function () {
+      // Outside (...), ';' still terminates statements as before.
+      assert.deepEqual(lpe.parse('a(); b()'), ['begin', ['a'], ['b']]);
+    });
+
+    it('does not affect ; inside nested calls', function () {
+      // The inner call's ; terminates inner-arg parsing; the outer call continues.
+      assert.deepEqual(
+        lpe.parse('outer(inner(a; b); c)'),
+        ['outer', ['inner', 'a', 'b'], 'c']
+      );
+    });
+  });
 });
