@@ -210,6 +210,52 @@ describe('LPE tests', function() {
     });
   });
 
+  describe('comments: -- line and /* */ block (DAX/SQL compat)', function () {
+    it('-- starts a line comment when preceded by whitespace', function () {
+      assert.deepEqual(lpe.parse('1 + 2 -- ignored'),               ['+', 1, 2]);
+      assert.deepEqual(lpe.parse('-- top of file\nx + y'),          ['+', 'x', 'y']);
+      assert.deepEqual(lpe.parse('a -- one\nb -- two\nc'),          ['begin', 'a', 'b', 'c']);
+    });
+
+    it('-- continues an expression across newlines (mid-expression comment)', function () {
+      // `1 + -- comment\n2` should parse as 1 + 2; the line comment ends at \n
+      // but the + is still pending so expression parsing resumes on next line.
+      assert.deepEqual(lpe.parse('1 + -- mid\n2'),                  ['+', 1, 2]);
+    });
+
+    it('does NOT treat -- as a comment when it is in arithmetic position (no whitespace before)', function () {
+      // Backwards-compat: `1--2` keeps meaning `1 - (-2)`.
+      assert.deepEqual(lpe.parse('1--2'),                           ['-', 1, ['-', 2]]);
+      assert.deepEqual(lpe.parse('a--b'),                           ['-', 'a', ['-', 'b']]);
+      assert.deepEqual(lpe.parse('1 - -2'),                         ['-', 1, ['-', 2]]);   // sanity
+    });
+
+    it('/* */ starts and ends a block comment', function () {
+      assert.deepEqual(lpe.parse('1 /* mid */ + 2'),                ['+', 1, 2]);
+      assert.deepEqual(lpe.parse('/* head */ x + y'),               ['+', 'x', 'y']);
+      assert.deepEqual(lpe.parse('x + y /* tail */'),               ['+', 'x', 'y']);
+    });
+
+    it('/* */ block comment can span multiple lines', function () {
+      assert.deepEqual(lpe.parse('1 /* multi\n  line\n  block */ + 2'), ['+', 1, 2]);
+    });
+
+    it('empty /**/ is allowed', function () {
+      assert.deepEqual(lpe.parse('1 + /**/ 2'),                     ['+', 1, 2]);
+    });
+
+    it('// line comments still work (regression guard)', function () {
+      assert.deepEqual(lpe.parse('1 + 2 // ignored'),               ['+', 1, 2]);
+    });
+
+    it('comments compose with the ; argument separator', function () {
+      assert.deepEqual(
+        lpe.parse('IF(/* check */ a > b; -- DAX style\n  1; 2)'),
+        ['IF', ['>', 'a', 'b'], 1, 2]
+      );
+    });
+  });
+
   describe('argument separator: ; accepted (DAX-Euro locale compat)', function () {
     it('parses ; identically to , inside function calls', function () {
       assert.deepEqual(lpe.parse('f(a, b, c)'),  lpe.parse('f(a; b; c)'));

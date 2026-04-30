@@ -288,8 +288,31 @@ export function tokenize(s, options) {
       const {type, str} = nextString();
       result.push(make(type, str));
 
-    } else if (c === '/' && s.charAt(i + 1) === '/') {                                              // comment
+    } else if (c === '/' && s.charAt(i + 1) === '/') {                                              // // line comment
       i += 1;
+      for (; ;) {
+        c = s.charAt(i);
+        if (c === '\n' || c === '\r' || c === '') {
+          break;
+        }
+        i += 1;
+      }
+
+    } else if (c === '/' && s.charAt(i + 1) === '*') {                                              // /* block comment */ (DAX/JS-style)
+      i += 2;
+      while (i < length) {
+        if (s.charAt(i) === '*' && s.charAt(i + 1) === '/') {
+          i += 2;
+          break;
+        }
+        i += 1;
+      }
+      // Unterminated comment runs to end-of-input — same forgiving behavior as //.
+
+    } else if (c === '-' && s.charAt(i + 1) === '-' && (i === 0 || s.charAt(i - 1) <= ' ')) {       // -- line comment (DAX/SQL-style)
+      // Only treat -- as a comment when preceded by whitespace or at start of input,
+      // so existing LPE arithmetic like `1--2` (= 1 - -2 = 3) keeps working.
+      i += 2;
       for (; ;) {
         c = s.charAt(i);
         if (c === '\n' || c === '\r' || c === '') {

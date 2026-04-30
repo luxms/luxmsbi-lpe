@@ -11,6 +11,7 @@ looks like, and what tests cover it. Read these alongside `../CHANGELOG.md`
 
 - [Statement separators](./statement-separators.md) — `;` and `\n` are now required between top-level statements; adjacency (`a() b()`) is rejected.
 - [Argument separators](./argument-separators.md) — `;` is also accepted as an argument separator inside `(...)`, for DAX-Euro-locale compat.
+- [Comments: `//`, `--`, `/* */`](./comments.md) — DAX/SQL line and block comments accepted.
 - [VAR … RETURN](./var-return.md) — DAX-style block syntax that compiles to `let*`.
 - [`~>` operator](./tilde-arrow-operator.md) — JS-style member access and method dispatch, separate from `.`.
 - [`{=}` empty-hash literal](./empty-hash-literal.md) — the literal you reach for when `{}` (empty array) won't do.
