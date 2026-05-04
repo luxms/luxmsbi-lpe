@@ -29,16 +29,17 @@ std = statement denotation
 */
 
 
-import { isArray } from './lisp';
+import { isArray, isHash } from './lisp';
 import { tokenize, makeError, LPESyntaxError } from './lpel';
 
 /**
  *
- * @param {{squareBrackets: boolean}} options
+ * @param {EvalOptions} opt
  * @returns {function(*): null|*|{sexpr: string[]}}
  */
-const make_parse = function (options = {}) {
-  const squareBrackets = options.squareBrackets ?? false;                           // by default - ! squareBrackets
+const make_parse = function (opt = {}) {
+  const squareBrackets = opt.squareBrackets ?? false;                           // by default - ! squareBrackets
+  let options = opt;
 
   var m_symbol_table = {};
   var m_token;
@@ -220,6 +221,78 @@ const make_parse = function (options = {}) {
           {sexpr: ['begin', ...program.map(el => el.sexpr)]});
   };
 
+
+
+  function addMetaForSexpr (left) {
+    if (!options.debug || !isArray(left.sexpr)) {
+      return;
+    }
+    // Добавить в AST информацию об исходной строке
+    /** @type {ASTMeta} */
+    const meta = {
+      source: left.src,
+      position: left.namePosiotion === undefined ? [left.from, left.to] : [...left.namePosiotion],
+      keyPosiotion: left.namePosiotion === undefined ? [left.from, left.to] : left.namePosiotion,
+      argsPositions: [],
+    };
+
+    if (options.sourceMeta !== undefined) {
+      meta.outerMeta = options.sourceMeta;
+    }
+
+    if (left.closurePosition !== undefined) {
+      meta.keyClosurePosiotion = left.closurePosition;
+      if (meta.keyClosurePosiotion[0] < meta.position[0]) {
+        meta.position[0] = meta.keyClosurePosiotion[0];
+      }
+      if (meta.keyClosurePosiotion[1] > meta.position[1]) {
+        meta.position[1] = meta.keyClosurePosiotion[1];
+      }
+    }
+
+    const multipleArgs = [".", "..", "->", "->>"];
+
+    const args = multipleArgs.includes(left.value) ? [left.second]
+                : isArray(left.sexpr) && left.sexpr[0] === "()" && left.sexpr.length === 1 ? []
+                : isArray(left.second) ? left.second // Функция, у которой first - токен имени, а second - аргументы
+                : isHash(left.second) ? [left.first, left.second] // Бинарный оператор
+                : isArray(left.first) ? left.first  // Оператор типа (), {}, []
+                : isHash(left.first) ? [left.first] // Унарный оператор
+                : [];
+
+    if (multipleArgs.includes(left.value)) {
+      meta.multiplePosition = [meta.keyPosiotion];
+      let tok = left.first;
+      while (tok.value === left.value) {
+        args.unshift(tok.second);
+        meta.multiplePosition.unshift(tok.sexpr.meta.keyPosiotion)
+        tok = tok.first;
+      }
+      args.unshift(tok);
+    }
+
+    if (isArray(args)) {
+      for (const arg of args) {
+        let from = arg.from, to = arg.to;
+        if (isArray(arg.sexpr) && arg.sexpr.meta !== undefined) {
+          from = arg.sexpr.meta.position[0];
+          to = arg.sexpr.meta.position[1];
+        }
+        meta.argsPositions.push([from, to]);
+        if (from < meta.position[0]) {
+          meta.position[0] = from;
+        }
+        if (to > meta.position[1]) {
+          meta.position[1] = to;
+        }
+      }
+    }
+
+    left.sexpr.meta = meta;
+  }
+
+
+
   const expression = function (rbp) {
     let t = m_token;
     advance();
@@ -231,8 +304,12 @@ const make_parse = function (options = {}) {
     while (rbp < m_token.lbp) {
       t = m_token;
       advance();
+      addMetaForSexpr(left);
       left = t.led(left);
     }
+
+    addMetaForSexpr(left);
+
     return left;
   };
 
@@ -521,6 +598,8 @@ const make_parse = function (options = {}) {
     }
 
     this.sexpr = [this.first.value].concat(a.map(function(el){return el.sexpr}));
+    this.namePosiotion = [this.first.from, this.first.to];
+    this.closurePosition = [m_token.from, m_token.to];
     advance(")");
     return this;
   });
@@ -602,15 +681,25 @@ const make_parse = function (options = {}) {
       this.value = 'not';
       this.sexpr = 'not';
       const e = {
-        from: 0,
-        to: 2,
+        src: this.src,
+        crs: this.crs,
+        from: this.from,
+        to: this.to,
+        closurePosition: expr.closurePosition,
         value: '(',
         arity: 'binary',
         sexpr: ['not'],
         first: this,
       };
       if (expr.sexpr.length > 1) {
-        e.second = [{from: 4, to: 5, value: expr.sexpr[1], arity: 'literal', sexpr: expr.sexpr[1]}]
+        e.second = [{
+          from: expr.first[0].from,
+          to: expr.first[0].to,
+          src: expr.first[0].src,
+          value: expr.sexpr[1],
+          arity: 'literal',
+          sexpr: expr.sexpr[1]
+        }]
         e.sexpr.push(expr.sexpr)  // keep () in the parsed AST
         // e.sexpr = e.sexpr.concat(expr.sexpr) // keep () in the parsed AST
       }
@@ -654,6 +743,7 @@ const make_parse = function (options = {}) {
       this.arity = "binary"
       this.sexpr = ["()"]
       this.first = { from: this.from, to: this.to+1, value: '()', arity: 'name', sexpr: ['()'] }
+      this.closurePosition = [m_token.from, m_token.to];
       advance(")");
       return this;
     }
@@ -681,14 +771,17 @@ const make_parse = function (options = {}) {
           advance(",");
         }
       }
+      const closurePosition = [m_token.from, m_token.to];
       advance(")");
 
       const sexpr = [a.length > 1 ? "tuple" : "()"].concat(a.filter(Boolean).map((el) => el.sexpr));
       return {
+        ...this,
         first: a,
         value: "(",                              // FIXME: why not make it '()' ?? and looks like function `()` call ?
         arity: "unary",
         sexpr: sexpr,
+        closurePosition: closurePosition,
       };
     }
 
@@ -719,6 +812,7 @@ const make_parse = function (options = {}) {
           advance(",");
         }
       }
+      this.closurePosition = [m_token.from, m_token.to];
       advance("]");
       this.first = a;
       this.arity = "unary";
@@ -786,6 +880,7 @@ const make_parse = function (options = {}) {
         advance(",");
       }
     }
+    this.closurePosition = [m_token.from, m_token.to];
     advance('}');
     this.first = a;
     this.arity = "unary";
@@ -793,7 +888,8 @@ const make_parse = function (options = {}) {
     return this;
   });
 
-  return function (source) {
+  return function (source, opt) {
+    options = opt;
     m_source = source;
     m_tokens = tokenize(source, {squareBrackets});
     m_token_nr = 0;
@@ -807,8 +903,27 @@ const make_parse = function (options = {}) {
 };
 
 
-const parser3 = make_parse({squareBrackets: false});
-const parser4 = make_parse({squareBrackets: true});
+/** @type {Record<string, (src: string, opt: EvalOptions) => any>} */
+const parsers = {}
+
+
+/**
+ * Создаёт и кэширует парсер
+ * @param {EvalOptions} options
+ */
+function parserFabric(options) {
+  const compileDependentOptions = [
+    // Здесь указываются опции, от которых зависит функциональное наполнение парсера
+    options.squareBrackets || false,
+  ];
+  const parserKey = compileDependentOptions.join(":");
+  if (parsers[parserKey] === undefined) {
+    parsers[parserKey] = make_parse(options);
+  }
+  return parsers[parserKey];
+}
+
+
 
 /**
  *
@@ -819,14 +934,9 @@ const parser4 = make_parse({squareBrackets: true});
 export function parse(str, options = {}) {
   try {
     const squareBrackets = options.squareBrackets ?? false;                                         // by default - do not use square brackets (true)
-    let parser;
-    if (squareBrackets) {
-      parser = parser4;                                                                             // In v4 - square brackets are interpreted as special strings (SQL column/table)
-    } else {
-      parser = parser3;
-    }
+    let parser = parserFabric(options);
 
-    const parseResult = parser(str);   // from, to, value, arity, sexpr
+    const parseResult = parser(str, options);   // from, to, value, arity, sexpr
     return parseResult.sexpr;
 
   } catch(err) {
