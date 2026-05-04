@@ -24,6 +24,21 @@ import { makeDoc, selectPerfectFunctionName } from "./doc";
  * @property {boolean=} resolveString Proceed variables to their names <br>`lpe 'x' -> string 'x' (if x is not defined)`
  * @property {any=} streamAdapter Is there any streaming library so lpe can use it
  * @property {boolean=} squareBrackets Should `[Square Brackets]` be interpreted as string
+ * @property {boolean}    [debug] Activate debug:
+ *                                - Add `ASTMeta` to parse result AST
+ * @property {ASTMeta}    [sourceMeta] Мета of outer expression if is nested parse function
+ */
+
+
+/**
+ * @typedef {Object} ASTMeta
+ * @property {string} source Source string
+ * @property {ASTMeta} [outerMeta] Мета of outer expression if is nested parse function
+ * @property {[number, number]} position Positin of expression with all it arguments
+ * @property {[number, number]} keyPosiotion Position of function name or operator
+ * @property {[number, number][]} [mulpiplePosiotion] Position of all multiple operators (a.b.c.d)
+ * @property {[number, number]} [keyClosurePosiotion] Position of closure operator part
+ * @property {[number, number][]} argsPositions Arguments positions
  */
 
 
