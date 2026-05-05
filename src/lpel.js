@@ -175,12 +175,15 @@ export function tokenize(s, options) {
   };
 
   let c;                                                                                            // The current character.
+  let parenDepth = 0;                                                                               // (), [], {} nesting; LFs only emitted at depth 0
   while ((c = s.charAt(i))) {                                                                       // Loop through this text, one character at a time.
     from = i;
 
     if (c === '\n') {
       i++;
-      result.push(make('LF', c));
+      if (parenDepth === 0) {                                                                       // Inside parens, newlines are whitespace, not statement separators
+        result.push(make('LF', c));
+      }
 
     } else if (c <= ' ') {                                                                          // Ignore whitespace.
       i += 1;
@@ -347,6 +350,8 @@ export function tokenize(s, options) {
 
    // single-character operator
     } else {
+      if (c === '(' || c === '[' || c === '{') parenDepth++;
+      else if (c === ')' || c === ']' || c === '}') parenDepth = Math.max(0, parenDepth - 1);
       i += 1;
       result.push(make('operator', c));
       c = s.charAt(i);

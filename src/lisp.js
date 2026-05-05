@@ -35,9 +35,9 @@ import { makeDoc, selectPerfectFunctionName } from "./doc";
  * @property {string} source Source string
  * @property {ASTMeta} [outerMeta] Мета of outer expression if is nested parse function
  * @property {[number, number]} position Positin of expression with all it arguments
- * @property {[number, number]} keyPosiotion Position of function name or operator
- * @property {[number, number][]} [mulpiplePosiotion] Position of all multiple operators (a.b.c.d)
- * @property {[number, number]} [keyClosurePosiotion] Position of closure operator part
+ * @property {[number, number]} keyPosition Position of function name or operator
+ * @property {[number, number][]} [mulpiplePosition] Position of all multiple operators (a.b.c.d)
+ * @property {[number, number]} [keyClosurePosition] Position of closure operator part
  * @property {[number, number][]} argsPositions Arguments positions
  */
 

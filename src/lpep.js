@@ -231,8 +231,8 @@ const make_parse = function (opt = {}) {
     /** @type {ASTMeta} */
     const meta = {
       source: left.src,
-      position: left.namePosiotion === undefined ? [left.from, left.to] : [...left.namePosiotion],
-      keyPosiotion: left.namePosiotion === undefined ? [left.from, left.to] : left.namePosiotion,
+      position: left.namePosition === undefined ? [left.from, left.to] : [...left.namePosition],
+      keyPosition: left.namePosition === undefined ? [left.from, left.to] : left.namePosition,
       argsPositions: [],
     };
 
@@ -241,12 +241,12 @@ const make_parse = function (opt = {}) {
     }
 
     if (left.closurePosition !== undefined) {
-      meta.keyClosurePosiotion = left.closurePosition;
-      if (meta.keyClosurePosiotion[0] < meta.position[0]) {
-        meta.position[0] = meta.keyClosurePosiotion[0];
+      meta.keyClosurePosition = left.closurePosition;
+      if (meta.keyClosurePosition[0] < meta.position[0]) {
+        meta.position[0] = meta.keyClosurePosition[0];
       }
-      if (meta.keyClosurePosiotion[1] > meta.position[1]) {
-        meta.position[1] = meta.keyClosurePosiotion[1];
+      if (meta.keyClosurePosition[1] > meta.position[1]) {
+        meta.position[1] = meta.keyClosurePosition[1];
       }
     }
 
@@ -261,11 +261,11 @@ const make_parse = function (opt = {}) {
                 : [];
 
     if (multipleArgs.includes(left.value)) {
-      meta.multiplePosition = [meta.keyPosiotion];
+      meta.multiplePosition = [meta.keyPosition];
       let tok = left.first;
       while (tok.value === left.value) {
         args.unshift(tok.second);
-        meta.multiplePosition.unshift(tok.sexpr.meta.keyPosiotion)
+        meta.multiplePosition.unshift(tok.sexpr.meta.keyPosition)
         tok = tok.first;
       }
       args.unshift(tok);
@@ -547,6 +547,9 @@ const make_parse = function (opt = {}) {
     }
 
     // dima support for missed function arguments...
+    // Newlines inside an argument list are whitespace, not statement separators,
+    // so skip any LF tokens before looking at the first arg / closer.
+    while (m_token.id === 'LF') advance();
     if (m_token.id !== ")") {
       if (false && (left.value == "where" || left.value == "filter" || left.value == "expr" || left.value == "logexpr")) {
         // специальный парсер для where - logical expression.
@@ -587,6 +590,7 @@ const make_parse = function (opt = {}) {
             m_expr_scope.pop();
             // var e = statements();
             a.push(e);
+            while (m_token.id === 'LF') advance();
             if (!isArgSep(m_token.id)) {
               break;
             }
@@ -598,7 +602,7 @@ const make_parse = function (opt = {}) {
     }
 
     this.sexpr = [this.first.value].concat(a.map(function(el){return el.sexpr}));
-    this.namePosiotion = [this.first.from, this.first.to];
+    this.namePosition = [this.first.from, this.first.to];
     this.closurePosition = [m_token.from, m_token.to];
     advance(")");
     return this;
@@ -737,6 +741,8 @@ const make_parse = function (opt = {}) {
   });
 
   prefix("(", function () {
+    // Newlines inside parens are whitespace, not statement separators.
+    while (m_token.id === 'LF') advance();
     if (m_token.value === ')'){
       // если это просто () две скобки, то возвращаем сразу кусок AST,генерим функцию с именем "()"
       // {"from":3,"to":4,"value":"(","arity":"operator","sexpr":"("}
@@ -765,6 +771,7 @@ const make_parse = function (opt = {}) {
             break;
           }
           a.push(expression(0));
+          while (m_token.id === 'LF') advance();
           if (m_token.id !== ",") {
             break;
           }
@@ -786,6 +793,7 @@ const make_parse = function (opt = {}) {
     }
 
     var e = expression(0);
+    while (m_token.id === 'LF') advance();
     if ([".", "->"].includes(e.value)) {
       // в скобки взято выражение из цепочки LPE вызовов, нужно запомнить скобки, делаем push "()" в текущий AST
       e = {
@@ -802,10 +810,13 @@ const make_parse = function (opt = {}) {
   if (!squareBrackets) {
     prefix("[", function () {
       var a = [];
+      // Newlines inside a [...] literal are whitespace, like inside (...).
+      while (m_token.id === 'LF') advance();
       if (m_token.id !== "]") {
         while (true) {
           a.push(expression(0));
           // a.push(statements());
+          while (m_token.id === 'LF') advance();
           if (m_token.id !== ",") {
             break;
           }
