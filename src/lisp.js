@@ -214,7 +214,9 @@ export const __getitem__ = Symbol.for('__getitem__');
       return $var$(theCtx, varName, value, options, evalOptions);
     }
     if (value === undefined) return undefined;                                                      // get => variable not found in all contexts
-    if (ctx.length) $var$(ctx[0], varName, value, options, evalOptions);                            // set => set variable to HEAD context
+    if (ctx.length) {
+      return $var$(ctx[0], varName, value, options, evalOptions);                                   // set => set variable to HEAD context
+    }
     return undefined;                                                                               // ??? ctx.length = 0
   }
 
