@@ -445,7 +445,7 @@ export function selectPerfectFunctionName(name1, name2) {
  * @returns {any}
  */
 export function makeDoc(contextName, func, docSource) {
-  let ruDocValue = (docSource || func).toString().match(/\{\s*\/\*\*([\s\S]*?)\*\//);
+  let ruDocValue = (docSource || func).toString().match(/\{(?:\s*|var[\s\w_;,$-]+)*\/\*\*([\s\S]*?)\*\//);
   let res = func;
   const lpeName = func.lpeName || docSource?.lpeName;
   if (lpeName === undefined) {
