@@ -470,10 +470,11 @@ const letStarSF = (ast, ctx, rs) => {
   if (isArray(pair) && isString(pair[0]) && isArrayFunction(pair[0])) {                              // strip "[" off this pair
     pair = pair.slice(1);
   }
-  if (!isArray(pair) || !isString(pair[0])) {
+  if (!isArray(pair) || pair.length !== 2) {
     throw new Error('LISP: let* binding must be a [name, value] pair');
   }
-  const [name, valueAst] = pair;
+  const [nameAst, valueAst] = pair;
+  const name = String(EVAL(nameAst, ctx, rs));
   const value = EVAL(valueAst, ctx, rs);
   return unbox(
     [value],
