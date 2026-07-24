@@ -857,14 +857,14 @@ const SPECIAL_FORMS = {                                                         
      *          ## x == {a: {b: {c: 42}}}
      * @category Работа с переменными | 23
      */
-    const array = eval_lisp(ast[1], ctx, {...rs, wantCallable: false});
+    const array = eval_lisp(ast[1], ctx, rs);
     // удивительно, но работает set(a . 3 , 2, "Hoy")
     //const m = ["->", ast[0]].concat( array.slice(0,-1) );
     //const e = ["set", m, array.pop(), ast[2]]
     // первый аргумент в ast - ссылка на контекст/имя переменной
     //console.log('assoc_in var:', JSON.stringify(ast))
-    // let focus = $var$(ctx, ast[0], undefined, {...rs, wantCallable: false});
-    let focus = EVAL(ast[0], ctx, {...rs, wantCallable: false});
+    // let focus = $var$(ctx, ast[0], undefined, rs);
+    let focus = EVAL(ast[0], ctx, rs);
     for (var i = 0; i < array.length-1; i++) {
       if (focus[array[i]] === undefined) {
         // нужно создать
@@ -900,8 +900,8 @@ const SPECIAL_FORMS = {                                                         
      *          ## y = { c: { d: 12, f: 10 } }
      * @category Работа с переменными | 24
      */
-    const from = EVAL(ast[0], ctx, {...rs, wantCallable: false})
-    const to = EVAL(ast[1], ctx, {...rs, wantCallable: false})
+    const from = EVAL(ast[0], ctx, rs);
+    const to = EVAL(ast[1], ctx, rs);
     //console.log(`CP ${JSON.stringify(from)} to `, JSON.stringify(to))
     const lpe = ["assoc_in", to[0], ["["].concat(to.slice(1)), ["get_in", from[0], ["["].concat(from.slice(1))]]
     //console.log('CP', JSON.stringify(ast))
@@ -1345,7 +1345,7 @@ export const STDLIB = {
   'pick': makeVararg(['n:int'], (n, args) => args[n - 1]),                                          // The pick function returns the n:th expression in the list. n is an integer between 1 and N.
   //
 
-  'map': makeSF((ast, ctx, rs) => {
+  'map': (arr, fn) => {
     /**
      * Применяет функцию к каждому элементу массива
      *
@@ -1358,11 +1358,8 @@ export const STDLIB = {
      *          map({1, 2, 3}, minus) => [-1, -2, -3]
      * @category Работа с объектами | 20
      */
-      let arr = eval_lisp(ast[0], ctx,  {...rs, wantCallable: false});
-      rs.wantCallable = true;
-      let fn = eval_lisp(ast[1], ctx,  {...rs, wantCallable: true});
       return isArray(arr) ? arr.map(it => fn(it)) : [];
-  }),
+  },
 
 
   'filter': (arr, fn) => {

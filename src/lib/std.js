@@ -130,7 +130,7 @@ const STD = {
      * @category Создание объектов | 12
      */
     let argNames = [];
-    if (ast[0]?.[0] === 'tuple') argNames = ast[0].slice(1);
+    if (ast[0]?.[0] === 'tuple' || ast[0]?.[0] === '()') argNames = ast[0].slice(1);
     else argNames = [ast[0]];
     return EVAL(['->fn', ast[1], ...argNames], ctx, opt);                                    // Подготавливает аргументы в другом порядке и вызывает ->fn
   }),

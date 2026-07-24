@@ -503,7 +503,7 @@ const make_parse = function (opt = {}) {
   infix("<-", 20);
 
   // Стрелочка функции f := a => print(a)
-  infix("=>", 40);
+  infix("=>", 21);
 
   infixr('~', 40);
   infixr('!~', 40);
