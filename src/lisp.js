@@ -42,6 +42,34 @@ import { makeDoc, selectPerfectFunctionName } from "./doc";
  */
 
 
+class ReturnThrow extends Error {
+  value = undefined;
+  /**
+   * @param {any} value
+   */
+  constructor(value) {
+    super(`Unexpected return construction with value [${value}]`);
+    this.value = value;
+  }
+}
+
+
+/**
+ * Ловит return ошибку и возвращает ее значение
+ * @param {function} fn
+ * @returns
+ */
+export function catchReturn(fn) {
+  try {
+    return fn();
+  } catch (err) {
+    if (err instanceof ReturnThrow) {
+      return err.value;
+    }
+    throw err;
+  }
+}
+
 
 export const isArray = (arg) => {
   /**
@@ -451,7 +479,8 @@ const letStarSF = (ast, ctx, rs) => {
    * @param exprs [any] Выражения для выполнения в контексте привязок
    *
    * @example let*({{"x", 10}, {"y", x * 2}}, y) => 20
-   * @category Работа с переменными | 1
+   * @category Работа с переменными | 2
+   * @tags return-support
    */
   let bindings = ast[0];
   if (!isArray(bindings)) {
@@ -499,13 +528,16 @@ const beginSF = (ast, ctx, options) => {
    * @example begin(println("Hello"), println("World"), 1 + 2) => 3
    *          ## Выведет "Hello", "World" в консоль
    * @category Управление выполнением | 1
+   * @tags return-support
    */
   if (ast.length === 0) return null;
-  const firstOperator = EVAL(ast[0], ctx, options);
-  return unbox(
-      [firstOperator],
-      ([firstResult]) => ast.length === 1 ? firstResult : beginSF(ast.slice(1), ctx, options),      // Если один аргумент - возвращаем значение
-      options?.streamAdapter);
+  return catchReturn(() => {
+    const firstOperator = EVAL(ast[0], ctx, options);
+    return unbox(
+        [firstOperator],
+        ([firstResult]) => ast.length === 1 ? firstResult : beginSF(ast.slice(1), ctx, options),      // Если один аргумент - возвращаем значение
+        options?.streamAdapter);
+  });
 };
 
 
@@ -522,6 +554,7 @@ const SPECIAL_FORMS = {                                                         
      *          let({{"name", "Alice"}}, println("Hello,", name), name) => Alice
      *          ## Вывод в консоль: "Hello, Alice"
      * @category Работа с переменными | 1
+     * @tags return-support
      */
     return EVAL(['begin', ...ast.slice(1)], [makeLetBindings(ast[0], ctx, rs), ctx], rs);
   }),
@@ -675,10 +708,13 @@ const SPECIAL_FORMS = {                                                         
      * @example fn({x}, x * x) => функция возведения в квадрат
      *          {1, 2, 3}.map(fn({x}, x * 2)) => [2, 4, 6]
      * @category Создание объектов | 10
+     * @tags return-support
      */
     // define new function (lambda)
-    const f = (...args) => EVAL(ast[1], env_bind(ast[0], ctx, args, rs), rs);
-    f.ast = [ast[1], ctx, ast[0]];                                              // f.ast compresses more than f.data
+    const f = (...args) => catchReturn(() =>
+      EVAL(ast[1], env_bind(ast[0], ctx, args, rs), rs)
+    );
+    f.ast = [["catchReturn", ast[1]], ctx, ast[0]];                                              // f.ast compresses more than f.data
     return f;
   }),
 
@@ -693,7 +729,7 @@ const SPECIAL_FORMS = {                                                         
      *
      * @example def(x, 42) => 42
      * @example begin(def(pi, 3.14159), 2*pi) => 6.28318
-     * @category Работа с переменными | 2
+     * @category Работа с переменными | 3
      */
     // update current environment
     const value = EVAL(ast[1], ctx, rs);
@@ -768,10 +804,11 @@ const SPECIAL_FORMS = {                                                         
      *
      * @example filterit({1, 2, 3, 4}, it > 2 || idx = 0) => [1, 3, 4]
      * @category Работа с объектами | 24
+     * @tags return-support
      */
     //console.log("FILTERIT: " + JSON.stringify(ast))
     const array = eval_lisp(ast[0], ctx, rs);
-    const conditionAST = ast[1];
+    const conditionAST = ["catchReturn", ast[1]];
     const result = Array.prototype.filter.call(array, (it, idx) => !!eval_lisp(conditionAST, [{it, idx}, ctx], rs));
     return result;
   }),
@@ -790,9 +827,10 @@ const SPECIAL_FORMS = {                                                         
      * @example mapit({1, 2, 3}, it * 2) => [2, 4, 6]
      * @example mapit({"a", "b", "c"}, it + idx) => ["a0", "b1", "c2"]
      * @category Работа с объектами | 23
+     * @tags return-support
      */
     const array = eval_lisp(ast[0], ctx, rs);
-    const conditionAST = ast[1];
+    const conditionAST = ["catchReturn", ast[1]];
     const result = Array.prototype.map.call(array, (it, idx) => eval_lisp(conditionAST, [{it, idx}, ctx], rs));
     return result;
   }),
@@ -1390,6 +1428,41 @@ export const STDLIB = {
      */
     throw(a);
   },
+
+
+
+  'return': makeSF((ast, ctx, rs) => {
+    /**
+     * Прерывает выполнение текущей функции и возвращает результат.
+     *
+     * Работает для [созданных функций]($func-fn), [let]($func-let) и [begin]($func-begin).
+     *
+     * @usage return(value)
+     * @param value [any] Возвращаемое значение.
+     *
+     * @example {1, 2, 3, 4}.map(x =>
+     *          |  begin(
+     *          |     if(x < 3, return(-1)),
+     *          |     x * 2
+     *          |  )
+     *          |) => [-1, -1, 6, 8]
+     * @category Управление выполнением | 7
+     */
+    throw new ReturnThrow(EVAL(ast[0], ctx, rs));
+  }),
+
+
+  'catchReturn': makeSF((ast, ctx, rs) => {
+    /**
+     * Отлавливает вызов функции return и возвращает результат.
+     * @usage catchReturn(expr)
+     * @param expr [any] Выражение, в котором используется функция return.
+     *
+     * @category Управление выполнением | 8
+     * @tags hidden
+     */
+    return catchReturn(() => EVAL(ast[0], ctx, rs));
+  }),
 
 
   'identity': a => {
@@ -2226,6 +2299,8 @@ export const STDLIB = {
   }),
   // system functions & objects
   // 'js': eval,
+
+
 
   eval: (a) => {
     /**

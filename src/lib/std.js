@@ -1,4 +1,4 @@
-import {EVAL, makeSF} from "../lisp";
+import {EVAL, makeSF, catchReturn} from "../lisp";
 
 /**
  * Конвертация скоботы в функцию
@@ -21,7 +21,7 @@ const convertAstToFunction = makeSF((ast, ctx, opt) => {
    * @example {1, 2, 3}.map(toFn(x * 2, x)) => [2, 4, 6]
    * @category Создание объектов | 11
    */
-  return (...args) => {
+  return (...args) => catchReturn(() => {
     const argsCtx = {};
     ast.slice(1).forEach((argAst, i) => {                                     // Считаем, что ast начиная с первого - это названия переменных и что они ничем не обернуты
       if (typeof argAst === 'string') {
@@ -34,7 +34,7 @@ const convertAstToFunction = makeSF((ast, ctx, opt) => {
       result = result(...args);                                                       //            по-разному можно коллбэк
     }                                                                                 //                                  объявить
     return result;
-  };
+  });
 });
 
 
