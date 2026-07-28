@@ -2397,6 +2397,8 @@ const contextAliases = {
   ".-": ["property"],
 
   "=>": ["lambda"],
+
+  "let*": ["letseq"],
 }
 
 for (const [name, aliases] of Object.entries(contextAliases)) {
