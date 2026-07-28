@@ -1380,6 +1380,29 @@ export const STDLIB = {
   }),
 
 
+  'makeHash': makeSF((ast, ctx, rs) => {
+    /**
+      * Создаёт хэш-таблицу из именованных аргументов.
+      *
+      * Без аргументов возвращает пустой хэш {}.
+      * Позиционные аргументы игнорируются — для смешанных структур используйте [vector]($func-vector).
+      *
+      * В отличие от [hash]($func-hash), эта функция выполняет выражения, записанные в качестве имен ключей.
+      *
+      * @usage hash(...kwargs)
+      * @param kwargs [any] Именованные элементы
+      *
+      * @example makeHash() => {}
+      *          makeHash(a = 1, b = 2) => {a: 1, b: 2}
+      *          makeHash(1+2 = 'test') => {3: 'test'}
+      * @category Создание объектов | 5
+    */
+    return Object.fromEntries(
+      ast
+        .filter(subast => isArray(subast) && subast[0] === "=" && subast.length === 3)
+        .map(subast => [eval_lisp(subast[1], ctx, rs), eval_lisp(subast[2], ctx, rs)])
+    );
+  }),
 
 
   // Qk functions
