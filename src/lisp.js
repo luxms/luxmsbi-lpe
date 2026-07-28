@@ -977,7 +977,7 @@ export const STDLIB = {
   'false': false,
   'Array': makeLF(Array),                                                               // TODO: consider removing these properties
   'Object': makeLF(Object),
-  'Hashmap': {},
+  get Hashmap() { return {}; },
   'Date': makeLF(Date),
 
   'console': console,
