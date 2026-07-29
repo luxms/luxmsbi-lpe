@@ -42,6 +42,13 @@ import { makeDoc, selectPerfectFunctionName } from "./doc";
  */
 
 
+/**
+ * @typedef {Object} VarSearchOptions
+ * @property {number} evalFrom Search variable from that index (for skip forms)
+ * @property {number} currentCtxElement Current context element index
+ */
+
+
 class ReturnThrow extends Error {
   value = undefined;
   /**
@@ -82,7 +89,7 @@ export const isArray = (arg) => {
    *          isArray({a = 1}) => false
    *          isArray({1, 2, a = 1}) => true
    *          isArray("hello") => false
-   * @category Проверки типов | 7
+   * @category Проверки типов | 8
    */
   return Object.prototype.toString.call(arg) === '[object Array]';
 };
@@ -97,7 +104,7 @@ export const isString = (arg) => {
    * @example isString("hello") => true
    *          isString(123) => false
    *          isString({1, 2}) => false
-   * @category Проверки типов | 8
+   * @category Проверки типов | 9
    */
   return (typeof arg === 'string');
 };
@@ -114,7 +121,7 @@ export const isNumber = (arg) => {
    *          isNumber(3.14) => true
    *          isNumber("42") => false
    *          isNumber(NaN) => true (NaN является числом по typeof)
-   * @category Проверки типов | 9
+   * @category Проверки типов | 10
    */
   return (typeof arg === 'number');
 }
@@ -131,7 +138,7 @@ export const isBoolean = (arg) => {
    *          isBoolean(false) => true
    *          isBoolean(0) => false
    *          isBoolean("true") => false
-   * @category Проверки типов | 10
+   * @category Проверки типов | 11
    */
   return arg === true || arg === false;
 };
@@ -151,7 +158,7 @@ export const isHash = (arg) => {
    *          isHash({1, 2, 3, a = 1}) => false
    *          isHash(null) => false
    *          isHash("object") => false
-   * @category Проверки типов | 11
+   * @category Проверки типов | 12
    */
   return (typeof arg === 'object') && (arg !== null) && !isArray(arg);
 };
@@ -167,7 +174,7 @@ export const isFunction = (arg) => {
    * @example isFunction((a, b) => a + b) => true
    *          isFunction(fn({a, b}, a + b)) => true
    *          isFunction(42) => false
-   * @category Проверки типов | 12
+   * @category Проверки типов | 13
    */
   return (typeof arg === 'function');
 };
@@ -214,74 +221,160 @@ function makeError(name, ast, message) {
  * @type {symbol}
  */
 export const $VAR$ = Symbol.for('__getitem__');
+export const $VAR_SCOPE$ = Symbol.for('__isvars__');
 
 export const __call__ = Symbol.for('__call__');
 export const __getitem__ = Symbol.for('__getitem__');
+/** @type {Record<string, *>} */
+export const VAR_SCOPE = { __isvars__: true };
+const VAR_NOT_FOUND = { value: undefined, found: false };
 
 /**
  * Get or Set variable in context
+ * deprecated: sometimes we need to set variable value as undefined
  * @param {*} ctx - array, hashmap or function that stores variables
  * @param {string} varName - the name of variable
  * @param {*} value - optional value to set (undefined if get)
- * @param {EvalOptions=} options - options on how to resolve. resolveString - must be checked by caller and is not handled here...
- * @param {Record<string, any>=} evalOptions - current evaluate context and options for find endpoint
+ * @param {EvalOptions} rs - options on how to resolve. resolveString - must be checked by caller and is not handled here...
+ * @param {VarSearchOptions=} varSearchOptions - current evaluate context and options for find endpoint
  */
- export function $var$(ctx, varName, value, options = {}, evalOptions = undefined) {
-  let result = undefined;
-  if (!evalOptions) {
-    evalOptions = { evalFrom: 0, currentCtxElement: 0 }
+export function $var$(ctx, varName, value, rs = {}, varSearchOptions = undefined) {
+  if (value === undefined) {
+    return $getvar$(ctx, varName, rs, varSearchOptions);
+  } else {
+    return $setvar$(ctx, varName, value, rs);
   }
-  evalOptions.currentCtxElement++;   // Инкрементируем шаг
-  if (isArray(ctx)) {                                                                               // contexts chain
+}
+
+
+
+/**
+ * Get variable or function in context
+ * @param {*} ctx - array, hashmap or function that stores variables
+ * @param {string} varName - the name of variable
+ * @param {EvalOptions} rs - options on how to resolve
+ * @param {VarSearchOptions=} varSearchOptions - current evaluate context and options for find endpoint
+ */
+export function $getvar$(ctx, varName, rs = {}, varSearchOptions = undefined) {
+  if (!varSearchOptions) {
+    varSearchOptions = { evalFrom: 0, currentCtxElement: 0 }
+  }
+
+  const result = varGetter(ctx, varName, rs, varSearchOptions);
+  return result.found ? result.value : VAR_SCOPE[varName];
+}
+
+
+
+/**
+ * Set variable in context
+ * @param {*} ctx - array, hashmap or function that stores variables
+ * @param {string} varName - the name of variable
+ * @param {*} value - the value of variable
+ * @param {EvalOptions} rs - options on how to resolve
+ */
+export function $setvar$(ctx, varName, value, rs = {}) {
+  const result = varSetter(ctx, varName, value, rs);
+
+  if (result.found) {
+    return result.value;
+  }
+  return (VAR_SCOPE[varName] = value);
+}
+
+
+
+/**
+ * Get variable from context
+ * @param {*} ctx
+ * @param {string} varName
+ * @param {EvalOptions} rs
+ * @param {VarSearchOptions} varSearchOptions
+ * @returns {{value: *, found: boolean}}
+ */
+function varGetter(ctx, varName, rs, varSearchOptions) {
+  varSearchOptions.currentCtxElement++;
+
+  if (isArray(ctx)) {
     for (let theCtx of ctx) {
-      result = $var$(theCtx, varName, undefined, options, evalOptions);                             // Пытаемся получить значение из очередного контекста (выставив value=undefined - get-вариант)
-      if (result === undefined) continue;                                                           // не найдено - продолжаем искать
-      if (value === undefined) return result;                                                       // если вариант get => возвращаем результат
-      // Ранее функция вызывалась c value=undefined и мы нашли конекст, в котором есть переменная
-      // Значит, в этом контексте можно вызвать set-вариант функции, передав value
-      return $var$(theCtx, varName, value, options, evalOptions);
+      const res = varGetter(theCtx, varName, rs, varSearchOptions);
+      if (res.found) {
+        return res;
+      }
     }
-    if (value === undefined) return undefined;                                                      // get => variable not found in all contexts
-    if (ctx.length) {
-      return $var$(ctx[0], varName, value, options, evalOptions);                                   // set => set variable to HEAD context
-    }
-    return undefined;                                                                               // ??? ctx.length = 0
+    return VAR_NOT_FOUND;
   }
 
   // Если мы хотим выполнить функцию, которая лежит ниже, пропускаем эту
-  if (evalOptions.currentCtxElement < evalOptions.evalFrom) {
-    return undefined;
+  if (varSearchOptions.currentCtxElement < varSearchOptions.evalFrom) {
+    return VAR_NOT_FOUND;
   }
 
   if (isFunction(ctx)) {
-      return ctx(varName, value, options);
+    const res = ctx(varName, undefined, rs);
+    return { value: res, found: res !== undefined };
   }
 
-  if (isHash(ctx)) {                                                                                // Контекст является хэшмапом
-    if (value === undefined) {                                                                      // получить значение
-      result = ctx[varName];
-      if (result !== undefined) {                                                                   // Нашлось в хэшмапе
-        return result;
-      }
-      if (varName.substr(0, 3) !== 'sf:' && isFunction(ctx['sf:' + varName])) {                     // user-defined special form
-        return makeSF(ctx['sf:' + varName]);
-      }
-      if ($VAR$ in ctx) {                                                                           // На хэшмапе может быть определена функция
-        result = ctx[$VAR$](ctx, varName, value, options, evalOptions);                             // вызываем ее
-        if (result !== undefined) {                                                                 // Подходящее значение нашлось
-          return result;
-        }
-      }
 
-      return undefined;
-    } else {                                                                                        // Установить значение
-      // Кажется, здесь надо еще подумать
-      return (ctx[varName] = value);
+  if (isHash(ctx)) {                                                                              // получить значение
+    if (Object.hasOwn(ctx, varName)) {                                                            // Нашлось в хэшмапе
+      return { value: ctx[varName], found: true };
+    }
+    if (varName.substr(0, 3) !== 'sf:' && isFunction(ctx['sf:' + varName])) {                     // user-defined special form
+      return { value: makeSF(ctx['sf:' + varName]), found: true };
+    }
+    if ($VAR$ in ctx) {                                                                           // На хэшмапе может быть определена функция
+      const res = ctx[$VAR$](ctx, varName, undefined, rs, varSearchOptions);                      // вызываем ее
+      if (res !== undefined) {                                                                    // Подходящее значение нашлось
+        return { value: res, found: true };
+      }
     }
   }
-
-  return undefined;
+  return VAR_NOT_FOUND;
 }
+
+
+
+/**
+ * Set existed variable value at
+ * Get variable from context
+ * Get variable from context context
+ * @param {*} ctx
+ * @param {string} varName
+ * @param {*} value
+ * @param {EvalOptions} rs
+ * @returns {{value: *, found: boolean}}
+ */
+function varSetter(ctx, varName, value, rs) {
+
+  if (isArray(ctx)) {
+    for (let theCtx of ctx) {
+      const res = varSetter(theCtx, varName, value, rs);
+      if (res.found) {
+        return res;
+      }
+    }
+    return VAR_NOT_FOUND;
+  }
+
+
+  if (isFunction(ctx)) {
+    const res = ctx(varName, undefined, rs);
+    return { value: res, found: res !== undefined };
+  }
+
+
+  if (isHash(ctx)) {
+    if (!ctx[$VAR_SCOPE$]) {
+      return VAR_NOT_FOUND;
+    }
+    if (Object.hasOwn(ctx, varName)) {
+      return { value: (ctx[varName] = value), found: true };
+    }
+  }
+  return VAR_NOT_FOUND;
+}
+
 
 
 export function makeMacro(fn, ast) {
@@ -355,7 +448,7 @@ function isSkip(fn) {
 
 
 function makeLetBindings(ast, ctx, rs) {
-  let result = {};
+  let result = {[$VAR_SCOPE$]: true};
   if (isHash(ast)) {
     for (let varName in ast) {
       result[varName] = EVAL(ast[varName], ctx, rs);
@@ -509,7 +602,7 @@ const letStarSF = (ast, ctx, rs) => {
     [value],
     ([resolved]) => letStarSF(
       [bindings.slice(1), ...ast.slice(1)],
-      [{[name]: resolved}, ctx],
+      [{[name]: resolved, [$VAR_SCOPE$]: true}, ctx],
       rs),
     rs?.streamAdapter);
 };
@@ -733,8 +826,73 @@ const SPECIAL_FORMS = {                                                         
      */
     // update current environment
     const value = EVAL(ast[1], ctx, rs);
-    const result = $var$(ctx, ast[0], value);
+    const result = $setvar$(ctx, ast[0], value, rs);
     return result;
+  }),
+
+
+  'undef': makeSF((ast, ctx, rs) => {
+    /**
+     * Удаляет переменную из текущего контекста и возвращает её значение
+     *
+     * @usage undef(name)
+     * @param name [string] Имя переменной
+     *
+     * @example begin(
+     *          |  x := 42,
+     *          |  undef(x),
+     *          |  x
+     *          |) => undefined
+     *
+     *          begin(
+     *          |  x := 42,
+     *          |  undef(x)
+     *          |) => 42 ## Сама функция возвращает значение удаленной переменной
+     *
+     *          begin(
+     *          |  x := 42,
+     *          |  let({{x, 12}}, prn(x), undef(x), prn(x)),
+     *          |  x
+     *          |) => 42
+     *          ## Напечатается сперва 12, затем 42
+     *          ## При этом удалится локальная переменная x, а глобальная останется
+     *
+     *          begin(
+     *          |  x := 42,
+     *          |  varName := "x",
+     *          |  undef(_"varName"),
+     *          |  x
+     *          |) => undefined
+     *          ## Если передано выражение, то оно вычислится
+     *          ## Удалится переменная, имя которой равно значению выражения
+     * @category Работа с переменными | 4
+     */
+
+    const varName = isString(ast[0]) ? ast[0] : String(eval_lisp(ast[0], ctx, rs));
+
+     /**
+      * @param {*} ctx
+      * @returns {{ value: *, found: boolean }}
+      */
+    const undefFunc = (ctx) => {
+      if (isArray(ctx)) {
+        for (const subctx of ctx) {
+          const res = undefFunc(subctx);
+          if (res.found) {
+            return res;
+          }
+        }
+      } else if (isHash(ctx)) {
+        if (Object.hasOwn(ctx, varName)) {
+          const res = { value: ctx[varName], found: true };
+          delete ctx[varName];
+          return res;
+        }
+      }
+      return { value: undefined, found: false };
+    };
+
+    return undefFunc([ctx, VAR_SCOPE]).value;
   }),
 
 
@@ -748,7 +906,7 @@ const SPECIAL_FORMS = {                                                         
      * @example resolve(x) => значение переменной x
      * @category Работа с переменными | 10
      */
-    const result = $var$(ctx, ast[0], undefined, rs);
+    const result = $getvar$(ctx, ast[0], rs);
     return result;
   }),
 
@@ -961,7 +1119,7 @@ const SPECIAL_FORMS = {                                                         
      */
     //FIXME will work only for single keys, we want: ctx(k1,k2,k3.df)
     let ret = {}
-    ast.map(k=>ret[k]=$var$(ctx, k, undefined, rs))
+    ast.map(k=>ret[k]=$getvar$(ctx, k, rs))
     return ret
   })
 };
@@ -973,6 +1131,7 @@ export const STDLIB = {
   '#f': false,
   'NIL': null,
   'null': null,                                                                // js specific
+  'undefined': undefined,
   'true': true,
   'false': false,
   'Array': makeLF(Array),                                                               // TODO: consider removing these properties
@@ -1184,7 +1343,7 @@ export const STDLIB = {
       if (ast[0][0] !== ".") {
         makeError(":=", ast, 'Left operand of ":=" must be lvalue!');
       }
-      let val = isArray(ast[0][1]) ? eval_lisp(ast[0][1], ctx, rs) : $var$(ctx, ast[0][1]);
+      let val = isArray(ast[0][1]) ? eval_lisp(ast[0][1], ctx, rs) : $getvar$(ctx, ast[0][1], rs);
       for (let i = 2; i < ast[0].length - 1; ++i) {
         let key = eval_lisp(ast[0][i], ctx, rs);
         val[key] = val[key] || {};
@@ -1192,7 +1351,7 @@ export const STDLIB = {
       }
       return (val[eval_lisp(ast[0][ast[0].length - 1], ctx, rs)] = eval_lisp(ast[1], ctx, rs));
     }
-    return $var$(ctx, ast[0], eval_lisp(ast[1], ctx, rs));
+    return $setvar$(ctx, ast[0], eval_lisp(ast[1], ctx, rs), rs);
   }),
 //  "'": a => `'${a}'`,
 
@@ -1566,6 +1725,22 @@ export const STDLIB = {
   },
 
 
+  'undefined?': (a) => {
+    /**
+     * Проверяет, является ли значение undefined
+     *
+     * @usage isUndef(value)
+     * @param value [any] Проверяемое значение
+     *
+     * @example isUndef(null) => false
+     *          isUndef(undefined) => true
+     *          isUndef(0) => false
+     * @category Проверки типов | 4
+     */
+    return a === undefined;
+  },
+
+
   'true?': (a) => {
     /**
      * Проверяет, является ли значение true
@@ -1575,7 +1750,7 @@ export const STDLIB = {
      *
      * @example isTrue(true) => true
      *          isTrue(1) => false
-     * @category Проверки типов | 4
+     * @category Проверки типов | 5
      */
     return a === true;
   },
@@ -1590,7 +1765,7 @@ export const STDLIB = {
      *
      * @example isFalse(false) => true
      *          isFalse(0) => false
-     * @category Проверки типов | 5
+     * @category Проверки типов | 6
      */
     return a === false;
   },
@@ -1963,7 +2138,7 @@ export const STDLIB = {
      * @param obj [any] Объект
      *
      * @example classOf({}) => "[object Array]"
-     * @category Проверки типов | 6
+     * @category Проверки типов | 7
      */
     return Object.prototype.toString.call(a);
   },
@@ -2055,7 +2230,7 @@ export const STDLIB = {
      *          begin(x := 12, q("x", "_")) => 12
      * @category Базовые операторы | 29
      */
-    if (ast[1] === '_') return $var$(ctx, ast[0]);
+    if (ast[1] === '_') return $getvar$(ctx, ast[0], rs);
     else return String(ast[0]);
   }),
 
@@ -2277,7 +2452,7 @@ export const STDLIB = {
      */
     let context = {};
     let ind = 0;
-    let statics = $var$(ctx, '##static') || {};
+    let statics = $getvar$(ctx, '##static', rs) || {};
     while (ind < ast.length && isArray(ast[ind]) && isArrayFunction(ast[ind][0])) {
       let last = ast[ind];
       let body = last[last.length - 1];
@@ -2308,7 +2483,7 @@ export const STDLIB = {
         if (!body) {
           return false;
         }
-        let ths = $var$(ctx, '##static');
+        let ths = $getvar$(ctx, '##static', rs);
         if (ths) ths = ths[last[1]];
         return eval_lisp(
           ["let",
@@ -2387,6 +2562,7 @@ const contextAliases = {
 
   // Проверки типов
   "null?": ["isNull"],
+  "undefined?": ["isUndefined", "isUndef"],
   "true?": ["isTrue"],
   "false?": ["isFalse"],
   "string?": ["isString"],
@@ -2423,7 +2599,7 @@ const contextAliases = {
 
   "=>": ["lambda"],
 
-  "let*": ["letseq"],
+  "let*": ["letseq", "letstar"],
 }
 
 for (const [name, aliases] of Object.entries(contextAliases)) {
@@ -2464,7 +2640,7 @@ function macroexpand(ast, ctx, resolveString = true) {
     if (!isArray(ast)) break;
     if (!isString(ast[0])) break;
     //const v = $var$(ctx, ast[0]);
-    const v = $var$(ctx, ast[0], undefined, {"resolveString": resolveString}); //возможно надо так
+    const v = $getvar$(ctx, ast[0], {"resolveString": resolveString}); //возможно надо так
     if (!isFunction(v)) break;
 
     if (!isMacro(v)) break;
@@ -2515,15 +2691,15 @@ function env_bind(ast, ctx, exprs, opt) {
  *
  * @param ast
  * @param ctx
- * @param {EvalOptions=} options
+ * @param {EvalOptions=} rs
  * @returns {Promise<Awaited<unknown>[] | void>|*|null|undefined}
  */
-export function EVAL(ast, ctx, options) {
+export function EVAL(ast, ctx, rs) {
   // В этой функции задаем параметры поиска и обрабатываем skip результат
   // после чего перенаправляем в исходную функцию, которая теперь называется EVAL_IMPLEMENTATION
   let evalOptions = { evalFrom: 0, currentCtxElement: 0 }
   let skippedForms = []
-  let result = EVAL_IMPLEMENTATION(ast, ctx, options, evalOptions);
+  let result = EVAL_IMPLEMENTATION(ast, ctx, rs, evalOptions);
   while (isSkip(result)) {
     // Если в качестве результата вернулась функция с пометкой skip
     // необходимо продолжить поиск с того же места в контексте
@@ -2543,7 +2719,7 @@ export function EVAL(ast, ctx, options) {
     if (result.__ast) {
       ast = [ast[0], ...result.__ast];
     }
-    result = EVAL_IMPLEMENTATION(ast, ctx, options, evalOptions);
+    result = EVAL_IMPLEMENTATION(ast, ctx, rs, evalOptions);
   }
   for (let i = skippedForms.length - 1; i >= 0; --i) {
     result = skippedForms[i](result);
@@ -2555,26 +2731,22 @@ export function EVAL(ast, ctx, options) {
  *
  * @param ast
  * @param ctx
- * @param {EvalOptions=} options
+ * @param {EvalOptions} rs
  * @param evalOptions
  * @returns {*|fn|Stream<undefined>|Promise<Awaited<unknown>[]>|undefined|null}
  * @constructor
  */
-function EVAL_IMPLEMENTATION(ast, ctx, options, evalOptions) {
+function EVAL_IMPLEMENTATION(ast, ctx, rs, evalOptions) {
   while (true) {
-    ast = macroexpand(ast, ctx, options?.resolveString ?? false);                                   // by default do not resolve string
+    ast = macroexpand(ast, ctx, rs?.resolveString ?? false);                                   // by default do not resolve string
 
     if (!isArray(ast)) {                                                                            // atom
       if (isString(ast)) {
-        const value = $var$(ctx, ast, undefined, options, evalOptions);
-        if (value !== undefined) {
-          if (isFunction(value) && options["wantCallable"] !== true && !value.__literalFunction) {
-            return ast
-          } else {                                 // variable
-            return value;
-          }
+        const value = varGetter([ctx, VAR_SCOPE], ast, rs, evalOptions);
+        if (value.found) {                            // variable
+          return value.value;
         }
-        return options && options.resolveString ? ast : undefined;                                 // if string and not in ctx
+        return rs && rs.resolveString ? ast : undefined;                                 // if string and not in ctx
       }
       return ast;
     }
@@ -2588,7 +2760,7 @@ function EVAL_IMPLEMENTATION(ast, ctx, options, evalOptions) {
 
     const [opAst, ...argsAst] = ast;
 
-    let op = EVAL_IMPLEMENTATION(opAst, ctx, {... options, wantCallable: true}, evalOptions);       // evaluate operator
+    let op = EVAL_IMPLEMENTATION(opAst, ctx, rs, evalOptions);       // evaluate operator
 
     if (isHash(op) && (__call__ in op)) {                                                           // Если в качестве функции нам дают хэшмап и у него есть __call__
       op = op[__call__].bind(op);                                                                   // то используем его как callable (и сохраняем this)
@@ -2599,15 +2771,15 @@ function EVAL_IMPLEMENTATION(ast, ctx, options, evalOptions) {
     }
 
     if (isSF(op)) {                                                                                 // special form
-      const sfResult = op(argsAst, ctx, options, ast);
+      const sfResult = op(argsAst, ctx, rs, ast);
       return sfResult;
     }
 
-    const args = argsAst.map(a => EVAL(a, ctx, options));                                           // evaluate arguments
+    const args = argsAst.map(a => EVAL(a, ctx, rs));                                           // evaluate arguments
 
     if (op.ast) {                                                                                   // Macro
       ast = op.ast[0];
-      ctx = env_bind(op.ast[2], op.ast[1], args, options);                                                   // TCO
+      ctx = env_bind(op.ast[2], op.ast[1], args, rs);                                                   // TCO
     } else {
       return unbox(
           args,
@@ -2615,14 +2787,14 @@ function EVAL_IMPLEMENTATION(ast, ctx, options, evalOptions) {
             const fnResult = op.apply(op, args);
             return fnResult;
           },
-          options?.streamAdapter);
+          rs?.streamAdapter);
     }
   }
 } // EVAL
 
 
 export function eval_lisp(ast, ctx, options) {
-  const result = EVAL(ast, [ctx || {}, STDLIB], options || {resolveString: true, maxLoopIterations: 65536});
+  const result = EVAL(ast, [ctx || {}, STDLIB, $VAR_SCOPE$], options || {resolveString: true, maxLoopIterations: 65536});
   return result;
 }
 
@@ -2631,7 +2803,7 @@ export function init_lisp(ctx) {
   ctx = [ctx || {}, STDLIB];
   return {
     eval: (ast) => eval_lisp(ast, ctx),
-    val: (varName, value) => $var$(ctx, varName, value),
+    val: (varName, value) => value === undefined ? $getvar$(ctx, varName) : $setvar$(ctx, varName, value),
   }
 }
 

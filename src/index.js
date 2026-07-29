@@ -1,7 +1,7 @@
 import {parse, LPESyntaxError} from './lpep';
 import {deparse} from './lped';
 import makeVararg from './lisp.vararg';
-import {eval_lisp, isString, isArray, isHash, isFunction, makeSF, makeSkipForm, isNumber, $var$, STDLIB, $VAR$} from './lisp';
+import {eval_lisp, isString, isArray, isHash, isFunction, makeSF, makeSkipForm, isNumber, $var$, STDLIB, $VAR$, $VAR_SCOPE$, $getvar$, $setvar$} from './lisp';
 import {makeDoc, selectPerfectFunctionName, generateSimpleHash} from './doc'
 import {LOCALE_DOC} from './localization/localization'
 import unbox from './lisp.unbox';
@@ -24,11 +24,14 @@ export {
   isFunction,
   isNumber,
   $var$,
+  $getvar$,
+  $setvar$,
   makeSF,
   makeVararg,
   makeSkipForm,
   STDLIB,
   $VAR$,
+  $VAR_SCOPE$,
   unbox,
   makeDoc,
   selectPerfectFunctionName,
