@@ -126,6 +126,21 @@ export const isNumber = (arg) => {
   return (typeof arg === 'number');
 }
 
+export const isNumberLike = (arg) => {
+  /**
+   * Проверяет, является ли аргумент числом или числом-строкой
+   *
+   * @usage isNumberLike(arg)
+   * @param arg [any] Проверяемое значение
+   *
+   * @example isNumberLike(42) => true
+   *          isNumberLike("3.14") => true
+   *          isNumberLike({}) => false
+   * @category Проверки типов | 11
+   */
+  return isNumber(arg) || isString(arg) && arg.match(/^(0|[1-9]\d*)(\.\d+)?$/);
+};
+
 
 export const isBoolean = (arg) => {
   /**
@@ -141,6 +156,26 @@ export const isBoolean = (arg) => {
    * @category Проверки типов | 11
    */
   return arg === true || arg === false;
+};
+
+
+export const isObj = (arg) => {
+  /**
+   * Проверяет, является ли аргумент хеш-таблицей или массивом (не null)
+   *
+   * @usage isObj(arg)
+   * @param arg [any] Проверяемое значение
+   *
+   * @example isObj({a = 1, b = 2}) => true
+   *          isObj(Hashmap) => true
+   *          isObj({}) => true
+   *          isObj({1, 2, 3}) => true
+   *          isObj({1, 2, 3, a = 1}) => true
+   *          isObj(null) => false
+   *          isObj("object") => false
+   * @category Проверки типов | 12
+   */
+  return isArray(arg) || isHash(arg);
 };
 
 
@@ -666,6 +701,30 @@ const SPECIAL_FORMS = {                                                         
     return f;
   }),
 
+  'nvl': makeSF((ast, ctx, rs) => {
+    /**
+     * Возвращает первый не-null/undefined аргумент
+     *
+     * При отсутствии аргументов возвращает null
+     *
+     * При нахождении подходящего аргумента возвращает его и не выполняет остальные аргументы
+     *
+     * @usage nvl(...arg)
+     * @param arg [any] Аргументы
+     *
+     * @example nvl(null, undefined, 42) => 42
+     *          nvl(1, 2, 3) => 1
+     */
+
+    for (const arg of ast) {
+      const val = eval_lisp(arg, ctx, rs);
+      if (val !== null && val !== undefined) {
+        return val;
+      }
+    }
+    return null;
+  }),
+
 
   '.-': makeSF((ast, ctx, options) => {
     /**
@@ -800,7 +859,7 @@ const SPECIAL_FORMS = {                                                         
      *
      * @example fn({x}, x * x) => функция возведения в квадрат
      *          {1, 2, 3}.map(fn({x}, x * 2)) => [2, 4, 6]
-     * @category Создание объектов | 10
+     * @category Создание объектов | 30
      * @tags return-support
      */
     // define new function (lambda)
@@ -1061,8 +1120,9 @@ const SPECIAL_FORMS = {                                                         
     // первый аргумент в ast - ссылка на контекст/имя переменной
     //console.log('assoc_in var:', JSON.stringify(ast))
     // let focus = $var$(ctx, ast[0], undefined, rs);
-    let focus = EVAL(ast[0], ctx, rs);
-    for (var i = 0; i < array.length-1; i++) {
+    const origin = EVAL(ast[0], ctx, rs);
+    let focus = origin;
+    for (let i = 0; i < array.length-1; i++) {
       if (focus[array[i]] === undefined) {
         // нужно создать
         if (isString(array[i+1])) {
@@ -1075,9 +1135,77 @@ const SPECIAL_FORMS = {                                                         
       }
     }
     const e = ["set", focus, array.pop(), ast[2]]
-    //console.log(JSON.stringify(e), JSON.stringify(eval_lisp(e, ctx, rs)))
-    return eval_lisp(e, ctx, rs);
+    eval_lisp(e, ctx, rs);
+    return origin;
   }),
+
+
+
+  'update_in': makeSF((ast, ctx, rs) => {
+    /**
+     * Устанавливает значение во вложенной структуре по пути ключей используя функцию
+     *
+     * Функция принимает 2 аргумента:
+     * - `value`: текущее значение
+     * - `path`: путь до ключа
+     *
+     * В случае использования регулярных выражений при отсутствии ключа попадающего в регулярное выражение, объект не будет создан.
+     *
+     * Изменяет и возвращает переданную структуру.
+     *
+     * @usage update_in(obj, keys, fn)
+     * @param obj [object|array] Целевая структура
+     * @param keys [array] Путь ключей
+     * @param fn [function] Функция обновления
+     *
+     * @usage update_in(obj, keys, fn, regexpEnable)
+     * @param obj [object|array] Целевая структура
+     * @param keys [array] Путь ключей
+     * @param fn [function] Функция обновления
+     * @param regexpEnable [boolean] Включение регулярных выражений
+     *
+     * @example update_in({a = {b = 10}}, {"a", "b"}, x => x + 1) => {a: {b: 11}}
+     *          update_in({=}, {"a", "b"}, x => nvl(x, 0) + 1) => {a: {b: 1}}
+     *          update_in({Ivan = {id = 1}, Bob = {id = 2}, Fred = {id = 3, name = "Freddy"}}, {"/.+/", "name"}, (x, path) => nvl(x, path.(0)), true) => {Ivan: {name: "Ivan", id: 1}, Bob: {name: "Bob", id: 2}, Fred: {name: "Freddy", id: 3}}
+     * @category Работа с переменными | 23
+    */
+    const obj = EVAL(ast[0], ctx, rs);
+    const path = EVAL(ast[1], ctx, rs);
+    const fn = EVAL(ast[2], ctx, rs);
+    const regexpEnable = EVAL(ast[3], ctx, rs);
+
+    const updater = (obj, path, was) => {
+      const key = String(path[0]);
+      let entries;
+      if (regexpEnable && key.startsWith("/") && key.endsWith("/")) {
+        const regexp = new RegExp(key.slice(1, -1));
+        entries = Object.entries(obj).filter(k => regexp.test(k));
+      } else if (Object.hasOwn(obj, key)) {
+        entries = [[key, obj[key]]];
+      } else if (path.length > 1) {
+        obj[key] = {};
+        entries = [[key, obj[key]]];
+      } else {
+        entries = [[key, undefined]];
+      }
+
+      entries.forEach(([key, value]) => {
+        if (path.length === 1) {
+          obj[key] = fn(value, [...was, path[0]]);
+          return;
+        }
+
+        if (isObj(value)) {
+          updater(value, path.slice(1), [...was, key]);
+        }
+      });
+    }
+    if (isObj(obj)) {
+      updater(obj, path, []);
+    }
+    return obj;
+  }),
+
 
 
   'cp': makeSF((ast, ctx, rs) => {
@@ -1162,6 +1290,21 @@ export const STDLIB = {
      * @category Базовые операторы | 6
      */
     return args.every(v => v == args[0]);
+  },
+
+
+  '===': (...args) => {
+    /**
+     * Проверяет на равенство всех аргументов первому аргументу
+     * @usage eq(compared, ...agrs)
+     * @param compared [any] Значение, с которым сравниваем
+     * @param args [any] Значение, которое сравниваем
+     * @example eq(1, 2, 1) => false
+     *          eq(1, 1, 1, 1) => true
+     *          1 = 3 => false
+     * @category Базовые операторы | 6
+     */
+    return args.every(v => v === args[0]);
   },
 
 
@@ -1254,7 +1397,7 @@ export const STDLIB = {
      *          1 < 2 < 3 => true
      * @category Базовые операторы | 8
      */
-    return args.every((v, i) => i === 0 ? true : args[i-1] < args[i]);
+    return args.every((v, i) => i === 0 ? true : args[i - 1] < args[i]);
   },
 
 
@@ -1270,7 +1413,7 @@ export const STDLIB = {
      *          3 > 2 > 1 => true
      * @category Базовые операторы | 9
      */
-    return args.every((v, i) => i === 0 ? true : args[i-1] > args[i]);
+    return args.every((v, i) => i === 0 ? true : args[i - 1] > args[i]);
   },
 
 
@@ -1286,7 +1429,7 @@ export const STDLIB = {
      *          1 <= 2 <= 2 <= 3 => true
      * @category Базовые операторы | 10
      */
-    return args.every((v, i) => i === 0 ? true : args[i-1] <= args[i]);
+    return args.every((v, i) => i === 0 ? true : args[i - 1] <= args[i]);
   },
 
 
@@ -1302,7 +1445,7 @@ export const STDLIB = {
      *          3 >= 2 >= 2 >= 1 => true
      * @category Базовые операторы | 11
      */
-    return args.every((v, i) => i === 0 ? true : args[i-1] >= args[i]);
+    return args.every((v, i) => i === 0 ? true : args[i - 1] >= args[i]);
   },
 
 
@@ -1344,16 +1487,22 @@ export const STDLIB = {
         makeError(":=", ast, 'Left operand of ":=" must be lvalue!');
       }
       let val = isArray(ast[0][1]) ? eval_lisp(ast[0][1], ctx, rs) : $getvar$(ctx, ast[0][1], rs);
-      for (let i = 2; i < ast[0].length - 1; ++i) {
-        let key = eval_lisp(ast[0][i], ctx, rs);
+      const keys = ast[0].slice(2).map(subast => {
+        if (isString(subast)) {
+          return subast;
+        }
+        return eval_lisp(subast, ctx, rs);
+      });
+      for (let i = 0; i < keys.length - 1; ++i) {
+        let key = keys[i];
         val[key] = val[key] || {};
         val = val[key];
       }
-      return (val[eval_lisp(ast[0][ast[0].length - 1], ctx, rs)] = eval_lisp(ast[1], ctx, rs));
+      return (val[keys[keys.length - 1]] = eval_lisp(ast[1], ctx, rs));
     }
     return $setvar$(ctx, ast[0], eval_lisp(ast[1], ctx, rs), rs);
   }),
-//  "'": a => `'${a}'`,
+  //  "'": a => `'${a}'`,
 
 
   'RegExp': (...args) => {
@@ -1365,7 +1514,7 @@ export const STDLIB = {
      * @param flags [string] Флаги регулярного выражения
      *
      * @example regexp("[0-9]+", "g") => /[0-9]+/g
-     * @category Создание объектов | 30
+     * @category Создание объектов | 40
      */
     return RegExp.apply(RegExp, args);
   },
@@ -1440,7 +1589,7 @@ export const STDLIB = {
      * @param args [any] Аргументы конструктора
      *
      * @example new(Date, 2023, 0, 1) => Date object (2023-01-01)
-     * @category Создание объектов | 20
+     * @category Создание объектов | 28
      */
     return new (args[0].bind.apply(args[0], args));
   },
@@ -1548,7 +1697,7 @@ export const STDLIB = {
       *
       * В отличие от [hash]($func-hash), эта функция выполняет выражения, записанные в качестве имен ключей.
       *
-      * @usage hash(...kwargs)
+      * @usage makeHash(...kwargs)
       * @param kwargs [any] Именованные элементы
       *
       * @example makeHash() => {}
@@ -1564,6 +1713,158 @@ export const STDLIB = {
   }),
 
 
+  'makeStruct': (from, struct) => {
+    /**
+     * Создает объект с заданной структурой. Модифицирует второй аргумент для соответствия структуре (создает копию).
+     *
+     * В структуре указаны умалчиваемые значения, которые будут использованы если их нет в from или если тип данных не соответствует ожидаемому.
+     *
+     * @usage makeStruct(struct, obj)
+     * @param obj [array | object] Объект, который необходимо заполнить
+     * @param struct [array | object] Объект-схема структуры
+     *
+     * @example {
+     *          |  a = {1, 2, 3},
+     *          |  b = {c = {}}
+     *          |}.makeStruct(
+     *          |  { a = {b=0}, d = {0,0,0}}
+     *          |) => { a: [ 1, 2, 3, b: 0 ], b: { c: [] }, d: [ 0, 0, 0 ] }
+     *          {1, 2, 3}.makeStruct({a=1, b = 2}) => [ 1, 2, 3, a: 1, b: 2 ]
+     *          {1, 2, 3}.makeStruct({0,0,0,0,0,0}) => [ 1, 2, 3, 0, 0, 0 ]
+     * @category Создание объектов | 21
+     */
+
+    const restruct = (struct, from) => {
+      if (!isArray(from) && !isHash(from)) {
+        return structuredClone(struct);
+      }
+      let res;
+      if (isHash(struct) && isHash(from)) {
+        res = {};
+      } else {
+        res = [];
+      }
+      const keys = [
+        ...Object.keys(struct),
+        ...Object.keys(from),
+      ].filter((k, idx, arr) => arr.indexOf(k) === idx);
+      for (const k of keys) {
+        if (isHash(struct[k]) || isArray(struct[k])) {
+          res[k] = restruct(struct[k], from[k]);
+        } else if (Object.hasOwn(from, k)) {
+          res[k] = from[k];
+        } else {
+          res[k] = struct[k];
+        }
+      }
+      return res;
+    }
+
+    if (!isArray(struct) && !isHash(struct)) {
+      throw new Error('struct must be an array or an object');
+    }
+
+    return restruct(struct, from);
+  },
+
+
+  'range': (start, end, step) => {
+    /**
+     * Возвращает массив чисел в диапазоне [start, end) с шагом step
+     *
+     * @usage range(end)
+     * @param end [number] Конечное значение
+     *
+     * @usage range(start, end)
+     * @param start [number] Начальное значение
+     * @param end [number] Конечное значение
+     *
+     * @usage range(start, end, step)
+     * @param start [number] Начальное значение
+     * @param end [number] Конечное значение
+     * @param step [number] Шаг
+     *
+     * @usage range(start, end, step)
+     * @param start [number] Начальное значение
+     * @param end [number] Конечное значение
+     * @param step [number] Шаг
+     *
+     * @example range(5) => [0, 1, 2, 3, 4]
+     *          range(1, 5) => [1, 2, 3, 4]
+     *          range(5, 1, -2) => [5, 3]
+     * @category Создание объектов | 15
+     */
+    if (end === undefined) {
+      end = start;
+      start = 0;
+    }
+    if (step === undefined || step == 0) {
+      step = 1;
+    }
+    start = +start; end = +end; step = +step;
+
+    const result = [];
+    for (let i = start; step > 0 ? i < end : i > end; i += step) {
+      result.push(i);
+    }
+    return result;
+  },
+
+  'zip': (arrays, zipByMinLength) => {
+    /**
+     * Объединяет массивы по индексам в кортежи.
+     *
+     * @usage zip(arrays)
+     * @param arrays [Array<Array>] Массивы для объединения
+     *
+     * @usage zip(arrays, minimize)
+     * @param arrays [Array<Array>] Массивы для объединения
+     * @param minimize [boolean] Минимизировать длину результата до минимальной длины входных массивов
+     *
+     * @example zip({{1, 2}, {3, 4}}) => [[1, 3], [2, 4]]
+     *          zip({{1, 2}, {3}}) => [[1, 3], [2, undefined]]
+     *          zip({{1}, {2, 3}, {4}}) => [[1, 2, 4], [undefined, 3, undefined]]
+     *          zip({{1}, {2, 3}, {4}}, true) => [[1, 2, 4]]
+     * @category Создание объектов | 16
+     */
+    const len = zipByMinLength ? Math.min(...arrays.map(a => a.length)) : Math.max(...arrays.map(a => a.length));
+    return [...Array(len)].map((_, i) => arrays.map(a => a[i]));
+  },
+
+
+  'repeat': makeSF((ast, ctx, rs) => {
+    /**
+     * Создает массив из повторений значения n раз.
+     *
+     * Каждое значение вычисляется заново на каждой итерации.
+     *
+     * @usage repeat(n, val)
+     * @param n [number] Количество повторений
+     * @param val [any] Значение для повторения
+     *
+     * @example repeat(3, 5) => [5, 5, 5]
+     *          begin(
+     *          |  x := 0,
+     *          |  repeat(2, x := x + 1)
+     *          |) => [1, 2]
+     *          repeat(3, x := nvl(_"x", 0) + 1) => [1, 2, 3]
+     *          begin(
+     *          |  arr := repeat(2, {}),
+     *          |  arr._0._0 := 12,
+     *          |  arr
+     *          |) => [[12], []]
+     * @category Создание объектов | 17
+     */
+    const result = [];
+    const n = +eval_lisp(ast[0], ctx, rs);
+    for (let i = 0; i < n; i++) {
+      const val = eval_lisp(ast[1], ctx, rs);
+      result.push(val);
+    }
+    return result;
+  }),
+
+
   // Qk functions
   'pick': makeVararg(['n:int'], (n, args) => args[n - 1]),                                          // The pick function returns the n:th expression in the list. n is an integer between 1 and N.
   //
@@ -1572,32 +1873,788 @@ export const STDLIB = {
     /**
      * Применяет функцию к каждому элементу массива
      *
+     * Функция `fn` может принимать 1 аргумент:
+     * - `val` - значение текущего элемента
+     *
      * В качестве функции можно использовать имя LPE функции
      * @usage map(arr, fn)
      * @param arr [array] Массив
      * @param fn [function] Функция для применения
      *
      * @example map({1, 2, 3}, fn({a}, a * 2)) => [2, 4, 6]
-     *          map({1, 2, 3}, minus) => [-1, -2, -3]
-     * @category Работа с объектами | 20
+     *          {1, 2, 3}.map(minus) => [-1, -2, -3]
+     * @category Работа с массивами | 1
      */
-      return isArray(arr) ? arr.map(it => fn(it)) : [];
+    return isArray(arr) ? arr.map(it => fn(it)) : [];
   },
+
+
+
+  'mapArr': (arr, fn) => {
+    /**
+     * Применяет функцию к каждому элементу массива
+     *
+     * Функция `fn` может принимать до 3-х аргументов:
+     * - `val` - значение текущего элемента
+     * - `idx` - индекс текущего элемента
+     * - `arr` - исходный массив
+     *
+     * В качестве функции можно использовать имя LPE функции
+     *
+     * @usage mapArr(arr, fn)
+     * @param arr [array] Массив
+     * @param fn [function] Функция для применения
+     *
+     * @example mapArr({1, 2, 3}, fn({a}, a * 2)) => [2, 4, 6]
+     *          {1, 2, 3}.mapArr({1, 2, 3}, (val, idx) => val * idx) => [0, 2, 6]
+     * @category Работа с массивами | 2
+     */
+    return isArray(arr) ? arr.map(fn) : [];
+  },
+
 
 
   'filter': (arr, fn) => {
     /**
      * Фильтрует массив по предикату
      *
+     * Функция `predicate` может принимать 1 аргумент:
+     * - `val` - значение текущего элемента
+     *
+     * В качестве функции можно использовать имя LPE функции
+     *
      * @usage filter(arr, predicate)
      * @param arr [array] Массив
      * @param predicate [function] Функция-предикат
      *
-     * @example filter([1, 2, 3, 4], fn({a}, a > 2)) => [3, 4]
-     * @category Работа с объектами | 21
+     * @example filter({1, 2, 3, 4}, fn({a}, a > 2)) => [3, 4]
+     * @category Работа с массивами | 5
      */
     return isArray(arr) ? arr.filter(it => fn(it)) : [];
   },
+
+
+
+  'filterArr': (arr, fn) => {
+    /**
+     * Фильтрует массив по предикату
+     *
+     * Функция `predicate` может принимать до 3-х аргументов:
+     * - `val` - значение текущего элемента
+     * - `idx` - индекс текущего элемента
+     * - `arr` - исходный массив
+     *
+     * В качестве функции можно использовать имя LPE функции
+     *
+     * @usage filterArr(arr, predicate)
+     * @param arr [array] Массив
+     * @param predicate [function] Функция-предикат
+     *
+     * @example filterArr({1, 2, 3, 4}, fn({val, idx}, idx < 3)) => [1, 2, 3]
+     * @category Работа с массивами | 5
+     */
+    return isArray(arr) ? arr.filter(fn) : [];
+  },
+
+
+
+  'reduce': (arr, fn, init) => {
+    /**
+     * Применяет функцию к элементам массива поступательно и накапливает результат.
+     *
+     * Функция `fn` может принимать до 2-х аргументов:
+     * - `aсс` - накопленный результат
+     * - `val` - значение текущего элемента
+     *
+     * В случае, если `arr` не является массивом, возвращается `init`.
+     *
+     * В качестве функции можно использовать имя LPE функции
+     *
+     * @usage reduce(arr, fn, init)
+     * @param arr [array] Массив
+     * @param fn [function] Функция для применения
+     * @param init [any] Начальное значение
+     *
+     * @example reduce(
+     *          |  {1, 2, 3},
+     *          |  add,
+     *          |  0
+     *          |) => 6
+     * @category Работа с массивами | 10
+     */
+    return isArray(arr) ? arr.reduce((acc, val) => fn(acc, val), init) : init;
+  },
+
+
+
+  'reduceArr': (arr, fn, init) => {
+    /**
+     * Применяет функцию к элементам массива поступательно и накапливает результат.
+     *
+     * Функция `fn` может принимать до 4-х аргументов:
+     * - `aсс` - накопленный результат
+     * - `val` - значение текущего элемента
+     * - `idx` - индекс текущего элемента
+     * - `arr` - исходный массив
+     *
+     * В случае, если `arr` не является массивом, возвращается `init`.
+     *
+     * В качестве функции можно использовать имя LPE функции
+     *
+     * @usage reduce(arr, fn, init)
+     * @param arr [array] Массив
+     * @param fn [function] Функция для применения
+     * @param init [any] Начальное значение
+     *
+     * @example reduce(
+     *          |  {1, 2, 3},
+     *          |  (acc, val) => acc + val,
+     *          |  0
+     *          |) => 6
+     * @category Работа с массивами | 11
+     */
+    return isArray(arr) ? arr.reduce(fn, init) : init;
+  },
+
+
+  'frequencies': (arr) => {
+    /**
+     * Возвращает объект, содержащий частоты элементов массива.
+     *
+     * @usage frequencies(arr)
+     * @param arr [array] Массив
+     *
+     * @example frequencies({1, 1, 2, 2, 2, 3}) => {1: 2, 2: 3, 3: 1}
+     *          "test words of the test".words().frequencies() => { "test: 2, words: 1, of: 1, the: 1 }
+     * @category Работа с массивами | 15
+     */
+    return isArray(arr) ? arr.reduce((acc, val) => {
+      acc[val] = (acc[val] || 0) + 1;
+      return acc;
+    }, {}) : {};
+  },
+
+
+  'reverse': (arr) => {
+    /**
+     * Возвращает массив в обратном порядке.
+     *
+     * @usage reverse(arr)
+     * @param arr [array] Массив
+     *
+     * @example reverse({1, 2, 3}) => [3, 2, 1]
+     * @category Работа с массивами | 20
+     */
+    return isArray(arr) ? arr.reverse() : [];
+  },
+
+
+
+  'find': (arr, fn) => {
+    /**
+     * Возвращает первый элемент массива, удовлетворяющий условию.
+     *
+     * Функция `fn` может принимать до 3-х аргументов:
+     * - `val` - значение текущего элемента
+     * - `idx` - индекс текущего элемента
+     * - `arr` - исходный массив
+     *
+     * В качестве функции можно использовать имя LPE функции
+     *
+     * @usage find(arr, fn)
+     * @param arr [array] Массив
+     * @param fn [function] Функция для проверки
+     *
+     * @usage find(arr, value)
+     * @param arr [array] Массив
+     * @param value [any] Искомое значение
+     *
+     * @example find({1, 2, 3}, x => x > 1) => 2
+     *          find({1, 2, 3}, 2) => 2
+     *          find({1, 2, 3}, 6) => undefined
+     * @category Работа с массивами | 25
+    */
+    return isArray(arr) ? arr.find(isFunction(fn) ? fn : ((v) => v == fn)) : undefined;
+  },
+
+
+
+  'findIndex': (arr, fn) => {
+    /**
+     * Возвращает индекс первого элемента, удовлетворяющего условию
+     *
+     * Если элемент не найден, возвращает -1
+     *
+     * Функция `fn` может принимать до 3-х аргументов:
+     * - `val` - значение текущего элемента
+     * - `idx` - индекс текущего элемента
+     * - `arr` - исходный массив
+     *
+     * В качестве функции можно использовать имя LPE функции
+     *
+     * @usage findIndex(arr, fn)
+     * @param arr [array] Массив
+     * @param fn [function] Функция для проверки
+     *
+     * @usage findIndex(arr, value)
+     * @param arr [array] Массив
+     * @param value [any] Искомое значение
+     *
+     * @example findIndex({1, 2, 3}, x => x > 1) => 1
+     *          findIndex({1, 2, 3}, 3) => 2
+     *          findIndex({1, 2, 3}, 6) => -1
+     * @category Работа с массивами | 26
+     */
+    return isArray(arr) ? arr.findIndex(isFunction(fn) ? fn : ((v) => v == fn)) : -1;
+  },
+
+
+  'some': (arr, fn) => {
+    /**
+     * Возвращает true, если хотя бы один элемент массива удовлетворяет условию
+     *
+     * Функция `fn` может принимать до 3-х аргументов:
+     * - `val` - значение текущего элемента
+     * - `idx` - индекс текущего элемента
+     * - `arr` - исходный массив
+     *
+     * В качестве функции можно использовать имя LPE функции
+     *
+     * @usage some(arr, fn)
+     * @param arr [array] Массив
+     * @param fn [function] Функция для проверки
+     *
+     * @usage some(arr, value)
+     * @param arr [array] Массив
+     * @param value [any] Искомое значение
+     *
+     * @example some({1, 2, 3}, x => x > 1) => true
+     *          some({1, 2, 3}, 3) => true
+     *          some({1, 2, 3}, 6) => false
+     * @category Работа с массивами | 27
+     */
+    return isArray(arr) ? arr.some(isFunction(fn) ? fn : ((v) => v == fn)) : false;
+  },
+
+
+  'every': (arr, fn) => {
+    /**
+     * Возвращает true, если все элементы массива удовлетворяют условию
+     *
+     * Функция `fn` может принимать до 3-х аргументов:
+     * - `val` - значение текущего элемента
+     * - `idx` - индекс текущего элемента
+     * - `arr` - исходный массив
+     *
+     * В качестве функции можно использовать имя LPE функции
+     *
+     * @usage every(arr, fn)
+     * @param arr [array] Массив
+     * @param fn [function] Функция для проверки
+     *
+     * @usage every(arr, value)
+     * @param arr [array] Массив
+     * @param value [any] Искомое значение
+     *
+     * @example every({1, 2, 3}, x => x > 1) => false
+     *          every({1, 2, 3}, 3) => false
+     *          every({1, 2, 3}, x => x > 0) => true
+     * @category Работа с массивами | 28
+     */
+    return isArray(arr) ? arr.every(isFunction(fn) ? fn : ((v) => v == fn)) : false;
+  },
+
+
+  'partition': (arr, n) => {
+    /**
+     * Разбивает массив на части по n элементов
+     *
+     * @usage partition(arr, n)
+     * @param arr [array] Массив
+     * @param n [number] Количество элементов в каждой части
+     *
+     * @example partition({1, 2, 3, 4, 5}, 2) => [[1, 2], [3, 4], [5]]
+     * @category Работа с массивами | 35
+     */
+    return isArray(arr) ? arr.reduce((acc, _, i) => {
+      if (i % n === 0) {
+        acc.push([]);
+      }
+      acc[acc.length - 1].push(arr[i]);
+      return acc;
+    }, []) : [];
+  },
+
+
+  'flat': (arr, depth) => {
+    /**
+     * Разглаживает массив до указанной глубины. Глубина по умолчанию равна 1.
+     *
+     *
+     * @usage flat(arr)
+     * @param arr [array] Массив
+     *
+     * @usage flat(arr, depth)
+     * @param arr [array] Массив
+     * @param depth [number] Глубина рекурсии
+     *
+     * @example {{1, 2}, 3, {4, {5}}}.flat(1) => [1, 2, 3, 4, [5]]
+     *          {{1, 2}, 3, {4, {5}}}.flat() => [1, 2, 3, 4, [5]]
+     *          {{1, 2}, 3, {4, {5}}}.flat(2) => [1, 2, 3, 4, 5]
+     * @category Работа с массивами | 35
+     */
+    return isArray(arr) ? arr.flat(depth ?? 1) : arr;
+  },
+
+
+  'distinct': (arr, fn) => {
+    /**
+     * Возвращает массив без повторяющихся элементов с сохранением порядка
+     *
+     * @usage distinct(arr)
+     * @param arr [array] Массив
+     *
+     * @usage distinct(arr, fn)
+     * @param arr [array] Массив
+     * @param fn [function] Функция для сравнения элементов
+     *
+     * @example distinct({3, 1, 2, 3, 3, 2, 3}) => [3, 1, 2]
+     *          distinct({{a = 1}, {a = 2}, {a = 1}}, (a, b) => a.a = b.a) => [{a: 1}, {a: 2}]
+     * @category Работа с массивами | 40
+    */
+    const comparer = fn ?? ((a, b) => a == b);
+    return isArray(arr) ? arr.filter((item, index) => arr.findIndex((v) => comparer(v, item)) === index) : arr;
+  },
+
+
+  'union': (arrays, fn) => {
+    /**
+     * Возвращает объединенный массив из всех переданных массивов
+     *
+     * @usage union(arrays)
+     * @param arrays [Array<Array>] Массивы для объединения
+     *
+     * @usage union(arrays, fn)
+     * @param arrays [Array<Array>] Массивы для объединения
+     * @param fn [function] Функция для сравнения элементов
+     *
+     * @example union([[1, 2], [3, 4]]) => [1, 2, 3, 4]
+     * @category Работа с массивами | 41
+     */
+    const comparer = fn ?? ((a, b) => a == b);
+    if (!isArray(arrays)) {
+      return [];
+    }
+    return arrays
+      .filter(el => isArray(el))
+      .flat(1)
+      .filter((item, idx, arr) => arr.findIndex(v => comparer(item, v)) === idx);
+  },
+
+
+  'intersect': (arrays, fn) => {
+    /**
+     * Возвращает пересечение всех переданных массивов
+     *
+     * @usage intersect(arrays)
+     * @param arrays [Array<Array>] Массивы для пересечения
+     *
+     * @usage intersect(arrays, fn)
+     * @param arrays [Array<Array>] Массивы для пересечения
+     * @param fn [function] Функция для сравнения элементов
+     *
+     * @example intersect({{1, 2}, {2, 3}}) => [2]
+     *          intersect({{1, 2, 2, 2}, {2, 3}, {1, 2}}) => [2]
+     * @category Работа с массивами | 42
+     */
+    const comparer = fn ?? ((a, b) => a == b);
+    arrays = isArray(arrays) ? arrays.filter(el => isArray(el)) : [];
+    if (arrays.length === 0) {
+      return [];
+    }
+    return arrays[0].filter((item, idx, firstArr) =>
+      firstArr.findIndex(v => comparer(item, v)) === idx &&
+      arrays.slice(1).every(arr => arr.some(val => comparer(item, val)))
+    );
+  },
+
+
+  'difference': (arrays, fn) => {
+    /**
+     * Возвращает разницу между массивами. Из первого массива извлекаются все элементы, которые содержатся в других массивах
+     *
+     * Оставляет повторяющиеся элементы
+     *
+     * @usage difference(arrays)
+     * @param arrays [Array<Array>] Массивы для вычитания
+     *
+     * @usage difference(arrays, fn)
+     * @param arrays [Array<Array>] Массивы для вычитания
+     * @param fn [function] Функция для сравнения элементов
+     *
+     * @example difference({{1, 2, 1}, {2, 3}}) => [1, 1]
+     * @category Работа с массивами | 43
+     */
+    const compare = fn ?? ((a, b) => a == b);
+    arrays = isArray(arrays) ? arrays.filter(el => isArray(el)) : [];
+    if (arrays.length === 0) {
+      return [];
+    }
+    return arrays[0].filter(item =>
+      !arrays.slice(1).some(arr => arr.some(val => compare(item, val)))
+    );
+  },
+
+
+  'uniques': (arrays, fn) => {
+    /**
+     * Возвращает уникальные элементы из массивов: элементы, которые есть только в одном из массивов
+     *
+     * @usage uniques(arrays)
+     * @param arrays [Array<Array>] Массивы для поиска уникальных элементов
+     *
+     * @usage uniques(arrays, fn)
+     * @param arrays [Array<Array>] Массивы для поиска уникальных элементов
+     * @param fn [function] Функция для сравнения элементов
+     *
+     * @example uniques({{1, 2, 1}, {2, 3}}) => [1, 3]
+     * @category Работа с массивами | 44
+     */
+    const compare = fn ?? ((a, b) => a == b);
+    arrays = isArray(arrays) ? arrays.filter(el => isArray(el)) : [];
+    if (arrays.length === 0) {
+      return [];
+    }
+    return arrays
+      .map(arr => arr.filter((item, idx) => arr.findIndex(val => compare(item, val)) === idx))
+      .flat()
+      .filter((item, idx, arr) =>
+        arr.filter((val, id) => id === idx || compare(item, val)).length === 1
+      );
+  },
+
+
+  'merge': (hashes, fn, mergeType) => {
+    /**
+     * Объединяет несколько хэш-таблиц в одну
+     *
+     * Без указания функции слияния берет последний встреченный элемент
+     *
+     * Можно указать тип слияния, от которого зависят аргументы функции слияния (по умолчанию `sequence`):
+     * - `sequence`: Слияние происходит последовательно. Функция слияния принимает 3 аргумента: имя ключа, предыдущее значение и следующее значение.
+     * - `sequenceWithFirst`: Слияние происходит последовательно. Функция слияния принимает 4 аргумента: имя ключа, предыдущее значение, следующее значение и флаг, указывающий, является ли это первым вхождением этого ключа.
+     * - `full`: Слияние происходит за одну итерацию. Функция слияния принимает 3 аргумента: имя ключа, массив значений для данного ключа и массив флагов, указывающий, присутствовали ли значения для данного ключа.
+     *
+     * @usage merge(hashes, fn)
+     * @param hashes [Array<Object>] Массив хэшей для объединения
+     *
+     * @usage merge(hashes, fn)
+     * @param hashes [Array<Object>] Массив хэшей для объединения
+     * @param fn [function] Функция для слияния элементов
+     *
+     * @usage merge(hashes, fn, type)
+     * @param hashes [Array<Object>] Массив хэшей для объединения
+     * @param fn [function] Функция для слияния элементов
+     * @param type ['sequence'|'full'] Тип слияния
+     *
+     * @example merge({{a = 1, c = 5}, {a = 3, b = 2}}) => {a: 3, c: 5, b: 2}
+     *          merge({{a = {4,5,6}}, {a = {1}, b = 2}}) => {a: [1]}, b: 2} ## Вложенные структуры не сливаются рекурсивно
+     *          merge({{a = 1}, {a = 3, b = 2}}, (key, old, new) => old) => {a: 1, b: 2} ## Взять первое встреченное значение
+     *          merge({{a = 1}, {a = 3, b = 2}}, (key, old, new) => old + new) => {a: 4, b: 2} ## Сложить значения
+     *          merge({{a = 1}, {a = 3, b = 2}}, (key, vals, has) => vals, 'full') => {a: [1, 3], b: [undefined, 2]}
+     *          merge({{a = 1}, {a = 3, b = 2}}, (key, vals, has) => vals.filterArr((v, idx) => has.(idx)), 'full') => {a: [1, 3], b: [2]}
+     *          merge({{a = 1}, {a = 3, b = 2}}, (key, old, new, first) => if(first, {new}, old.concat({new})), 'sequenceWithFirst') => {a: [1, 3], b: [2]}
+     *          merge({{1, 2, 3}, { 5, 2, 10}}, (key, old, new) => old + new) => [6, 4, 13] ## Слить массивы с позиционным сложением элементов
+     * @category Работа с хэш-таблицами | 20
+     */
+    if (!isFunction(fn) || !["full", "sequenceWithFirst"].includes(mergeType)) {
+      mergeType = "sequence";
+    }
+    const merger = isFunction(fn) ? fn : (k, a, b) => b;
+
+    const res = hashes.some(h => isArray(h)) ? [] : {};
+
+    if (mergeType === "full") {
+      const keys = hashes.flatMap(h => Object.keys(h)).filter((key, idx, arr) => arr.indexOf(key) === idx);
+      keys.forEach(key => {
+        res[key] = merger(key, hashes.map(h => h[key]), hashes.map(h => Object.hasOwn(h, key)));
+      });
+    } else {
+      hashes.forEach(h => {
+        Object.entries(h).forEach(([key, val]) => {
+          if (mergeType === "sequenceWithFirst") {
+            res[key] = merger(key, res[key], val, !Object.hasOwn(res, key));
+          } else {
+            res[key] = Object.hasOwn(res, key) ? merger(key, res[key], val) : val;
+          }
+        });
+      });
+    }
+    return res;
+  },
+
+
+  'mergeDeep': (obj1, obj2, fn, manualMerge) => {
+    /**
+     * Объединяет два хэш-таблицы в одну, при этом обходя все массивы и объекты
+     *
+     * Без указания функции слияния берет последний встреченный элемент
+     *
+     * Функция слияния принимает 3 аргумента:
+     * - `path`: путь до ключа
+     * - `old`: значение из первой хэш-таблицы
+     * - `new`: значение из второй хэш-таблицы
+     *
+     * @usage merge(obj1, obj2, fn)
+     * @param obj1 [Array | Object] Первая хэш-таблица
+     * @param obj2 [Array | Object] Вторая хэш-таблица
+     * @param fn [function] Функция для слияния элементов
+     *
+     * @usage merge(obj1, obj2, fn, manualMerge)
+     * @param obj1 [Array | Object] Первая хэш-таблица
+     * @param obj2 [Array | Object] Вторая хэш-таблица
+     * @param fn [function] Функция для слияния элементов
+     * @param manualMerge [boolean] Если true, то вызывать функцию слияния даже в том случае, если в одном из объектов значение не установлено
+     *
+     * @example mergeDeep({a = 1, c = 5}, {a = 3, b = 2}) => {a: 3, c: 5, b: 2}
+     *          mergeDeep({a = {4,5,6}}, {a = {1}, b = 2}) => {a: [1, 5, 6]}, b: 2} ## Поэлементное слияние
+     *          mergeDeep({a = {4,5,6}}, {a = {1}, b = 2}, (path, old, new) => old + new) => {a: [5, 5, 6]}, b: 2} ## Поэлементное слияние
+     * @category Работа с хэш-таблицами | 21
+     */
+    const merger = isFunction(fn) ? fn : (k, a, b) => b;
+
+    if (!isArray(obj1) && !isHash(obj1) && !(isArray(obj2) && !isHash(obj2))) {
+      throw new Error('Both arguments must be arrays or hashes');
+    }
+
+    const mrg = (obj1, obj2, path) => {
+      const res = [obj1, obj2].some(h => isArray(h)) ? [] : {};
+      const keys = [
+        ...Object.keys(obj1),
+        ...Object.keys(obj2),
+      ].filter((key, idx, arr) => arr.indexOf(key) === idx);
+
+      keys.forEach(key => {
+        if (isObj(obj1[key]) && isObj(obj2[key])) {
+          res[key] = mrg(obj1[key], obj2[key], [...path, key]);
+        } else if (!manualMerge && !(Object.hasOwn(obj1, key) && Object.hasOwn(obj2, key))) {
+          res[key] = obj1[key] ?? obj2[key];
+        } else {
+          res[key] = merger([...path, key], obj1[key], obj2[key]);
+        }
+      });
+      return res;
+    }
+
+    return mrg(obj1, obj2, []);
+  },
+
+
+  'select': (obj, keys) => {
+    /**
+     * Возвращает подмножество хэш-таблицы по списку ключей
+     *
+     * @usage select(obj, keys)
+     * @param obj [Array | Object] Хэш-таблица или массив для выбора ключей
+     * @param keys [Array] Список ключей
+     *
+     * @example select({a = 1, b = 2, c = 3}, {a, c}) => {a: 1, c: 3}
+     *          select({1, 2, 3, 4}, {0, 3}) => [1, 4]
+     *          select({1, 2, 3, 4, user = {id = 1, name = 'John'}}, {0, 3, 'user'}) => [1, 4, user: {id: 1, name: 'John'}]
+     *          select({1, 2, 3, 4, user = {id = 1, name = 'John'}}, {0, user = {'name'}}) => [1, user: {name: 'John'}]
+     *          select({{id = 1, name = 'John'}, {id = 2, action = 'delete'}}, makeHash('0' = {'name'}, '1' = {'action'})) => [{name: 'John'}, {action: 'delete'}] ## Для настройки выборки позиционных аргументов необходимо создавать хэш-таблицу
+     *          select({{id = 1, name = 'John'}, {id = 2, action = 'delete'}}, makeHash('0' = true, '1' = {'action'})) => [{id: 1, name: 'John'}, {action: 'delete'}] ## Чтобы взять объект полностью, передаем true
+     *          select({123, {id = 2, action = 'delete'}}, makeHash('0' = {'name'}, '1' = {'action'})) => [{action: 'delete'}] ## Удаляет поле в случае, если мы ожидали структуру
+     * @category Работа с хэш-таблицами | 30
+     */
+
+    const selection = (obj, selections) => {
+      const selectMap = Object.fromEntries(Object.entries(selections).map(([k, v]) => {
+        if (isArray(selections) && isNumberLike(k)) {
+          return [v, true];
+        }
+        return [k, v];
+      }));
+
+      return Object.entries(selectMap).reduce((acc, [key, need]) => {
+        if (!Object.hasOwn(obj, key)) {
+          return acc;
+        }
+        if (isObj(need) && !isObj(obj[key])) {
+          return acc;
+        }
+        const value = isObj(need) ? selection(obj[key], need) : obj[key];
+        if (isArray(acc) && isNumberLike(key)) {
+          acc.push(value);
+        } else {
+          acc[key] = value;
+        }
+        return acc;
+      }, isHash(obj) ? {} : []);
+    }
+
+    return selection(obj, keys);
+  },
+
+
+  'omit': (obj, keys) => {
+    /**
+     * Возвращает подмножество хэш-таблицы без указанных ключей
+     *
+     * @usage omit(hash, keys)
+     * @param obj [Array | Object] Хэш-таблица или массив для удаления ключей
+     * @param keys [Array] Список ключей
+     *
+     * @example omit({a = 1, b = 2, c = 3}, {a, c}) => {b: 2}
+     *          omit({1, 2, 3, 4}, {0, 3}) => [2, 3]
+     *          omit({1, 2, 3, 4, user = {id = 1, name = 'John'}}, {0, 3, 'user'}) => [2, 3]
+     *          omit({1, 2, 3, 4, user = {id = 1, name = 'John'}}, {0, user = {'id'}}) => [2, 3, 4, user: {name: 'John'}]
+     *          omit({{id = 1, name = 'John'}, {id = 2, action = 'delete'}}, makeHash('0' = {'id'}, '1' = {'action'})) => [{name: 'John'}, {id: 2}] ## Для настройки выборки позиционных аргументов необходимо создавать хэш-таблицу
+     *          omit({{id = 1, name = 'John'}, {id = 2, action = 'delete'}}, makeHash('0' = true, '1' = {'id'})) => [{action: 'delete'}] ## Чтобы исключить объект полностью, передаем true
+     *          omit({123, {id = 2, action = 'delete'}}, makeHash('0' = {'name'}, '1' = {'id'})) => [123, {action: 'delete'}] ## Оставляет поле в случае, если мы ожидали структуру
+     * @category Работа с хэш-таблицами | 31
+     */
+
+    const selection = (obj, selections) => {
+      const selectMap = Object.fromEntries(Object.entries(selections).map(([k, v]) => {
+        if (isArray(selections) && isNumberLike(k)) {
+          return [v, true];
+        }
+        return [k, v];
+      }));
+
+      // reverse для обратного порядка
+      return Object.entries(selectMap).reverse().reduce((acc, [key, need]) => {
+        if (!Object.hasOwn(obj, key)) {
+          return acc;
+        }
+        if (isObj(need) && !isObj(obj[key])) {
+          return acc;
+        }
+        if (isObj(need)) {
+          acc[key] = selection(obj[key], need);
+        } else if (isArray(acc) && isNumberLike(key)) {
+          acc.splice(+key, 1);
+        } else {
+          delete acc[key];
+        }
+        return acc;
+      }, obj);
+    }
+
+    return selection(structuredClone(obj), keys);
+  },
+
+
+  'entries': (obj) => {
+    /**
+     * Возвращает массив пар [ключ, значение] для объекта.
+     *
+     * @usage entries(obj)
+     * @param obj [Array | Object] Объект для получения пар ключ-значение.
+     *
+     * @example entries({a = 1, b = 2}) => [['a', 1], ['b', 2]]
+     * @category Работа с хэш-таблицами | 2
+     */
+    return Object.entries(obj);
+  },
+
+
+
+  'fromEntries': (obj) => {
+    /**
+     * Возвращает объект из массива пар [ключ, значение].
+     *
+     * @usage fromEntries(obj)
+     * @param obj [Array<Array>] Массив пар [ключ, значение].
+     *
+     * @example fromEntries({{'a', 1}, {'b', 2}}) => {a: 1, b: 2}
+     * @category Работа с хэш-таблицами | 3
+     */
+    return Object.fromEntries(obj);
+  },
+
+
+  'compact': (obj, depth) => {
+    /**
+     * Удаляет все `null` и `undefined` значения из объекта.
+     *
+     * @usage compact(obj, depth)
+     * @param obj [Array | Object] Объект для удаления значений.
+     *
+     * @usage compact(obj, depth)
+     * @param obj [Array | Object] Объект для удаления значений.
+     * @param depth [number] Глубина рекурсии (по умолчанию 1).
+     *
+     * @example compact({a = 1, b = null, c = undefined}) => {a: 1}
+     *          compact({a = 1, b = {c = null}}, 2) => {a: 1, b: {}}
+     * @category Работа с объектами | 1
+     */
+    const compactObj = (obj, depth) => {
+      if (depth <= 0) return obj;
+      const keys = Object.keys(obj);
+      for (const key of keys.reverse()) {
+        if (obj[key] === null || obj[key] === undefined) {
+          if (isArray(obj) && isNumberLike(key)) {
+            obj.splice(+key, 1);
+          } else {
+            delete obj[key];
+          }
+        } else if (isObj(obj[key])) {
+          compactObj(obj[key], depth - 1);
+        }
+      }
+    };
+
+    const clone = structuredClone(obj);
+    compactObj(clone, isNumber(depth) ? depth : 1);
+    return clone;
+  },
+
+
+  'shuffle': (arr) => {
+    /**
+     * Перемешивает элементы массива случайным образом.
+     *
+     * @usage shuffle(arr)
+     * @param arr [Array] Массив для перемешивания
+     *
+     * @example shuffle({1, 2, 3, 4, 5})
+     * @category Массивы | 1
+     */
+    return arr
+      .map(el => [el, Math.random()])
+      .sort((a, b) => a[1] - b[1])
+      .map(el => el[0]);
+  },
+
+
+  'sample': (arr, n) => {
+    /**
+     * Выбирает случайные элементы из массива.
+     *
+     *
+     * @usage sample(arr)
+     * @param arr [Array] Массив для выборки
+     *
+     * @usage sample(arr, n)
+     * @param arr [Array] Массив для выборки
+     * @param n [int] Количество элементов для выборки
+     *
+     * @example sample({1, 2, 3, 4, 5}, 3) => [3, 1, 5]
+     *          sample({1, 2, 3, 4, 5}) => 4
+     *          sample({1, 2, 3, 4, 5}, 10) => {2, 5, 1, 4, 3}
+     * @category Массивы | 1
+     */
+    const count = isNumber(n) ? n : 1;
+    const res = arr
+      .map(el => [el, Math.random()])
+      .sort((a, b) => a[1] - b[1])
+      .map(el => el[0])
+      .slice(0, count);
+    return count === 1 ? res[0] : res;
+  },
+
 
 
   'throw': a => {
@@ -1899,6 +2956,27 @@ export const STDLIB = {
   }),
 
 
+  'words': (str, reg) => {
+    /**
+     * Разбивает строку на слова
+     *
+     * @usage words(str)
+     * @param str [string] Строка
+     *
+     * @usage words(str, regexp)
+     * @param str [string] Строка
+     * @param regexp [string] Регулярное выражение для определения слова
+     *
+     * @example words("a, b, c") => ["a", "b", "c"]
+     *          words("a-1, test_2 - 322 __432__") => ["a-1", "test_2", "322", "__432__"]
+     *          words("a-1, test_2 - 322 __432__", "\\w+") => ["a", "1", "test_2", "322", "__432__"]
+     * @category Работа с объектами | 11
+     */
+    const r = reg === undefined ? /-*[a-zA-Zа-яА-ЯёЁ_\d][a-zA-Zа-яА-ЯёЁ_\d-]*/g : new RegExp(reg, 'g');
+    return [...str.matchAll(r)].map(el => el[0]);
+  },
+
+
   'println': (...args) => {
     /**
      * Выводит значения в консоль
@@ -2055,6 +3133,28 @@ export const STDLIB = {
   },
 
 
+
+  'sortBy': (a, fn) => {
+  /**
+    * Сортирует массив по указанному ключу
+    *
+    * Функция изменяет исходный массив (сортирует на месте)
+    *
+    * Для строк стандартная сортировка основана на Unicode-кодах (не лексикографическая!)
+    *
+    *
+    * @usage sort(array, compareFn)
+    * @param array [array] Массив для сортировки
+    * @param fn [function] Функция сравнения формата (obj) => значение
+    *
+    * @example sortBy({{id = 1, name = "John"}, {id = 1, name = "Albert"}}, (obj) => obj.name) => [ { id: 1, name: 'Albert' }, { id: 1, name: 'John' } ]
+    *
+    * @category Работа с объектами | 25
+    */
+    return isArray(a) ? a.sort((a,b) => fn(a) > fn(b) ? 1 : -1) : [];
+  },
+
+
   // https://stackoverflow.com/questions/1669190/find-the-min-max-element-of-an-array-in-javascript
   // only for numbers!
   'max': (a) => {
@@ -2182,7 +3282,7 @@ export const STDLIB = {
      * @param values [any] Значения для заполнения
      *
      * @example reshape(5, 1, 2) => [1, 2, 1, 2, 1]
-     * @category Создание объектов | 4
+     * @category Создание объектов | 20
      */
     return Array.apply(null, Array(len)).map((a, idx) => values[idx % values.length]);
   },
@@ -2273,6 +3373,8 @@ export const STDLIB = {
      * Если правый аргумент - числовая или строковая константа,
      * пытаемся взять значение объекта левого выражения по ключю правого выражения
      *
+     * Для обращения к элементам массива используйте числовые индексы в круглых скобках: a.(0), a.(1).(0) и т.д.
+     *
      * @usage explression.func(...args)
      * @param explression [any] Значение, подставляемое первым аргументом в функцию
      * @param func [function] Вызываемая функция
@@ -2283,8 +3385,9 @@ export const STDLIB = {
      * @param key [string | number] Ключ (строковая константа должна быть без кавычек)
      *
      * @example date.dateShift(-1, "m").toStart("m") => Дата начала предыдущего месяца
-     * @example {1, 2, 3}.1 => 2
+     * @example {1, 2, 3}._1 => 2
      *          {a = 2, b = 3}.b => 3
+     *          {{1}}.(0).(0) => 1
      * @category Базовые операторы | 30
      */
     // thread first macro
@@ -2296,8 +3399,8 @@ export const STDLIB = {
     for (let arr of ast) {
       if (!isArray(arr)) {
         arr = [".-", acc, arr];                                                 // это может быть обращение к хэшу или массиву через индекс или ключ....
-      } else if (arr[0] === "()" && arr.length === 2 && (isString(arr[1]) || isNumber(arr[1]))) {
-        arr = [".-", acc, arr[1]];
+      } else if (arr[0] === "()" && arr.length === 2) {
+        arr = [".-", acc, arr];
       } else {
         arr = arr.slice(0);                                                     // must copy array before modify
         arr.splice(1, 0, acc);
@@ -2412,7 +3515,7 @@ export const STDLIB = {
   }),
 
 
-  "define": makeSF((ast, ctx, rs) => {
+  'define': makeSF((ast, ctx, rs) => {
     /**
      * Определение функций с поддержкой статических переменных
      * и выполнение последующих аргументов с этими функциями в контексте
@@ -2502,7 +3605,7 @@ export const STDLIB = {
 
 
 
-  eval: (a) => {
+  'eval': (a) => {
     /**
      * Вычисляет LPE-AST в контексте STDLIB
      *
@@ -2534,7 +3637,8 @@ export const STDLIB = {
 
 
 const contextAliases = {
-  "=": ["eq", "equal"],
+  "=": ["eq", "equal", "=="],
+  "===": ["eqq", "superEqual"],
   "+": ["add", "plus"],
   "-": ["minus", "subtract"],
   "*": ["mul", "multiply"],
@@ -2600,6 +3704,9 @@ const contextAliases = {
   "=>": ["lambda"],
 
   "let*": ["letseq", "letstar"],
+
+  "vals": ["values"],
+  "frequencies": ["counter"],
 }
 
 for (const [name, aliases] of Object.entries(contextAliases)) {

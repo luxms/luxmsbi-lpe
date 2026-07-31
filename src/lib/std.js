@@ -19,7 +19,7 @@ const convertAstToFunction = makeSF((ast, ctx, opt) => {
    * @param argNames [string] Имена аргументов функции
    *
    * @example {1, 2, 3}.map(toFn(x * 2, x)) => [2, 4, 6]
-   * @category Создание объектов | 11
+   * @category Создание объектов | 31
    */
   return (...args) => catchReturn(() => {
     const argsCtx = {};
