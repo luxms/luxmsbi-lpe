@@ -513,6 +513,7 @@ const make_parse = function (opt = {}) {
   operator_alias('≠', '!='); // from to canonical form;
 
   infixr('==', 40);
+  infixr('===', 40);
   infixr('!==', 40);
   infixr('!=', 40);
   infixr('<', 40);

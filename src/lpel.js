@@ -68,11 +68,11 @@ const PREFIX = '>!+-*&|/%^:.';
 const SUFFIX = '=<>&|:.';
 
 // Наверное более правильно перечислять явно какой оператор за кем может идти а не вот это вот все
-const OPSEQ = {
-  '<': '-=<>',                                               // <-  <=  <<  <>
-  '=': '=>',                                                  //  == =>
-  '~': '>',                                                   // ~ alone (regex match) or ~> (JS method dispatch)
-}
+const OPSEQ = [
+  "<-", "<=", "<<", "<>",
+  "==", "=>", "===",
+  "~>",
+];
 
 
 /**
@@ -324,15 +324,12 @@ export function tokenize(s, options) {
         i += 1;
       }
 
-    } else if (OPSEQ[c]) {                                                                          // Только для операторов из двух символов - более строгие правила
-      const nextOp = OPSEQ[c];
-      str = c;
-      i += 1;
-      c = s.charAt(i);
-      if (nextOp.includes(c)) {
-        str += c;
-        i += 1;
-      }
+    } else if (OPSEQ.some((op) => op === s.slice(i, i + op.length))) {
+      // Многосимвольные операторы
+      const ops = OPSEQ.filter((op) => op === s.slice(i, i + op.length)).sort((a,b) => b.length - a.length);
+      const nextOp = ops[0];
+      str = nextOp;
+      i += nextOp.length;
       result.push(make('operator', str));
 
     } else if (PREFIX.indexOf(c) >= 0) {                                                            // combining
