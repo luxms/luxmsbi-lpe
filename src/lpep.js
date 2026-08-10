@@ -541,11 +541,6 @@ const make_parse = function (opt = {}) {
     this.first = left;
     this.value = "(";       // it was '(' by dima
     this.second = a;
-    if ((left.arity !== "unary" || left.id !== "function") &&
-         left.arity !== "name" && left.id !== "(" && left.value !== "(" &&
-         left.id !== "&&" && left.id !== "||" && left.id !== "?") {
-      makeError(left, "Expected a variable name.");
-    }
 
     // dima support for missed function arguments...
     // Newlines inside an argument list are whitespace, not statement separators,
@@ -590,10 +585,7 @@ const make_parse = function (opt = {}) {
       m_expr_scope.pop();
     }
 
-    this.sexpr = [this.first.value].concat(a.map(function (el) { return el.sexpr }));
-    if (this.first.value === "(") {
-      this.sexpr[0] = this.first.sexpr;
-    }
+    this.sexpr = [this.first.sexpr].concat(a.map(function (el) { return el.sexpr }));
     this.namePosition = [this.first.from, this.first.to];
     this.closurePosition = [m_token.from, m_token.to];
     advance(")");
