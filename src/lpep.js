@@ -95,10 +95,10 @@ const make_parse = function (opt = {}) {
     return m_expr_scope;
   };
 
-  const advance = function (id) {
+  const advance = function (...ids) {
     var a, o, v;
-    if (id && m_token.id !== id) {
-      makeError(m_token, "Got " + m_token.value + " but expected '" + id + "'.");
+    if (ids.length > 0 && !ids.some(id => m_token.id === id)) {
+      makeError(m_token, "Got " + m_token.value + " but expected '" + ids.join("' or '") + "'.");
     }
     if (m_token_nr >= m_tokens.length) {
       m_token = m_symbol_table["(end)"];
@@ -877,10 +877,10 @@ const make_parse = function (opt = {}) {
       while (true) {
         a.push(expression(0));
         // a.push(statements());
-        if (m_token.id !== ",") {
+        if (m_token.id !== "," && m_token.id !== ";") {
           break;
         }
-        advance(",");
+        advance(",", ";");
       }
     }
     this.closurePosition = [m_token.from, m_token.to];
