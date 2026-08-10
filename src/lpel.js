@@ -112,9 +112,11 @@ export function tokenize(s, options) {
 
   /**
    * When current character is one of opening quote, will proceed until closing qoute
+   * @param {Array<'r'> =} flags Флаги для парсинга строки
+   *                        - `r`: Парсить как регулярное выражение: \ не считается символом экранирования
    * @returns {{str: string, type: ("string_double"|"string_single"|"string_column")}}
    */
-  const nextString = () => {
+  const nextString = (flags) => {
     let c = s.charAt(i);
     /** @type {'string_double' | 'string_single' | 'string_column'}  */
     const type =
@@ -137,7 +139,7 @@ export function tokenize(s, options) {
         break;
       }
 
-      if ((type === 'string_single' || type === 'string_double') && c === '\\') {                 // Look for escapement.
+      if ((type === 'string_single' || type === 'string_double') && c === '\\' && !flags?.includes("r")) {                 // Look for escapement.
         i += 1;
         if (i >= length) {
           makeError(make(type, str), "Unterminated string");
@@ -210,7 +212,7 @@ export function tokenize(s, options) {
       // Handle typed (D'2020-01-01') strings here because there MUST NOT be space between element and
       // We handle only ' and " string, because xxx[...] are handled differently, ALLOWING space
       if (c === SQUOT || c === DQUOT) {
-        const {str, type} = nextString();
+        const {str, type} = nextString(name === "r" ? ["r"] : undefined);
         result.push(make(type, [c, str, name]));                                                    // set the value [', str, strType]
       } else {
         result.push(make('name', name));
