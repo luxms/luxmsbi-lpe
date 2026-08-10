@@ -542,7 +542,7 @@ const make_parse = function (opt = {}) {
     this.value = "(";       // it was '(' by dima
     this.second = a;
     if ((left.arity !== "unary" || left.id !== "function") &&
-         left.arity !== "name" && left.id !== "(" &&
+         left.arity !== "name" && left.id !== "(" && left.value !== "(" &&
          left.id !== "&&" && left.id !== "||" && left.id !== "?") {
       makeError(left, "Expected a variable name.");
     }
@@ -552,57 +552,48 @@ const make_parse = function (opt = {}) {
     // so skip any LF tokens before looking at the first arg / closer.
     while (m_token.id === 'LF') advance();
     if (m_token.id !== ")") {
-      if (false && (left.value == "where" || left.value == "filter" || left.value == "expr" || left.value == "logexpr")) {
-        // специальный парсер для where - logical expression.
-        // тут у нас выражение с использованием скобок, and, or, not и никаких запятых...
-        // DIMA 2021: logexpr function will be generic name for logical things
-        // where && filter is used for SQL generation and should not be changed....
-        // expr is deprecated name for logexpr
-        // FIXME: make transition to the logexpr!
-        new_expression_scope("logical");
-        var e = expression(0);
-        m_expr_scope.pop();
-        a.push(e);
-      } else {
-        new_expression_scope("lpe");
-        // ',' and ';' are both accepted as argument separators. DAX (and Excel/
-        // Power BI) uses ';' as the list separator in locales where ',' is the
-        // decimal separator (most of Europe, Russia). Inside (...) there is no
-        // ambiguity — ';' as a statement terminator never made sense here, it
-        // was only ever a parse error.
-        const isArgSep = (id) => id === ',' || id === ';';
-        while (true) {
-          if (isArgSep(m_token.id)) {
-            a.push({
-              value: null,
-              arity: "literal"
-            });
-            advance();
-          } else if (m_token.id === ')') {
-            a.push({
-              value: null,
-              arity: "literal"
-            });
+
+      new_expression_scope("lpe");
+      // ',' and ';' are both accepted as argument separators. DAX (and Excel/
+      // Power BI) uses ';' as the list separator in locales where ',' is the
+      // decimal separator (most of Europe, Russia). Inside (...) there is no
+      // ambiguity — ';' as a statement terminator never made sense here, it
+      // was only ever a parse error.
+      const isArgSep = (id) => id === ',' || id === ';';
+      while (true) {
+        if (isArgSep(m_token.id)) {
+          a.push({
+            value: null,
+            arity: "literal"
+          });
+          advance();
+        } else if (m_token.id === ')') {
+          a.push({
+            value: null,
+            arity: "literal"
+          });
+          break;
+        } else {
+          new_expression_scope("logical");
+          const e = expression(0);
+          //console.log("LOGICAL????? " + JSON.stringify(e));
+          m_expr_scope.pop();
+          // var e = statements();
+          a.push(e);
+          while (m_token.id === 'LF') advance();
+          if (!isArgSep(m_token.id)) {
             break;
-          } else {
-            new_expression_scope("logical");
-            var e = expression(0);
-            //console.log("LOGICAL????? " + JSON.stringify(e));
-            m_expr_scope.pop();
-            // var e = statements();
-            a.push(e);
-            while (m_token.id === 'LF') advance();
-            if (!isArgSep(m_token.id)) {
-              break;
-            }
-            advance();
           }
+          advance();
         }
-        m_expr_scope.pop();
       }
+      m_expr_scope.pop();
     }
 
-    this.sexpr = [this.first.value].concat(a.map(function(el){return el.sexpr}));
+    this.sexpr = [this.first.value].concat(a.map(function (el) { return el.sexpr }));
+    if (this.first.value === "(") {
+      this.sexpr[0] = this.first.sexpr;
+    }
     this.namePosition = [this.first.from, this.first.to];
     this.closurePosition = [m_token.from, m_token.to];
     advance(")");
