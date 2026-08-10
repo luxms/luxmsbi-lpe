@@ -163,7 +163,7 @@ const make_parse = function (opt = {}) {
     m_token.value = v;
     m_token.arity = a;
     m_token.src = m_source;
-    m_token.crs = m_source.split('').map((c, i) => i >= t.from && i < t.to ? "^" : "-").join("");
+    m_token.crs = m_source.split('').map((c, i) => i >= t.from && i < t.to ? "^" : c === "\n" ? "--" : "-").join("");
     if (a === "operator") {
       m_token.sexpr = m_operator_aliases[v];
     } else {
