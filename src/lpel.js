@@ -67,11 +67,16 @@ export function makeError(t, message) {
 const PREFIX = '>!+-*&|/%^:.';
 const SUFFIX = '=<>&|:.';
 
-// Наверное более правильно перечислять явно какой оператор за кем может идти а не вот это вот все
+
 const OPSEQ = [
   "<-", "<=", "<<", "<>",
   "==", "=>", "===",
   "~>",
+];
+
+// Операторы, перед и после которых будут удаляться переносы строки
+const OPNOLF = [
+  "."
 ];
 
 
@@ -354,7 +359,30 @@ export function tokenize(s, options) {
       c = s.charAt(i);
     }
   }
-  return result;
+
+
+
+  return result
+    .filter((token, idx, arr) => {
+      if (token.type !== "LF") {
+        return true;
+      }
+      for (let i = idx - 1; i >= 0; i--) {
+        if (arr[i].type === "operator" && OPNOLF.includes(arr[i].value)) {
+          return false;
+        } else if (arr[i].type !== "LF") {
+          break;
+        }
+      }
+      for (let i = idx + 1; i < arr.length; i++) {
+        if (arr[i].type === "operator" && OPNOLF.includes(arr[i].value)) {
+          return false;
+        } else if (arr[i].type !== "LF") {
+          break;
+        }
+      }
+      return true;
+    });
 }
 
 export default tokenize;
