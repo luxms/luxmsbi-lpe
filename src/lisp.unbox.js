@@ -60,6 +60,7 @@ export default function unbox(args, resolve, streamAdapter) {
           resultStream = result;
           streamAdapter.retain(resultStream);                                                       // we need it for some time
           onNextValue(streamAdapter.getLastValue(resultStream));
+          ///! CHECK: onNextValue -> onNextResult ??
           resultStreamSubscription = streamAdapter.subscribe(resultStream, onNextValue);
         }
       } else {                                                                                      // when result is just value (TODO: Promise)

@@ -74,6 +74,9 @@ function parseTemplate(template) {
  * - Other types evaluate immediately
  *
  * The wrapped function receives: ...templateArgs, remainingArgs[], remainingKwargs{}
+ * @param {Array<string | Record<string, string>>} template ["argName", "argName:type", { "pattern": "type" }]
+ * @param {VarargFunction} fn
+ * @returns {VarargFunction}
  */
 export default function makeVararg(template, fn) {
   const { varnames, getType } = parseTemplate(template);

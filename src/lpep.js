@@ -29,7 +29,7 @@ std = statement denotation
 */
 
 
-import { isArray, isHash } from './lisp';
+import { isArray, isHash } from './lib/utils';
 import { tokenize, makeError, LPESyntaxError } from './lpel';
 
 /**

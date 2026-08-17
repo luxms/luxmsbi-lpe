@@ -60,7 +60,7 @@
  */
 
 
-import { LOCALE_DOC } from "./localization/localization";
+import { LOCALE_DOC } from "../localization/localization";
 
 
 
