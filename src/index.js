@@ -4,7 +4,7 @@ import makeVararg from './lisp.vararg';
 import { eval_lisp, EVAL, STDLIB, $VAR$, $IS_LIB$ } from './lisp';
 import { isString, isArray, isHash, isFunction, makeSF, makeSkipForm, isNumber } from './lib/utils';
 import { $var$, $getvar$, $setvar$ } from './context/variables';
-import {makeDoc, selectPerfectFunctionName, generateSimpleHash} from './lib/doc'
+import {makeDoc, selectPerfectFunctionName, generateSimpleHash, DOC_WARNINGS} from './lib/doc'
 import {LOCALE_DOC} from './localization/localization'
 import unbox from './lisp.unbox';
 
@@ -46,4 +46,5 @@ export {
   selectPerfectFunctionName,
   generateSimpleHash,
   LOCALE_DOC,
+  DOC_WARNINGS,
 };

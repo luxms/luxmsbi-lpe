@@ -115,6 +115,15 @@ import { LOCALE_DOC } from "../localization/localization";
  */
 
 
+
+/** @type {{LOC_UNDEFINED: Record<string, true>, LOC_OUTDATED: Record<number, Record<string, true>>, NODOC: Record<string, true>}} */
+export const DOC_WARNINGS = {
+  "LOC_UNDEFINED": {},
+  "LOC_OUTDATED": {},
+  "NODOC": {},
+};
+
+
 /**
  * Сгенерировать числовой хэш строки
  * @param {string} str
@@ -454,17 +463,22 @@ export function makeDoc(contextName, func, docSource) {
 
   const localize = lpeName === undefined ? undefined : (LOCALE_DOC[contextName] || {})[lpeName];
   if (localize === undefined && lpeName !== undefined && ruDocValue !== null) {
-    console.log(`DOC: WARNING: localization for function ${contextName}.${lpeName} undefined`);
+    DOC_WARNINGS.LOC_UNDEFINED[`${contextName}.${lpeName}`] = true;
   };
   const hash = ruDocValue === null ? undefined : generateSimpleHash(ruDocValue[1].replaceAll(/\r\n/g, "\n").replaceAll(/\n\s+/g, "\n"));
   if (hash !== undefined && localize !== undefined && localize.hash !== hash) {
-    console.log(`DOC: WARNING: localization for ${contextName}.${lpeName} was outdated. Current hash: ${hash}`);
+    if (!DOC_WARNINGS.LOC_OUTDATED[hash]) {
+      DOC_WARNINGS.LOC_OUTDATED[hash] = {};
+    }
+    DOC_WARNINGS.LOC_OUTDATED[hash][`${contextName}.${lpeName}`] = true;
   }
   if (ruDocValue !== null || localize !== undefined) {
     res._doc = {
       ru: parseDocstring((ruDocValue||[])[1] || localize?.ru),
       en: parseDocstring(localize?.en),
     };
+  } else {
+    DOC_WARNINGS.NODOC[`${contextName}.${lpeName}`] = true;
   }
 
   const docTags = func.__docTags || docSource?.__docTags;
