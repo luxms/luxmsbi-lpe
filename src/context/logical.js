@@ -1,6 +1,26 @@
-import { makeSF } from "../lib/utils";
+import { isArray, makeSF } from "../lib/utils";
 import { EVAL } from "../lisp";
 import unbox from "../lisp.unbox";
+
+
+
+
+const logicalSequencedOperators = ["<", "<=", ">", ">="];
+
+/**
+ * @param {string} op
+ * @param {Array<any>} args
+ */
+function compareFn(op, args) {
+  /** @type {Record<string, (a: any, b: any) => boolean>} */
+  const fn = {
+    "<": (a, b) => a < b,
+    "<=": (a, b) => a <= b,
+    ">": (a, b) => a > b,
+    ">=": (a, b) => a >= b,
+  };
+  return args.every((_, i) => i === 0 ? true : fn[op](args[i - 1], args[i]));
+}
 
 
 /** @type {ContextObject} */
@@ -90,7 +110,7 @@ _context['!=='] = _context['strictNe'] = (...args) => {
 
 
 
-_context['<'] = _context['lt'] = _context['less'] = (...args) => {
+_context['<'] = _context['lt'] = _context['less'] = makeSF((ast, ctx, rs) => {
   /**
     * Проверяет, что каждый последующий аргумент больше предыдущего.
     *
@@ -100,14 +120,35 @@ _context['<'] = _context['lt'] = _context['less'] = (...args) => {
     * @example lt(1, 2, 3) => true
     *          lt(1, 3, 2) => false
     *          1 < 2 => true
+    *          1 < 2 < 3 < 4 => true
+    *          1 < 10 >= 3 => true
     * @category Логические операторы | 5
     */
-  return args.every((_, i) => i === 0 ? true : args[i - 1] < args[i]);
-};
+  const op = "<";
+  if (ast.length === 2 && isArray(ast[1]) && logicalSequencedOperators.includes(ast[1][0])) {
+    return unbox(
+      [EVAL(ast[0], ctx, rs), EVAL(ast[1][1], ctx, rs)],
+      ([a, b]) => {
+        // Если false, второе не пытаемся выполнять
+        if (!compareFn(op, [a, b])) {
+          return false;
+        }
+        // ast[1][1] уже выполнен
+        return EVAL([ast[1][0], ["$AST$", b], ...ast[1].slice(2)], ctx, rs);
+      },
+      rs?.streamAdapter,
+    );
+  }
+  return unbox(
+    ast.map((/** @type {AST} */ arg) => EVAL(arg, ctx, rs)),
+    (args) => compareFn(op, args),
+    rs?.streamAdapter,
+  );
+});
 
 
 
-_context['<='] = _context['le'] = _context['lte'] = (...args) => {
+_context['<='] = _context['le'] = _context['lte'] = makeSF((ast, ctx, rs) => {
   /**
     * Проверяет, что каждый последующий аргумент больше или равен предыдущему.
     *
@@ -117,14 +158,35 @@ _context['<='] = _context['le'] = _context['lte'] = (...args) => {
     * @example le(1, 2, 2, 3) => true
     *          le(1, 3, 2) => false
     *          1 <= 2 => true
+    *          1 <= 2 <= 2 <= 4 => true
+    *          1 <= 10 > 3 => true
     * @category Логические операторы | 6
     */
-  return args.every((_, i) => i === 0 ? true : args[i - 1] <= args[i]);
-};
+  const op = "<=";
+  if (ast.length === 2 && isArray(ast[1]) && logicalSequencedOperators.includes(ast[1][0])) {
+    return unbox(
+      [EVAL(ast[0], ctx, rs), EVAL(ast[1][1], ctx, rs)],
+      ([a, b]) => {
+        // Если false, второе не пытаемся выполнять
+        if (!compareFn(op, [a, b])) {
+          return false;
+        }
+        // ast[1][1] уже выполнен
+        return EVAL([ast[1][0], ["$AST$", b], ...ast[1].slice(2)], ctx, rs);
+      },
+      rs?.streamAdapter,
+    );
+  }
+  return unbox(
+    ast.map((/** @type {AST} */ arg) => EVAL(arg, ctx, rs)),
+    (args) => compareFn(op, args),
+    rs?.streamAdapter,
+  );
+});
 
 
 
-_context['>'] = _context['gt'] = _context['greater'] = (...args) => {
+_context['>'] = _context['gt'] = _context['greater'] = makeSF((ast, ctx, rs) => {
   /**
     * Проверяет, что каждый последующий аргумент меньше предыдущего.
     *
@@ -134,14 +196,35 @@ _context['>'] = _context['gt'] = _context['greater'] = (...args) => {
     * @example gt(3, 2, 1) => true
     *          gt(3, 1, 2) => false
     *          3 > 2 => true
+    *          4 > 3 > 2 > 1 => true
+    *          10 > 4 < 6 => true
     * @category Логические операторы | 7
     */
-  return args.every((_, i) => i === 0 ? true : args[i - 1] > args[i]);
-};
+  const op = ">";
+  if (ast.length === 2 && isArray(ast[1]) && logicalSequencedOperators.includes(ast[1][0])) {
+    return unbox(
+      [EVAL(ast[0], ctx, rs), EVAL(ast[1][1], ctx, rs)],
+      ([a, b]) => {
+        // Если false, второе не пытаемся выполнять
+        if (!compareFn(op, [a, b])) {
+          return false;
+        }
+        // ast[1][1] уже выполнен
+        return EVAL([ast[1][0], ["$AST$", b], ...ast[1].slice(2)], ctx, rs);
+      },
+      rs?.streamAdapter,
+    );
+  }
+  return unbox(
+    ast.map((/** @type {AST} */ arg) => EVAL(arg, ctx, rs)),
+    (args) => compareFn(op, args),
+    rs?.streamAdapter,
+  );
+});
 
 
 
-_context['>='] = _context['ge'] = _context['gte'] = (...args) => {
+_context['>='] = _context['ge'] = _context['gte'] = makeSF((ast, ctx, rs) => {
   /**
     * Проверяет, что каждый последующий аргумент меньше или равен предыдущему.
     *
@@ -151,10 +234,31 @@ _context['>='] = _context['ge'] = _context['gte'] = (...args) => {
     * @example ge(3, 2, 2, 1) => true
     *          ge(3, 1, 2) => false
     *          3 >= 2 => true
+    *          4 >= 2 >= 2 >= 1 => true
+    *          10 >= 4 < 6 => true
     * @category Логические операторы | 8
     */
-  return args.every((_, i) => i === 0 ? true : args[i - 1] >= args[i]);
-};
+  const op = ">=";
+  if (ast.length === 2 && isArray(ast[1]) && logicalSequencedOperators.includes(ast[1][0])) {
+    return unbox(
+      [EVAL(ast[0], ctx, rs), EVAL(ast[1][1], ctx, rs)],
+      ([a, b]) => {
+        // Если false, второе не пытаемся выполнять
+        if (!compareFn(op, [a, b])) {
+          return false;
+        }
+        // ast[1][1] уже выполнен
+        return EVAL([ast[1][0], ["$AST$", b], ...ast[1].slice(2)], ctx, rs);
+      },
+      rs?.streamAdapter,
+    );
+  }
+  return unbox(
+    ast.map((/** @type {AST} */ arg) => EVAL(arg, ctx, rs)),
+    (args) => compareFn(op, args),
+    rs?.streamAdapter,
+  );
+});
 
 
 

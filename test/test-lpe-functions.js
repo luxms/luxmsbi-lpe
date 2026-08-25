@@ -141,6 +141,8 @@ describe('LPE Full Test Suite', function() {
       it('возрастающая последовательность', () => {
         strictEqual('lt(1, 2, 3)', true);
         strictEqual('1 < 2', true);
+        strictEqual('1 < 2 < 3 < 4 < 5', true);
+        strictEqual('1 < 2 < 3 < 3 < 5', false);
         strictEqual('lt(1, 3, 2)', false);
       });
     });
@@ -149,6 +151,8 @@ describe('LPE Full Test Suite', function() {
       it('нестрогое возрастание', () => {
         strictEqual('le(1, 2, 2, 3)', true);
         strictEqual('1 <= 1', true);
+        strictEqual('1 <= 1 <= 2 <= 2 <= 3', true);
+        strictEqual('1 <= 1 <= 2 <= 1 <= 3', false);
         strictEqual('le(1, 3, 2)', false);
       });
     });
@@ -157,6 +161,8 @@ describe('LPE Full Test Suite', function() {
       it('убывающая последовательность', () => {
         strictEqual('gt(3, 2, 1)', true);
         strictEqual('3 > 2', true);
+        strictEqual('3 > 2 > 1 > 0', true);
+        strictEqual('3 > 2 > 2 > 0', false);
         strictEqual('gt(3, 1, 2)', false);
       });
     });
@@ -165,7 +171,79 @@ describe('LPE Full Test Suite', function() {
       it('нестрогое убывание', () => {
         strictEqual('ge(3, 2, 2, 1)', true);
         strictEqual('3 >= 2', true);
+        strictEqual('3 >= 2 >= 2 >= 1 >= 1 >= 0', true);
+        strictEqual('3 >= 2 >= 2 >= 3 >= 1 >= 0', false);
         strictEqual('ge(3, 1, 2)', false);
+      });
+    });
+
+    describe('mixed > >= < <=', () => {
+      it('Цепочки сравнения', () => {
+        // Базовые цепочки
+        strictEqual('3 > 2 >= 2 > 1', true);
+        strictEqual('1 < 3 > 1', true);
+        strictEqual('3 > 1 < 3', true);
+
+        // Простые цепочки с числами
+        strictEqual('5 > 4 > 3 > 2 > 1', true);
+        strictEqual('1 < 2 < 3 < 4 < 5', true);
+        strictEqual('10 >= 10 <= 10', true);
+        strictEqual('10 > 10 >= 10', false);
+        strictEqual('10 >= 10 > 10', false);
+
+        // Цепочки со смешанными операторами
+        strictEqual('2 < 4 <= 4 < 6', true);
+        strictEqual('2 < 4 <= 3 < 6', false);
+        strictEqual('8 > 6 >= 6 > 4', true);
+        strictEqual('8 > 6 >= 7 > 4', false);
+
+        // Длинные цепочки
+        strictEqual('1 < 2 < 3 < 4 < 5 < 6 < 7 < 8 < 9 < 10', true);
+        strictEqual('10 > 9 > 8 > 7 > 6 > 5 > 4 > 3 > 2 > 1', true);
+        strictEqual('1 < 2 < 3 < 4 < 5 > 4 > 3 > 2 > 1', true);
+        strictEqual('1 < 3 < 5 < 7 < 9 > 7 > 5 > 3 > 1', true);
+        strictEqual('1 < 3 < 5 < 7 < 9 > 7 > 5 > 3 > 0', true);
+        strictEqual('1 < 3 < 5 < 7 < 9 > 7 > 5 > 3 > 9', false);
+
+        // Цепочки с отрицательными числами
+        strictEqual('-5 < -3 < -1 < 0 < 2', true);
+        strictEqual('2 > 0 > -2 > -4 > -6', true);
+        strictEqual('-3 < -1 > -5 < 0', true);
+
+        // Комбинированные цепочки
+        strictEqual('1 >= 1 >= 1', true);
+        strictEqual('1 <= 1 <= 1', true);
+        strictEqual('1 > 1 >= 1', false);
+        strictEqual('1 >= 1 > 1', false);
+
+        // Сложные смешанные цепочки
+        strictEqual('3 < 4 > 2 < 5', true);
+        strictEqual('3 < 4 > 5 < 6', false);
+        strictEqual('5 >= 4 >= 3 < 4 <= 5', true);
+        strictEqual('5 >= 4 >= 3 < 4 <= 3', false);
+
+        // Цепочки с проверкой короткого замыкания
+        strictEqual('1 < 2 < 1 < 3 < 4', false);
+        strictEqual('5 > 3 > 1 > 0', true);
+        strictEqual('5 > 3 > 1 > 2', false);
+
+
+        // Перемешанные строгие и нестрогие
+        strictEqual('1 < 2 <= 3 < 4 <= 5', true);
+        strictEqual('5 >= 4 > 3 >= 2 > 1', true);
+        strictEqual('1 < 2 <= 2 < 3 <= 4', true);
+        strictEqual('1 < 2 <= 1 < 3 <= 4', false);
+
+        // С одинаковыми числами
+        strictEqual('5 >= 5 >= 5', true);
+        strictEqual('5 <= 5 <= 5', true);
+        strictEqual('5 > 5 > 5', false);
+        strictEqual('5 < 5 < 5', false);
+
+      });
+
+      it('После false не выполняется', () => {
+        deepEqual('x := 0; a := (x := x + 1) < (x := x + 1) > (x := x + 1) > (x := x + 1) > (x := x + 1) > (x := x + 1) > (x := x + 1); {x, a}', [3, false]);
       });
     });
 
