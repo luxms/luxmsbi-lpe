@@ -97,12 +97,12 @@ _context['read-string'] = _context["jsonParse"] = _context["json_parse"] = a => 
 
 _context["jsonStringify"] = a => {
   /**
-   * Преобразует JSON-строку в объект.
+   * Преобразует JSON-объект в строку.
    *
-   * @usage json_parse(str)
-   * @param str [string] JSON-строка
+   * @usage jsonStringify(obj)
+   * @param obj [Object] Объект
    *
-   * @example json_parse('{"a": 1}') => {a: 1}
+   * @example jsonStringify({a = 1}) => "{"a": 1}"
    * @category Преобразование типов | 11
    */
   return JSON.stringify(a);

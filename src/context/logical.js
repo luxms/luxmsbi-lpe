@@ -240,7 +240,7 @@ const landSF = _context['logicalAnd'] = _context['logical_and'] = makeSF((ast, c
    * Логическое И. Возвращает true, если все выражения истинны.
    *
    * Возвращает true или false.
-   * @usage logical-and(...exprs)
+   * @usage logicalAnd(...exprs)
    * @param exprs [boolean] Выражения для проверки
    *
    * @category Логические операторы | 22

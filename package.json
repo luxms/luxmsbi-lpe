@@ -17,6 +17,7 @@
   "license": "MIT",
   "scripts": {
     "test": "mocha --reporter spec",
+    "localize": "node utils/update-loc.js",
     "t": "mocha --reporter spec test/test.js",
     "test-lpe-functions": "mocha --reporter spec test/test-full.js",
     "test-lisp": "mocha --reporter spec test/test-lisp.js",
@@ -36,6 +37,7 @@
     "mocha": "^10.2.0",
     "standard-version": "^9.5.0",
     "webpack": "5",
+    "diff": "^9.0.0",
     "webpack-cli": "^5.1.4"
   }
 }

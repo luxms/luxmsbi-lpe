@@ -465,7 +465,7 @@ export function makeDoc(contextName, func, docSource) {
   if (localize === undefined && lpeName !== undefined && ruDocValue !== null) {
     DOC_WARNINGS.LOC_UNDEFINED[`${contextName}.${lpeName}`] = true;
   };
-  const hash = ruDocValue === null ? undefined : generateSimpleHash(ruDocValue[1].replaceAll(/\r\n/g, "\n").replaceAll(/\n\s+/g, "\n"));
+  const hash = ruDocValue === null ? undefined : generateSimpleHash(ruDocValue[1].replaceAll(/\r\n/g, "\n").replaceAll(/\r?\n\s*(\* ?)?/g, "\n").trim());
   if (hash !== undefined && localize !== undefined && localize.hash !== hash) {
     if (!DOC_WARNINGS.LOC_OUTDATED[hash]) {
       DOC_WARNINGS.LOC_OUTDATED[hash] = {};

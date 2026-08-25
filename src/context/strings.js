@@ -47,7 +47,7 @@ _context['split'] = (str, sep) => {
 
 _context['words'] = (str, reg) => {
   /**
-   * Разбивает строку на слова
+   * Разбивает строку на слова.
    *
    * @usage words(str)
    * @param str [string] Строка
@@ -58,7 +58,7 @@ _context['words'] = (str, reg) => {
    *
    * @example words("a, b, c") => ["a", "b", "c"]
    *          words("a-1, test_2 - 322 __432__") => ["a-1", "test_2", "322", "__432__"]
-   *          words("a-1, test_2 - 322 __432__", "\\w+") => ["a", "1", "test_2", "322", "__432__"]
+   *          words("a-1, test_2 - 322 __432__", r"\w+") => ["a", "1", "test_2", "322", "__432__"]
    * @category Работа со строками | 11
    */
   const r = reg === undefined ? /-*[a-zA-Zа-яА-ЯёЁ_\d][a-zA-Zа-яА-ЯёЁ_\d-]*/g : new RegExp(reg, 'g');

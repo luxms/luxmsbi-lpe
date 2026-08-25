@@ -165,11 +165,6 @@ _context['range'] = (start, end, step) => {
    * @param end [number] Конечное значение
    * @param step [number] Шаг
    *
-   * @usage range(start, end, step)
-   * @param start [number] Начальное значение
-   * @param end [number] Конечное значение
-   * @param step [number] Шаг
-   *
    * @example range(5) => [0, 1, 2, 3, 4]
    *          range(1, 5) => [1, 2, 3, 4]
    *          range(5, 1, -2) => [5, 3]
@@ -694,7 +689,7 @@ _context['filter'] = (arr, fn) => {
    * Функция `predicate` может принимать 1 аргумент:
    * - `val` - значение текущего элемента.
    *
-   * В качестве функции можно использовать имя LPE функции
+   * В качестве функции можно использовать имя LPE функции.
    *
    * @usage filter(arr, predicate)
    * @param arr [array] Массив
@@ -748,7 +743,7 @@ _context['filterArr'] = (arr, fn) => {
    * - `idx` - индекс текущего элемента.
    * - `arr` - исходный массив.
    *
-   * В качестве функции можно использовать имя LPE функции
+   * В качестве функции можно использовать имя LPE функции.
    *
    * @usage filterArr(arr, predicate)
    * @param arr [array] Массив
@@ -779,10 +774,10 @@ _context['reduce'] = (arr, fn, init) => {
    * @param fn [function] Функция для применения
    * @param init [any] Начальное значение
    *
-   * @example reduce(
-   *          |  {1, 2, 3},
-   *          |  add,
-   *          |  0
+   * @example reduce(\
+   *          |  {1, 2, 3},\
+   *          |  add,\
+   *          |  0\
    *          |) => 6
    * @category Работа с массивами | 45
    */
@@ -1041,7 +1036,7 @@ _context['union'] = (arrays, fn) => {
    * @param arrays [Array<Array>] Массивы для объединения
    * @param fn [function] Функция для сравнения элементов
    *
-   * @example union([[1, 2], [3, 4]]) => [1, 2, 3, 4]
+   * @example union({{1, 2}, {3, 4}}) => [1, 2, 3, 4]
    * @category Работа с массивами | 81
    */
   const comparer = fn ?? ((/** @type {*} */ a, /** @type {*} */ b) => a == b);
@@ -1715,7 +1710,7 @@ _context['merge'] = (/** @type {Array<ObjectLike>} */ hashes, fn, mergeType) => 
    * - `sequenceWithFirst`: Слияние происходит последовательно. Функция слияния принимает 4 аргумента: имя ключа, предыдущее значение, следующее значение и флаг, указывающий, является ли это первым вхождением этого ключа.
    * - `full`: Слияние происходит за одну итерацию. Функция слияния принимает 3 аргумента: имя ключа, массив значений для данного ключа и массив флагов, указывающий, присутствовали ли значения для данного ключа.
    *
-   * @usage merge(hashes, fn)
+   * @usage merge(hashes)
    * @param hashes [Array<Object>] Массив хэшей для объединения
    *
    * @usage merge(hashes, fn)
@@ -1791,7 +1786,7 @@ _context['mergeDeep'] = (obj1, obj2, fn, manualMerge) => {
    *
    * @example mergeDeep({a = 1, c = 5}, {a = 3, b = 2}) => {a: 3, c: 5, b: 2}
    *          mergeDeep({a = {4,5,6}}, {a = {1}, b = 2}) => {a: [1, 5, 6]}, b: 2} ## Поэлементное слияние
-   *          mergeDeep({a = {4,5,6}}, {a = {1}, b = 2}, (path, old, new) => old + new) => {a: [5, 5, 6]}, b: 2} ## Поэлементное слияние
+   *          mergeDeep({a = {4,5,6}}, {a = {1}, b = 2}, (path, old, new) => old + new) => {a: [5, 5, 6]}, b: 2} ## Поэлементное суммирование
    * @category Работа с хэш-таблицами | 51
    */
   const merger = isFunction(fn) ? fn : (/** @type {string[]} */ k, /** @type {*} */ a, /** @type {*} */ b) => b;
@@ -1835,11 +1830,11 @@ _context['makeStruct'] = (from, struct) => {
    * @param obj [array | object] Объект, который необходимо заполнить
    * @param struct [array | object] Объект-схема структуры
    *
-   * @example {
-   *          |  a = {1, 2, 3},
-   *          |  b = {c = {}}
-   *          |}.makeStruct(
-   *          |  { a = {b=0}, d = {0,0,0}}
+   * @example {\
+   *          |  a = {1, 2, 3},\
+   *          |  b = {c = {}}\
+   *          |}.makeStruct(\
+   *          |  { a = {b=0}, d = {0,0,0}}\
    *          |) => { a: [ 1, 2, 3, b: 0 ], b: { c: [] }, d: [ 0, 0, 0 ] }
    *          {1, 2, 3}.makeStruct({a=1, b = 2}) => [ 1, 2, 3, a: 1, b: 2 ]
    *          {1, 2, 3}.makeStruct({0,0,0,0,0,0}) => [ 1, 2, 3, 0, 0, 0 ]

@@ -159,7 +159,7 @@ export const isArray = (/** @type {any} */ arg) => {
 /** @returns {arg is Object} */
 export const isHash = (/** @type {any} */ arg) => {
   /**
-   * Проверяет, является ли аргумент хешем (объектом, но не массивом и не null).
+   * Проверяет, является ли аргумент хэш-таблицей (объектом, но не массивом и не null).
    *
    * @usage isHash(arg)
    * @param arg [any] Проверяемое значение
@@ -182,7 +182,7 @@ export const isHash = (/** @type {any} */ arg) => {
 /** @returns {arg is Object | Array<any>} */
 export const isObj = (/** @type {any} */ arg) => {
   /**
-   * Проверяет, является ли аргумент хеш-таблицей или массивом (не null).
+   * Проверяет, является ли аргумент хэш-таблицей или массивом (не null).
    *
    * @usage isObj(arg)
    * @param arg [any] Проверяемое значение

@@ -489,7 +489,7 @@ _context['eval_ast'] = makeSF((ast, ctx, rs) => {
    * Вычисляет LPE-AST в этом же контексте.
    *
    * @usage eval_ast(expr)
-   * @param expr [AST] LPE-выражение
+   * @param expr [AST] AST-дерево
    *
    * @example eval_ast({"+", 1, 2}) => 3
    * @category Интерпретатор | 3

@@ -46,6 +46,10 @@ export const __getitem__ = Symbol.for('__getitem__');
 /** @type {ContextObject} */
 export const STDLIB = {
   [$IS_LIB$]: true,
+
+  // $$CONTEXT_NAME$$ Должен совпадать с именем в LOCALE_DOC объекте
+  "$$CONTEXT_NAME$$": () => "STDLIB",
+
   // built-in constants
   '#t': true,
   '#f': false,
