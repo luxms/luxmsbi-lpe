@@ -5,6 +5,9 @@
  *
  *                                          `lpe 'x' -> string 'x' (если x не определена)`
  *
+ * @property {number=}        disallowLibFunctionsGetting Запретить получать функцию из библиотеки как переменную.
+ * @property {boolean=}       wantCallable Указание для resolver функций, что мы ищем функцию.
+ *
  * @property {any=}           streamAdapter Есть ли какая-нибудь библиотека для стриминга, чтобы LPE мог её использовать.
  * @property {boolean=}       squareBrackets Использовать ли квадратные скобки как строковые литералы.
  *

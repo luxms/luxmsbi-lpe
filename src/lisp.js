@@ -158,7 +158,7 @@ function EVAL_IMPLEMENTATION(ast, ctx, rs, evalOptions) {
 
   if (!isArray(ast)) {
     if (isString(ast)) {
-      const value = varGetter(ctx, ast, rs, evalOptions);
+      const value = varGetter(ctx, ast, {...rs, wantCallable: true}, evalOptions);
       if (value.found) {
         return value.value;
       }

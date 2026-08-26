@@ -100,6 +100,10 @@ export function varGetter(ctx, varName, rs, varSearchOptions) {
 
   if (isHash(ctx)) {                                                                              // получить значение
     if (Object.hasOwn(ctx, varName)) {                                                            // Нашлось в хэшмапе
+      if (!rs.wantCallable && ctx[$IS_LIB$] && rs.disallowLibFunctionsGetting && isFunction(ctx[varName])) {
+        // Для sql строки могут быть заданы без кавычек.
+        return VAR_NOT_FOUND;
+      }
       return { value: ctx[varName], found: true };
     }
     if (varName.slice(0, 3) !== 'sf:' && isFunction(ctx['sf:' + varName])) {                     // user-defined special form
