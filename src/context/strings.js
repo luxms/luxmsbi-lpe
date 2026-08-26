@@ -29,6 +29,38 @@ _context["str"] = (...args) => {
 
 
 
+_context["lower"] = (str) => {
+  /**
+   * Преобразует строку в нижний регистр.
+   *
+   * @usage lower(str)
+   * @param str [string] Строка
+   *
+   * @example lower("Hello") => "hello"
+   *          "TeST".lower() => "test"
+   * @category Работа со строками | 5
+   */
+  return str.toLocaleLowerCase();
+};
+
+
+
+_context["upper"] = (str) => {
+  /**
+   * Преобразует строку в верхний регистр.
+   *
+   * @usage upper(str)
+   * @param str [string] Строка
+   *
+   * @example upper("Hello") => "HELLO"
+   *          "TesT".upper() => "TEST"
+   * @category Работа со строками | 6
+   */
+  return str.toLocaleUpperCase();
+};
+
+
+
 _context["split"] = (str, sep) => {
   /**
    * Разбивает строку по разделителю.
@@ -67,6 +99,33 @@ _context["words"] = (str, reg) => {
 
 
 
+_context["indexOf"] = (str, substr, start) => {
+  /**
+   * Возвращает индекс первого вхождения подстроки в строку.
+   *
+   * @usage indexOf(str, substr)
+   * @param str [string] Строка
+   * @param substr [string] Подстрока
+   *
+   * @usage indexOf(str, substr, start)
+   * @param str [string] Строка
+   * @param substr [string] Подстрока
+   * @param start [number] Начальный индекс поиска
+   *
+   * @example indexOf("hello", "e") => 1
+   *          "hello".indexOf("e") => 1
+   *          indexOf("hello", "world") => -1
+   *          indexOf("test test", "st") => 2
+   *          indexOf("test test", "st", 3) => 7
+   *          indexOf("test test", "", 3) => 3
+   *          indexOf("test test", "", 1000) => 9
+   * @category Работа со строками | 19
+   */
+  return str.indexOf(substr, start || 0);
+};
+
+
+
 _context["re_match"] = (t, r, o) => {
   /**
    * Проверяет соответствие строки регулярному выражению. Возвращает попадания.
@@ -84,7 +143,7 @@ _context["re_match"] = (t, r, o) => {
    *          re_match("hello123", "[!]+", "g") => null
    *          re_match("hello123", "[a-z]+") => ReMath object
    *          re_match("test(aaa)", "\\((.*)\\)").0 => '(aaa)'
-   *          re_match("test(aaa)", "\\((.*)\\)").1 => 'aaa'
+   *          re_match("test(aaa)", r"\((.*)\)").1 => 'aaa'
    *          re_match("hello123", "[!]+") => null
    * @category Работа со строками | 20
    */
@@ -106,4 +165,174 @@ _context["RegExp"] = (...args) => {
    */
   // @ts-ignore
   return RegExp.apply(RegExp, args);
+};
+
+
+
+_context["trim"] = (str) => {
+  /**
+   * Удаляет пробелы и символы переноса строки в начале и конце строки.
+   *
+   * @usage trim(str)
+   * @param str [string] Строка
+   *
+   * @example trim("  hello  ") => "hello"
+   * @category Работа со строками | 30
+   */
+  return str.trim();
+};
+
+
+
+_context["trimStart"] = (str) => {
+  /**
+   * Удаляет пробелы и символы переноса строки в начале строки.
+   *
+   * @usage trimStart(str)
+   * @param str [string] Строка
+   *
+   * @example trimStart("  hello  ") => "hello  "
+   * @category Работа со строками | 31
+   */
+  return str.trimStart();
+};
+
+
+
+_context["trimEnd"] = (str) => {
+  /**
+   * Удаляет пробелы и символы переноса строки в конце строки.
+   *
+   * @usage trimEnd(str)
+   * @param str [string] Строка
+   *
+   * @example trimEnd("  hello  ") => "  hello"
+   * @category Работа со строками | 32
+   */
+  return str.trimEnd();
+};
+
+
+
+_context["padStart"] = (str, len, ch) => {
+  /**
+   * Добавляет символы в начало строки до указанной длины.
+   *
+   * @usage padStart(str, len, ch)
+   * @param str [string] Строка
+   * @param len [number] Длина строки
+   * @param ch [string] Символ для добавления
+   *
+   * @example padStart("hello", 10, " ") => "     hello"
+   *          "10".padStart(5, "0") => "00010"
+   * @category Работа со строками | 35
+   */
+  return str.padStart(len, ch);
+};
+
+
+
+_context["padEnd"] = (str, len, ch) => {
+  /**
+   * Добавляет символы в начало строки до указанной длины.
+   *
+   * @usage padEnd(str, len, ch)
+   * @param str [string] Строка
+   * @param len [number] Длина строки
+   * @param ch [string] Символ для добавления
+   *
+   * @example padEnd("hello", 10, " ") => "hello     "
+   *          "10".padEnd(5, "0") => "10000"
+   * @category Работа со строками | 35
+   */
+  return str.padEnd(len, ch);
+};
+
+
+
+_context["replace"] = (str, search, replacement) => {
+  /**
+   * Заменяет первое вхождение подстроки в строке на указанню подстроку.
+   *
+   * @usage replace(str, search, replacement)
+   * @param str [string] Строка
+   * @param search [string] Подстрока или регулярное выражение для поиска
+   * @param replacement [string] Подстрока для замены
+   *
+   * @example replace("helloween", "e", "[e]") => "h[e]lloween"
+   *          replace("helloween", RegExp(r"(e{2,})"), "[$1]") => "hellow[ee]n"
+   * @category Работа со строками | 40
+   */
+  return str.replace(search, replacement);
+};
+
+
+
+_context["replaceAll"] = (str, search, replacement) => {
+  /**
+   * Заменяет все вхождения подстроки в строке на указанню подстроку.
+   *
+   * @usage replaceAll(str, search, replacement)
+   * @param str [string] Строка
+   * @param search [string] Подстрока или регулярное выражение с ключом "g" для поиска
+   * @param replacement [string] Подстрока для замены
+   *
+   * @example replaceAll("helloween", "e", "[e]") => "h[e]llow[e][e]n"
+   *          replaceAll("helloween engeneer", RegExp(r"([en]+)", "g"), "[$1]") => "h[e]llow[een] [en]g[enee]r"
+   *          replaceAll("+1 234 567 89-98", RegExp(r"\d", "g"), "*") => "+* *** *** **-**"
+   * @category Работа со строками | 41
+   */
+  return str.replaceAll(search, replacement);
+};
+
+
+
+_context["startsWith"] = (str, search) => {
+  /**
+   * Проверяет, начинается ли строка с указанной подстроки.
+   *
+   * @usage startsWith(str, search)
+   * @param str [string] Строка
+   * @param search [string] Подстрока для поиска
+   *
+   * @example startsWith("hello", "hell") => true
+   *          startsWith("hello", "world") => false
+   * @category Работа со строками | 50
+   */
+  return str.startsWith(search);
+};
+
+
+
+_context["endsWith"] = (str, search) => {
+  /**
+   * Проверяет, заканчивается ли строка указанной подстрокой.
+   *
+   * @usage endsWith(str, search)
+   * @param str [string] Строка
+   * @param search [string] Подстрока для поиска
+   *
+   * @example endsWith("hello", "lo") => true
+   *          endsWith("hello", "world") => false
+   * @category Работа со строками | 51
+   */
+  return str.endsWith(search);
+};
+
+
+
+_context["includes"] = (str, search) => {
+  /**
+   * Проверяет, содержит ли строка указанную подстроку.
+   *
+   * @usage includes(str, search)
+   * @param str [string] Строка
+   * @param search [string] Подстрока для поиска
+   *
+   * @example includes("hello", "lo") => true
+   *          includes("hello", "el") => true
+   *          includes("hello", "world") => flase
+   * @category Работа со строками | 52
+   */
+  return str.includes(search);
 };

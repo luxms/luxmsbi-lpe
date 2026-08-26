@@ -135,6 +135,7 @@ _context["."] = _context["->"] = _context["threadFirst"] = makeSF((ast, ctx, rs)
    * @example {1, 2, 3}.(1) => 2
    *          {a = 2, b = 3}.b => 3
    *          {{1}}.(0).(0) => 1
+   *          "test".(2) => "s"
    * @category 20
    */
   // thread first macro

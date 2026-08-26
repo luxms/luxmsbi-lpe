@@ -977,6 +977,37 @@ export const LOCALE_DOC = {
 
 
 
+//#region endsWith
+    "endsWith": {
+      en: `/**
+            * Checks if a string ends with a specified substring.
+            * 
+            * @usage endsWith(str, search)
+            * @param str [string] String
+            * @param search [string] Substring to search for
+            * 
+            * @example endsWith("hello", "lo") => true
+            *          endsWith("hello", "world") => false
+            * @category Working with Strings | 51
+            */`,
+      ru: `/**
+            * Проверяет, заканчивается ли строка указанной подстрокой.
+            * 
+            * @usage endsWith(str, search)
+            * @param str [string] Строка
+            * @param search [string] Подстрока для поиска
+            * 
+            * @example endsWith("hello", "lo") => true
+            *          endsWith("hello", "world") => false
+            * @category Работа со строками | 51
+            */`,
+      hash: 818845970,
+    },
+//#endregion endsWith
+
+
+
+
 //#region entries
     "entries": {
       en: `/**
@@ -1881,6 +1912,90 @@ export const LOCALE_DOC = {
       hash: 1634102927,
     },
 //#endregion if
+
+
+
+
+//#region includes
+    "includes": {
+      en: `/**
+            * Checks if a string contains a specified substring.
+            * 
+            * @usage includes(str, search)
+            * @param str [string] String
+            * @param search [string] Substring to search for
+            * 
+            * @example includes("hello", "lo") => true
+            *          includes("hello", "el") => true
+            *          includes("hello", "world") => flase
+            * @category Working with Strings | 52
+            */`,
+      ru: `/**
+            * Проверяет, содержит ли строка указанную подстроку.
+            * 
+            * @usage includes(str, search)
+            * @param str [string] Строка
+            * @param search [string] Подстрока для поиска
+            * 
+            * @example includes("hello", "lo") => true
+            *          includes("hello", "el") => true
+            *          includes("hello", "world") => flase
+            * @category Работа со строками | 52
+            */`,
+      hash: 460372614,
+    },
+//#endregion includes
+
+
+
+
+//#region indexOf
+    "indexOf": {
+      en: `/**
+            * Returns the index of the first occurrence of a substring in a string.
+            * 
+            * @usage indexOf(str, substr)
+            * @param str [string] String
+            * @param substr [string] Substring
+            * 
+            * @usage indexOf(str, substr, start)
+            * @param str [string] String
+            * @param substr [string] Substring
+            * @param start [number] Starting index
+            * 
+            * @example indexOf("hello", "e") => 1
+            *          "hello".indexOf("e") => 1
+            *          indexOf("hello", "world") => -1
+            *          indexOf("test test", "st") => 2
+            *          indexOf("test test", "st", 3) => 7
+            *          indexOf("test test", "", 3) => 3
+            *          indexOf("test test", "", 1000) => 9
+            * @category Working with Strings | 19
+            */`,
+      ru: `/**
+            * Возвращает индекс первого вхождения подстроки в строку.
+            * 
+            * @usage indexOf(str, substr)
+            * @param str [string] Строка
+            * @param substr [string] Подстрока
+            * 
+            * @usage indexOf(str, substr, start)
+            * @param str [string] Строка
+            * @param substr [string] Подстрока
+            * @param start [number] Начальный индекс поиска
+            * 
+            * @example indexOf("hello", "e") => 1
+            *          "hello".indexOf("e") => 1
+            *          indexOf("hello", "world") => -1
+            *          indexOf("test test", "st") => 2
+            *          indexOf("test test", "st", 3) => 7
+            *          indexOf("test test", "", 3) => 3
+            *          indexOf("test test", "", 1000) => 9
+            * @category Работа со строками | 19
+            */`,
+      hash: 1907794668,
+    },
+//#endregion indexOf
 
 
 
@@ -2990,6 +3105,35 @@ export const LOCALE_DOC = {
 
 
 
+//#region lower
+    "lower": {
+      en: `/**
+            * Transforms the string to lowercase.
+            * 
+            * @usage lower(str)
+            * @param str [string] String
+            * 
+            * @example lower("Hello") => "hello"
+            *          "TeST".lower() => "test"
+            * @category Working with Strings | 5
+            */`,
+      ru: `/**
+            * Преобразует строку в нижний регистр.
+            * 
+            * @usage lower(str)
+            * @param str [string] Строка
+            * 
+            * @example lower("Hello") => "hello"
+            *          "TeST".lower() => "test"
+            * @category Работа со строками | 5
+            */`,
+      hash: 2142350278,
+    },
+//#endregion lower
+
+
+
+
 //#region lt
     "lt": {
       en: `/**
@@ -3760,6 +3904,72 @@ export const LOCALE_DOC = {
 
 
 
+//#region padEnd
+    "padEnd": {
+      en: `/**
+            * Pads the end of a string with a specified character to reach a specified length.
+            * 
+            * @usage padEnd(str, len, ch)
+            * @param str [string] String
+            * @param len [number] Length
+            * @param ch [string] Character to add
+            * 
+            * @example padEnd("hello", 10, " ") => "hello     "
+            *          "10".padEnd(5, "0") => "10000"
+            * @category Working with Strings | 35
+            */`,
+      ru: `/**
+            * Добавляет символы в начало строки до указанной длины.
+            * 
+            * @usage padEnd(str, len, ch)
+            * @param str [string] Строка
+            * @param len [number] Длина строки
+            * @param ch [string] Символ для добавления
+            * 
+            * @example padEnd("hello", 10, " ") => "hello     "
+            *          "10".padEnd(5, "0") => "10000"
+            * @category Работа со строками | 35
+            */`,
+      hash: 1983084649,
+    },
+//#endregion padEnd
+
+
+
+
+//#region padStart
+    "padStart": {
+      en: `/**
+            * Pads the start of a string with a specified character to reach a specified length.
+            * 
+            * @usage padStart(str, len, ch)
+            * @param str [string] String
+            * @param len [number] Length
+            * @param ch [string] Character to add
+            * 
+            * @example padStart("hello", 10, " ") => "     hello"
+            *          "10".padStart(5, "0") => "00010"
+            * @category Working with Strings | 35
+            */`,
+      ru: `/**
+            * Добавляет символы в начало строки до указанной длины.
+            * 
+            * @usage padStart(str, len, ch)
+            * @param str [string] Строка
+            * @param len [number] Длина строки
+            * @param ch [string] Символ для добавления
+            * 
+            * @example padStart("hello", 10, " ") => "     hello"
+            *          "10".padStart(5, "0") => "00010"
+            * @category Работа со строками | 35
+            */`,
+      hash: 974867278,
+    },
+//#endregion padStart
+
+
+
+
 //#region partition
     "partition": {
       en: `/**
@@ -4132,10 +4342,10 @@ export const LOCALE_DOC = {
             * @example re_match("hello123", "[a-z]+", "g") => ["hello"]
             *          re_match("hello123", "[!]+", "g") => null
             *          re_match("hello123", "[a-z]+") => ReMath object
-            *          re_match("test(aaa)", "\\((.*)\\)").0 => '(aaa)'
-            *          re_match("test(aaa)", "\\((.*)\\)").1 => 'aaa'
+            *          re_match("test(aaa)", "\\\\((.*)\\\\)").0 => '(aaa)'
+            *          re_match("test(aaa)", r"\\((.*)\\)").1 => 'aaa'
             *          re_match("hello123", "[!]+") => null
-            * @category Working with strings | 20
+            * @category Working with Strings | 20
             */`,
       ru: `/**
             * Проверяет соответствие строки регулярному выражению. Возвращает попадания.
@@ -4153,11 +4363,11 @@ export const LOCALE_DOC = {
             *          re_match("hello123", "[!]+", "g") => null
             *          re_match("hello123", "[a-z]+") => ReMath object
             *          re_match("test(aaa)", "\\\\((.*)\\\\)").0 => '(aaa)'
-            *          re_match("test(aaa)", "\\\\((.*)\\\\)").1 => 'aaa'
+            *          re_match("test(aaa)", r"\\((.*)\\)").1 => 'aaa'
             *          re_match("hello123", "[!]+") => null
             * @category Работа со строками | 20
             */`,
-      hash: 878742887,
+      hash: 897650031,
     },
 //#endregion re_match
 
@@ -4290,7 +4500,7 @@ export const LOCALE_DOC = {
             * @param flags [string] Regular expression flags
             * 
             * @example regexp("[0-9]+", "g") => /[0-9]+/g
-            * @category Working with strings | 21
+            * @category Working with Strings | 21
             */`,
       ru: `/**
             * Создаёт регулярное выражение.
@@ -4385,6 +4595,74 @@ export const LOCALE_DOC = {
       hash: 2081105240,
     },
 //#endregion repeat
+
+
+
+
+//#region replace
+    "replace": {
+      en: `/**
+            * Replaces the first occurrence of a substring in a string with a specified substring.
+            * 
+            * @usage replace(str, search, replacement)
+            * @param str [string] String
+            * @param search [string] Substring or regular expression to search for
+            * @param replacement [string] Substring to replace
+            * 
+            * @example replace("helloween", "e", "[e]") => "h[e]lloween"
+            *          replace("helloween", RegExp(r"(e{2,})"), "[$1]") => "hellow[ee]n"
+            * @category Working with Strings | 40
+            */`,
+      ru: `/**
+            * Заменяет первое вхождение подстроки в строке на указанню подстроку.
+            * 
+            * @usage replace(str, search, replacement)
+            * @param str [string] Строка
+            * @param search [string] Подстрока или регулярное выражение для поиска
+            * @param replacement [string] Подстрока для замены
+            * 
+            * @example replace("helloween", "e", "[e]") => "h[e]lloween"
+            *          replace("helloween", RegExp(r"(e{2,})"), "[$1]") => "hellow[ee]n"
+            * @category Работа со строками | 40
+            */`,
+      hash: 1867937725,
+    },
+//#endregion replace
+
+
+
+
+//#region replaceAll
+    "replaceAll": {
+      en: `/**
+            * Replaces all occurrences of a substring in a string with a specified substring.
+            * 
+            * @usage replaceAll(str, search, replacement)
+            * @param str [string] String
+            * @param search [string] Substring or regular expression with "g" flag to search for
+            * @param replacement [string] Substring to replace
+            * 
+            * @example replaceAll("helloween", "e", "[e]") => "h[e]llow[e][e]n"
+            *          replaceAll("helloween engeneer", RegExp(r"([en]+)", "g"), "[$1]") => "h[e]llow[een] [en]g[enee]r"
+            *          replaceAll("+1 234 567 89-98", RegExp(r"\\d", "g"), "*") => "+* *** *** **-**"
+            * @category Working with Strings | 41
+            */`,
+      ru: `/**
+            * Заменяет все вхождения подстроки в строке на указанню подстроку.
+            * 
+            * @usage replaceAll(str, search, replacement)
+            * @param str [string] Строка
+            * @param search [string] Подстрока или регулярное выражение с ключом "g" для поиска
+            * @param replacement [string] Подстрока для замены
+            * 
+            * @example replaceAll("helloween", "e", "[e]") => "h[e]llow[e][e]n"
+            *          replaceAll("helloween engeneer", RegExp(r"([en]+)", "g"), "[$1]") => "h[e]llow[een] [en]g[enee]r"
+            *          replaceAll("+1 234 567 89-98", RegExp(r"\\d", "g"), "*") => "+* *** *** **-**"
+            * @category Работа со строками | 41
+            */`,
+      hash: 212685074,
+    },
+//#endregion replaceAll
 
 
 
@@ -4970,6 +5248,37 @@ export const LOCALE_DOC = {
 
 
 
+//#region startsWith
+    "startsWith": {
+      en: `/**
+            * Checks if a string starts with a specified substring.
+            * 
+            * @usage startsWith(str, search)
+            * @param str [string] String
+            * @param search [string] Substring to search for
+            * 
+            * @example startsWith("hello", "hell") => true
+            *          startsWith("hello", "world") => false
+            * @category Working with Strings | 50
+            */`,
+      ru: `/**
+            * Проверяет, начинается ли строка с указанной подстроки.
+            * 
+            * @usage startsWith(str, search)
+            * @param str [string] Строка
+            * @param search [string] Подстрока для поиска
+            * 
+            * @example startsWith("hello", "hell") => true
+            *          startsWith("hello", "world") => false
+            * @category Работа со строками | 50
+            */`,
+      hash: 1120394616,
+    },
+//#endregion startsWith
+
+
+
+
 //#region str
     "str": {
       en: `/**
@@ -5102,6 +5411,7 @@ export const LOCALE_DOC = {
             * @example {1, 2, 3}.1 => 2
             *          {a = 2, b = 3}.b => 3
             *          {{1}}.(0).(0) => 1
+            *          "test".(2) => "s"
             * @category 20
             */`,
       ru: `/**
@@ -5127,9 +5437,10 @@ export const LOCALE_DOC = {
             * @example {1, 2, 3}.(1) => 2
             *          {a = 2, b = 3}.b => 3
             *          {{1}}.(0).(0) => 1
+            *          "test".(2) => "s"
             * @category 20
             */`,
-      hash: 2110505306,
+      hash: 948174895,
     },
 //#endregion threadFirst
 
@@ -5445,6 +5756,87 @@ export const LOCALE_DOC = {
 
 
 
+//#region trim
+    "trim": {
+      en: `/**
+            * Removes leading and trailing whitespace and newline characters from a string.
+            * 
+            * @usage trim(str)
+            * @param str [string] String
+            * 
+            * @example trim("  hello  ") => "hello"
+            * @category Working with Strings | 30
+            */`,
+      ru: `/**
+            * Удаляет пробелы и символы переноса строки в начале и конце строки.
+            * 
+            * @usage trim(str)
+            * @param str [string] Строка
+            * 
+            * @example trim("  hello  ") => "hello"
+            * @category Работа со строками | 30
+            */`,
+      hash: 652542942,
+    },
+//#endregion trim
+
+
+
+
+//#region trimEnd
+    "trimEnd": {
+      en: `/**
+            * Removes trailing whitespace and newline characters from a string.
+            * 
+            * @usage trimEnd(str)
+            * @param str [string] String
+            * 
+            * @example trimEnd("  hello  ") => "  hello"
+            * @category Working with Strings | 32
+            */`,
+      ru: `/**
+            * Удаляет пробелы и символы переноса строки в конце строки.
+            * 
+            * @usage trimEnd(str)
+            * @param str [string] Строка
+            * 
+            * @example trimEnd("  hello  ") => "  hello"
+            * @category Работа со строками | 32
+            */`,
+      hash: 707178356,
+    },
+//#endregion trimEnd
+
+
+
+
+//#region trimStart
+    "trimStart": {
+      en: `/**
+            * Removes leading whitespace and newline characters from a string.
+            * 
+            * @usage trimStart(str)
+            * @param str [string] String
+            * 
+            * @example trimStart("  hello  ") => "hello  "
+            * @category Working with Strings | 31
+            */`,
+      ru: `/**
+            * Удаляет пробелы и символы переноса строки в начале строки.
+            * 
+            * @usage trimStart(str)
+            * @param str [string] Строка
+            * 
+            * @example trimStart("  hello  ") => "hello  "
+            * @category Работа со строками | 31
+            */`,
+      hash: 937881109,
+    },
+//#endregion trimStart
+
+
+
+
 //#region try
     "try": {
       en: `/**
@@ -5750,6 +6142,35 @@ export const LOCALE_DOC = {
       hash: 1917698144,
     },
 //#endregion update_in
+
+
+
+
+//#region upper
+    "upper": {
+      en: `/**
+            * Transforms the string to uppercase.
+            * 
+            * @usage upper(str)
+            * @param str [string] String
+            * 
+            * @example upper("Hello") => "HELLO"
+            *          "TesT".upper() => "TEST"
+            * @category Working with Strings | 6
+            */`,
+      ru: `/**
+            * Преобразует строку в верхний регистр.
+            * 
+            * @usage upper(str)
+            * @param str [string] Строка
+            * 
+            * @example upper("Hello") => "HELLO"
+            *          "TesT".upper() => "TEST"
+            * @category Работа со строками | 6
+            */`,
+      hash: 1513097953,
+    },
+//#endregion upper
 
 
 
