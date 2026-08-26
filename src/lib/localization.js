@@ -171,30 +171,6 @@ function getWordDiff(oldStr, newStr) {
 
   return result;
 }
-// function getWordDiff(oldStr, newStr) {
-//   // Разбиваем на слова и пробелы
-//   const tokenize = (/** @type {string} */ str) => {
-//     return str.match(/([^\s]+|\s+)/g) || [];
-//   };
-
-//   const oldWords = tokenize("\n" + oldStr.replaceAll("\r\n", "\n") + "\n");
-//   const newWords = tokenize("\n" + newStr.replaceAll("\r\n", "\n") + "\n");
-
-//   const diff = LOCALIZATION_OPTIONS.modules.diff.diffArrays(oldWords, newWords);
-
-//   let result = '';
-//   diff.forEach((/** @type {{ added: boolean; value: string[]; removed: boolean; }} */ part) => {
-//     if (part.added) {
-//       result += part.value.join('').split("\n").map((el, idx) => el === "" && idx === 0 ? "" : `[+${el}+]`).join("\n");
-//     } else if (part.removed) {
-//       result += part.value.join('').split("\n").map((el, idx) => el === "" && idx === 0 ? "" : `[-${el}-]`).join("\n");
-//     } else {
-//       result += part.value.join('').replace(/\n[\s\S]*\n/, "\n");
-//     }
-//   });
-
-//   return result;
-// }
 
 
 
@@ -287,17 +263,6 @@ function extractLocalizationDataFromTmpFile(changedFileText) {
   );
   localesTexts["hash"] = generateSimpleHash(localesTexts["ru"]?.trim() || "");
   return localesTexts;
-  // const newText =
-  //   `  "${lpeName}": {\n` +
-  //   localesTexts.map(([loc, text]) =>
-  //     `    ${loc}: ` + "`" + text.replaceAll("\\", "\\\\").replaceAll("`", "\\`").replaceAll(/\n\s*/g, "\n          ") + "`,\n"
-  //   ).join("") +
-  //   `    hash: ` + generateSimpleHash(localesTexts.find(el => el[0] === "ru")?.[1].replaceAll(/\r?\n\s+/g, "\n").slice(3, -2) || "") + ",\n" +
-  //   `  },`;
-
-  // return locFileText.replace(
-  //   new RegExp(String.raw`//#region ${lpeName}(\r?)\n([\s\S]*?)//#endregion ${lpeName}\r?\n`),
-  //    (_, p1) => `//#region ${lpeName}${p1}\n${newText}\n//#endregion ${lpeName}${p1}\n`);
 }
 
 
@@ -425,7 +390,7 @@ async function updateFile(locFileText, contextName, context) {
     regContextData,
     `//#region ${contextName}\n` +
       `${spaces}  "${contextName}": {\n` +
-      generateLocalizationHashData(newDoc) +
+      generateLocalizationHashData(newDoc).replaceAll("$", "$$$$") +
       `\n${spaces}},\n` +
       `//#endregion ${contextName}\n`,
   );
