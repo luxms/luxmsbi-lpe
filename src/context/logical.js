@@ -32,7 +32,7 @@ const _context = CONTEXT_LOGICAL;
 
 
 
-_context['='] = _context['eq'] = _context['equal'] = _context['=='] = (...args) => {
+_context["="] = _context["eq"] = _context["equal"] = _context["=="] = (...args) => {
   /**
     * Проверяет на равенство всех аргументов первому аргументу
     * @usage eq(compared, ...agrs)
@@ -49,7 +49,7 @@ _context['='] = _context['eq'] = _context['equal'] = _context['=='] = (...args) 
 
 
 
-_context['==='] = _context["strictEq"] = (...args) => {
+_context["==="] = _context["strictEq"] = (...args) => {
   /**
     * Проверяет на строгое равенство всех аргументов первому аргументу.
     *
@@ -67,7 +67,7 @@ _context['==='] = _context["strictEq"] = (...args) => {
 
 
 
-_context['!='] = _context['neq'] = _context['ne'] = (...args) => {
+_context["!="] = _context["neq"] = _context["ne"] = (...args) => {
   /**
     * Проверяет, что не все аргументы равны первому.
     *
@@ -88,7 +88,7 @@ _context['!='] = _context['neq'] = _context['ne'] = (...args) => {
 
 
 
-_context['!=='] = _context['strictNe'] = (...args) => {
+_context["!=="] = _context["strictNe"] = (...args) => {
   /**
     * Проверяет, что не все аргументы строго равны первому.
     *
@@ -110,7 +110,7 @@ _context['!=='] = _context['strictNe'] = (...args) => {
 
 
 
-_context['<'] = _context['lt'] = _context['less'] = makeSF((ast, ctx, rs) => {
+_context["<"] = _context["lt"] = _context["less"] = makeSF((ast, ctx, rs) => {
   /**
     * Проверяет, что каждый последующий аргумент больше предыдущего.
     *
@@ -148,7 +148,7 @@ _context['<'] = _context['lt'] = _context['less'] = makeSF((ast, ctx, rs) => {
 
 
 
-_context['<='] = _context['le'] = _context['lte'] = makeSF((ast, ctx, rs) => {
+_context["<="] = _context["le"] = _context["lte"] = makeSF((ast, ctx, rs) => {
   /**
     * Проверяет, что каждый последующий аргумент больше или равен предыдущему.
     *
@@ -186,7 +186,7 @@ _context['<='] = _context['le'] = _context['lte'] = makeSF((ast, ctx, rs) => {
 
 
 
-_context['>'] = _context['gt'] = _context['greater'] = makeSF((ast, ctx, rs) => {
+_context[">"] = _context["gt"] = _context["greater"] = makeSF((ast, ctx, rs) => {
   /**
     * Проверяет, что каждый последующий аргумент меньше предыдущего.
     *
@@ -224,7 +224,7 @@ _context['>'] = _context['gt'] = _context['greater'] = makeSF((ast, ctx, rs) => 
 
 
 
-_context['>='] = _context['ge'] = _context['gte'] = makeSF((ast, ctx, rs) => {
+_context[">="] = _context["ge"] = _context["gte"] = makeSF((ast, ctx, rs) => {
   /**
     * Проверяет, что каждый последующий аргумент меньше или равен предыдущему.
     *
@@ -262,7 +262,7 @@ _context['>='] = _context['ge'] = _context['gte'] = makeSF((ast, ctx, rs) => {
 
 
 
-_context['not'] = _context['!'] = a => {
+_context["not"] = _context["!"] = a => {
   /**
    * Логическое отрицание.
    *
@@ -279,7 +279,7 @@ _context['not'] = _context['!'] = a => {
 
 
 
-const andSF = _context['&&'] = _context["and"] = makeSF((ast, ctx, rs) => {
+const andSF = _context["&&"] = _context["and"] = makeSF((ast, ctx, rs) => {
   /**
    * Логическое И.
    *
@@ -309,7 +309,7 @@ const andSF = _context['&&'] = _context["and"] = makeSF((ast, ctx, rs) => {
 
 
 
-const orSF = _context['||'] = _context['or'] = makeSF((ast, ctx, rs) => {
+const orSF = _context["||"] = _context["or"] = makeSF((ast, ctx, rs) => {
   /**
    * Логическое ИЛИ.
    *
@@ -339,7 +339,7 @@ const orSF = _context['||'] = _context['or'] = makeSF((ast, ctx, rs) => {
 
 
 
-const landSF = _context['logicalAnd'] = _context['logical_and'] = makeSF((ast, ctx, rs) => {
+const landSF = _context["logicalAnd"] = _context["logical_and"] = makeSF((ast, ctx, rs) => {
   /**
    * Логическое И. Возвращает true, если все выражения истинны.
    *
@@ -364,7 +364,7 @@ const landSF = _context['logicalAnd'] = _context['logical_and'] = makeSF((ast, c
 
 
 
-const lorSF = _context['logicalOr'] = _context['logical_or'] = makeSF((ast, ctx, rs) => {
+const lorSF = _context["logicalOr"] = _context["logical_or"] = makeSF((ast, ctx, rs) => {
   /**
    * Логическое ИЛИ. Возвращает true, если хотя бы одно из выражений истинно.
    *

@@ -11,7 +11,7 @@ const _context = CONTEXT_TYPES;
 
 
 
-_context['->any'] = _context["toAny"] = v => {
+_context["->any"] = _context["toAny"] = v => {
   /**
    * Преобразует значение в any (возвращает как есть).
    *
@@ -27,7 +27,7 @@ _context['->any'] = _context["toAny"] = v => {
 
 
 
-_context['->bool'] = _context["toBool"] = v => {
+_context["->bool"] = _context["toBool"] = v => {
   /**
    * Преобразует значение в булевый тип.
    *
@@ -45,7 +45,7 @@ _context['->bool'] = _context["toBool"] = v => {
 
 
 
-_context['->int'] = _context["toInt"] = _context["toNumber"] = v => {
+_context["->int"] = _context["toInt"] = _context["toNumber"] = v => {
   /**
    * Преобразует значение в число.
    *
@@ -63,7 +63,7 @@ _context['->int'] = _context["toInt"] = _context["toNumber"] = v => {
 
 
 
-_context['->str'] = _context["toStr"] = v => {
+_context["->str"] = _context["toStr"] = v => {
   /**
    * Преобразует значение в строку.
    *
@@ -80,7 +80,7 @@ _context['->str'] = _context["toStr"] = v => {
 
 
 
-_context['read-string'] = _context["jsonParse"] = _context["json_parse"] = a => {
+_context["read-string"] = _context["jsonParse"] = _context["json_parse"] = a => {
   /**
    * Преобразует JSON-строку в объект.
    *
@@ -110,7 +110,7 @@ _context["jsonStringify"] = a => {
 
 
 
-_context['isa'] = (a, b) => {
+_context["isa"] = (a, b) => {
   /**
    * Проверяет, является ли объект экземпляром класса.
    *
@@ -126,7 +126,7 @@ _context['isa'] = (a, b) => {
 
 
 
-_context['type'] = a => {
+_context["type"] = a => {
   /**
    * Возвращает тип значения.
    *
@@ -142,7 +142,7 @@ _context['type'] = a => {
 
 
 
-_context['classOf'] = (a) => {
+_context["classOf"] = (a) => {
   /**
    * Возвращает имя класса объекта.
    *
@@ -157,7 +157,7 @@ _context['classOf'] = (a) => {
 
 
 
-_context['null?'] = _context["isNull"] = (a) => {
+_context["null?"] = _context["isNull"] = (a) => {
   /**
    * Проверяет, является ли значение null или undefined.
    *
@@ -175,7 +175,7 @@ _context['null?'] = _context["isNull"] = (a) => {
 
 
 
-_context['undefined?'] = _context["isUndef"] = _context["isUndefined"] = (a) => {
+_context["undefined?"] = _context["isUndef"] = _context["isUndefined"] = (a) => {
   /**
    * Проверяет, является ли значение undefined.
    *
@@ -192,7 +192,7 @@ _context['undefined?'] = _context["isUndef"] = _context["isUndefined"] = (a) => 
 
 
 
-_context['true?'] = _context["isTrue"] = (a) => {
+_context["true?"] = _context["isTrue"] = (a) => {
   /**
    * Проверяет, является ли значение true.
    *
@@ -208,7 +208,7 @@ _context['true?'] = _context["isTrue"] = (a) => {
 
 
 
-_context['false?'] = _context["isFalse"] = (a) => {
+_context["false?"] = _context["isFalse"] = (a) => {
   /**
    * Проверяет, является ли значение false.
    *
@@ -223,18 +223,18 @@ _context['false?'] = _context["isFalse"] = (a) => {
 };
 
 
-_context['bool?'] = _context["isBool"] = isBoolean;
-_context['number?'] = _context["isNumber"] = isNumber;
-_context['numberlike?'] = _context["isNumberLike"] = isNumberLike;
-_context['string?'] = _context["isString"] = isString;
-_context['list?'] = _context["isArray"] = isArray;
-_context['hash?'] = _context["isHash"] = isHash;
-_context['obj?'] = _context["isObj"] = isObj;
-_context['func?'] = _context["isFunction"] = isFunction;
+_context["bool?"]       = _context["isBool"]        = isBoolean;
+_context["number?"]     = _context["isNumber"]      = isNumber;
+_context["numberlike?"] = _context["isNumberLike"]  = isNumberLike;
+_context["string?"]     = _context["isString"]      = isString;
+_context["list?"]       = _context["isArray"]       = isArray;
+_context["hash?"]       = _context["isHash"]        = isHash;
+_context["obj?"]        = _context["isObj"]         = isObj;
+_context["func?"]       = _context["isFunction"]    = isFunction;
 
 
 
-_context['pr_str'] = _context["jsonJoin"] = (...a) => {
+_context["pr_str"] = _context["jsonJoin"] = (...a) => {
   /**
    * Преобразует значения в JSON-строки и объединяет через пробел.
    *
@@ -249,7 +249,7 @@ _context['pr_str'] = _context["jsonJoin"] = (...a) => {
 
 
 
-_context['[]'] = _context["astToString"] = makeSF((ast, ctx, rs) => {
+_context["[]"] = _context["astToString"] = makeSF((ast, ctx, rs) => {
   /**
    * Преобразовать в строку AST дерево выражения.
    *

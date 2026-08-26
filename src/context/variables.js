@@ -183,7 +183,7 @@ const _context = CONTEXT_VARIABLES;
 
 
 
-_context[':='] = _context['assign'] = makeSF((ast, ctx, rs) => {
+_context[":="] = _context["assign"] = makeSF((ast, ctx, rs) => {
   /**
     * Оператор присваивания. Возвращает значение переменной после присваивания.
     *
@@ -339,7 +339,7 @@ _context["let"] = makeSF((ast, ctx, rs) => {
 
 
 
-const letStarSF = _context['let*'] = _context['letseq'] = _context['letstar'] = makeSF((ast, ctx, rs) => {
+const letStarSF = _context["let*"] = _context["letseq"] = _context["letstar"] = makeSF((ast, ctx, rs) => {
   /**
    * Создаёт локальные привязки переменных последовательно: каждая следующая привязка
    * видит предыдущие (в отличие от let, где привязки независимы).
@@ -388,7 +388,7 @@ const letStarSF = _context['let*'] = _context['letseq'] = _context['letstar'] = 
 
 
 
-_context['def'] = makeSF((ast, ctx, rs) => {
+_context["def"] = makeSF((ast, ctx, rs) => {
   /**
    * Определяет переменную в текущем контексте.
    *
@@ -414,7 +414,7 @@ _context['def'] = makeSF((ast, ctx, rs) => {
 
 
 
-_context['undef'] = makeSF((ast, ctx, rs) => {
+_context["undef"] = makeSF((ast, ctx, rs) => {
   /**
    * Удаляет переменную из текущего контекста и возвращает её значение.
    *
@@ -490,7 +490,7 @@ _context['undef'] = makeSF((ast, ctx, rs) => {
 
 
 
-_context['resolve'] = makeSF((ast, ctx, rs) => {
+_context["resolve"] = makeSF((ast, ctx, rs) => {
   /**
    * Получить значение переменной.
    *
@@ -506,7 +506,7 @@ _context['resolve'] = makeSF((ast, ctx, rs) => {
 
 
 
-_context['ctx'] = makeSF((ast, ctx, rs) => {
+_context["ctx"] = makeSF((ast, ctx, rs) => {
   /**
    * Получить объект с переменными.
    *
@@ -526,7 +526,7 @@ _context['ctx'] = makeSF((ast, ctx, rs) => {
 
 
 
-_context['.-'] = _context['property'] = makeSF((ast, ctx, options) => {
+_context[".-"] = _context["property"] = makeSF((ast, ctx, options) => {
   /**
    * Получает или устанавливает свойство объекта.
    *

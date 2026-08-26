@@ -21,7 +21,7 @@ const _context = CONTEXT_STD;
 
 
 
-_context["()"] = _context['identity'] = a => {
+_context["()"] = _context["identity"] = a => {
   /**
    * Возвращает переданный аргумент.
    *
@@ -37,7 +37,7 @@ _context["()"] = _context['identity'] = a => {
 
 
 
-_context['"'] = _context["'"] = _context["q"] = makeSF((ast, ctx, rs) => {
+_context["\""] = _context["'"] = _context["q"] = makeSF((ast, ctx, rs) => {
   /**
    * Создает строку или получает значение переменной.
    *
@@ -58,7 +58,7 @@ _context['"'] = _context["'"] = _context["q"] = makeSF((ast, ctx, rs) => {
 
 
 
-_context['apply'] = (f, ...b) => {
+_context["apply"] = (f, ...b) => {
   /**
    * Применяет функцию к списку аргументов.
    *
@@ -74,7 +74,7 @@ _context['apply'] = (f, ...b) => {
 
 
 
-_context['_get_obj_meth_'] = _context['~>'] = (obj, propName) => {
+_context["_get_obj_meth_"] = _context["~>"] = (obj, propName) => {
   // Internal helper used by the ~> operator (no docstring on purpose so it
   // doesn't need a localization entry — it is never user-callable by name).
   // Returns obj[name]. If the value is a function, it is bound to obj so the
@@ -90,7 +90,7 @@ _context['_get_obj_meth_'] = _context['~>'] = (obj, propName) => {
 
 
 
-_context['invoke'] = _context['_call_obj_meth_'] = (obj, methodName, ...args) => {
+_context["invoke"] = _context["_call_obj_meth_"] = (obj, methodName, ...args) => {
   /**
    * Вызов метода объекта.
    *
@@ -111,7 +111,7 @@ _context['invoke'] = _context['_call_obj_meth_'] = (obj, methodName, ...args) =>
 
 
 // Для обратной совместимости с версиями до 1.6.0 "->" эквивалентен "."
-_context['.'] = _context['->'] = _context["threadFirst"] = makeSF((ast, ctx, rs) => {
+_context["."] = _context["->"] = _context["threadFirst"] = makeSF((ast, ctx, rs) => {
   /**
    * Если правый аргумент - вызов функции, позволяет выполнять последовательные вызовы (thread-first).
    *
@@ -163,7 +163,7 @@ _context['.'] = _context['->'] = _context["threadFirst"] = makeSF((ast, ctx, rs)
 
 
 // Для обратной совместимости с версиями до 1.6.0 "->" эквивалентен "."
-_context['..'] = _context['->>'] = _context["threadLast"] = makeSF((ast, ctx, rs) => {
+_context[".."] = _context["->>"] = _context["threadLast"] = makeSF((ast, ctx, rs) => {
   /**
    * Позволяет выполнять последовательных вызовов (thread-last).
    *
@@ -191,7 +191,7 @@ _context['..'] = _context['->>'] = _context["threadLast"] = makeSF((ast, ctx, rs
 
 
 
-_context['nvl'] = _context['coalesce'] = makeSF((ast, ctx, rs) => {
+_context["nvl"] = _context["coalesce"] = makeSF((ast, ctx, rs) => {
   /**
    * Возвращает первый не-null/undefined аргумент.
    *
@@ -217,7 +217,7 @@ _context['nvl'] = _context['coalesce'] = makeSF((ast, ctx, rs) => {
 
 
 
-_context['println'] = (...args) => {
+_context["println"] = (...args) => {
   /**
     * Выводит значения в консоль. В случае, если значение не является строкой, оно выводится как JSON.
     *
@@ -233,7 +233,7 @@ _context['println'] = (...args) => {
 
 
 
-_context['prn'] = (...args) => {
+_context["prn"] = (...args) => {
   /**
     * Выводит JSON-представление значений в консоль. Строки оборачиваются в двойные кавычки.
     *
@@ -249,7 +249,7 @@ _context['prn'] = (...args) => {
 
 
 
-_context['print'] = (...args) => {
+_context["print"] = (...args) => {
   /**
    * Выводит значения в консоль (без JSON форматирования).
    *
@@ -266,7 +266,7 @@ _context['print'] = (...args) => {
 
 
 
-_context['throw'] = a => {
+_context["throw"] = a => {
   /**
    * Выбрасывает исключение.
    *
@@ -281,7 +281,7 @@ _context['throw'] = a => {
 
 
 
-_context['try'] = makeSF((ast, ctx, rs) => {
+_context["try"] = makeSF((ast, ctx, rs) => {
   /**
    * Обработка исключений.
    *
@@ -305,7 +305,7 @@ _context['try'] = makeSF((ast, ctx, rs) => {
 
 
 
-const beginSF = _context['begin'] = makeSF((ast, ctx, options) => {
+const beginSF = _context["begin"] = makeSF((ast, ctx, options) => {
   /**
    * Последовательно выполняет несколько выражений и возвращает результат последнего.
    *
@@ -331,7 +331,7 @@ const beginSF = _context['begin'] = makeSF((ast, ctx, options) => {
 
 
 
-const ifSF = _context['if'] = makeSF((ast, ctx, rs) => {
+const ifSF = _context["if"] = makeSF((ast, ctx, rs) => {
   /**
    * Получение выражения по условию.
    *
@@ -367,7 +367,7 @@ const ifSF = _context['if'] = makeSF((ast, ctx, rs) => {
 
 
 
-_context['do'] = makeSF((ast, ctx, rs) => {
+_context["do"] = makeSF((ast, ctx, rs) => {
   /**
    * Выполнение выражения в цикле до тех пор, пока условие выполняется.
    *
@@ -413,7 +413,7 @@ _context['do'] = makeSF((ast, ctx, rs) => {
 
 
 
-_context['return'] = makeSF((ast, ctx, rs) => {
+_context["return"] = makeSF((ast, ctx, rs) => {
   /**
   * Прерывает выполнение текущей функции и возвращает результат.
   *
@@ -435,7 +435,7 @@ _context['return'] = makeSF((ast, ctx, rs) => {
 
 
 
-_context['catchReturn'] = makeSF((ast, ctx, rs) => {
+_context["catchReturn"] = makeSF((ast, ctx, rs) => {
   /**
    * Отлавливает вызов функции [return]($func-return) и возвращает результат.
    *
@@ -450,7 +450,7 @@ _context['catchReturn'] = makeSF((ast, ctx, rs) => {
 
 
 
-_context['rep'] = makeSF((ast, ctx, rs) => {
+_context["rep"] = makeSF((ast, ctx, rs) => {
   /**
    * Вычисляет AST в виде строки и возвращает JSON-представление результата.
    *
@@ -469,7 +469,7 @@ _context['rep'] = makeSF((ast, ctx, rs) => {
 
 
 
-_context['eval'] = (a) => {
+_context["eval"] = (a) => {
   /**
    * Вычисляет LPE-AST в контексте STDLIB. Другие контексты будут недоступны.
    *
@@ -484,7 +484,7 @@ _context['eval'] = (a) => {
 
 
 
-_context['eval_ast'] = makeSF((ast, ctx, rs) => {
+_context["eval_ast"] = makeSF((ast, ctx, rs) => {
   /**
    * Вычисляет LPE-AST в этом же контексте.
    *
@@ -503,7 +503,7 @@ _context['eval_ast'] = makeSF((ast, ctx, rs) => {
 
 
 
-_context['eval_lpe'] = makeSF((ast, ctx, rs) => {
+_context["eval_lpe"] = makeSF((ast, ctx, rs) => {
   /**
    * Вычисляет LPE-код из строки.
    *
@@ -526,7 +526,7 @@ _context['eval_lpe'] = makeSF((ast, ctx, rs) => {
 
 
 
-_context['set_options'] = makeSF((ast, ctx, rs) => {
+_context["set_options"] = makeSF((ast, ctx, rs) => {
   /**
    * Устанавливает опции выполнения для выражения.
    *

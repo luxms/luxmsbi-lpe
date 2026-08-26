@@ -11,7 +11,7 @@ const _context = CONTEXT_STRINGS;
 
 
 
-_context['str'] = (...args) => {
+_context["str"] = (...args) => {
   /**
    * Преобразует аргументы в строку и объединяет.
    *
@@ -29,7 +29,7 @@ _context['str'] = (...args) => {
 
 
 
-_context['split'] = (str, sep) => {
+_context["split"] = (str, sep) => {
   /**
    * Разбивает строку по разделителю.
    *
@@ -45,7 +45,7 @@ _context['split'] = (str, sep) => {
 
 
 
-_context['words'] = (str, reg) => {
+_context["words"] = (str, reg) => {
   /**
    * Разбивает строку на слова.
    *
@@ -67,7 +67,7 @@ _context['words'] = (str, reg) => {
 
 
 
-_context['re_match'] = (t, r, o) => {
+_context["re_match"] = (t, r, o) => {
   /**
    * Проверяет соответствие строки регулярному выражению. Возвращает попадания.
    *
@@ -93,7 +93,7 @@ _context['re_match'] = (t, r, o) => {
 
 
 
-_context['RegExp'] = (...args) => {
+_context["RegExp"] = (...args) => {
   /**
    * Создаёт регулярное выражение.
    *

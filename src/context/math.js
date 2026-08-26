@@ -10,7 +10,7 @@ const _context = CONTEXT_MATH;
 
 
 
-_context['+'] = _context['add'] = _context['plus'] = (...args) => {
+_context["+"] = _context["add"] = _context["plus"] = (...args) => {
   /**
     * Складывает аргументы.
     * @usage add(...agrs)
@@ -34,7 +34,7 @@ _context['+'] = _context['add'] = _context['plus'] = (...args) => {
 
 
 
-_context['-'] = _context['minus'] = _context['subtract'] = (...args) => {
+_context["-"] = _context["minus"] = _context["subtract"] = (...args) => {
   /**
     * Вычитает из первого аргумента остальные.
     *
@@ -55,7 +55,7 @@ _context['-'] = _context['minus'] = _context['subtract'] = (...args) => {
 
 
 
-_context['*'] = _context['mul'] = _context['multiply'] = (...args) => {
+_context["*"] = _context["mul"] = _context["multiply"] = (...args) => {
   /**
     * Умножает аргументы.
     *
@@ -70,7 +70,7 @@ _context['*'] = _context['mul'] = _context['multiply'] = (...args) => {
 
 
 
-_context['/'] = _context['div'] = _context['divide'] = (...args) => {
+_context["/"] = _context["div"] = _context["divide"] = (...args) => {
   /**
     * Делит первый аргумент на остальные.
     *
@@ -92,7 +92,7 @@ _context['/'] = _context['div'] = _context['divide'] = (...args) => {
 
 
 
-_context['rand'] = () => {
+_context["rand"] = () => {
   /**
    * Возвращает случайное число от 0 до 1.
    *
@@ -106,7 +106,7 @@ _context['rand'] = () => {
 
 
 
-_context['max'] = (a) => {
+_context["max"] = (a) => {
   /**
    * Находит максимальное число в массиве.
    *
@@ -121,7 +121,7 @@ _context['max'] = (a) => {
 
 
 
-_context['min'] = (a) => {
+_context["min"] = (a) => {
   /**
    * Находит минимальное число в массиве.
    *

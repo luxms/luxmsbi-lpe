@@ -13,7 +13,7 @@ const _context = CONTEXT_OBJECTS;
 
 
 
-_context['new'] = (...args) => {
+_context["new"] = (...args) => {
   /**
    * Создаёт новый экземпляр класса
    *
@@ -29,7 +29,7 @@ _context['new'] = (...args) => {
 
 
 
-_context['vector'] = _context['{'] = makeVararg([], (args, kwargs) => {
+_context["vector"] = _context["{"] = makeVararg([], (args, kwargs) => {
   /**
    * Создаёт гибридный массив (kwargs array) из аргументов.
    *
@@ -51,7 +51,7 @@ _context['vector'] = _context['{'] = makeVararg([], (args, kwargs) => {
 
 
 
-_context['list'] = _context["array"] = _context["["] = (...args) => {
+_context["list"] = _context["array"] = _context["["] = (...args) => {
   /**
    * Создаёт список (массив) из аргументов
    *
@@ -67,7 +67,7 @@ _context['list'] = _context["array"] = _context["["] = (...args) => {
 
 
 
-_context['tuple'] = makeVararg([], (args, kwargs) => {
+_context["tuple"] = makeVararg([], (args, kwargs) => {
   /**
    * Создаёт гибридный массив (kwargs array) из аргументов
    *
@@ -87,7 +87,7 @@ _context['tuple'] = makeVararg([], (args, kwargs) => {
 
 
 
-_context['hash'] = makeVararg([], (_, kwargs) => {
+_context["hash"] = makeVararg([], (_, kwargs) => {
   /**
    * Создаёт хэш-таблицу из именованных аргументов.
    *
@@ -107,7 +107,7 @@ _context['hash'] = makeVararg([], (_, kwargs) => {
 
 
 
-_context['makeHash'] = makeSF((ast, ctx, rs) => {
+_context["makeHash"] = makeSF((ast, ctx, rs) => {
   /**
    * Создаёт хэш-таблицу из именованных аргументов.
    *
@@ -149,7 +149,7 @@ _context['makeHash'] = makeSF((ast, ctx, rs) => {
 
 
 
-_context['range'] = (start, end, step) => {
+_context["range"] = (start, end, step) => {
   /**
    * Возвращает массив чисел в диапазоне [start, end) с шагом step.
    *
@@ -188,7 +188,7 @@ _context['range'] = (start, end, step) => {
 
 
 
-_context['repeat'] = makeSF((ast, ctx, rs) => {
+_context["repeat"] = makeSF((ast, ctx, rs) => {
   /**
    * Создает массив из повторений значения n раз.
    *
@@ -226,7 +226,7 @@ _context['repeat'] = makeSF((ast, ctx, rs) => {
 
 
 
-_context['⍴'] = _context["reshape"] = (len, ...values) => {
+_context["⍴"] = _context["reshape"] = (len, ...values) => {
   /**
    * Создаёт массив заданной длины, заполняя его значениями по циклу.
    *
@@ -242,7 +242,7 @@ _context['⍴'] = _context["reshape"] = (len, ...values) => {
 
 
 
-_context['zip'] = (/** @type {Array<Array<*>>} */ arrays, zipByMinLength) => {
+_context["zip"] = (/** @type {Array<Array<*>>} */ arrays, zipByMinLength) => {
   /**
    * Объединяет массивы по индексам в кортежи.
    *
@@ -265,7 +265,7 @@ _context['zip'] = (/** @type {Array<Array<*>>} */ arrays, zipByMinLength) => {
 
 
 
-_context['fn'] = makeSF((ast, ctx, rs) => {
+_context["fn"] = makeSF((ast, ctx, rs) => {
   /**
    * Создаёт анонимную функцию.
    *
@@ -309,7 +309,7 @@ _context['fn'] = makeSF((ast, ctx, rs) => {
 
 
 /** @returns {function(...[*]): Promise<Awaited<*>[]|void>|*|null|undefined} */
-_context['->fn'] = _context['toFn'] = _context["defFn"] = makeSF((ast, ctx, rs) => {
+_context["->fn"] = _context["toFn"] = _context["defFn"] = makeSF((ast, ctx, rs) => {
   /**
    * Преобразует выражение в функцию.
    *
@@ -348,7 +348,7 @@ _context['->fn'] = _context['toFn'] = _context["defFn"] = makeSF((ast, ctx, rs) 
 
 
 
-_context['=>'] = _context["lambda"] = makeSF((ast, ctx, rs) => {
+_context["=>"] = _context["lambda"] = makeSF((ast, ctx, rs) => {
   /**
    * Создаёт функцию с альтернативным синтаксисом.
    *
@@ -381,7 +381,7 @@ _context['=>'] = _context["lambda"] = makeSF((ast, ctx, rs) => {
 
 
 
-_context['count'] = _context['length'] = (a) => {
+_context["count"] = _context["length"] = (a) => {
   /**
    * Возвращает длину массива или строки.
    *
@@ -397,7 +397,7 @@ _context['count'] = _context['length'] = (a) => {
 
 
 
-_context['empty?'] = _context["empty"] = (a) => {
+_context["empty?"] = _context["empty"] = (a) => {
   /**
    * Проверяет, является ли массив пустым
    *
@@ -413,7 +413,7 @@ _context['empty?'] = _context["empty"] = (a) => {
 
 
 
-_context['reverse'] = (arr) => {
+_context["reverse"] = (arr) => {
   /**
    * Возвращает массив в обратном порядке.
    *
@@ -438,7 +438,7 @@ _context['reverse'] = (arr) => {
 
 
 
-_context['slice'] = (a, b, ...end) => {
+_context["slice"] = (a, b, ...end) => {
   /**
    * Возвращает срез массива или подстроку.
    *
@@ -463,7 +463,7 @@ _context['slice'] = (a, b, ...end) => {
 
 
 
-_context['concat'] = (...a) => {
+_context["concat"] = (...a) => {
   /**
    * Конкатинирует массивы.
    *
@@ -480,7 +480,7 @@ _context['concat'] = (...a) => {
 
 
 
-_context['first'] = (a) => {
+_context["first"] = (a) => {
   /**
    * Возвращает первый элемент массива.
    *
@@ -496,7 +496,7 @@ _context['first'] = (a) => {
 
 
 
-_context['last'] = (a) => {
+_context["last"] = (a) => {
   /**
    * Возвращает последний элемент массива.
    *
@@ -512,7 +512,7 @@ _context['last'] = (a) => {
 
 
 
-_context['rest'] = (a) => {
+_context["rest"] = (a) => {
   /**
    * Возвращает все элементы массива кроме первого.
    *
@@ -528,7 +528,7 @@ _context['rest'] = (a) => {
 
 
 
-_context['cons'] = _context["pushStart"] = (/** @type {*} */ a, /** @type {Array<*>} */ b) => {
+_context["cons"] = _context["pushStart"] = (/** @type {*} */ a, /** @type {Array<*>} */ b) => {
   /**
    * Добавляет элемент в начало массива
    *
@@ -546,7 +546,7 @@ _context['cons'] = _context["pushStart"] = (/** @type {*} */ a, /** @type {Array
 
 
 
-_context['find'] = (arr, fn) => {
+_context["find"] = (arr, fn) => {
   /**
    * Возвращает первый элемент массива, удовлетворяющий условию.
    *
@@ -575,7 +575,7 @@ _context['find'] = (arr, fn) => {
 
 
 
-_context['findIndex'] = (arr, fn) => {
+_context["findIndex"] = (arr, fn) => {
   /**
    * Возвращает индекс первого элемента, удовлетворяющего условию.
    *
@@ -606,7 +606,7 @@ _context['findIndex'] = (arr, fn) => {
 
 
 
-_context['map'] = (arr, fn) => {
+_context["map"] = (arr, fn) => {
   /**
    * Применяет функцию к каждому элементу массива.
    *
@@ -627,7 +627,7 @@ _context['map'] = (arr, fn) => {
 
 
 
-_context['mapit'] = makeSF((ast, ctx, rs) => {
+_context["mapit"] = makeSF((ast, ctx, rs) => {
   /**
    * Преобразует массив с использованием переменных it и idx.
    *
@@ -658,7 +658,7 @@ _context['mapit'] = makeSF((ast, ctx, rs) => {
 
 
 
-_context['mapArr'] = (arr, fn) => {
+_context["mapArr"] = (arr, fn) => {
   /**
    * Применяет функцию к каждому элементу массива.
    *
@@ -682,7 +682,7 @@ _context['mapArr'] = (arr, fn) => {
 
 
 
-_context['filter'] = (arr, fn) => {
+_context["filter"] = (arr, fn) => {
   /**
    * Фильтрует массив по предикату.
    *
@@ -703,7 +703,7 @@ _context['filter'] = (arr, fn) => {
 
 
 
-_context['filterit'] = makeSF((ast, ctx, rs) => {
+_context["filterit"] = makeSF((ast, ctx, rs) => {
   /**
    * Фильтрует массив с использованием переменных it и idx.
    *
@@ -734,7 +734,7 @@ _context['filterit'] = makeSF((ast, ctx, rs) => {
 
 
 
-_context['filterArr'] = (arr, fn) => {
+_context["filterArr"] = (arr, fn) => {
   /**
    * Фильтрует массив по предикату.
    *
@@ -757,7 +757,7 @@ _context['filterArr'] = (arr, fn) => {
 
 
 
-_context['reduce'] = (arr, fn, init) => {
+_context["reduce"] = (arr, fn, init) => {
   /**
    * Применяет функцию к элементам массива поступательно и накапливает результат.
    *
@@ -786,7 +786,7 @@ _context['reduce'] = (arr, fn, init) => {
 
 
 
-_context['reduceArr'] = (arr, fn, init) => {
+_context["reduceArr"] = (arr, fn, init) => {
   /**
    * Применяет функцию к элементам массива поступательно и накапливает результат.
    *
@@ -818,7 +818,7 @@ _context['reduceArr'] = (arr, fn, init) => {
 
 
 
-_context['sort'] = (a, fn) => {
+_context["sort"] = (a, fn) => {
   /**
    * Сортирует массив.
    *
@@ -863,7 +863,7 @@ _context['sort'] = (a, fn) => {
 
 
 
-_context['sortBy'] = (a, fn) => {
+_context["sortBy"] = (a, fn) => {
   /**
    * Сортирует массив по указанному ключу.
    *
@@ -884,7 +884,7 @@ _context['sortBy'] = (a, fn) => {
 
 
 
-_context['some'] = (arr, fn) => {
+_context["some"] = (arr, fn) => {
   /**
    * Возвращает true, если хотя бы один элемент массива удовлетворяет условию.
    *
@@ -913,7 +913,7 @@ _context['some'] = (arr, fn) => {
 
 
 
-_context['every'] = (arr, fn) => {
+_context["every"] = (arr, fn) => {
   /**
    * Возвращает true, если все элементы массива удовлетворяют условию.
    *
@@ -942,7 +942,7 @@ _context['every'] = (arr, fn) => {
 
 
 
-_context['flat'] = (arr, depth) => {
+_context["flat"] = (arr, depth) => {
   /**
    * Разглаживает массив до указанной глубины. Глубина по умолчанию равна 1.
    *
@@ -963,7 +963,7 @@ _context['flat'] = (arr, depth) => {
 
 
 
-_context['frequencies'] = _context['counter'] = (arr) => {
+_context["frequencies"] = _context["counter"] = (arr) => {
   /**
    * Возвращает объект, содержащий частоты элементов массива.
    *
@@ -982,7 +982,7 @@ _context['frequencies'] = _context['counter'] = (arr) => {
 
 
 
-_context['partition'] = (arr, n) => {
+_context["partition"] = (arr, n) => {
   /**
    * Разбивает массив на части по n элементов.
    *
@@ -1004,7 +1004,7 @@ _context['partition'] = (arr, n) => {
 
 
 
-_context['distinct'] = (arr, fn) => {
+_context["distinct"] = (arr, fn) => {
   /**
    * Возвращает массив без повторяющихся элементов с сохранением порядка.
    *
@@ -1025,7 +1025,7 @@ _context['distinct'] = (arr, fn) => {
 
 
 
-_context['union'] = (arrays, fn) => {
+_context["union"] = (arrays, fn) => {
   /**
    * Возвращает объединенный массив из всех переданных массивов.
    *
@@ -1051,7 +1051,7 @@ _context['union'] = (arrays, fn) => {
 
 
 
-_context['intersect'] = (/** @type {Array<Array<*>>} */ arrays, fn) => {
+_context["intersect"] = (/** @type {Array<Array<*>>} */ arrays, fn) => {
   /**
    * Возвращает пересечение всех переданных массивов.
    *
@@ -1079,7 +1079,7 @@ _context['intersect'] = (/** @type {Array<Array<*>>} */ arrays, fn) => {
 
 
 
-_context['difference'] = (/** @type {Array<Array<*>>} */ arrays, fn) => {
+_context["difference"] = (/** @type {Array<Array<*>>} */ arrays, fn) => {
   /**
    * Возвращает разницу между массивами.
    * Из первого массива извлекаются все элементы, которые содержатся в других массивах.
@@ -1108,7 +1108,7 @@ _context['difference'] = (/** @type {Array<Array<*>>} */ arrays, fn) => {
 
 
 
-_context['uniques'] = (/** @type {Array<Array<*>>} */ arrays, fn) => {
+_context["uniques"] = (/** @type {Array<Array<*>>} */ arrays, fn) => {
   /**
    * Возвращает уникальные элементы из массивов: элементы, которые есть только в одном из массивов.
    *
@@ -1137,7 +1137,7 @@ _context['uniques'] = (/** @type {Array<Array<*>>} */ arrays, fn) => {
 
 
 
-_context['shuffle'] = (/** @type {Array<*>} */ arr) => {
+_context["shuffle"] = (/** @type {Array<*>} */ arr) => {
   /**
    * Перемешивает элементы массива случайным образом.
    *
@@ -1155,7 +1155,7 @@ _context['shuffle'] = (/** @type {Array<*>} */ arr) => {
 
 
 
-_context['sample'] = (/** @type {Array<*>} */ arr, /** @type {number} */ n) => {
+_context["sample"] = (/** @type {Array<*>} */ arr, /** @type {number} */ n) => {
   /**
    * Выбирает случайные элементы из массива.
    *
@@ -1183,7 +1183,7 @@ _context['sample'] = (/** @type {Array<*>} */ arr, /** @type {number} */ n) => {
 
 
 
-_context['pluck'] = (c, k) => {
+_context["pluck"] = (c, k) => {
   /**
    * Извлекает значение свойства из каждого элемента массива.
    *
@@ -1200,7 +1200,7 @@ _context['pluck'] = (c, k) => {
 
 
 
-_context['join'] = (a, sep) => {
+_context["join"] = (a, sep) => {
   /**
    * Объединяет элементы массива в строку через разделителью
    *
@@ -1216,7 +1216,7 @@ _context['join'] = (a, sep) => {
 
 
 
-_context['joinObj'] = (/** @type {ObjectLike} */ a, sep, fn) => {
+_context["joinObj"] = (/** @type {ObjectLike} */ a, sep, fn) => {
   /**
    * Объединяет элементы массива или хэш-таблицы в строку через разделитель.
    *
@@ -1246,7 +1246,7 @@ _context['joinObj'] = (/** @type {ObjectLike} */ a, sep, fn) => {
 
 
 
-_context['contains?'] = _context["containsKey"] = (a, b) => {
+_context["contains?"] = _context["containsKey"] = (a, b) => {
   /**
    * Проверяет, содержит ли объект указанное свойство.
    *
@@ -1262,7 +1262,7 @@ _context['contains?'] = _context["containsKey"] = (a, b) => {
 
 
 
-_context['get'] = _context["nth"] = (a, b, c) => {
+_context["get"] = _context["nth"] = (a, b, c) => {
   /**
    * Получает значение свойства объекта.
    *
@@ -1284,7 +1284,7 @@ _context['get'] = _context["nth"] = (a, b, c) => {
 };
 
 
-_context['set'] = (a, b, c) => {
+_context["set"] = (a, b, c) => {
   /**
    * Устанавливает значение свойства объекта и возвращает объект.
    *
@@ -1302,7 +1302,7 @@ _context['set'] = (a, b, c) => {
 
 
 
-_context['del'] = (a, b) => {
+_context["del"] = (a, b) => {
   /**
    * Удаляет свойство из объекта.
    *
@@ -1318,7 +1318,7 @@ _context['del'] = (a, b) => {
 
 
 
-_context['keys'] = (a) => {
+_context["keys"] = (a) => {
   /**
    * Возвращает массив ключей объекта.
    *
@@ -1333,7 +1333,7 @@ _context['keys'] = (a) => {
 };
 
 
-_context['vals'] = _context['values'] = (a) => {
+_context["vals"] = _context["values"] = (a) => {
   /**
    * Возвращает массив значений объекта.
    *
@@ -1348,7 +1348,7 @@ _context['vals'] = _context['values'] = (a) => {
 
 
 
-_context['entries'] = (obj) => {
+_context["entries"] = (obj) => {
   /**
    * Возвращает массив пар [ключ, значение] для объекта.
    *
@@ -1363,7 +1363,7 @@ _context['entries'] = (obj) => {
 
 
 
-_context['fromEntries'] = (obj) => {
+_context["fromEntries"] = (obj) => {
   /**
    * Возвращает объект из массива пар [ключ, значение].
    *
@@ -1378,7 +1378,7 @@ _context['fromEntries'] = (obj) => {
 
 
 
-_context['select'] = (obj, keys) => {
+_context["select"] = (obj, keys) => {
   /**
    * Возвращает подмножество хэш-таблицы по списку ключей.
    *
@@ -1425,7 +1425,7 @@ _context['select'] = (obj, keys) => {
 };
 
 
-_context['omit'] = (obj, keys) => {
+_context["omit"] = (obj, keys) => {
   /**
    * Возвращает подмножество хэш-таблицы без указанных ключей.
    *
@@ -1475,7 +1475,7 @@ _context['omit'] = (obj, keys) => {
 
 
 
-_context['compact'] = (obj, depth) => {
+_context["compact"] = (obj, depth) => {
   /**
    * Удаляет все `null` и `undefined` значения из объекта.
    *
@@ -1514,7 +1514,7 @@ _context['compact'] = (obj, depth) => {
 
 
 
-_context['get_in'] = makeSF((ast, ctx, rs) => {
+_context["get_in"] = makeSF((ast, ctx, rs) => {
   /**
    * Получает значение из вложенной структуры по пути ключей.
    *
@@ -1556,7 +1556,7 @@ _context['get_in'] = makeSF((ast, ctx, rs) => {
 
 
 
-_context['assoc_in'] = makeSF((ast, ctx, rs) => {
+_context["assoc_in"] = makeSF((ast, ctx, rs) => {
   /**
    * Устанавливает значение во вложенной структуре по пути ключей.
    *
@@ -1600,7 +1600,7 @@ _context['assoc_in'] = makeSF((ast, ctx, rs) => {
 
 
 
-_context['update_in'] = (obj, path, fn, regexpEnable) => {
+_context["update_in"] = (obj, path, fn, regexpEnable) => {
   /**
    * Устанавливает значение во вложенной структуре по пути ключей используя функцию.
    *
@@ -1668,7 +1668,7 @@ _context['update_in'] = (obj, path, fn, regexpEnable) => {
 
 
 
-_context['cp'] = makeSF((ast, ctx, rs) => {
+_context["cp"] = makeSF((ast, ctx, rs) => {
   /**
    * Копирует значение из одной вложенной структуры в другую.
    *
@@ -1697,7 +1697,7 @@ _context['cp'] = makeSF((ast, ctx, rs) => {
 
 
 
-_context['merge'] = (/** @type {Array<ObjectLike>} */ hashes, fn, mergeType) => {
+_context["merge"] = (/** @type {Array<ObjectLike>} */ hashes, fn, mergeType) => {
   /**
    * Объединяет несколько хэш-таблиц в одну. При использовании массивов в качестве имен ключей используется индекс элемента.
    *
@@ -1762,7 +1762,7 @@ _context['merge'] = (/** @type {Array<ObjectLike>} */ hashes, fn, mergeType) => 
 
 
 
-_context['mergeDeep'] = (obj1, obj2, fn, manualMerge) => {
+_context["mergeDeep"] = (obj1, obj2, fn, manualMerge) => {
   /**
    * Объединяет два хэш-таблицы в одну, при этом обходя все массивы и объекты.
    *
@@ -1820,7 +1820,7 @@ _context['mergeDeep'] = (obj1, obj2, fn, manualMerge) => {
 
 
 
-_context['makeStruct'] = (from, struct) => {
+_context["makeStruct"] = (from, struct) => {
   /**
    * Создает объект с заданной структурой. Модифицирует переданный объект для соответствия структуре (создает копию).
    *
