@@ -477,6 +477,9 @@ export function makeDoc(contextName, func, docSource) {
       ru: parseDocstring((ruDocValue||[])[1] || localize?.ru),
       en: parseDocstring(localize?.en),
     };
+    if (DOC_WARNINGS.LOC_UNDEFINED[`${contextName}.${lpeName}`] && res._doc.ru?.tags?.includes("hidden")) {
+      delete DOC_WARNINGS.LOC_UNDEFINED[`${contextName}.${lpeName}`];
+    }
   } else {
     DOC_WARNINGS.NODOC[`${contextName}.${lpeName}`] = true;
   }

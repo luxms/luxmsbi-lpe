@@ -49,12 +49,18 @@ function showHelp() {
 
   -s, --spaces=<number>         Количество пробелов перед внешним хэшмапом локализации
                                 По умолчанию: 0
+
+  -u, --auto-hash-update        Автоматическое обновление локализации в случае, если необходимо только обновить хэш
 `);
 }
 
+const flagKeys = [
+  "u", "h"
+];
 
 
-lpe.LOCALIZATION_OPTIONS.modules = { child_process, fs, diff: Diff }
+
+lpe.LOCALIZATION_OPTIONS.modules = { child_process, fs, diff: Diff };
 
 lpe.LOCALIZATION_OPTIONS.editor = "vim";
 
@@ -68,8 +74,10 @@ for (let i = 2; i < process.argv.length; i++) {
     [key, value] = arg.slice(2).split("=");
   } else if (arg.startsWith("-")) {
     key = arg.slice(1);
-    value = process.argv[i + 1];
-    i++;
+    if (!flagKeys.includes(key)) {
+      value = process.argv[i + 1];
+      i++;
+    }
   } else {
     continue;
   }
@@ -106,6 +114,11 @@ for (let i = 2; i < process.argv.length; i++) {
     case "spaces":
       lpe.LOCALIZATION_OPTIONS.localizationHashmapStartSpaces = +value;
       break;
+
+      case "u":
+      case "auto-hash-update":
+        lpe.LOCALIZATION_OPTIONS.autoHashUpdate = true;
+        break;
   }
 }
 

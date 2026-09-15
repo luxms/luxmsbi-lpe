@@ -22,6 +22,7 @@ import { generateSimpleHash, matchAllPlv8 } from './doc.js';
  * @property {() => void} forceExitCallback
  * @property {string} abortFile Путь к файлу, в которую сохранится локализация при forceExits
  * @property {Record<string, any>} modules Модули Node.js
+ * @property {boolean} autoHashUpdate Не открывать на редоктирование при простом обновлении хэша
  */
 
  /**
@@ -71,6 +72,8 @@ export const LOCALIZATION_OPTIONS = {
     "fs": undefined,
     "diff": undefined,
   },
+
+  "autoHashUpdate": false,
 
 };
 
@@ -219,7 +222,7 @@ function getTmpChangerFileText(actualText, locData, lpeName, message) {
     `// HASH: ${locData["hash"]} => ${newHash}`
   );
 
-  if (locData["hash"] != newHash || actualText !== locData["ru"]) {
+  if (actualText !== locData["ru"] || (locData["hash"] != newHash && !LOCALIZATION_OPTIONS.autoHashUpdate)) {
     return fileText.join("\n");
   }
 }
@@ -287,7 +290,7 @@ function generateLocalizationHashData(localizations) {
           .sort((a, b) => a[0].localeCompare(b[0]))
           .map(([loc, text]) => [
             `${s3}${loc}: \`/**`,
-            ...text.split("\n").map(line => `* ${line.replaceAll("\\", "\\\\").replaceAll("`", "\\`")}`),
+            ...text.split("\n").map(line => `* ${line.replaceAll("\\", "\\\\").replaceAll("`", "\\`")}`.trim()),
             `*/\`,`,
           ].join(`\n${s4}`))
           .join("\n") + "\n" +
@@ -332,6 +335,9 @@ async function updateFile(locFileText, contextName, context) {
       continue;
     }
     if (evaledFuncs.includes(obj.lpeName)) {
+      continue;
+    }
+    if (obj._doc?.ru?.tags?.includes("hidden")) {
       continue;
     }
     evaledFuncs.push(obj.lpeName);
@@ -379,6 +385,12 @@ async function updateFile(locFileText, contextName, context) {
           process.exit(0);
         }
       }
+    } else if (currentLoc !== undefined) {
+      const newHash = String(generateSimpleHash(currentLoc["ru"]?.trim() || ""));
+      if (currentLoc["hash"] != newHash) {
+        console.log(`Auto-updating hash for ${obj.lpeName}: ${currentLoc["hash"]} -> ${newHash}`);
+        currentLoc["hash"] = newHash;
+      }
     }
   }
 
@@ -391,7 +403,7 @@ async function updateFile(locFileText, contextName, context) {
     `//#region ${contextName}\n` +
       `${spaces}  "${contextName}": {\n` +
       generateLocalizationHashData(newDoc).replaceAll("$", "$$$$") +
-      `\n${spaces}},\n` +
+      `\n${spaces}  },\n` +
       `//#endregion ${contextName}\n`,
   );
 }
@@ -445,6 +457,6 @@ export async function localizationUpdate(ctx) {
 
   addCtx(ctx);
   for (const [name, ctx] of Object.entries(contextes)) {
-    Update(name, ctx);
+    await Update(name, ctx);
   }
 }

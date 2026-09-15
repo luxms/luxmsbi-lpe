@@ -158,7 +158,7 @@ function EVAL_IMPLEMENTATION(ast, ctx, rs, evalOptions) {
 
   if (!isArray(ast)) {
     if (isString(ast)) {
-      const value = varGetter(ctx, ast, {...rs, wantCallable: true}, evalOptions);
+      const value = varGetter(ctx, ast, rs, evalOptions);
       if (value.found) {
         return value.value;
       }
@@ -177,7 +177,7 @@ function EVAL_IMPLEMENTATION(ast, ctx, rs, evalOptions) {
 
   const [opAst, ...argsAst] = ast;
 
-  let op = EVAL_IMPLEMENTATION(opAst, ctx, rs, evalOptions);       // evaluate operator
+  let op = EVAL_IMPLEMENTATION(opAst, ctx, isString(opAst) ? {...rs, wantCallable: true} : rs, evalOptions);       // evaluate operator
 
   if (isHash(op) && (__call__ in op)) {       // Если в качестве функции нам дают хэшмап и у него есть __call__
     op = op[__call__].bind(op);               // то используем его как callable (и сохраняем this)
