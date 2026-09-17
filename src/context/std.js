@@ -34,6 +34,9 @@ _context["()"] = _context["identity"] = a => {
   return a;
 };
 
+// Обёртка для обратной совместимости с выражениями фильтров lpe-sql.
+_context["ensureThat"] = _context["identity"];
+
 
 
 _context["\""] = _context["'"] = _context["q"] = makeSF((ast, ctx, rs) => {
