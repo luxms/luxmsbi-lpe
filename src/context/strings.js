@@ -1,13 +1,10 @@
 import { except } from "../lib/exception.js";
 import { isFunction, isString } from "../lib/utils.js";
-import { EVAL } from "../lisp";
 
-/** @type {ContextObject} */
-export const CONTEXT_STRINGS = {
-};
 
 /** @type {ContextFunctionsObject} */
-const _context = CONTEXT_STRINGS;
+const _context = {};
+export default _context;
 
 
 

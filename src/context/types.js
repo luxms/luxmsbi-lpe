@@ -2,12 +2,9 @@ import { except } from "../lib/exception.js";
 import { isArray, isBoolean, isFunction, isHash, isNumber, isNumberLike, isObj, isString, makeSF } from "../lib/utils.js";
 import { EVAL } from "../lisp";
 
-/** @type {ContextObject} */
-export const CONTEXT_TYPES = {
-};
-
 /** @type {ContextFunctionsObject} */
-const _context = CONTEXT_TYPES;
+const _context = {};
+export default _context;
 
 
 

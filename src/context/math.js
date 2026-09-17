@@ -1,12 +1,9 @@
 import { except } from "../lib/exception.js";
 import { isArray } from "../lib/utils.js";
 
-/** @type {ContextObject} */
-export const CONTEXT_MATH = {
-};
-
 /** @type {ContextFunctionsObject} */
-const _context = CONTEXT_MATH;
+const _context = {};
+export default _context;
 
 
 

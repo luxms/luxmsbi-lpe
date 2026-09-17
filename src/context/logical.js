@@ -4,6 +4,11 @@ import unbox from "../lisp.unbox";
 
 
 
+/** @type {ContextFunctionsObject} */
+const _context = {};
+export default _context;
+
+
 
 const logicalSequencedOperators = ["<", "<=", ">", ">="];
 
@@ -21,14 +26,6 @@ function compareFn(op, args) {
   };
   return args.every((_, i) => i === 0 ? true : fn[op](args[i - 1], args[i]));
 }
-
-
-/** @type {ContextObject} */
-export const CONTEXT_LOGICAL = {
-};
-
-/** @type {ContextFunctionsObject} */
-const _context = CONTEXT_LOGICAL;
 
 
 

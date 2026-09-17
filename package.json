@@ -17,7 +17,7 @@
   "license": "MIT",
   "scripts": {
     "test": "mocha --reporter spec",
-    "localize": "node utils/update-loc.js",
+    "localize": "node scripts/update-loc.js",
     "t": "mocha --reporter spec test/test.js",
     "test-lpe-functions": "mocha --reporter spec test/test-full.js",
     "test-lisp": "mocha --reporter spec test/test-lisp.js",

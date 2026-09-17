@@ -4,12 +4,9 @@ import { EVAL } from "../lisp";
 import unbox from "../lisp.unbox.js";
 import makeVararg from "../lisp.vararg.js";
 
-/** @type {ContextObject} */
-export const CONTEXT_OBJECTS = {
-};
-
 /** @type {ContextFunctionsObject} */
-const _context = CONTEXT_OBJECTS;
+const _context = {};
+export default _context;
 
 
 

@@ -23,13 +23,14 @@ export const $IS_LIB$ = Symbol.for('__islib__');
 
 
 import unbox from "./lisp.unbox";
-import {CONTEXT_STD} from './context/std';
-import {CONTEXT_TYPES} from './context/types';
-import {$getvar$, varGetter, CONTEXT_VARIABLES} from './context/variables';
-import {CONTEXT_LOGICAL} from './context/logical';
-import {CONTEXT_MATH} from './context/math';
-import {CONTEXT_STRINGS} from './context/strings';
-import {CONTEXT_OBJECTS} from './context/objects';
+import { varGetter } from './lisp.var';
+import CONTEXT_STD from './context/std';
+import CONTEXT_TYPES from './context/types';
+import CONTEXT_VARIABLES from './context/variables';
+import CONTEXT_LOGICAL from './context/logical';
+import CONTEXT_MATH from './context/math';
+import CONTEXT_STRINGS from './context/strings';
+import CONTEXT_OBJECTS from './context/objects';
 import {DATE_TIME} from './lib/datetime';
 import { makeDoc, selectPerfectFunctionName } from "./lib/doc";
 import { isArray, isArrayFunction, isFunction, isHash, isSF, isSkip, isString } from "./lib/utils";

@@ -3,21 +3,20 @@ import { catchReturn, GLOBAL_CONTEXT, isArray, isString, makeSF, ReturnThrow } f
 import { EVAL, eval_lisp } from "../lisp";
 import unbox from "../lisp.unbox.js";
 import { parse } from "../lpep.js";
-import { $getvar$ } from "./variables.js";
+import { $getvar$ } from "../lisp.var.js";
 
-/** @type {ContextObject} */
-export const CONTEXT_STD = {
+/** @type {ContextFunctionsObject} */
+const _context = {
 
   // parser не умеет их считывать.
   // Это здесь на всякий случай, если где-то такое AST формируется
-  "`": makeSF((ast, ctx) => ast[0]),
+  "`": makeSF((ast) => ast[0]),
 
   // Системная функция, чтобы вернуть AST без изменений.
   "$AST$": makeSF((ast) => ast[0]),
 };
 
-/** @type {ContextFunctionsObject} */
-const _context = CONTEXT_STD;
+export default _context;
 
 
 
