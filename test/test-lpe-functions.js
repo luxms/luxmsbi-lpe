@@ -1363,6 +1363,53 @@ describe('LPE Full Test Suite', function() {
       });
     });
 
+    describe('ensureThat', () => {
+      it('returns values without coercion or assertion', () => {
+        strictEqual('ensureThat(1 + 2)', 3);
+        strictEqual('ensureThat(1 = 2)', false);
+        strictEqual('ensureThat(true)', true);
+        strictEqual('ensureThat(0)', 0);
+        strictEqual('ensureThat("")', '');
+        strictEqual('ensureThat(null)', null);
+        strictEqual('ensureThat(undefined)', undefined);
+      });
+
+      it('preserves object and array references', () => {
+        for (const value of [{ id: 42 }, [1, 2, 3]]) {
+          assert.strictEqual(lpe.eval_lpe('ensureThat(value)', { value }), value);
+        }
+      });
+
+      it('evaluates its argument once', () => {
+        let calls = 0;
+        const result = lpe.eval_lpe('ensureThat(next())', { next: () => ++calls });
+        assert.strictEqual(result, 1);
+        assert.strictEqual(calls, 1);
+      });
+
+      it('keeps the filter marker in the parsed AST and supports eval_lisp', () => {
+        const ast = lpe.parse('ensureThat(id = 42)');
+        assert.deepStrictEqual(ast, ['ensureThat', ['=', 'id', 42]]);
+        assert.strictEqual(lpe.eval_lisp(ast, { id: 42 }), true);
+        assert.deepStrictEqual(ast, ['ensureThat', ['=', 'id', 42]]);
+      });
+
+      it('passes through SQL expressions produced by a custom context', () => {
+        const context = { '=': (column, value) => `${column} = ${value}` };
+        assert.strictEqual(lpe.eval_lpe('ensureThat(id = 42)', context), 'id = 42');
+      });
+
+      it('allows a custom context to override the wrapper', () => {
+        const context = { ensureThat: value => `WHERE ${value}` };
+        assert.strictEqual(lpe.eval_lpe('ensureThat("id = 42")', context), 'WHERE id = 42');
+      });
+
+      it('resolves asynchronous arguments', async () => {
+        const result = await lpe.eval_lpe('ensureThat(value)', { value: Promise.resolve(false) });
+        assert.strictEqual(result, false);
+      });
+    });
+
     describe('apply', () => {
       it('распаковка аргументов', () => {
         strictEqual('apply(fn({a,b,c}, a + b * c), 1, 2, 3)', 7);
