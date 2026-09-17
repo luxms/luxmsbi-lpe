@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.7.0](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.6.7...v1.7.0) (2026-09-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove functions ~, macroexpend; remove macros support; remove JS functions init_lisp, evaluate, makeMacro, isMacro, env_bind; migrate to SF unbox support; refactor lisp structure; add lisp functions; refactor variables
+
+### Bug Fixes
+
+* := operator not returns value of new variables ([ff12033](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/ff12033a77527bac827cf4463d1f3f2dbc47189c))
+* crs string prints 2 chars -- under \n ([785592a](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/785592aca4544d7987284c747fc9a5a837c0354b))
+* doc: add lamda function correct parsing ([b58cdfe](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/b58cdfe9438f80c5825bb91384c3ef564d541fa4))
+* Hashmap now is not global object ([c581814](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/c58181410c09a886d7d73b54b18cfa97ea8d09e3))
+* let* bindings with names as expression ([964e685](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/964e685b95f33e5159638877b723b72af9e2e6d7))
+* localize generation error on ([b7ac9bd](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/b7ac9bd0a250a3a887a388962dd4cf3168212187))
+* multiple assign by := ([927d803](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/927d803a8ebd8267698bd7336887ee11534e0501))
+* rename utils -> scripts; export default at context files ([20bb5f2](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/20bb5f267b6c5e1c24e9eae18c434973ad6012bd))
+
+
+### changes
+
+* remove functions ~, macroexpend; remove macros support; remove JS functions init_lisp, evaluate, makeMacro, isMacro, env_bind; migrate to SF unbox support; refactor lisp structure; add lisp functions; refactor variables ([4b1e9d2](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/4b1e9d24a4e83e3eb7875fc4c8d62232e232597a))
+
 ### [1.6.7](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.6.6...v1.6.7) (2026-05-05)
 
 ### [1.6.6](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.6.5...v1.6.6) (2026-05-04)
