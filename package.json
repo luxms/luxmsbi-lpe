@@ -34,7 +34,7 @@
     "@babel/preset-env": "^7.0.0",
     "babel-loader": "^8.0.0",
     "core-js": "^2.6.5",
-    "mocha": "^10.2.0",
+    "mocha": "^10.8.2",
     "standard-version": "^9.5.0",
     "webpack": "5",
     "diff": "^9.0.0",
