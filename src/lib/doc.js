@@ -60,7 +60,7 @@
  */
 
 
-import { LOCALE_DOC } from "./localization/localization";
+import { LOCALE_DOC } from "../localization/localization";
 
 
 
@@ -113,6 +113,15 @@ import { LOCALE_DOC } from "./localization/localization";
  * @property {string} result
  * @property {string[]} comments
  */
+
+
+
+/** @type {{LOC_UNDEFINED: Record<string, true>, LOC_OUTDATED: Record<number, Record<string, true>>, NODOC: Record<string, true>}} */
+export const DOC_WARNINGS = {
+  "LOC_UNDEFINED": {},
+  "LOC_OUTDATED": {},
+  "NODOC": {},
+};
 
 
 /**
@@ -445,7 +454,7 @@ export function selectPerfectFunctionName(name1, name2) {
  * @returns {any}
  */
 export function makeDoc(contextName, func, docSource) {
-  let ruDocValue = (docSource || func).toString().match(/\{\s*\/\*\*([\s\S]*?)\*\//);
+  let ruDocValue = (docSource || func).toString().match(/\{(?:\s*|var[\s\w_;,$-]+)*\/\*\*([\s\S]*?)\*\//);
   let res = func;
   const lpeName = func.lpeName || docSource?.lpeName;
   if (lpeName === undefined) {
@@ -454,17 +463,25 @@ export function makeDoc(contextName, func, docSource) {
 
   const localize = lpeName === undefined ? undefined : (LOCALE_DOC[contextName] || {})[lpeName];
   if (localize === undefined && lpeName !== undefined && ruDocValue !== null) {
-    console.log(`DOC: WARNING: localization for function ${contextName}.${lpeName} undefined`);
+    DOC_WARNINGS.LOC_UNDEFINED[`${contextName}.${lpeName}`] = true;
   };
-  const hash = ruDocValue === null ? undefined : generateSimpleHash(ruDocValue[1].replaceAll(/\r\n/g, "\n").replaceAll(/\n\s+/g, "\n"));
+  const hash = ruDocValue === null ? undefined : generateSimpleHash(ruDocValue[1].replaceAll(/\r\n/g, "\n").replaceAll(/\r?\n\s*(\* ?)?/g, "\n").trim());
   if (hash !== undefined && localize !== undefined && localize.hash !== hash) {
-    console.log(`DOC: WARNING: localization for ${contextName}.${lpeName} was outdated. Current hash: ${hash}`);
+    if (!DOC_WARNINGS.LOC_OUTDATED[hash]) {
+      DOC_WARNINGS.LOC_OUTDATED[hash] = {};
+    }
+    DOC_WARNINGS.LOC_OUTDATED[hash][`${contextName}.${lpeName}`] = true;
   }
   if (ruDocValue !== null || localize !== undefined) {
     res._doc = {
       ru: parseDocstring((ruDocValue||[])[1] || localize?.ru),
       en: parseDocstring(localize?.en),
     };
+    if (DOC_WARNINGS.LOC_UNDEFINED[`${contextName}.${lpeName}`] && res._doc.ru?.tags?.includes("hidden")) {
+      delete DOC_WARNINGS.LOC_UNDEFINED[`${contextName}.${lpeName}`];
+    }
+  } else {
+    DOC_WARNINGS.NODOC[`${contextName}.${lpeName}`] = true;
   }
 
   const docTags = func.__docTags || docSource?.__docTags;

@@ -29,7 +29,7 @@ std = statement denotation
 */
 
 
-import { isArray, isHash } from './lisp';
+import { isArray, isHash } from './lib/utils';
 import { tokenize, makeError, LPESyntaxError } from './lpel';
 
 /**
@@ -95,10 +95,10 @@ const make_parse = function (opt = {}) {
     return m_expr_scope;
   };
 
-  const advance = function (id) {
+  const advance = function (...ids) {
     var a, o, v;
-    if (id && m_token.id !== id) {
-      makeError(m_token, "Got " + m_token.value + " but expected '" + id + "'.");
+    if (ids.length > 0 && !ids.some(id => m_token.id === id)) {
+      makeError(m_token, "Got " + m_token.value + " but expected '" + ids.join("' or '") + "'.");
     }
     if (m_token_nr >= m_tokens.length) {
       m_token = m_symbol_table["(end)"];
@@ -163,7 +163,7 @@ const make_parse = function (opt = {}) {
     m_token.value = v;
     m_token.arity = a;
     m_token.src = m_source;
-    m_token.crs = m_source.split('').map((c, i) => i >= t.from && i < t.to ? "^" : "-").join("");
+    m_token.crs = m_source.split('').map((c, i) => i >= t.from && i < t.to ? "^" : c === "\n" ? "--" : "-").join("");
     if (a === "operator") {
       m_token.sexpr = m_operator_aliases[v];
     } else {
@@ -499,11 +499,11 @@ const make_parse = function (opt = {}) {
   infixr(":", 2);
 
   // Присваивание должно быть весьма высокоприоритетное
-  infix(":=", 20);
+  infixr(":=", 20);
   infix("<-", 20);
 
   // Стрелочка функции f := a => print(a)
-  infix("=>", 40);
+  infix("=>", 21);
 
   infixr('~', 40);
   infixr('!~', 40);
@@ -513,6 +513,7 @@ const make_parse = function (opt = {}) {
   operator_alias('≠', '!='); // from to canonical form;
 
   infixr('==', 40);
+  infixr('===', 40);
   infixr('!==', 40);
   infixr('!=', 40);
   infixr('<', 40);
@@ -540,68 +541,51 @@ const make_parse = function (opt = {}) {
     this.first = left;
     this.value = "(";       // it was '(' by dima
     this.second = a;
-    if ((left.arity !== "unary" || left.id !== "function") &&
-         left.arity !== "name" && left.id !== "(" &&
-         left.id !== "&&" && left.id !== "||" && left.id !== "?") {
-      makeError(left, "Expected a variable name.");
-    }
 
     // dima support for missed function arguments...
     // Newlines inside an argument list are whitespace, not statement separators,
     // so skip any LF tokens before looking at the first arg / closer.
     while (m_token.id === 'LF') advance();
     if (m_token.id !== ")") {
-      if (false && (left.value == "where" || left.value == "filter" || left.value == "expr" || left.value == "logexpr")) {
-        // специальный парсер для where - logical expression.
-        // тут у нас выражение с использованием скобок, and, or, not и никаких запятых...
-        // DIMA 2021: logexpr function will be generic name for logical things
-        // where && filter is used for SQL generation and should not be changed....
-        // expr is deprecated name for logexpr
-        // FIXME: make transition to the logexpr!
-        new_expression_scope("logical");
-        var e = expression(0);
-        m_expr_scope.pop();
-        a.push(e);
-      } else {
-        new_expression_scope("lpe");
-        // ',' and ';' are both accepted as argument separators. DAX (and Excel/
-        // Power BI) uses ';' as the list separator in locales where ',' is the
-        // decimal separator (most of Europe, Russia). Inside (...) there is no
-        // ambiguity — ';' as a statement terminator never made sense here, it
-        // was only ever a parse error.
-        const isArgSep = (id) => id === ',' || id === ';';
-        while (true) {
-          if (isArgSep(m_token.id)) {
-            a.push({
-              value: null,
-              arity: "literal"
-            });
-            advance();
-          } else if (m_token.id === ')') {
-            a.push({
-              value: null,
-              arity: "literal"
-            });
+
+      new_expression_scope("lpe");
+      // ',' and ';' are both accepted as argument separators. DAX (and Excel/
+      // Power BI) uses ';' as the list separator in locales where ',' is the
+      // decimal separator (most of Europe, Russia). Inside (...) there is no
+      // ambiguity — ';' as a statement terminator never made sense here, it
+      // was only ever a parse error.
+      const isArgSep = (id) => id === ',' || id === ';';
+      while (true) {
+        if (isArgSep(m_token.id)) {
+          a.push({
+            value: null,
+            arity: "literal"
+          });
+          advance();
+        } else if (m_token.id === ')') {
+          a.push({
+            value: null,
+            arity: "literal"
+          });
+          break;
+        } else {
+          new_expression_scope("logical");
+          const e = expression(0);
+          //console.log("LOGICAL????? " + JSON.stringify(e));
+          m_expr_scope.pop();
+          // var e = statements();
+          a.push(e);
+          while (m_token.id === 'LF') advance();
+          if (!isArgSep(m_token.id)) {
             break;
-          } else {
-            new_expression_scope("logical");
-            var e = expression(0);
-            //console.log("LOGICAL????? " + JSON.stringify(e));
-            m_expr_scope.pop();
-            // var e = statements();
-            a.push(e);
-            while (m_token.id === 'LF') advance();
-            if (!isArgSep(m_token.id)) {
-              break;
-            }
-            advance();
           }
+          advance();
         }
-        m_expr_scope.pop();
       }
+      m_expr_scope.pop();
     }
 
-    this.sexpr = [this.first.value].concat(a.map(function(el){return el.sexpr}));
+    this.sexpr = [this.first.sexpr].concat(a.map(function (el) { return el.sexpr }));
     this.namePosition = [this.first.from, this.first.to];
     this.closurePosition = [m_token.from, m_token.to];
     advance(")");
@@ -885,10 +869,10 @@ const make_parse = function (opt = {}) {
       while (true) {
         a.push(expression(0));
         // a.push(statements());
-        if (m_token.id !== ",") {
+        if (m_token.id !== "," && m_token.id !== ";") {
           break;
         }
-        advance(",");
+        advance(",", ";");
       }
     }
     this.closurePosition = [m_token.from, m_token.to];

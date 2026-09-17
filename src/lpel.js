@@ -67,12 +67,17 @@ export function makeError(t, message) {
 const PREFIX = '>!+-*&|/%^:.';
 const SUFFIX = '=<>&|:.';
 
-// Наверное более правильно перечислять явно какой оператор за кем может идти а не вот это вот все
-const OPSEQ = {
-  '<': '-=<>',                                               // <-  <=  <<  <>
-  '=': '=>',                                                  //  == =>
-  '~': '>',                                                   // ~ alone (regex match) or ~> (JS method dispatch)
-}
+
+const OPSEQ = [
+  "<-", "<=", "<<", "<>",
+  "==", "=>", "===",
+  "~>",
+];
+
+// Операторы, перед и после которых будут удаляться переносы строки
+const OPNOLF = [
+  "."
+];
 
 
 /**
@@ -107,9 +112,11 @@ export function tokenize(s, options) {
 
   /**
    * When current character is one of opening quote, will proceed until closing qoute
+   * @param {Array<'r'> =} flags Флаги для парсинга строки
+   *                        - `r`: Парсить как регулярное выражение: \ не считается символом экранирования
    * @returns {{str: string, type: ("string_double"|"string_single"|"string_column")}}
    */
-  const nextString = () => {
+  const nextString = (flags) => {
     let c = s.charAt(i);
     /** @type {'string_double' | 'string_single' | 'string_column'}  */
     const type =
@@ -132,7 +139,7 @@ export function tokenize(s, options) {
         break;
       }
 
-      if ((type === 'string_single' || type === 'string_double') && c === '\\') {                 // Look for escapement.
+      if ((type === 'string_single' || type === 'string_double') && c === '\\' && !flags?.includes("r")) {                 // Look for escapement.
         i += 1;
         if (i >= length) {
           makeError(make(type, str), "Unterminated string");
@@ -205,7 +212,7 @@ export function tokenize(s, options) {
       // Handle typed (D'2020-01-01') strings here because there MUST NOT be space between element and
       // We handle only ' and " string, because xxx[...] are handled differently, ALLOWING space
       if (c === SQUOT || c === DQUOT) {
-        const {str, type} = nextString();
+        const {str, type} = nextString(name === "r" ? ["r"] : undefined);
         result.push(make(type, [c, str, name]));                                                    // set the value [', str, strType]
       } else {
         result.push(make('name', name));
@@ -324,15 +331,12 @@ export function tokenize(s, options) {
         i += 1;
       }
 
-    } else if (OPSEQ[c]) {                                                                          // Только для операторов из двух символов - более строгие правила
-      const nextOp = OPSEQ[c];
-      str = c;
-      i += 1;
-      c = s.charAt(i);
-      if (nextOp.includes(c)) {
-        str += c;
-        i += 1;
-      }
+    } else if (OPSEQ.some((op) => op === s.slice(i, i + op.length))) {
+      // Многосимвольные операторы
+      const ops = OPSEQ.filter((op) => op === s.slice(i, i + op.length)).sort((a,b) => b.length - a.length);
+      const nextOp = ops[0];
+      str = nextOp;
+      i += nextOp.length;
       result.push(make('operator', str));
 
     } else if (PREFIX.indexOf(c) >= 0) {                                                            // combining
@@ -357,7 +361,30 @@ export function tokenize(s, options) {
       c = s.charAt(i);
     }
   }
-  return result;
+
+
+
+  return result
+    .filter((token, idx, arr) => {
+      if (token.type !== "LF") {
+        return true;
+      }
+      for (let i = idx - 1; i >= 0; i--) {
+        if (arr[i].type === "operator" && OPNOLF.includes(arr[i].value)) {
+          return false;
+        } else if (arr[i].type !== "LF") {
+          break;
+        }
+      }
+      for (let i = idx + 1; i < arr.length; i++) {
+        if (arr[i].type === "operator" && OPNOLF.includes(arr[i].value)) {
+          return false;
+        } else if (arr[i].type !== "LF") {
+          break;
+        }
+      }
+      return true;
+    });
 }
 
 export default tokenize;
