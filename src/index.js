@@ -3,7 +3,7 @@ import {deparse} from './lped';
 import makeVararg from './lisp.vararg';
 import { eval_lisp, EVAL, STDLIB, $VAR$, $IS_LIB$ } from './lisp';
 import { isString, isArray, isHash, isFunction, makeSF, makeSkipForm, isNumber } from './lib/utils';
-import { $var$, $getvar$, $setvar$ } from './context/variables';
+import { $var$, $getvar$, $setvar$ } from './lisp.var';
 import {makeDoc, selectPerfectFunctionName, generateSimpleHash, DOC_WARNINGS} from './lib/doc'
 import { LOCALE_DOC } from './localization/localization'
 import { LOCALIZATION_OPTIONS, localizationUpdate } from './lib/localization';

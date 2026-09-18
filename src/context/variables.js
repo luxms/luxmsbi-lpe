@@ -1,3 +1,4 @@
+import { parse } from '../lpep';
 // @ts-check
 import { isArray, isHash, isString, makeSF, isFunction, isArrayFunction, isObj } from "../lib/utils";
 import { $getvar$, $setvar$ } from "../lisp.var";
@@ -388,4 +389,91 @@ _context[".-"] = _context["property"] = makeSF((ast, ctx, options) => {
       }
     },
     options?.streamAdapter);
+});
+
+
+_context["define"] = makeSF((ast, ctx, rs) => {
+  /**
+   * Определение функций с поддержкой статических переменных
+   * и выполнение последующих аргументов с этими функциями в контексте
+   *
+   * Описание аргументов функции:
+   * - Для указания позиционного аргумента используется имя аргумента: `n`;
+   * - Для указания позиционного аргумента с умалчиваемым значением: `n = 10`;
+   * - Для указания статической переменной, общей для всех вызовов этой функции: `$n = 10`
+   *
+   * Статические переменные будут храниться в переменной `this`
+   * @usage define(...{name, ...args, funcBody}, ...expr)
+   * @param name [string] Имя функции
+   * @param args [array | string] Описание аргументов функции
+   * @param funcBody [string] Тело функции
+   * @param expr [any] Выражения выполняемые
+   *
+   * @example define(\
+   *          |  { factorial, n,\
+   *          |    "if(n < 2, 1, n * factorial(n - 1))"\
+   *          |  },\
+   *          |  factorial(4)\
+   *          |) => 24
+   * @example define(\
+   *          |  { incr, $inc = 0,\
+   *          |    "this.inc := this.inc + 1"\
+   *          |  },\
+   *          |  incr(), incr(), incr()\
+   *          |) => 3
+   *          ## Считает количество вызовов этой функции используя статическую переменную
+   * @example define(\
+   *          |  { func, a, b = 5 * 2,\
+   *          |    "a + b"\
+   *          |  },\
+   *          |  func(1, 2) + func(3)\
+   *          |) => 16
+   * @category Работа с переменными | 3
+   */
+  let context = {};
+  let ind = 0;
+  let statics = $getvar$(ctx, '##static') || {};
+  while (ind < ast.length && isArray(ast[ind]) && isArrayFunction(ast[ind][0])) {
+    let last = ast[ind];
+    let body = last[last.length - 1];
+    if (!(isArray(body) && ['"', "'"].includes(body[0]))) {
+      throw new Error('Last argument of define must be <String> ("func body at quotes")');
+    }
+    body = body[1];
+    let fargs = [];
+    statics[last[1]] = {};
+    last.slice(2, last.length - 1).forEach((v) => {
+      let name = v;
+      let val = undefined;
+      if (isArray(v)) {
+        if (v[0] != "=") {
+          throw new Error('Argument of function must be <name> or <name = defaultValue>');
+        }
+        name = v[1];
+        val = EVAL(v[2], ctx, rs);
+      }
+      if (name.startsWith("$")) {
+        statics[last[1]][name.slice(1)] = val;
+      } else {
+        fargs.push([ name, val ]);
+      }
+    });
+
+    context[last[1]] = makeSF((ast, ctx, rs) => {
+      if (!body) {
+        return false;
+      }
+      let ths = $getvar$(ctx, '##static');
+      if (ths) ths = ths[last[1]];
+      return EVAL(
+        ["let",
+          [["this", ths || {}], ...fargs.map((x, i) => [x[0], ast[i] || x[1]])],
+          parse(body)],
+        ctx,
+        rs
+      );
+    });
+    ind++;
+  }
+  return EVAL(['let', [["##static", statics]], ...ast.slice(ind)], [context, ctx], rs)
 });
