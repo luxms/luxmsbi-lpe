@@ -29,7 +29,7 @@
     "dev": "NODE_ENV=development nodemon -x 'npm run build && npm run test || exit 1' --watch src --watch test"
   },
   "devDependencies": {
-    "@babel/core": "^7.0.0",
+    "@babel/core": "^7.29.7",
     "@babel/plugin-transform-optional-chaining": "^7.24.8",
     "@babel/preset-env": "^7.0.0",
     "babel-loader": "^8.0.0",
