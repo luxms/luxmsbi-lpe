@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.7.1](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.7.0...v1.7.1) (2026-09-18)
+
+
+### Bug Fixes
+
+* восстановить define и исправить deparse ([0187259](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/0187259ff534b91d27a875f6ff0586bfcbf20484))
+
 ## [1.7.0](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.6.7...v1.7.0) (2026-09-17)
 
 
