@@ -97,6 +97,10 @@ module.exports = {
   plugins: [
     new CustomPlugin("afterEmit", "PrintDocWarningsPlugin", () => {
       const lpe = require('./dist/lpe.js');
+      // Collect all diagnostics during the build, without eager work at runtime.
+      for (const fn of new Set(Object.values(lpe.STDLIB))) {
+        if (typeof fn === "function") void fn._doc;
+      }
       const DOC_WARNINGS = lpe.DOC_WARNINGS;
       if (Object.keys(DOC_WARNINGS?.NODOC ?? {}).filter(nodocFunctionExcepted).length > 0) {
         console.warn(`DOC WARING: documentation for some functions undefined!`);

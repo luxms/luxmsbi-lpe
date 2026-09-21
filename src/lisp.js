@@ -92,9 +92,22 @@ for (const [key, val] of Object.entries(STDLIB)) {
   }
 }
 
-for (const [key, val] of Object.entries(STDLIB)) {
+// Aliases share functions: do not trigger a lazy getter while registering them.
+for (const val of new Set(Object.values(STDLIB))) {
   if (isFunction(val) && val._doc === undefined) {
-    makeDoc("STDLIB", val, val.__docFunction);
+    const setDoc = value => Object.defineProperty(val, "_doc", {
+      value, configurable: true, enumerable: true, writable: true,
+    });
+    Object.defineProperty(val, "_doc", {
+      configurable: true,
+      enumerable: true,
+      get() {
+        setDoc(undefined);
+        makeDoc("STDLIB", val, val.__docFunction);
+        return val._doc;
+      },
+      set: setDoc,
+    });
   }
 }
 

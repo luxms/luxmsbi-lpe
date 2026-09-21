@@ -67,7 +67,7 @@ import { LOCALE_DOC } from "../localization/localization";
 /**
  * @typedef {Object} ContextDocData
  *
- * @property {number} index
+ * @property {number} index Assigned when parsed; not a stable function identifier.
  * @property {string} source
  * @property {string} description
  * @property {ContextDocUsage[]} usages
@@ -454,7 +454,9 @@ export function selectPerfectFunctionName(name1, name2) {
  * @returns {any}
  */
 export function makeDoc(contextName, func, docSource) {
-  let ruDocValue = (docSource || func).toString().match(/\{(?:\s*|var[\s\w_;,$-]+)*\/\*\*([\s\S]*?)\*\//);
+  // One var branch covers consecutive Babel declarations without repeated,
+  // overlapping whitespace groups that backtrack exponentially after bundling.
+  let ruDocValue = (docSource || func).toString().match(/\{\s*(?:var[\s\w_;,$-]+)?\/\*\*([\s\S]*?)\*\//);
   let res = func;
   const lpeName = func.lpeName || docSource?.lpeName;
   if (lpeName === undefined) {
