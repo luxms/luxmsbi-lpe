@@ -101,8 +101,13 @@
 /**
  * Параметры контекстной функции указывающие на тип этой функции
  * @typedef {Object} ContextFunctionParams
+ * @property {string=} lpeName Наиболее подходящее имя функции
+ * @property {ContextFunctionDoc=} _doc Документация функции
  * @property {boolean=} __isSpecialForm Является ли функция Special Form
  * @property {FunctionCustomAST=} ast Настраиваемое AST функции
+ * @property {Array<[ContextFunction, string]>=} __associatedFunctions Список связанных функций для их именования
+ * @property {Array<string>=} __docTags Список тэгов, которые нужно добавить в документацию
+ * @property {ContextFunction=} __docFunction Функция, содержащая документацию, которая может быть обернута в другую функцию (vararg и т.д.)
  */
 
 
@@ -194,3 +199,72 @@
   * Массив, ассоциативный массив или объект
   * @typedef {Record<string, *>} ObjectLike
   */
+
+
+
+//////////////////////////////////
+//////////////////////////////////
+// DOC
+//////////////////////////////////
+//////////////////////////////////
+
+/**
+ * @typedef {Record<LocaleName, ContextDocData | undefined>} ContextFunctionDoc
+ */
+
+
+/**
+ * @typedef {Object} ContextDocData
+ *
+ * @property {number} index
+ * @property {string} source
+ * @property {string} description
+ * @property {ContextDocUsage[]} usages
+ * @property {string[]} results
+ * @property {Array<ExampleObject[]>} examples
+ * @property {string[]} examplesSources
+ * @property {string[]} tags
+ * @property {string[]} category
+ * @property {Flavor[]} support
+ * @property {string[]} [names]
+ * @property {SQLizeData[]} [sqlize]
+ */
+
+
+/**
+ * @typedef {Object} ContextDocUsage
+ *
+ * @property {string} usage
+ * @property {ContextDocParam[]} params
+ */
+
+
+/**
+ * @typedef {Object} ContextDocParam
+ *
+ * @property {string} name
+ * @property {string} type
+ * @property {string} description
+ */
+
+
+/**
+ * @typedef {Object} SQLizeData
+ *
+ * @property {Array<boolean>} argsType
+ * @property {boolean} returnType
+ */
+
+/**
+ * @typedef {Object} ExampleObject
+ *
+ * @property {string} body
+ * @property {string} result
+ * @property {string[]} comments
+ */
+
+
+/** @typedef {string} ContextName */
+/** @typedef {string} FunctionName */
+/** @typedef {string} LocaleName */
+/** @typedef {string} Flavor Имя СУБД */

@@ -711,6 +711,7 @@ const make_parse = function (opt = {}) {
 
   prefix("-");                                                                                      // trying to optimize, when we have negated -number
   prefix("#");
+  prefix("@");
 
   prefix(".",function () {
     var v = expression(70);

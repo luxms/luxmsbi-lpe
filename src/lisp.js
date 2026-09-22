@@ -24,6 +24,7 @@ export const $IS_LIB$ = Symbol.for('__islib__');
 
 import unbox from "./lisp.unbox";
 import { varGetter } from './lisp.var';
+import { except } from './lib/exception';
 import CONTEXT_STD from './context/std';
 import CONTEXT_TYPES from './context/types';
 import CONTEXT_VARIABLES from './context/variables';
@@ -32,7 +33,7 @@ import CONTEXT_MATH from './context/math';
 import CONTEXT_STRINGS from './context/strings';
 import CONTEXT_OBJECTS from './context/objects';
 import {DATE_TIME} from './lib/datetime';
-import { makeDoc, selectPerfectFunctionName } from "./lib/doc";
+import { findDoc, makeDoc, selectPerfectFunctionName } from "./lib/doc";
 import { isArray, isArrayFunction, isFunction, isHash, isSF, isSkip, isString } from "./lib/utils";
 
 
@@ -83,33 +84,63 @@ export const STDLIB = {
 
 };
 
+prepareContext(STDLIB);
 
 
+/**
+ * Подготавливает контекст для выполнения Lisp-выражений.
+ *
+ * Задаёт всем функциям контекстное имя и подготавливает документацию.
+ * @param {ContextFunctionsObject} ctx
+ */
+export function prepareContext(ctx) {
+  const ctxName = isFunction(ctx["$$CONTEXT_NAME$$"]) ? ctx["$$CONTEXT_NAME$$"]() : undefined;
 
-for (const [key, val] of Object.entries(STDLIB)) {
-  if (isFunction(val)) {
-    val.lpeName = selectPerfectFunctionName(val.lpeName, key);
+  // Находим лучшее имя для каждой функции
+  for (const [key, val] of Object.entries(ctx)) {
+    if (isFunction(val)) {
+      const docFunction = val.__docFunction || val;
+      docFunction.lpeName = val.lpeName = selectPerfectFunctionName(val.lpeName, key);
+    }
   }
+
+
+  // Даем имена всем связанным функциям
+  for (const [key, val] of Object.entries(ctx)) {
+    if (isFunction(val)) {
+      const docFunction = val.__docFunction || val;
+      const assoc = [[docFunction, ""], ...(docFunction.__associatedFunctions || [])];
+      assoc.forEach(([fn, prefix]) => {
+        // @ts-ignore
+        fn.lpeName = val.lpeName;
+        Object.defineProperty(fn, 'name', {
+          value: "LISP_" + (prefix == "" ? val.lpeName : `${prefix}_${val.lpeName}`),
+          configurable: true,
+        });
+      });
+    }
+  }
+
+
+  if (ctxName === undefined) {
+    console.log(except("CONTEXT_NAME_UNDEFINED"));
+    return;
+  }
+
+  // Находим документацию для каждой функции
+  for (const [key, val] of Object.entries(ctx)) {
+    if (isFunction(val) && val._doc === undefined) {
+      const docFunction = val.__docFunction || val;
+      docFunction._doc = val._doc = findDoc(ctxName, val.lpeName);
+    }
+  }
+
+
+  // @ts-ignore Обозначаем, что это библиотека
+  ctx[$IS_LIB$] = true;
 }
 
-// Aliases share functions: do not trigger a lazy getter while registering them.
-for (const val of new Set(Object.values(STDLIB))) {
-  if (isFunction(val) && val._doc === undefined) {
-    const setDoc = value => Object.defineProperty(val, "_doc", {
-      value, configurable: true, enumerable: true, writable: true,
-    });
-    Object.defineProperty(val, "_doc", {
-      configurable: true,
-      enumerable: true,
-      get() {
-        setDoc(undefined);
-        makeDoc("STDLIB", val, val.__docFunction);
-        return val._doc;
-      },
-      set: setDoc,
-    });
-  }
-}
+
 
 
 
