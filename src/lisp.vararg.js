@@ -155,7 +155,8 @@ export default function makeVararg(template, fn) {
   }
 
   varargHandler.__isSpecialForm = true;
-  varargHandler.__docFunction = fn;
+  varargHandler.__docFunction = fn.__docFunction || fn;
   varargHandler.__isVarargs = true;
+  varargHandler.__docFunction.__associatedFunctions = [[varargHandler, "VARARG"], ...(varargHandler.__docFunction.__associatedFunctions || [])];
   return varargHandler;
 }

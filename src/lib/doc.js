@@ -61,58 +61,9 @@
 
 
 import { LOCALE_DOC } from "../localization/localization";
+import { isFunction } from "./utils";
 
 
-
-/**
- * @typedef {Object} ContextDocData
- *
- * @property {number} index
- * @property {string} source
- * @property {string} description
- * @property {ContextDocUsage[]} usages
- * @property {string[]} results
- * @property {Array<ExampleObject[]>} examples
- * @property {string[]} examplesSources
- * @property {string[]} tags
- * @property {string[]} category
- * @property {Flavor[]} support
- * @property {string[]} [names]
- * @property {SQLizeData[]} [sqlize]
- */
-
-
-/**
- * @typedef {Object} ContextDocUsage
- *
- * @property {string} usage
- * @property {ContextDocParam[]} params
- */
-
-
-/**
- * @typedef {Object} ContextDocParam
- *
- * @property {string} name
- * @property {string} type
- * @property {string} description
- */
-
-
-/**
- * @typedef {Object} SQLizeData
- *
- * @property {Array<boolean>} argsType
- * @property {boolean} returnType
- */
-
-/**
- * @typedef {Object} ExampleObject
- *
- * @property {string} body
- * @property {string} result
- * @property {string[]} comments
- */
 
 
 
@@ -122,6 +73,9 @@ export const DOC_WARNINGS = {
   "LOC_OUTDATED": {},
   "NODOC": {},
 };
+
+/** @type {Record<ContextName, Record<FunctionName, Record<LocaleName, ContextDocData>>>} */ //@ts-ignore
+export const DOC = __DOC_OBJECT__;
 
 
 /**
@@ -355,7 +309,7 @@ function parseExpmple (text) {
 
 /**
  * Парсит весь комментарий документации
- * @param {string} docComment
+ * @param {string | undefined} docComment
  * @returns {ContextDocData | undefined}
  */
 function parseDocstring(docComment) {
@@ -365,11 +319,8 @@ function parseDocstring(docComment) {
   if (docComment.startsWith("/*") && docComment.endsWith("*/")) {
     docComment = docComment.slice(2, -2);
   }
-  let index = 0;
-  if (parseDocstring.index === undefined) {
-    parseDocstring.index = 0;
-  }
-  index = ++parseDocstring.index;
+  // @ts-ignore
+  if (parseDocstring.index === undefined) { parseDocstring.index = 0; }
 
   // Получить все строки комментария, образав начальную `*`
   /** @type {Array<string>} */
@@ -377,7 +328,8 @@ function parseDocstring(docComment) {
 
   /** @type {ContextDocData} */
   let doc = {
-    index: index,
+    // @ts-ignore
+    index: ++parseDocstring.index,
     source: docComment,
     description: "",
     usages: [],
@@ -449,46 +401,131 @@ export function selectPerfectFunctionName(name1, name2) {
  *
  * Если второй аргумент отсутствует, документация подставляется к первой функции.
  * @param {string} contextName Контекст функции
- * @param {Function} func Функция, которую необходимо вернуть в качестве результата
- * @param {Function} [docSource] Функция, в начале тела которой находится комментарий к функции
- * @returns {any}
+ * @param {ContextFunction} func Функция, которую необходимо вернуть в качестве результата
+ * @param {ContextFunction} [docSource] Функция, в начале тела которой находится комментарий к функции
+ * @returns {ContextFunctionDoc | undefined}
  */
 export function makeDoc(contextName, func, docSource) {
   let ruDocValue = (docSource || func).toString().match(/\{(?:\s*|var[\s\w_;,$-]+)*\/\*\*([\s\S]*?)\*\//);
-  let res = func;
   const lpeName = func.lpeName || docSource?.lpeName;
   if (lpeName === undefined) {
-    console.log("DOC: WARNING: lpeName undefined");
+    console.warn("DOC: WARNING: lpeName undefined");
   }
 
+  /** @type {Record<LocaleName, string>} */ //@ts-ignore
   const localize = lpeName === undefined ? undefined : (LOCALE_DOC[contextName] || {})[lpeName];
   if (localize === undefined && lpeName !== undefined && ruDocValue !== null) {
     DOC_WARNINGS.LOC_UNDEFINED[`${contextName}.${lpeName}`] = true;
   };
   const hash = ruDocValue === null ? undefined : generateSimpleHash(ruDocValue[1].replaceAll(/\r\n/g, "\n").replaceAll(/\r?\n\s*(\* ?)?/g, "\n").trim());
-  if (hash !== undefined && localize !== undefined && localize.hash !== hash) {
+  if (hash !== undefined && localize !== undefined && localize.hash != String(hash)) {
     if (!DOC_WARNINGS.LOC_OUTDATED[hash]) {
       DOC_WARNINGS.LOC_OUTDATED[hash] = {};
     }
     DOC_WARNINGS.LOC_OUTDATED[hash][`${contextName}.${lpeName}`] = true;
   }
-  if (ruDocValue !== null || localize !== undefined) {
-    res._doc = {
-      ru: parseDocstring((ruDocValue||[])[1] || localize?.ru),
-      en: parseDocstring(localize?.en),
-    };
-    if (DOC_WARNINGS.LOC_UNDEFINED[`${contextName}.${lpeName}`] && res._doc.ru?.tags?.includes("hidden")) {
-      delete DOC_WARNINGS.LOC_UNDEFINED[`${contextName}.${lpeName}`];
-    }
-  } else {
+
+  if (ruDocValue === null && localize === undefined) {
     DOC_WARNINGS.NODOC[`${contextName}.${lpeName}`] = true;
+    return undefined;
+  }
+
+  /** @type {ContextFunctionDoc} */
+  const res = {
+    // Преимущественно берем из самой функции, во вторую очередь из локализации
+    ru: parseDocstring((ruDocValue||[])[1] || localize?.ru),
+    en: parseDocstring(localize?.en),
+  };
+
+  // Это чтобы можно было не локализовать скрытые функции
+  if (DOC_WARNINGS.LOC_UNDEFINED[`${contextName}.${lpeName}`] && res.ru?.tags?.includes("hidden")) {
+    delete DOC_WARNINGS.LOC_UNDEFINED[`${contextName}.${lpeName}`];
   }
 
   const docTags = func.__docTags || docSource?.__docTags;
   if (docTags !== undefined) {
-    Object.values(res._doc || {}).forEach(doc => {
+    Object.values(res || {}).forEach(doc => {
       doc?.tags.push(...docTags);
     });
   }
   return res;
+}
+
+
+
+/**
+ * @param {Array<ContextFunctionsObject>} contextes
+ * @returns {Record<ContextName, Record<FunctionName, ContextFunctionDoc>>}
+ */
+export function makeDocForContextes(contextes) {
+  /** @type {Record<ContextName, Record<FunctionName, ContextFunctionDoc>>} */
+  const docObj = {};
+  contextes.forEach(context => {
+    const ctxName = isFunction(context["$$CONTEXT_NAME$$"]) ? context["$$CONTEXT_NAME$$"]() : undefined;
+
+    if (ctxName === undefined) {
+      console.warn(`MakeDoc: Context name is undefined.`);
+      return;
+    }
+
+    docObj[ctxName] = {};
+
+    // Генерируем документацию для функций в контексте
+    Object.entries(context).forEach(([key, val]) => {
+      if (isFunction(val) && val.lpeName !== undefined && !Object.hasOwn(docObj[ctxName], val.lpeName)) {
+        const doc = makeDoc(ctxName, val, val.__docFunction);
+        if (doc !== undefined) {
+          docObj[ctxName][val.lpeName] = doc;
+        }
+      }
+
+      // Добавляем список алиасов
+      if (isFunction(val) && val.lpeName !== undefined && Object.hasOwn(docObj[ctxName], val.lpeName)) {
+        Object.entries(docObj[ctxName][val.lpeName]).forEach(([_locale, docVal]) => {
+          if (docVal === undefined) {
+            return;
+          }
+          if (docVal.names === undefined) {
+            docVal.names = [key];
+          } else {
+            docVal.names.push(key);
+          }
+        });
+      }
+    });
+
+
+    // Добавляем документацию для функции имени контекста
+    /** @type {ContextDocData} */
+    const _name_doc = {
+      index: -1,
+      source: "",
+      description: "Функция для понимания, в каком контексте мы находимся.",
+      usages: [],
+      results: [],
+      examples: [],
+      examplesSources: [],
+      tags: ["hidden"],
+      category: ["context-name"],
+      support: [],
+    };
+    context["$$CONTEXT_NAME$$"]._doc = {
+      ru: _name_doc,
+      en: { ..._name_doc, description: "Function for understanding in which context we are located." },
+    };
+
+  });
+  return docObj;
+}
+
+
+/**
+ * Получить документацию для функции
+ * @param {ContextName} contextName
+ * @param {FunctionName | undefined} funcName
+ * @returns {ContextFunctionDoc | undefined}
+ */
+export function findDoc(contextName, funcName) {
+  // @ts-ignore
+  return DOC[contextName]?.[funcName];
 }

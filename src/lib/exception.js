@@ -3,6 +3,7 @@ import { GLOBAL_CONTEXT } from './utils';
 /**
  * @typedef {'SYSTEM_ERROR'
  * |'UNREACHABLE'
+ * |'CONTEXT_NAME_UNDEFINED'
  * |'EXCEPRION_UNKNOWN_TYPE'
  * |'LPE_VAR_SCOPE_NOT_FOUND'
  * |'LPE_VAR_NOT_FOUND'
@@ -65,6 +66,8 @@ const ru = {
     `Недостижимая ошибка.`,
   SYSTEM_ERROR: (place) =>
     `Произошла системная ошибка в [${place}].`,
+  CONTEXT_NAME_UNDEFINED: () =>
+    `Имя контекста не определено. Функция ctx.$$CONTEXT_NAME$$ не предоставлена.`,
   EXCEPRION_UNKNOWN_TYPE: () =>
     `Невозможно выбросить исключение: неизвестный тип ошибки.`,
   LPE_VAR_SCOPE_NOT_FOUND: () =>
@@ -90,6 +93,8 @@ const en = {
     `Unreachable error.`,
   SYSTEM_ERROR: (place) =>
     `A system error occurred in [${place}].`,
+  CONTEXT_NAME_UNDEFINED: () =>
+    `Context name getter ctx.$$CONTEXT_NAME$$ is undefined.`,
   EXCEPRION_UNKNOWN_TYPE: () =>
     `Unable to throw exception: unknown error type.`,
   LPE_VAR_SCOPE_NOT_FOUND: () =>

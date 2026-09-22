@@ -1,10 +1,10 @@
 import {parse, LPESyntaxError} from './lpep';
 import {deparse} from './lped';
 import makeVararg from './lisp.vararg';
-import { eval_lisp, EVAL, STDLIB, $VAR$, $IS_LIB$ } from './lisp';
-import { isString, isArray, isHash, isFunction, makeSF, makeSkipForm, isNumber } from './lib/utils';
+import { eval_lisp, EVAL, STDLIB, $VAR$, $IS_LIB$, prepareContext } from './lisp';
+import { isString, isArray, isHash, isFunction, makeSF, makeSkipForm, isNumber, isNumberLike } from './lib/utils';
 import { $var$, $getvar$, $setvar$ } from './lisp.var';
-import {makeDoc, selectPerfectFunctionName, generateSimpleHash, DOC_WARNINGS} from './lib/doc'
+import { findDoc, makeDoc, makeDocForContextes, selectPerfectFunctionName, generateSimpleHash, DOC_WARNINGS, DOC } from './lib/doc'
 import { LOCALE_DOC } from './localization/localization'
 import { LOCALIZATION_OPTIONS, localizationUpdate } from './lib/localization';
 import unbox from './lisp.unbox';
@@ -33,6 +33,7 @@ export {
   isHash,
   isFunction,
   isNumber,
+  isNumberLike,
   $var$,
   $getvar$,
   $setvar$,
@@ -43,10 +44,14 @@ export {
   $VAR$,
   $IS_LIB$,
   unbox,
+  findDoc,
   makeDoc,
+  makeDocForContextes,
   selectPerfectFunctionName,
   generateSimpleHash,
+  prepareContext,
   LOCALE_DOC,
+  DOC,
   DOC_WARNINGS,
   localizationUpdate,
   LOCALIZATION_OPTIONS,
