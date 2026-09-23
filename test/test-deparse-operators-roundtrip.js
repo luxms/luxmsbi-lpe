@@ -45,14 +45,14 @@ describe('LPE deparse operator roundtrips', function () {
   });
 
   it('distinguishes unary operators from binary operators and explicit parentheses', function () {
-    for (const unary of ['+', '-', '#', '!', '¬', 'not ']) {
+    for (const unary of ['+', '-', '#', '@', '!', '¬', 'not ']) {
       for (const operand of ['a', '1', '(a)', '(a + b)', '(a * b)', 'f(a)', 'a.b', '(-a)']) {
         assertRoundtrip(`${unary}${operand}`);
         assertRoundtrip(`${unary}${operand} * c`);
         assertRoundtrip(`f(${unary}${operand})`);
       }
     }
-    for (const source of ['not(a)', 'not((a))', 'not not a', 'not(a && b)', 'not(not(a))', '- -a']) {
+    for (const source of ['not(a)', 'not((a))', 'not not a', 'not(a && b)', 'not(not(a))', '- -a', '@@a', '@a @ b', 'a @ @b', '@a::T', '(@a)(b)', 'f(a, @b)']) {
       assertRoundtrip(source);
     }
   });

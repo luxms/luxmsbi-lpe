@@ -10,8 +10,9 @@ describe('Function documentation', () => {
     }
     documented.lpeName = 'documented';
 
-    assert.strictEqual(makeDoc('TEST', documented), documented);
-    assert.strictEqual(documented._doc.ru.description, 'Example documentation.');
+    const doc = makeDoc('TEST', documented);
+    assert.strictEqual(documented._doc, undefined);
+    assert.strictEqual(doc.ru.description, 'Example documentation.');
     assert.strictEqual(documented(), 42);
   });
 
@@ -19,9 +20,9 @@ describe('Function documentation', () => {
     const documented = new Function('var _a, _b;\nvar _c;\n/** Example documentation. */\nreturn 42;');
     documented.lpeName = 'babelDocumented';
 
-    makeDoc('TEST', documented);
+    const doc = makeDoc('TEST', documented);
 
-    assert.strictEqual(documented._doc.ru.description, 'Example documentation.');
+    assert.strictEqual(doc.ru.description, 'Example documentation.');
     assert.strictEqual(documented(), 42);
   });
 
@@ -33,9 +34,10 @@ describe('Function documentation', () => {
     source.lpeName = 'separate';
     source.__docTags = ['test'];
 
-    assert.strictEqual(makeDoc('TEST', target, source), target);
-    assert.strictEqual(target._doc.ru.description, 'Separate documentation.');
-    assert.deepStrictEqual(target._doc.ru.tags, ['test']);
+    const doc = makeDoc('TEST', target, source);
+    assert.strictEqual(target._doc, undefined);
+    assert.strictEqual(doc.ru.description, 'Separate documentation.');
+    assert.deepStrictEqual(doc.ru.tags, ['test']);
   });
 
   it('does not treat a comment after an expression as leading documentation', () => {
@@ -52,10 +54,10 @@ describe('Function documentation', () => {
     const undocumented = () => 42;
     undocumented.lpeName = 'add';
 
-    makeDoc('STDLIB', undocumented);
+    const doc = makeDoc('STDLIB', undocumented);
 
-    assert.ok(undocumented._doc.ru.description);
-    assert.ok(undocumented._doc.en.description);
+    assert.ok(doc.ru.description);
+    assert.ok(doc.en.description);
   });
 
   it('handles long indentation and var declarations without JSDoc in bounded time', function () {
@@ -67,7 +69,7 @@ describe('Function documentation', () => {
       for (const prefix of [' '.repeat(10000), 'var _a, _b;\\n'.repeat(1000)]) {
         const fn = new Function(prefix + 'return 42;');
         fn.lpeName = 'undocumented';
-        assert.strictEqual(makeDoc('TEST', fn), fn);
+        assert.strictEqual(makeDoc('TEST', fn), undefined);
         assert.strictEqual(fn._doc, undefined);
         assert.strictEqual(fn(), 42);
       }

@@ -16,7 +16,7 @@ for (const [priority, operators] of [
 const SPELLING = {and: '&&', or: '||', nor: '⍱', nand: '⍲', car: '⊣', cdr: '⊢'};
 const LEFT_ASSOC = new Set(['<-', '=>', '+', '-', '#', '*', '/', '.', '..', '->', '->>']);
 const CALLABLE_OPERATORS = new Set(['and', 'or', 'nor', 'nand', 'car', 'cdr']);
-const isUnary = (expr) => isArray(expr) && expr.length === 2 && ['+', '-', '#', 'not'].includes(expr[0]);
+const isUnary = (expr) => isArray(expr) && expr.length === 2 && ['+', '-', '#', '@', 'not'].includes(expr[0]);
 
 function fixString(s) {
   return s.replace(/[\\'"\x00-\x1f]/g, char => ({

@@ -95,10 +95,17 @@ prepareContext(STDLIB);
  */
 export function prepareContext(ctx) {
   const ctxName = isFunction(ctx["$$CONTEXT_NAME$$"]) ? ctx["$$CONTEXT_NAME$$"]() : undefined;
+  // Native-функции могут быть общими с хостом: нельзя менять ни имя, ни метаданные.
+  const preparable = new WeakMap();
+  const canPrepare = fn => {
+    if (!isFunction(fn)) return false;
+    if (!preparable.has(fn)) preparable.set(fn, !/\{\s*\[native code\]\s*\}/.test(Function.prototype.toString.call(fn)));
+    return preparable.get(fn);
+  };
 
   // Находим лучшее имя для каждой функции
   for (const [key, val] of Object.entries(ctx)) {
-    if (isFunction(val)) {
+    if (canPrepare(val) && canPrepare(val.__docFunction || val)) {
       const docFunction = val.__docFunction || val;
       docFunction.lpeName = val.lpeName = selectPerfectFunctionName(val.lpeName, key);
     }
@@ -107,10 +114,11 @@ export function prepareContext(ctx) {
 
   // Даем имена всем связанным функциям
   for (const [key, val] of Object.entries(ctx)) {
-    if (isFunction(val)) {
+    if (canPrepare(val) && canPrepare(val.__docFunction || val)) {
       const docFunction = val.__docFunction || val;
       const assoc = [[docFunction, ""], ...(docFunction.__associatedFunctions || [])];
       assoc.forEach(([fn, prefix]) => {
+        if (!canPrepare(fn)) return;
         // @ts-ignore
         fn.lpeName = val.lpeName;
         Object.defineProperty(fn, 'name', {
@@ -129,7 +137,7 @@ export function prepareContext(ctx) {
 
   // Находим документацию для каждой функции
   for (const [key, val] of Object.entries(ctx)) {
-    if (isFunction(val) && val._doc === undefined) {
+    if (canPrepare(val) && canPrepare(val.__docFunction || val) && val._doc === undefined) {
       const docFunction = val.__docFunction || val;
       docFunction._doc = val._doc = findDoc(ctxName, val.lpeName);
     }

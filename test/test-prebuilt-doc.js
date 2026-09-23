@@ -33,11 +33,13 @@ function docsWithoutIndices(lpe) {
   return docs;
 }
 
-describe('Lazy function documentation', () => {
-  it('does not inspect function sources on import, including aliases', () => {
+describe('Prebuilt function documentation', () => {
+  it('loads documentation as data without parsing documented functions on import', () => {
     const {lpe, context} = fresh();
     assert.strictEqual(context.docScans, 0);
-    assert.strictEqual(typeof Object.getOwnPropertyDescriptor(lpe.STDLIB.add, '_doc').get, 'function');
+    assert.strictEqual(Object.getOwnPropertyDescriptor(lpe.STDLIB.add, '_doc').get, undefined);
+    assert.strictEqual(lpe.STDLIB.add._doc, lpe.DOC.STDLIB.add);
+    assert.strictEqual(lpe.findDoc('STDLIB', 'add'), lpe.STDLIB.add._doc);
   });
 
   it('does not initialize docs when evaluating ordinary expressions', () => {
@@ -46,14 +48,14 @@ describe('Lazy function documentation', () => {
     assert.strictEqual(context.docScans, 0);
   });
 
-  it('initializes synchronously once and shares the result between aliases', () => {
+  it('shares embedded documentation between aliases without parsing sources', () => {
     const {lpe, context} = fresh();
     const doc = lpe.STDLIB.add._doc;
     assert.ok(doc.ru.description);
     assert.ok(doc.en.description);
     assert.strictEqual(lpe.STDLIB.plus._doc, doc);
     assert.strictEqual(lpe.STDLIB['+']._doc, doc);
-    assert.strictEqual(context.docScans, 1);
+    assert.strictEqual(context.docScans, 0);
     assert.strictEqual(Object.getOwnPropertyDescriptor(lpe.STDLIB.add, '_doc').writable, true);
   });
 
@@ -76,21 +78,24 @@ describe('Lazy function documentation', () => {
     assert.strictEqual(lpe.STDLIB.add._doc, undefined);
   });
 
-  it('keeps explicit makeDoc synchronous before the first read', () => {
+  it('returns fresh documentation from explicit makeDoc without replacing embedded docs', () => {
     const {lpe, context} = fresh();
-    assert.strictEqual(lpe.makeDoc('STDLIB', lpe.STDLIB.add), lpe.STDLIB.add);
+    const embedded = lpe.STDLIB.add._doc;
+    const doc = lpe.makeDoc('STDLIB', lpe.STDLIB.add);
     assert.strictEqual(context.docScans, 1);
-    assert.ok(lpe.STDLIB.add._doc.ru.description);
-    assert.strictEqual(context.docScans, 1);
+    assert.ok(doc.ru.description);
+    assert.notStrictEqual(doc, embedded);
+    assert.strictEqual(lpe.STDLIB.add._doc, embedded);
   });
 
-  it('caches missing documentation instead of repeatedly scanning', () => {
+  it('does not scan sources for missing documentation', () => {
     const {lpe, context} = fresh();
     const fn = lpe.STDLIB['$$CONTEXT_NAME$$'];
     assert.strictEqual(fn._doc, undefined);
     assert.strictEqual(fn._doc, undefined);
-    assert.strictEqual(context.docScans, 1);
-    assert.strictEqual(lpe.DOC_WARNINGS.NODOC['STDLIB.$$CONTEXT_NAME$$'], true);
+    assert.strictEqual(context.docScans, 0);
+    assert.strictEqual(lpe.findDoc('MISSING', 'unknown'), undefined);
+    assert.strictEqual(lpe.DOC_WARNINGS.NODOC['STDLIB.$$CONTEXT_NAME$$'], undefined);
   });
 
   it('preserves content regardless of the first-read order', () => {
@@ -115,11 +120,11 @@ describe('Lazy function documentation', () => {
     assert.strictEqual(new Set([...docs].map(doc => doc.index)).size, docs.size);
   });
 
-  it('collects diagnostics on demand when all docs are read', () => {
+  it('does not regenerate build diagnostics when embedded docs are read', () => {
     const {lpe} = fresh();
     assert.strictEqual(Object.keys(lpe.DOC_WARNINGS.NODOC).length, 0);
     docsWithoutIndices(lpe);
-    assert.ok(Object.keys(lpe.DOC_WARNINGS.NODOC).length > 0);
+    assert.strictEqual(Object.keys(lpe.DOC_WARNINGS.NODOC).length, 0);
   });
 
   it('preserves SQL metadata and tags when documenting another function', () => {
@@ -134,9 +139,10 @@ describe('Lazy function documentation', () => {
     source.lpeName = 'sqlTest';
     source.__docTags = ['test'];
     const target = () => 42;
-    lpe.makeDoc('TEST', target, source);
-    assert.deepStrictEqual(normalize(target._doc.ru.support), ['postgresql', 'clickhouse']);
-    assert.deepStrictEqual(normalize(target._doc.ru.sqlize), [{argsType: [true, false], returnType: true}]);
-    assert.deepStrictEqual(normalize(target._doc.ru.tags), ['test']);
+    const doc = lpe.makeDoc('TEST', target, source);
+    assert.strictEqual(target._doc, undefined);
+    assert.deepStrictEqual(normalize(doc.ru.support), ['postgresql', 'clickhouse']);
+    assert.deepStrictEqual(normalize(doc.ru.sqlize), [{argsType: [true, false], returnType: true}]);
+    assert.deepStrictEqual(normalize(doc.ru.tags), ['test']);
   });
 });

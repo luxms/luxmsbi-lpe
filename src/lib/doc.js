@@ -397,16 +397,15 @@ export function selectPerfectFunctionName(name1, name2) {
 
 
 /**
- * Вычисляет комментарий из первого аргумента-функции и подставляет его как `_doc` параметр во второй аргумент.
- *
- * Если второй аргумент отсутствует, документация подставляется к первой функции.
+ * Возвращает документацию из комментария функции и локализации, не изменяя функцию.
  * @param {string} contextName Контекст функции
- * @param {ContextFunction} func Функция, которую необходимо вернуть в качестве результата
+ * @param {ContextFunction} func Функция, для которой нужна документация
  * @param {ContextFunction} [docSource] Функция, в начале тела которой находится комментарий к функции
  * @returns {ContextFunctionDoc | undefined}
  */
 export function makeDoc(contextName, func, docSource) {
-  let ruDocValue = (docSource || func).toString().match(/\{(?:\s*|var[\s\w_;,$-]+)*\/\*\*([\s\S]*?)\*\//);
+  // Повторяющиеся группы пробелов приводят к экспоненциальному перебору без JSDoc.
+  let ruDocValue = (docSource || func).toString().match(/\{\s*(?:var[\s\w_;,$-]+)?\/\*\*([\s\S]*?)\*\//);
   const lpeName = func.lpeName || docSource?.lpeName;
   if (lpeName === undefined) {
     console.warn("DOC: WARNING: lpeName undefined");
