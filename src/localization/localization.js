@@ -680,6 +680,52 @@ export const LOCALE_DOC = {
 
 
 
+//#region define
+    "define": {
+      ru: `/**
+            * Определение функций с поддержкой статических переменных
+            * и выполнение последующих аргументов с этими функциями в контексте
+            *
+            * Описание аргументов функции:
+            * - Для указания позиционного аргумента используется имя аргумента: \`n\`;
+            * - Для указания позиционного аргумента с умалчиваемым значением: \`n = 10\`;
+            * - Для указания статической переменной, общей для всех вызовов этой функции: \`$n = 10\`
+            *
+            * Статические переменные будут храниться в переменной \`this\`
+            * @usage define(...{name, ...args, funcBody}, ...expr)
+            * @param name [string] Имя функции
+            * @param args [array | string] Описание аргументов функции
+            * @param funcBody [string] Тело функции
+            * @param expr [any] Выражения выполняемые
+            *
+            * @example define(\\
+            *          |  { factorial, n,\\
+            *          |    "if(n < 2, 1, n * factorial(n - 1))"\\
+            *          |  },\\
+            *          |  factorial(4)\\
+            *          |) => 24
+            * @example define(\\
+            *          |  { incr, $inc = 0,\\
+            *          |    "this.inc := this.inc + 1"\\
+            *          |  },\\
+            *          |  incr(), incr(), incr()\\
+            *          |) => 3
+            *          ## Считает количество вызовов этой функции используя статическую переменную
+            * @example define(\\
+            *          |  { func, a, b = 5 * 2,\\
+            *          |    "a + b"\\
+            *          |  },\\
+            *          |  func(1, 2) + func(3)\\
+            *          |) => 16
+            * @category Работа с переменными | 3
+            */`,
+      hash: 1491315493,
+    },
+//#endregion define
+
+
+
+
 //#region del
     "del": {
       en: `/**
@@ -1547,6 +1593,49 @@ export const LOCALE_DOC = {
       hash: 874079944,
     },
 //#endregion fn
+
+
+
+
+//#region formatString
+    "formatString": {
+      en: `/**
+            * Creates formatted string. Supports all prefixes [string]($func-q)
+            *
+            * Supports nested format strings.
+            *
+            * For escaping curly braces, use double curly braces.
+            *
+            * @usage f"value"
+            * @param value [string] Значение
+            *
+            * @example f"hello{ 1 + 1 }" => "hello2"
+            *          begin(x3y := 12, _f"x{1 + 2}y") => 12
+            *          f'test {"some" + "thing"}' => "test something"
+            *          rf'te\\nst {f'some{1 + 1}' + "thing"}' => "te\\nst some2thing"
+            *          f"test{{ 1 + 1 }" => "test{ 1 + 1 }"
+            * @category 6
+            */`,
+      ru: `/**
+            * Создает форматированную строку. Поддерживает все префиксы [обычной строки]($func-q)
+            *
+            * Поддерживает вложенные формат строки.
+            *
+            * Для экранирования фигурной скобки используйте двойную фигурную скобку.
+            *
+            * @usage f"value"
+            * @param value [string] Значение
+            *
+            * @example f"hello{ 1 + 1 }" => "hello2"
+            *          begin(x3y := 12, _f"x{1 + 2}y") => 12
+            *          f'test {"some" + "thing"}' => "test something"
+            *          rf'te\\nst {f'some{1 + 1}' + "thing"}' => "te\\nst some2thing"
+            *          f"test{{ 1 + 1 }" => "test{ 1 + 1 }"
+            * @category 6
+            */`,
+      hash: 1175399019,
+    },
+//#endregion formatString
 
 
 
@@ -4144,6 +4233,11 @@ export const LOCALE_DOC = {
       en: `/**
             * Creates a string or retrieves the value of a variable.
             *
+            * If a conversion function is present, calls it.
+            *
+            * Supports r-strings. In such strings, the backslash character is not escaped.
+            *
+            * Allowed use of multiple prefix modifiers.
             * @usage "value"
             * @param value [string] Value
             *
@@ -4153,11 +4247,21 @@ export const LOCALE_DOC = {
             * @example "hello" => "hello"
             *          begin(x := 12, _"x") => 12
             *          begin(x := 12, q("x", "_")) => 12
+            *          begin(\\
+            *          |  def("str>ARR", val => {val}),\\
+            *          |  ARR"test string"\\
+            *          |) => ["test string"]
+            *          r"[\\d+]\\n" => RegExp string
             * @category 5
             */`,
       ru: `/**
             * Создает строку или получает значение переменной.
             *
+            * При наличие функции преобразования, вызывает эту функцию.
+            *
+            * Поддерживает работу с r-строками. В таких строках символ обратного слэша не является экранирующим.
+            *
+            * Допустимо использование нескольких префиксных модификаторов.
             * @usage "value"
             * @param value [string] Значение
             *
@@ -4167,9 +4271,14 @@ export const LOCALE_DOC = {
             * @example "hello" => "hello"
             *          begin(x := 12, _"x") => 12
             *          begin(x := 12, q("x", "_")) => 12
+            *          begin(\\
+            *          |  def("str>ARR", val => {val}),\\
+            *          |  ARR"test string"\\
+            *          |) => ["test string"]
+            *          r"[\\d+]\\n" => Строка регулярного выражения
             * @category 5
             */`,
-      hash: 1782123871,
+      hash: 477578182,
     },
 //#endregion q
 
