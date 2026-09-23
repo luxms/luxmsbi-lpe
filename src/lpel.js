@@ -1,6 +1,8 @@
 
 // http://javascript.crockford.com/tdop/tdop.html
 
+import { except } from "./lib/exception";
+
 // 2010-02-23
 
 // (c) 2006 Douglas Crockford
@@ -79,11 +81,15 @@ const OPNOLF = [
   "."
 ];
 
+const STRFLAGS = [
+  "r", "f"
+]
+
 
 /**
  *
  * @param {string} s
- * @param {{squareBrackets: boolean}} options
+ * @param {{squareBrackets: boolean, fstring: boolean}} options
  * @returns {*[]}
  */
 export function tokenize(s, options) {
@@ -104,25 +110,51 @@ export function tokenize(s, options) {
 
   /**
    *
-   * @param {'name' | 'number' | 'operator' | 'LF' | 'string_double' | 'string_single' | 'string_column'} type
+   * @param {'name' | 'number' | 'operator' | 'LF' | 'string_double' | 'string_single' | 'string_column' | 'string_format_start' | 'string_format_end' | '(end)'} type
    * @param {*} value
    * @returns {{from, to: number, type, value}}
    */
   const make = (type, value) => ({type, value, from, to: i});                   // Make a token object.
 
+
+  /**
+   * Получить флаги для строки
+   * @param {string} prefix
+   */
+  const extractStringFlags = (prefix) => {
+    const existedFlags = [...STRFLAGS]
+    const flags = [...prefix.matchAll(/[A-Z_]+/g)].map(m => m[0]);
+    prefix = prefix.replaceAll(/[A-Z_]+/g, '');
+    let flag;
+    do {
+      flag = existedFlags.find(el => prefix.indexOf(el) >= 0);
+      if (flag !== undefined) {
+        prefix = prefix.replace(flag, '');
+        flags.push(flag);
+        existedFlags.splice(existedFlags.indexOf(flag), 1);
+      }
+    } while (flag !== undefined);
+    return flags.filter((flag, idx, arr) => flag !== "" && arr.findIndex(f => f === flag) === idx);
+  }
+
   /**
    * When current character is one of opening quote, will proceed until closing qoute
-   * @param {Array<'r'> =} flags Флаги для парсинга строки
+   * @param {Array<string> =} flags Флаги для парсинга строки `STRFLAGS`
    *                        - `r`: Парсить как регулярное выражение: \ не считается символом экранирования
-   * @returns {{str: string, type: ("string_double"|"string_single"|"string_column")}}
+   *                        - `f`: Парсить как форматную строку (при открытии фигурной скобки все внутри считается LPE кодом)
+   * @returns {{str: string, type: ("string_double"|"string_single"|"string_column"), tokens: Array<*>}}
    */
   const nextString = (flags) => {
     let c = s.charAt(i);
+    const startSymbol = c;
+
     /** @type {'string_double' | 'string_single' | 'string_column'}  */
     const type =
         c === DQUOT ? 'string_double' :
         c === SQUOT ? 'string_single' :
                       'string_column';
+    /** @type {Array<*>} */
+    const tokens = [];
     const closer = c === DQUOT ? DQUOT : c === SQUOT ? SQUOT : ']';
     let str = '';
     i += 1;                                                                                         // use global
@@ -174,11 +206,33 @@ export function tokenize(s, options) {
             break;
         }
       }
+      if (flags?.includes("f") && c === "{") {
+        i += 1;
+        if (i >= length) {
+          makeError(make(type, str), "Unterminated string");
+        }
+        c = s.charAt(i);
+        if (c !== "{") {
+          tokens.push(make(type, [startSymbol, str]));
+          tokens.push(...tokenize(s.slice(i), { ...options, fstring: true }).map(el => {
+            el.from += i;
+            el.to += i;
+            return el;
+          }));
+          const endToken = tokens.pop();
+          if (endToken.type !== '(end)') {
+            makeError(make(type, str), "Unterminated format string");
+          }
+          str = "";
+          from = i = endToken.to + 1;
+          continue;
+        }
+      }
       str += c;
       i += 1;
     }
     i += 1;
-    return {type, str};
+    return {type, str, tokens};
   };
 
   let c;                                                                                            // The current character.
@@ -212,8 +266,18 @@ export function tokenize(s, options) {
       // Handle typed (D'2020-01-01') strings here because there MUST NOT be space between element and
       // We handle only ' and " string, because xxx[...] are handled differently, ALLOWING space
       if (c === SQUOT || c === DQUOT) {
-        const {str, type} = nextString(name === "r" ? ["r"] : undefined);
-        result.push(make(type, [c, str, name]));                                                    // set the value [', str, strType]
+        const flags = extractStringFlags(name);
+        const visibleFlags = flags.filter((flag) => !["r", "f"].includes(flag));
+        const isFString = flags.includes("f");
+        if (isFString) {
+          result.push(make("string_format_start", visibleFlags));
+        }
+        const { str, type, tokens } = nextString(flags);
+        result.push(...tokens);
+        result.push(make(type, [c, str, ...(isFString ? [] : visibleFlags)]));                                                    // set the value [', str, strType]
+        if (isFString) {
+          result.push(make("string_format_end", undefined));
+        }
       } else {
         result.push(make('name', name));
       }
@@ -291,11 +355,11 @@ export function tokenize(s, options) {
       }
 
     } else if (c === SQUOT || c === DQUOT) {                                                        // 'string', "string",
-      const {type, str} = nextString();
+      const { type, str } = nextString();
       result.push(make(type, [c, str]));
 
     } else if (squareBrackets && c === '[') {                                                       //  [string]
-      const {type, str} = nextString();
+      const { type, str } = nextString();
       result.push(make(type, str));
 
     } else if (c === '/' && s.charAt(i + 1) === '/') {                                              // // line comment
@@ -333,7 +397,7 @@ export function tokenize(s, options) {
 
     } else if (OPSEQ.some((op) => op === s.slice(i, i + op.length))) {
       // Многосимвольные операторы
-      const ops = OPSEQ.filter((op) => op === s.slice(i, i + op.length)).sort((a,b) => b.length - a.length);
+      const ops = OPSEQ.filter((op) => op === s.slice(i, i + op.length)).sort((a, b) => b.length - a.length);
       const nextOp = ops[0];
       str = nextOp;
       i += nextOp.length;
@@ -351,6 +415,10 @@ export function tokenize(s, options) {
         i += 1;
       }
       result.push(make('operator', str));
+
+    } else if (c === "}" && parenDepth <= 0 && options.fstring) {
+      result.push(make("(end)", undefined));
+      break;
 
    // single-character operator
     } else {
