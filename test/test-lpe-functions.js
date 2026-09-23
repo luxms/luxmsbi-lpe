@@ -1585,4 +1585,53 @@ describe('LPE Full Test Suite', function() {
     });
 
   });
+
+
+
+  describe('f-строки', () => {
+    it('простая подстановка выражения', () => {
+      strictEqual('f"hello{ 1 + 1 }"', 'hello2');
+    });
+
+    it('конкатенация строк внутри выражения', () => {
+      strictEqual(`f'test {"some" + "thing"}'`, 'test something');
+    });
+
+    it('вложенная f-строка с raw-префиксом', () => {
+      strictEqual(`rf'te\\nst {f'some{1 + 1}' + "thing"}'`, 'te\\nst some2thing');
+    });
+
+    it('экранированные фигурные скобки', () => {
+      strictEqual('f"test{{ 1 + 1 }"', 'test{ 1 + 1 }');
+    });
+
+    it('f-строка как аргумент с присваиванием', () => {
+      strictEqual('begin(x3y := 12, _f"x{1 + 2}y")', 12);
+    });
+
+    it('f-строка с несколькими подстановками', () => {
+      strictEqual('f"{1} + {2} = {1 + 2}"', '1 + 2 = 3');
+    });
+
+    it('f-строка с числовым выражением', () => {
+      strictEqual('f"result: {2 * 3 + 4}"', 'result: 10');
+    });
+
+    it('f-строка со строковым выражением и переменной', () => {
+      strictEqual('name := "world"; f"hello, {name}!"', 'hello, world!');
+    });
+
+    it('пустая f-строка', () => {
+      strictEqual('f""', '');
+      strictEqual(`f"{""}{""}{""}{""}{""}{''}"`, '');
+    });
+
+    it('f-строка без подстановок', () => {
+      strictEqual('f"just text"', 'just text');
+    });
+
+    it('f-строка с bool-выражением', () => {
+      strictEqual('f"answer: {1 < 2}"', 'answer: true');
+    });
+  });
 });

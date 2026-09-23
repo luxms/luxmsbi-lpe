@@ -145,6 +145,12 @@ const make_parse = function (opt = {}) {
     } else if (a === 'string_double') {                                                             // "строчка" в двойных кавычках, v = [", ...]
       o = m_symbol_table['(string_literal_double)'];
       a = 'literal';
+    } else if (a === 'string_format_start') {                                                             // "строчка" в двойных кавычках, v = [", ...]
+      o = m_symbol_table['string_format_start'];
+      a = 'literal';
+    } else if (a === 'string_format_end') {                                                             // "строчка" в двойных кавычках, v = [", ...]
+      o = m_symbol_table['string_format_end'];
+      a = 'literal';
     } else if (a === 'string_column') {                                                             // [строчка] в скобочках
       o = m_symbol_table['(string_literal_column)'];
       a = 'literal';
@@ -817,6 +823,25 @@ const make_parse = function (opt = {}) {
     });
   }
 
+
+  symbol("string_format_end");
+  prefix("string_format_start", function () {
+    let a = [];
+    const strtype = m_token.sexpr[0];
+    // Newlines inside a [...] literal are whitespace, like inside (...).
+    while (m_token.id === 'LF') advance();
+    while (m_token.id !== "string_format_end") {
+      a.push(expression(0));
+      while (m_token.id === 'LF') advance();
+    }
+    this.closurePosition = [m_token.from, m_token.to];
+    advance("string_format_end");
+    this.first = a;
+    this.arity = "unary";
+    this.sexpr = ["f" + strtype, this.sexpr].concat(a.map((el) => el.sexpr));
+    return this;
+  });
+
   // DAX-style block:  VAR name = expr  (one or more)  RETURN expr
   // Compiles to ["let*", ["[", ["[", n1, v1], ...], body]
   // Bindings are sequential — each VAR may reference earlier VARs.
@@ -868,7 +893,9 @@ const make_parse = function (opt = {}) {
     let a = [];
     if (m_token.id !== '}') {
       while (true) {
-        a.push(expression(0));
+        if (m_token.id !== '}') {
+          a.push(expression(0));
+        }
         // a.push(statements());
         if (m_token.id !== "," && m_token.id !== ";") {
           break;
