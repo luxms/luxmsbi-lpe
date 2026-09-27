@@ -163,7 +163,6 @@ const make_parse = function (opt = {}) {
     m_token.value = v;
     m_token.arity = a;
     m_token.src = m_source;
-    m_token.crs = m_source.split('').map((c, i) => i >= t.from && i < t.to ? "^" : c === "\n" ? "--" : "-").join("");
     if (a === "operator") {
       m_token.sexpr = m_operator_aliases[v];
     } else {
@@ -314,6 +313,13 @@ const make_parse = function (opt = {}) {
   };
 
   const original_symbol = {
+    // The caret line under a token for error messages (crs), made only when an error reads it:
+    // made for every token as it was read, it cost the length of the source per token, and a long
+    // expression parsed in quadratic time. Symbols of the grammar have no source and no caret line.
+    get crs() {
+      if (typeof this.src !== "string") return undefined;
+      return this.src.split('').map((c, i) => i >= this.from && i < this.to ? "^" : c === "\n" ? "--" : "-").join("");
+    },
     nud: function () {
       makeError(this, "Undefined.");
     },
@@ -351,7 +357,10 @@ const make_parse = function (opt = {}) {
       if (LIFT_OPERATORS.includes(this.sexpr) && left.arity === 'binary' && left.sexpr[0] === this.sexpr) {
         // Соединяет a + b + c, которые здесь соберутся в left=[+ a b], right=c
         // в единую [+ a b c]
-        this.sexpr = [...left.sexpr, right.sexpr];
+        // The left operand's list was made for it alone, so it grows in place: a copy per term
+        // made a long sum quadratic.
+        left.sexpr.push(right.sexpr);
+        this.sexpr = left.sexpr;
         // Тут, может быть, надо поправить позиции исходников
       } else {
         this.sexpr = [this.sexpr, left.sexpr, right.sexpr];
@@ -766,7 +775,7 @@ const make_parse = function (opt = {}) {
       advance(")");
 
       const sexpr = [a.length > 1 ? "tuple" : "()"].concat(a.filter(Boolean).map((el) => el.sexpr));
-      return {
+      const tuple = {
         ...this,
         first: a,
         value: "(",                              // FIXME: why not make it '()' ?? and looks like function `()` call ?
@@ -774,6 +783,10 @@ const make_parse = function (opt = {}) {
         sexpr: sexpr,
         closurePosition: closurePosition,
       };
+      // The copy is a plain object: it keeps the token's caret line as its own, still made when read.
+      const token = this;
+      Object.defineProperty(tuple, "crs", {get: () => token.crs, enumerable: true, configurable: true});
+      return tuple;
     }
 
     var e = expression(0);
