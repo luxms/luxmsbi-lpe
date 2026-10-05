@@ -290,4 +290,33 @@ describe('LPE tests', function() {
       );
     });
   });
+
+  describe('long expressions', function () {
+    it('parses a sum of thousands of terms into one list, in linear time', function () {
+      const terms = Array.from({length: 3000}, (_, i) => `sum(a${i})`);
+      const started = Date.now();
+      const ast = lpe.parse(terms.join(' + '));
+      assert(Date.now() - started < 1000, 'a 3,000-term sum parsed in ' + (Date.now() - started) + ' ms');
+      assert.equal(ast.length, 3001);
+      assert.equal(ast[0], '+');
+      assert.deepEqual(ast[3000], ['sum', 'a2999']);
+      assert.deepEqual(lpe.parse('(a + b) + c + d'), ['+', ['()', ['+', 'a', 'b']], 'c', 'd']);
+    });
+
+    it('still puts the caret line under the token in an error message', function () {
+      const error = (src) => {
+        try {
+          lpe.parse(src);
+        } catch (err) {
+          return JSON.parse(err.message);
+        }
+        assert.fail('parsed ' + src);
+      };
+      assert.equal(error('a()b()').crs, '---^--');
+      const tuple = error('x ? (1, 2)');
+      assert.equal(tuple.crs, '----^-----');
+      assert.deepEqual(tuple.first.map((el) => el.crs), ['-----^----', '--------^-']);
+      assert.equal(error('f(').crs, undefined);   // the end of the source has no caret line
+    });
+  });
 });
