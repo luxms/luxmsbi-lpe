@@ -234,9 +234,9 @@ _context["def"] = makeSF((ast, ctx, rs) => {
   // update current environment
   const value = EVAL(ast[1], ctx, rs);
   return unbox(
-    [value],
-    ([value]) => {
-      const result = $setvar$(ctx, ast[0], value, rs);
+    [isArray(ast[0]) ? EVAL(ast[0], ctx, rs) : ast[0], value],
+    ([name, value]) => {
+      const result = $setvar$(ctx, name, value, rs);
       return result;
     },
     rs?.streamAdapter,

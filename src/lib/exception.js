@@ -5,6 +5,7 @@ import { GLOBAL_CONTEXT } from './utils';
  * |'UNREACHABLE'
  * |'CONTEXT_NAME_UNDEFINED'
  * |'EXCEPRION_UNKNOWN_TYPE'
+ * |'UNKNOWN_STRING_FLAGS'
  * |'LPE_VAR_SCOPE_NOT_FOUND'
  * |'LPE_VAR_NOT_FOUND'
  * |'LPE_VAR_NOT_DOT_ACCESSIBLE'
@@ -70,6 +71,8 @@ const ru = {
     `Имя контекста не определено. Функция ctx.$$CONTEXT_NAME$$ не предоставлена.`,
   EXCEPRION_UNKNOWN_TYPE: () =>
     `Невозможно выбросить исключение: неизвестный тип ошибки.`,
+  UNKNOWN_STRING_FLAGS: (prefix) =>
+    `Неизвестные флаги строки: [${prefix}].`,
   LPE_VAR_SCOPE_NOT_FOUND: () =>
     `Не найден допустимый объект контекста для создания новой переменной.`,
   LPE_VAR_NOT_FOUND: (varName) =>
@@ -97,6 +100,8 @@ const en = {
     `Context name getter ctx.$$CONTEXT_NAME$$ is undefined.`,
   EXCEPRION_UNKNOWN_TYPE: () =>
     `Unable to throw exception: unknown error type.`,
+  UNKNOWN_STRING_FLAGS: (prefix) =>
+    `Unknown string flags: [${prefix}].`,
   LPE_VAR_SCOPE_NOT_FOUND: () =>
     `No valid context object found for creating a new variable.`,
   LPE_VAR_NOT_FOUND: (varName) =>

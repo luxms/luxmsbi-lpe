@@ -1,5 +1,5 @@
 import { except } from "../lib/exception.js";
-import { catchReturn, GLOBAL_CONTEXT, isArray, isString, makeSF, ReturnThrow } from "../lib/utils.js";
+import { catchReturn, GLOBAL_CONTEXT, isArray, isFunction, isString, makeSF, ReturnThrow } from "../lib/utils.js";
 import { EVAL, eval_lisp } from "../lisp";
 import unbox from "../lisp.unbox.js";
 import { parse } from "../lpep.js";
@@ -43,6 +43,11 @@ _context["\""] = _context["'"] = _context["q"] = makeSF((ast, ctx, rs) => {
   /**
    * Создает строку или получает значение переменной.
    *
+   * При наличие функции преобразования, вызывает эту функцию.
+   *
+   * Поддерживает работу с r-строками. В таких строках символ обратного слэша не является экранирующим.
+   *
+   * Допустимо использование нескольких префиксных модификаторов.
    * @usage "value"
    * @param value [string] Значение
    *
@@ -52,10 +57,56 @@ _context["\""] = _context["'"] = _context["q"] = makeSF((ast, ctx, rs) => {
    * @example "hello" => "hello"
    *          begin(x := 12, _"x") => 12
    *          begin(x := 12, q("x", "_")) => 12
+   *          begin(\
+   *          |  def("str>ARR", val => {val}),\
+   *          |  ARR"test string"\
+   *          |) => ["test string"]
+   *          r"[\d+]\n" => Строка регулярного выражения
    * @category 5
    */
-  if (ast[1] === '_') return $getvar$(ctx, ast[0], rs);
-  else return String(ast[0]);
+  /** @type {string[]} */
+  const flags = ast.slice(1);
+  if (flags.includes('_')) {
+    return $getvar$(ctx, ast[0], rs);
+  }
+
+  for (const f of flags.filter(f => f !== '_')) {
+    const func = $getvar$(ctx, `str>${f}`, rs);
+    if (isFunction(func)) {
+      return EVAL([`str>${f}`, String(ast[0])], ctx, rs);
+    }
+  }
+
+  return String(ast[0]);
+});
+
+
+
+_context["f\""] = _context["f'"] = _context["formatString"] = makeSF((ast, ctx, rs) => {
+  /**
+   * Создает форматированную строку. Поддерживает все префиксы [обычной строки]($func-q)
+   *
+   * Поддерживает вложенные формат строки.
+   *
+   * Для экранирования фигурной скобки используйте двойную фигурную скобку.
+   *
+   * @usage f"value"
+   * @param value [string] Значение
+   *
+   * @example f"hello{ 1 + 1 }" => "hello2"
+   *          begin(x3y := 12, _f"x{1 + 2}y") => 12
+   *          f'test {"some" + "thing"}' => "test something"
+   *          rf'te\nst {f'some{1 + 1}' + "thing"}' => "te\nst some2thing"
+   *          f"test{{ 1 + 1 }" => "test{ 1 + 1 }"
+   * @category 6
+   */
+  const flags = ast[0];
+
+  return unbox(
+    ast.slice(1).map((/** @type {AST} */subast) => EVAL(subast, ctx, rs)),
+    (args) => EVAL(["'", args.map(String).join(""), ...flags], ctx, rs),
+    rs?.streamAdapter,
+  );
 });
 
 
