@@ -1,8 +1,99 @@
 # Rust LPE implementation
 
-Status: proposed; design only, no Rust runtime implemented by this change.
+Status: implementation and compatibility testing in progress. The native crate
+and shared JS/Rust test harness are implemented. Do not interpret passing fixture
+counts as complete compatibility; `coverage.json` records the remaining gaps.
+See [STATUS.md](STATUS.md) for verified results and the outstanding work.
 
 Tracking issue: [#72](https://github.com/luxms/luxmsbi-lpe/issues/72).
+
+## Build and test
+
+From the repository root:
+
+The crate requires Rust 1.92 or newer. Node is required only for the JavaScript
+reference and shared test tooling.
+
+```sh
+npm ci
+npm run test:all
+```
+
+The aggregate command builds the JS reference, runs its original tests, checks
+the harness, runs Rust tests, compares both implementations on shared fixtures,
+and enforces the strict coverage gate. It exits unsuccessfully while required
+coverage or behavior remains incomplete. Reports are written under
+`rust-impl/reports/`, which is ignored by Git.
+
+Individual commands:
+
+```sh
+npm run test:rust
+npm run test:parity
+cargo run --locked --manifest-path rust-impl/Cargo.toml --example embedding
+cargo build --locked --release --manifest-path rust-impl/Cargo.toml
+```
+
+The Rust library and executable do not need Node or a JS engine. Node and the
+original JS bundle are used only by development-time reference tests. The test
+runner invokes Mocha programmatically to avoid the old CLI's incompatibility
+with newer Node releases. Existing JS sources and tests remain unchanged.
+
+The `lpe` binary accepts newline-delimited UTF-8 JSON requests, with one response
+per line. See [fixtures/protocol.md](fixtures/protocol.md) for the test protocol.
+Each request uses a fresh interpreter; embedding the library allows reuse.
+
+```json
+{"op":"eval","source":"add(20,22)"}
+```
+
+The response is `{"ok":true,"value":42.0}` (JSON numeric formatting may vary).
+
+## Embedding and ownership
+
+See [examples/embedding.rs](examples/embedding.rs) for parsing, evaluation, context
+variables, synchronous and asynchronous callbacks, and explicit collection.
+Use `Runtime::eval_async` with a host-provided executor for asynchronous work.
+`Runtime::eval` and `eval_ast` are synchronous convenience entry points and block
+until all required futures resolve.
+
+Runtime values are distinct from JSON ASTs. Arrays, objects, functions, and
+environments use runtime-owned arena handles, preserving aliases and cycles.
+Handles must not be used with another runtime. `collect_garbage` traces context
+bindings and explicit host roots; hosts must pass any retained values as roots,
+including values captured inside opaque native callbacks or pending futures.
+Dropping a runtime releases its arenas. Collection is explicit, not automatic.
+
+`EvalOptions` provides work, nesting, and loop limits. Cancellation is checked
+during evaluation and when a pending evaluation is polled. A host that sets the
+cancellation flag must also arrange for its executor to poll the future again.
+Blocking native callbacks cannot be interrupted by the interpreter. Resource
+limits are safeguards, not a sandbox for untrusted native callbacks.
+
+## Unicode boundary
+
+Input, output, source code, and JSON interchange use UTF-8. Valid Unicode text,
+including non-BMP characters, is supported. JavaScript-compatible operations may
+count or slice UTF-16 code units internally; this is a compatibility detail, not
+an alternate input encoding. Isolated surrogate input or a result containing an
+isolated surrogate is outside the UTF-8 contract and must produce an error at
+the boundary, not a separate UTF-16 wire representation.
+
+## Measurement
+
+The arithmetic smoke benchmark separates parsing from repeated evaluation of a
+preparsed AST. It is intentionally small and is not evidence of end-to-end
+application performance or a promised speedup over JavaScript:
+
+```sh
+cargo run --locked --release --manifest-path rust-impl/Cargo.toml --example benchmark -- 10000
+node rust-impl/scripts/benchmark-js.cjs 10000
+```
+
+Both commands emit iteration count, input, elapsed seconds, and throughput.
+Record compiler/Node versions, host, build profile, and repeated-run variation
+when comparing results. JS results include JIT warm-up; neither program measures
+database work or reactive Streams.
 
 ## Scope
 
@@ -35,7 +126,7 @@ Relevant implementation areas:
 
 Inventory all public exports, built-ins, aliases, syntax, options, and observable
 errors in a checked-in coverage matrix. Each entry must be implemented,
-explicitly excluded as host-specific, or marked as Streams deferred. A temporary
+explicitly excluded by the agreed scope, or recorded as an implementation gap. A temporary
 incomplete implementation milestone is not an additional exclusion.
 
 ## From-scratch implementation
@@ -63,18 +154,37 @@ Preserve active special forms, quotation, AST manipulation, and thread-first /
 thread-last behavior. Threading comments use the word macro, but the operations
 execute as `makeSF` special forms and remain in scope.
 
-### Streams deferred
+### Streams
 
-Defer stream adapters, subscriptions, retain/release behavior, reactive updates,
-and stream-specific unboxing to a later version. Keep `test/test-streams.js` as
-its acceptance reference. Until supported, reject stream requests explicitly
-rather than silently using a last value or evaluating only once.
+Reactive Streams are in scope, including current values, ordered notifications,
+subscriptions, retain/release, and selected-child switching. The original
+`test/test-streams.js` suite and new shared scenarios are behavioral references.
+Native hosts bridge their sources using `Runtime::create_stream`, `stream_next`,
+`stream_subscribe`, `stream_value`, `stream_retain`, and `stream_release`.
+No JavaScript adapter object is required or accepted through JSON options.
 
-Ordinary asynchronous evaluation is distinct from Streams and remains in scope.
-Recreate non-stream promise behavior through Rust futures and host callbacks,
-including evaluation order, bindings, and errors. Do not require JavaScript
-Promise objects or implicitly choose an executor. A synchronous milestone may
-come first, but does not complete the full target.
+Streams may emit scalar values, Promises, or other Streams intermixed. Unboxing
+stream inputs passes their current values directly, without awaiting Promise
+arguments. A selected child stream is forwarded one layer deep; its emitted
+Promises or Streams are not recursively flattened. Promise-only unboxing awaits
+its arguments, but does not redetect a Stream produced by a Promise. Native
+`Value::Promise` and `Value::Stream` preserve these distinctions. Hosts explicitly
+poll asynchronous work through Rust futures; the core has no implicit executor.
+
+Compatibility follows the checked-in JS, including its mixed-operand limitation:
+with a stream holding `2` and a Promise resolving to `3`, `stream() + promise()`
+produces a stream holding `"2[object Promise]"`, not `5`. Settling the Promise
+does not trigger a new emission. Rust does not add implicit waiting or recursive
+flattening that is absent from `src/lisp.unbox.js`.
+
+Ownership follows the JS adapter: creating a stream gives its creator one
+reference, and each dependency adds one. Release balances subscriptions but
+does not implicitly consume a creator's reference. Thus nested computed streams
+can retain upstream subscriptions after an outer stream is released, exactly
+as in the JS baseline. Use a bounded runtime lifetime for such graphs; dropping
+the runtime disposes them. This upstream ownership limitation is not evidence
+of automatic graph cleanup. Native initialization failures roll back retained
+dependencies, and operations on disposed streams report errors.
 
 ### Host-specific exclusions
 
@@ -84,6 +194,13 @@ are JavaScript-runtime features, not all literally V8-specific. Record exact
 affected APIs and overloads in the coverage matrix; do not drop portable LPE
 behavior just because its JavaScript implementation uses native APIs.
 
+The concrete runtime exclusions include native constructors (`new`, `Array`,
+`Object`, `Date`), `RegExp` objects, native `console`/`JSON` objects, and JS receiver
+dispatch (`invoke`, `_call_obj_meth_`, `_get_obj_meth_`, `~>`). Their source-test
+exclusions are reviewed individually in `fixtures/scope.json`; neighboring
+parser tests are not excluded. See [API.md](API.md#explicit-exclusions) for the
+portable equivalents and the separate documentation-only exclusions.
+
 - LPE `eval()` in `src/context/std.js` calls `eval_lisp(a)` in STDLIB context;
   it is not JavaScript `eval`. Retain this portable operation, plus `eval_ast`,
   `eval_lpe`, and `rep`, preserving their different context rules.
@@ -92,20 +209,32 @@ behavior just because its JavaScript implementation uses native APIs.
 - Preserve datetime functions using native Rust code instead of requiring JS
   `Date` objects.
 - Preserve string-pattern functions such as `words` and `re_match`; test their
-  pattern/flag semantics and choose a compatible Rust implementation. Overloads
+  pattern/flag semantics using `regress`. Overloads
   accepting or returning actual JS RegExp objects are excluded.
-- Separate Node-only developer tooling, such as launching an editor for
-  localization updates, from the runtime. Retain portable documentation and
-  localization data as needed without implicit filesystem/process access.
 
-## Proposed library design
+### Documentation remains JS/V8-only
+
+Do not implement documentation generation, lookup, embedded documentation or
+localization data, or documentation-oriented context preparation in Rust. This
+excludes `makeDoc`, `makeDocForContextes`, `prepareContext`, `DOC`, `LOCALE_DOC`,
+`DOC_WARNINGS`, `findDoc`, the documentation helpers `generateSimpleHash` and
+`selectPerfectFunctionName`, and `localizationUpdate`/`LOCALIZATION_OPTIONS`.
+There is no Rust documentation module, generated data bundle, or runtime fallback.
+
+Keep the existing JS/V8 implementation and its documentation tests unchanged.
+The coverage inventory records these APIs and their dedicated source test groups
+as excluded, not missing or passing Rust features. Runtime function names,
+aliases, host registration, and interpreter examples extracted from JS comments
+remain in scope; they do not require a documentation subsystem.
+
+## Library design
 
 All new Rust code, fixtures, examples, and build metadata belong in `rust-impl/`:
 
 ```text
 rust-impl/
   README.md
-  Cargo.toml             # added when implementation starts
+  Cargo.toml             # standalone native crate
   src/                   # lexer, parser, deparser, values, evaluator, built-ins
   tests/                 # native and differential tests
   fixtures/              # inputs and tagged reference results
@@ -140,7 +269,7 @@ explicit host APIs. Define nesting and work limits, including parser and
 deparser limits, and clarify that cancellation of a blocking host callback is
 the host's responsibility.
 
-## Implementation milestones
+## Acceptance milestones
 
 1. **Behavior inventory and fixtures.** Pin the JavaScript reference; inventory
    APIs, both grammars, contexts, mutation, error behavior, datetime behavior,
@@ -164,12 +293,12 @@ the host's responsibility.
    inputs, exercise execution limits, and measure repeated-call retained memory.
    Publish reproducible latency and throughput benchmarks without assuming
    a speedup over JavaScript.
-7. **Library delivery.** Complete all non-excluded, non-stream coverage entries.
+7. **Library delivery.** Complete all non-excluded coverage entries.
    Document embedding, the API matrix, explicit exclusions,
    differences, dependency licenses, and examples. Select a minimum Rust version
    and platform CI matrix.
-8. **Later version: Streams.** Implement the adapter protocol and reactive
-   behavior against current stream tests; this does not block the first release.
+8. **Streams.** Implement reactive unboxing and host stream lifecycle against
+   current stream tests, including mixed Promise/Stream payloads and ownership.
 
 ## Validation strategy
 
@@ -186,7 +315,7 @@ non-finite numbers, and other non-JSON values instead of lossy JSON serializatio
 
 Cover numeric coercion, division, NaN/infinities, truthiness, null versus
 undefined, lookup fallback, shadowing, varargs, closure capture, mutation, and
-special-form evaluation order and non-stream async resolution. Include
+special-form evaluation order, async resolution, and reactive updates. Include
 Unicode/string behavior and controlled
 clock/timezone fixtures for datetime operations. Test both omitted options and
 explicit option objects. Compare error categories where exact text is not part
@@ -199,14 +328,18 @@ across repeated evaluations, including cyclic closure graphs and async work.
 ## Completion criteria and open decisions
 
 The first release is complete when both grammars and every non-excluded,
-non-stream runtime entry pass differential tests, embedding runs without
+runtime entry pass differential tests, embedding runs without
 JavaScript, and errors/resource-limit/memory tests pass. Ordinary async behavior
 is required. Publish the coverage matrix and excluded/deferred tests. The
 synchronous milestone alone does not satisfy this completion gate.
 
 Open decisions include the precise API and crate name, minimum Rust version,
-platform matrix, ownership/collection design, regex compatibility implementation,
+platform matrix, ownership/collection design, regex execution limits,
 async host interface, and non-JSON fixture representation. From-scratch code,
 no macros, the directory, and the feature boundaries above are decided. Resolve
 remaining engineering choices with small tested prototypes, independently of
 downstream applications.
+
+String-pattern regex matching uses `regress`, a standalone Rust ECMAScript
+engine. See [API.md](API.md#regular-expressions) for matching semantics and
+execution-limit caveats, and [STATUS.md](STATUS.md) for the verified parity scope.

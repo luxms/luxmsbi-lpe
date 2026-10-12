@@ -1,0 +1,26 @@
+[
+  {
+    "reason": "Legacy loose assertion coerces numeric AST/value strings. Shared protocol intentionally checks exact value types; keep the original expectation here rather than recording JS output.",
+    "origins": ["test/test.js:19", "test/test.js:88", "test/test.js:101", "test/test.js:103", "test/test.js:105", "test/test.js:109", "test/test.js:111", "test/test.js:113", "test/test.js:115", "test/test.js:119", "test/test.js:129", "test/test.js:141", "test/test.js:147"]
+  },
+  {
+    "reason": "Legacy loose assertion treats undefined and null as equal. Shared tagged protocol must retain their distinction.",
+    "origins": ["test/test-lisp.js:209"]
+  },
+  {
+    "reason": "Doc examples call strictEq under the strictNe documentation; the prose expectations contradict the actual expression. Do not rewrite expected values from observed results.",
+    "origins": ["src/context/logical.js:96", "src/context/logical.js:97", "src/context/logical.js:98", "src/context/logical.js:99"]
+  },
+  {
+    "reason": "Illustrative random output is not an expectation. Authored fixtures test range, permutation and sample-size invariants instead.",
+    "origins": ["src/context/math.js:98", "src/context/objects.js:1167", "src/context/objects.js:1168"]
+  },
+  {
+    "reason": "Example requires surrounding setup, uses unsupported example syntax, or disagrees with the current JS result. Preserved for upstream review; no claimed parity evidence.",
+    "origins": ["src/context/objects.js:280", "src/context/objects.js:323", "src/context/objects.js:674", "src/context/objects.js:810", "src/context/objects.js:1237", "src/context/objects.js:1254", "src/context/objects.js:1275", "src/context/objects.js:1276", "src/context/objects.js:1277", "src/context/objects.js:1326", "src/context/std.js:54", "src/context/variables.js:28", "src/context/variables.js:29", "src/lib/datetime.js:482"]
+  },
+  {
+    "reason": "Documentation describes console output, not the function return value. Console-output assertions require a separate capture protocol.",
+    "origins": ["src/context/std.js:231", "src/context/std.js:247"]
+  }
+]

@@ -1,0 +1,18 @@
+[
+  {
+    "origin": "test/test-deparse-forms-roundtrip.js:65",
+    "reason": "Direct AST normalization is tested separately in syntax-calendar-coverage.mjs with independent render/AST expectations and stable cycles."
+  },
+  {
+    "origin": "test/test-deparse-forms-roundtrip.js:65",
+    "reason": "Direct AST normalization is tested separately in syntax-calendar-coverage.mjs with independent render/AST expectations and stable cycles."
+  },
+  {
+    "origin": "test/test-deparse-forms-roundtrip.js:65",
+    "reason": "Direct AST normalization is tested separately in syntax-calendar-coverage.mjs with independent render/AST expectations and stable cycles."
+  },
+  {
+    "origin": "test/test-deparse-forms-roundtrip.js:65",
+    "reason": "Direct AST normalization is tested separately in syntax-calendar-coverage.mjs with independent render/AST expectations and stable cycles."
+  }
+]

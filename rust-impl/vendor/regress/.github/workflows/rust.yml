@@ -1,0 +1,107 @@
+on:
+  pull_request:
+    branches:
+      - "**"
+  push:
+    branches:
+      - "**"
+
+name: Continuous integration
+
+jobs:
+  check:
+    name: Check
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo check --verbose
+
+  test:
+    name: Test Suite
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        features:
+          - ""
+          - "index-positions"
+          - "prohibit-unsafe"
+          - "utf16"
+          - "index-positions,prohibit-unsafe"
+          - "index-positions,utf16"
+          - "prohibit-unsafe,utf16"
+          - "index-positions,prohibit-unsafe,utf16"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test --features "${{ matrix.features }}" --verbose
+
+  build-no-std:
+    name: Build (no_std)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build -p regress --lib --no-default-features --features "alloc" --verbose
+
+  test-no-std:
+    name: Test (no_std)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test -p regress --no-default-features --features "alloc,backend-pikevm" --verbose
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo clippy --all-targets --features "backend-pikevm,std,index-positions,prohibit-unsafe,utf16" -- -D warnings
+
+  test-nightly:
+    name: Test (Nightly)
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test --all-features --verbose
+
+  test-big-endian:
+    name: Test (Big Endian)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@v2.86.3
+        with:
+          tool: cross
+      - run: cross test --target s390x-unknown-linux-gnu --verbose
+
+  doc:
+    name: Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo doc --verbose --document-private-items
+        env:
+          RUSTDOCFLAGS: -D warnings

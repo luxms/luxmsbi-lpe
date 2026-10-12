@@ -1,0 +1,81 @@
+{
+  "requestField": "hostFixtures",
+  "type": "array of strings",
+  "lifetime": "fresh per request",
+  "precedence": "explicit context overrides host fixture bindings",
+  "fixtures": {
+    "host-special": {
+      "rawAst": "Special form returning its raw argument AST array without evaluating it.",
+      "evalAstHere": "Special form calling EVAL(first raw argument, current context, current options)."
+    },
+    "host-lookup": {
+      "$VAR$": "Lookup hook returns 42 for dynamicValue, callable x => x + 1 for dynamicFn, and undefined otherwise."
+    },
+    "host-library": {
+      "$IS_LIB$": true,
+      "libValue": 7,
+      "libFn()": "Returns 42.",
+      "libraryValue()": "Returns the original library object's libValue, to verify assignment does not mutate protected library bindings."
+    },
+    "host-skip": {
+      "layers": ["wrapped returns a skip form whose result callback prefixes outer:", "wrapped(value) returns base: + value"],
+      "example": "wrapped(\"x\") returns outer:base:x"
+    },
+    "source-skip": {
+      "layers": ["toStart: ordinary Start1 wrapper", ["toStart: Ast1 special form replacing arguments with quoted 20250203 and w", "toStart: ordinary Start2 wrapper"], "toStart: Ast2 special form", "STDLIB toStart fallback"],
+      "callbacks": "Each skip result callback prefixes its layer's label and a space to the lower result, in order Start1 Ast1 Start2 Ast2.",
+      "example": "toStart('20240203', 'w') returns Start1 Ast1 Start2 Ast2 2025-02-03. Rust's skip_form takes a full replacement call AST, unlike the JS argument-only replacement."
+    },
+    "async-values": {
+      "v1..v4": "Numbers 1..4.",
+      "p1..p4": "Actual asynchronous values resolving to numbers 1..4, not synchronous scalars.",
+      "later(value)": "Asynchronously resolve to value. No pf binding is required."
+    },
+    "async": {
+      "promise(value)": "Resolve to value asynchronously; omitted value resolves to undefined.",
+      "asyncDouble(number)": "Resolve to number * 2 asynchronously.",
+      "asyncFail()": "Reject with kind Error and message async failure."
+    },
+    "vararg-pair": {
+      "template": ["a", "b"],
+      "function": "testFunc",
+      "callbackArguments": ["a", "b", "args", "kwargs"],
+      "result": "{a,b,args,kwargs}; preserve missing a/b as tagged undefined."
+    },
+    "vararg-callback": {
+      "template": ["a", "callback:fn"],
+      "function": "testFunc",
+      "callbackArguments": ["a", "callback", "args", "kwargs"],
+      "result": "Invoke callback() with zero arguments; return {a,callbackResult}."
+    },
+    "vararg-regex": {
+      "template": [{"[": "int", "(.)\\1": "int", ".*(?<=a)b": "int", "pre|post": "int", ".": "bool"}],
+      "function": "testFunc",
+      "callbackArguments": ["args", "kwargs"],
+      "result": "Return kwargs after JS-compatible pattern-based casts; invalid patterns are skipped."
+    },
+    "vararg-probe": {
+      "configuration": "request.vararg = {template, result}; template is passed to makeVararg without rewriting types or argument names.",
+      "function": "testFunc",
+      "result": "A selector array, or an object mapping output field names to selectors. Fields are evaluated in insertion order.",
+      "selectors": {
+        "arg": "['arg', zeroBasedTemplateIndex, action?, count?]; out-of-range index yields undefined.",
+        "kwarg": "['kwarg', name, action?, count?]; selects an extra keyword argument.",
+        "args": "['args'] returns extra positional arguments.",
+        "kwargs": "['kwargs'] returns extra keyword arguments.",
+        "trace": "['trace'] snapshots track() values at this point in callback execution."
+      },
+      "actions": "value (default), isFunction, call (zero arguments), calls (zero arguments count times, returning an array; count is an integer from 0 through 100). No arbitrary host code is accepted.",
+      "counter()/inc()": "Aliases sharing one per-request counter starting at zero; return the incremented value.",
+      "track(value)": "Append value to a per-request evaluation trace and return it.",
+      "probeFail()": "Throw Error with message vararg probe failure."
+    },
+    "counter": {
+      "counter()": "Increment a per-request integer initialized to zero; return incremented value."
+    },
+    "async-trace": {
+      "traceAsync(label,value)": "Append start:LABEL immediately, return asynchronous value that appends end:LABEL on settlement and resolves to value. Settle calls in invocation order.",
+      "trace()": "Return a copy of per-request event strings."
+    }
+  }
+}
