@@ -52,19 +52,12 @@ jobs:
           - name: Linux / stable
             os: ubuntu-24.04
             toolchain: stable
-            test: true
           - name: Linux / Rust 1.92 (MSRV)
             os: ubuntu-24.04
             toolchain: 1.92.0
-            test: true
           - name: macOS / stable
             os: macos-14
             toolchain: stable
-            test: true
-          - name: Windows / stable (build only)
-            os: windows-2022
-            toolchain: stable
-            test: false
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -79,12 +72,9 @@ jobs:
           save-if: ${{ github.ref == 'refs/heads/rustaple' }}
       - name: Build release library and CLI
         run: cargo build --locked --release --manifest-path rust-impl/Cargo.toml
-      # The timezone tests use Unix TZ semantics; Windows is build-only for now.
       - name: Run native tests
-        if: matrix.test
         run: cargo test --locked --no-fail-fast --manifest-path rust-impl/Cargo.toml
       - name: Run embedding example
-        if: matrix.test
         run: cargo run --locked --manifest-path rust-impl/Cargo.toml --example embedding
 
   compatibility:
