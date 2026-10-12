@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [rustaple]
   push:
-    branches: [rustaple]
+    branches: [rustaple, 'ci/rust-*']
 
 permissions:
   contents: read

@@ -53,12 +53,15 @@ The response is `{"ok":true,"value":42.0}` (JSON numeric formatting may vary).
 
 [Rust CI](../.github/workflows/rust.yml) runs on every pull request targeting
 `rustaple` and every push to that branch. There are no path filters: changes to
-the JavaScript reference must also pass compatibility checks.
+the JavaScript reference must also pass compatibility checks. Pushes to
+`ci/rust-*` branches also run the workflow, allowing CI changes to be tested
+in a fork before merging.
 
 - Linux and macOS: release library/CLI builds, native tests, and the embedding
   example on stable Rust.
 - Linux: the same build and native checks on Rust 1.92.0, the minimum supported
-  Rust version, plus formatting and Clippy with warnings treated as errors.
+  Rust version. Formatting and Clippy run on stable Rust with warnings treated
+  as errors.
 - Windows: release library/CLI compilation on stable Rust only. Native tests are
   not run because the timezone fixtures currently require Unix `TZ` semantics;
   this job does not establish Windows runtime compatibility.
