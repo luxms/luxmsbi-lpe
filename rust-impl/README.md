@@ -11,8 +11,9 @@ Tracking issue: [#72](https://github.com/luxms/luxmsbi-lpe/issues/72).
 
 From the repository root:
 
-The crate requires Rust 1.92 or newer. Node is required only for the JavaScript
-reference and shared test tooling.
+Native builds require Rust 1.92 or newer. The experimental WASM build uses its
+own pinned Rust 1.100 toolchain (see below). Node is required only for the
+JavaScript reference and shared test tooling.
 
 ```sh
 npm ci
@@ -49,6 +50,59 @@ Each request uses a fresh interpreter; embedding the library allows reuse.
 
 The response is `{"ok":true,"value":42.0}` (JSON numeric formatting may vary).
 
+## WASI 0.3
+
+The experimental `wasm32-wasip3` target builds the same interpreter as a WASI
+command component. Only WASM uses Rust 1.100: currently `1.100.0-beta.4`, pinned
+as `beta-2026-10-05` until the stable release. Native builds keep their existing
+toolchains and Rust 1.92 minimum. There is no repository-wide toolchain override.
+
+Install the WASM toolchain and Wasmtime 49.0.2, then run from the repository root:
+
+```sh
+rustup toolchain install beta-2026-10-05 --profile minimal --target wasm32-wasip3
+npm run build:wasm
+printf '%s\n' '{"op":"eval","source":"add(20,22)"}' | \
+  wasmtime run rust-impl/target/wasm32-wasip3/release/lpe.wasm
+```
+
+Use rustup-managed Cargo and rustc on `PATH`; a separate system Rust installation
+must not override the compiler selected by `rustup run`. No JavaScript engine is
+needed to execute the component. It uses the same UTF-8 JSON-lines protocol and
+fresh interpreter per request as the native CLI. This is a `wasi:cli/run@0.3.0`
+command, not browser bindings or a typed LPE WIT library. LPE Promises and Streams
+retain their interpreter semantics; they are not exported as WASI stream/future
+APIs.
+
+For the complete WASM check, install the JS reference dependencies first:
+
+```sh
+npm ci
+npm run test:wasm
+```
+
+`test:wasm` builds the JS reference and release WASM command, runs the embedding
+example inside Wasmtime, checks protocol boundaries, and compares every shared
+fixture against JS before enforcing the strict coverage gate. `WASMTIME` may
+point to a specific Wasmtime executable. Results are written to
+`rust-impl/reports/wasm-parity.json`, with `rustTarget: "wasm32-wasip3"`.
+Native subprocess tests and non-UTC timezone tests remain in the native jobs;
+this command does not run the native Rust test binaries inside WASM.
+
+Current limits:
+
+- The pinned toolchain and runtime are experimental for this target. Update them
+  deliberately and rerun compatibility checks, rather than following beta/latest.
+- The component uses WASI 0.3 for its CLI entry point, stdio, and clocks, but the
+  dependency stack also imports WASI 0.2 compatibility interfaces for random
+  bytes and stderr/streams. The host must supply both, as Wasmtime 49.0.2 does;
+  this is not a WASI-0.3-only artifact.
+- Local-calendar operations use UTC on WASI, even if `TZ` is supplied. Native
+  host timezone behavior is unchanged.
+- No host filesystem directories, network permissions, or inherited environment
+  are granted by the test commands. Threads, subprocesses, and arbitrary
+  asynchronous host integrations are not established by these checks.
+
 ## GitHub CI
 
 [Rust CI](../.github/workflows/rust.yml) runs on every pull request targeting
@@ -65,12 +119,16 @@ in a fork before merging.
 - Linux with Node 26 and stable Rust: `npm ci` followed by `npm run test:all`,
   including the original JS suite, native and vendored regex tests, opt-in JS
   reference tests, fixture freshness, shared parity, and the strict coverage gate.
+- WASI 0.3: a separate Linux job with pinned Rust 1.100.0-beta.4, Wasmtime 49.0.2,
+  and Node 26 runs `npm run test:wasm`. Only after all checks pass, it uploads the
+  release component as `lpe-wasm32-wasip3` for download from the Actions run.
 
 Compatibility reports are uploaded for 14 days, including after failures when
 available. The tracked coverage inventory may be unchanged if the suite fails
 before generating a fresh report; consult the job log and parity report together.
 The workflow uses read-only repository permissions and pinned action revisions.
-It does not publish crates, create releases, or deploy artifacts.
+The component and diagnostic artifacts are retained for 14 days. The workflow
+does not publish crates, create releases, or deploy to an external environment.
 
 ## Embedding and ownership
 

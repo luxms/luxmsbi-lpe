@@ -7,6 +7,14 @@ selects IDs/groups; `--timeout MS` bounds each request; `--report PATH` writes
 machine-readable observations. Missing executables, malformed responses,
 timeouts, empty selections, expectation failures and differences fail the run.
 
+Use `--wasm rust-impl/target/wasm32-wasip3/release/lpe.wasm` to compare JS with the
+WASI 0.3 command under Wasmtime instead of the native executable. `--wasmtime PATH`
+selects a runtime binary; arguments are passed directly without a shell. `--wasm`
+and `--rust` are mutually exclusive, and neither is accepted with `--js-only`.
+Reports identify `rustTarget` as `native`, `wasm32-wasip3`, or null in JS-only mode.
+`npm run test:wasm` builds prerequisites and runs the entire shared corpus with
+a separate WASM report and coverage gate; it does not filter out failed fixtures.
+
 Each JSON fixture has `id`, `group`, `origin`, `request`, and `expected`.
 Expectations are authored manually or extracted from literal assertions/docs,
 never recorded from either implementation. Success expectations use

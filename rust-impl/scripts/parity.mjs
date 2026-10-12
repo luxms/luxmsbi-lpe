@@ -83,6 +83,15 @@ export function initialExpectation(actual, fixture) {
     ? actual.ok : expectation(actual, fixture.expected);
 }
 
+export function rustWorkerCommand(cli = {}) {
+  if (cli.wasm && cli.rust) throw new Error('--wasm and --rust are mutually exclusive');
+  if (cli.wasmtime && !cli.wasm) throw new Error('--wasmtime requires --wasm');
+  if (cli['js-only'] && (cli.wasm || cli.rust)) throw new Error('--js-only cannot select a Rust worker');
+  return cli.wasm
+    ? [cli.wasmtime || 'wasmtime', ['run', '--env', 'TZ=UTC', resolve(cli.wasm)]]
+    : [resolve(cli.rust || resolve(root, 'rust-impl/target/debug/lpe')), []];
+}
+
 async function roundtrip(worker, fixture, initial) {
   if (!initial.ok) return {pass: false, error: 'Initial parse failed'};
   let ast = initial.value;
@@ -100,11 +109,12 @@ async function roundtrip(worker, fixture, initial) {
 }
 
 async function main() {
-  const cli = args(process.argv.slice(2), ['--filter', '--timeout', '--rust', '--report', '--limit'], ['--js-only', '--help']);
+  const cli = args(process.argv.slice(2), ['--filter', '--timeout', '--rust', '--wasm', '--wasmtime', '--report', '--limit'], ['--js-only', '--help']);
   if (cli.help) {
-    console.log('node rust-impl/scripts/parity.mjs [--js-only] [--filter TEXT] [--timeout MS] [--rust PATH] [--report PATH] [--limit N]');
+    console.log('node rust-impl/scripts/parity.mjs [--js-only] [--filter TEXT] [--timeout MS] [--rust PATH | --wasm PATH [--wasmtime PATH]] [--report PATH] [--limit N]');
     return;
   }
+  const [rustCommand, rustArgs] = rustWorkerCommand(cli);
   const timeout = Number(cli.timeout || 3000);
   if (!Number.isSafeInteger(timeout) || timeout <= 0) throw new Error('Timeout must be a positive integer');
   let cases = fixtures().filter(f => !cli.filter || `${f.id} ${f.group}`.includes(cli.filter));
@@ -115,7 +125,7 @@ async function main() {
   }
   if (!cases.length) throw new Error('No matching fixtures');
   const js = new Worker(process.execPath, [resolve(root, 'rust-impl/scripts/js-runner.mjs')], timeout);
-  const rust = cli['js-only'] ? null : new Worker(resolve(cli.rust || resolve(root, 'rust-impl/target/debug/lpe')), [], timeout);
+  const rust = cli['js-only'] ? null : new Worker(rustCommand, rustArgs, timeout);
   const results = [];
   try {
     for (const fixture of cases) {
@@ -160,7 +170,8 @@ async function main() {
     console.error(`Worker protocol failure: ${terminalError.message}`);
   }
   const passed = results.filter(r => r.pass).length;
-  const report = {mode: rust ? 'parity' : 'js-only', selected: cases.length, executed: results.length, passed, failed: results.length - passed,
+  const report = {mode: rust ? 'parity' : 'js-only', rustTarget: rust ? (cli.wasm ? 'wasm32-wasip3' : 'native') : null,
+    selected: cases.length, executed: results.length, passed, failed: results.length - passed,
     fixtureKinds: {valueOrError: cases.filter(f => f.kind !== 'roundtrip' && f.evidence !== 'registry-metadata').length, registryMetadata: cases.filter(f => f.evidence === 'registry-metadata').length, metamorphicRoundtrip: cases.filter(f => f.kind === 'roundtrip').length}, results};
   if (cli.report) writeFileSync(resolve(cli.report), `${JSON.stringify(report, null, 2)}\n`);
   console.log(`${report.mode}: ${passed}/${cases.length} passed; ${report.failed} failed; ${cases.length - results.length} not run`);
