@@ -1,0 +1,124 @@
+name: Rust CI
+
+on:
+  pull_request:
+    branches: [rustaple]
+  push:
+    branches: [rustaple]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: "1"
+  TZ: UTC
+
+jobs:
+  quality:
+    name: Formatting and Clippy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          workspaces: rust-impl -> target
+          key: quality
+          save-if: ${{ github.ref == 'refs/heads/rustaple' }}
+      - name: Check formatting
+        run: cargo fmt --manifest-path rust-impl/Cargo.toml --check
+      - name: Check Clippy
+        run: cargo clippy --locked --manifest-path rust-impl/Cargo.toml --all-targets -- -D warnings
+
+  native:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux / stable
+            os: ubuntu-24.04
+            toolchain: stable
+            test: true
+          - name: Linux / Rust 1.92 (MSRV)
+            os: ubuntu-24.04
+            toolchain: 1.92.0
+            test: true
+          - name: macOS / stable
+            os: macos-14
+            toolchain: stable
+            test: true
+          - name: Windows / stable (build only)
+            os: windows-2022
+            toolchain: stable
+            test: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+        with:
+          toolchain: ${{ matrix.toolchain }}
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          workspaces: rust-impl -> target
+          key: native
+          save-if: ${{ github.ref == 'refs/heads/rustaple' }}
+      - name: Build release library and CLI
+        run: cargo build --locked --release --manifest-path rust-impl/Cargo.toml
+      # The timezone tests use Unix TZ semantics; Windows is build-only for now.
+      - name: Run native tests
+        if: matrix.test
+        run: cargo test --locked --no-fail-fast --manifest-path rust-impl/Cargo.toml
+      - name: Run embedding example
+        if: matrix.test
+        run: cargo run --locked --manifest-path rust-impl/Cargo.toml --example embedding
+
+  compatibility:
+    name: JS / Rust compatibility
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          workspaces: rust-impl -> target
+          key: compatibility
+          save-if: ${{ github.ref == 'refs/heads/rustaple' }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "26"
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install JS reference dependencies
+        run: npm ci
+      - name: Run JS, Rust, shared parity, and strict coverage checks
+        run: npm run test:all
+      - name: Upload compatibility reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: rust-compatibility-reports
+          path: |
+            rust-impl/reports/parity.json
+            rust-impl/coverage.json
+          if-no-files-found: warn
+          retention-days: 14
