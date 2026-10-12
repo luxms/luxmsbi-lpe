@@ -1,0 +1,1586 @@
+[
+  {
+    "id": "upstream-assertion:test/test-lisp.js:209:1",
+    "group": "LISP tests / and or not",
+    "origin": "test/test-lisp.js:209",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "a or b",
+      "context": {
+        "aaa": 123
+      },
+      "options": {
+        "resolveString": false
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": null
+    },
+    "reason": "Legacy loose assertion treats undefined and null as equal. Shared tagged protocol must retain their distinction."
+  },
+  {
+    "id": "upstream-assertion:test/test-lisp.js:519:1",
+    "group": "LISP tests / ~> JS method dispatch / calls a method on the receiver with this bound",
+    "origin": "test/test-lisp.js:519",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "'sss' ~> charCodeAt(1)"
+    },
+    "expected": {
+      "ok": true,
+      "value": 115
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-lisp.js:520:1",
+    "group": "LISP tests / ~> JS method dispatch / calls a method on the receiver with this bound",
+    "origin": "test/test-lisp.js:520",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "'hello world' ~> slice(1, 4)"
+    },
+    "expected": {
+      "ok": true,
+      "value": "ell"
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-lisp.js:521:1",
+    "group": "LISP tests / ~> JS method dispatch / calls a method on the receiver with this bound",
+    "origin": "test/test-lisp.js:521",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "'  spaces  ' ~> trim()"
+    },
+    "expected": {
+      "ok": true,
+      "value": "spaces"
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-lisp.js:522:1",
+    "group": "LISP tests / ~> JS method dispatch / calls a method on the receiver with this bound",
+    "origin": "test/test-lisp.js:522",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "'AbC' ~> toLowerCase()"
+    },
+    "expected": {
+      "ok": true,
+      "value": "abc"
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-lisp.js:526:1",
+    "group": "LISP tests / ~> JS method dispatch / works with the receiver coming from context",
+    "origin": "test/test-lisp.js:526",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "s ~> charCodeAt(0)",
+      "context": {
+        "s": "A"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": 65
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-lisp.js:537:1",
+    "group": "LISP tests / ~> JS method dispatch / chains: each ~> sees the previous result as the new receiver",
+    "origin": "test/test-lisp.js:537",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "'hello world' ~> slice(1, 4) ~> toUpperCase()"
+    },
+    "expected": {
+      "ok": true,
+      "value": "ELL"
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-lisp.js:544:1",
+    "group": "LISP tests / ~> JS method dispatch / works on arrays too (plain JS objects)",
+    "origin": "test/test-lisp.js:544",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "a ~> concat({4, 5})",
+      "context": {
+        "a": [
+          1,
+          2,
+          3
+        ]
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-lisp.js:559:1",
+    "group": "LISP tests / ~> JS method dispatch / bound-form returns undefined for missing properties (JS-like)",
+    "origin": "test/test-lisp.js:559",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "'hi' ~> noSuchMethod"
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "$lpe": "undefined"
+      }
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-lisp.js:578:1",
+    "group": "LISP tests / ~> JS method dispatch / accepts a string literal on the right (same as bare name)",
+    "origin": "test/test-lisp.js:578",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "o ~> \"greeting\"",
+      "context": {
+        "o": {
+          "greeting": "hi"
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "hi"
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-lisp.js:587:1",
+    "group": "LISP tests / ~> JS method dispatch / accepts (expr) on the right for a runtime-computed key",
+    "origin": "test/test-lisp.js:587",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "o ~> (k)",
+      "context": {
+        "o": {
+          "greeting": "hi",
+          "farewell": "bye"
+        },
+        "k": "greeting"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "hi"
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-lisp.js:589:1",
+    "group": "LISP tests / ~> JS method dispatch / accepts (expr) on the right for a runtime-computed key",
+    "origin": "test/test-lisp.js:589",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "o ~> (\"fare\" + \"well\")",
+      "context": {
+        "o": {
+          "greeting": "hi",
+          "farewell": "bye"
+        },
+        "k": "greeting"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "bye"
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-lisp.js:594:1",
+    "group": "LISP tests / ~> JS method dispatch / mixes static and dynamic keys in a chain",
+    "origin": "test/test-lisp.js:594",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "o ~> (key) ~> b ~> c",
+      "context": {
+        "o": {
+          "a": {
+            "b": {
+              "c": 42
+            }
+          }
+        },
+        "key": "a"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": 42
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-lisp.js:599:1",
+    "group": "LISP tests / ~> JS method dispatch / user's pattern: x := 'document'; window~>(x)",
+    "origin": "test/test-lisp.js:599",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "x := 'document'; window ~> (x)",
+      "context": {
+        "window": {
+          "document": {
+            "title": "demo"
+          }
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "title": "demo"
+      }
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-lpe-functions.js:1421:1",
+    "group": "LPE Full Test Suite / Application & Threading / invoke / вызов метода по имени",
+    "origin": "test/test-lpe-functions.js:1421",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "invoke({1, 2, 3}, \"toString\")"
+    },
+    "expected": {
+      "ok": true,
+      "value": "1,2,3"
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-lpe-functions.js:1422:1",
+    "group": "LPE Full Test Suite / Application & Threading / invoke / вызов метода по имени",
+    "origin": "test/test-lpe-functions.js:1422",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "invoke({1, 2, 3}, \"concat\", {4, 5, 6})"
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test.js:19:1",
+    "group": "LPE tests / should parse simple expressions",
+    "origin": "test/test.js:19",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "parse",
+      "source": "123"
+    },
+    "expected": {
+      "ok": true,
+      "value": "123"
+    },
+    "reason": "Legacy loose assertion coerces numeric AST/value strings. Shared protocol intentionally checks exact value types; keep the original expectation here rather than recording JS output."
+  },
+  {
+    "id": "upstream-assertion:test/test.js:88:1",
+    "group": "LPE tests / should parse logical expressions",
+    "origin": "test/test.js:88",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "parse",
+      "source": "1&&3||!0"
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        "and",
+        "1",
+        [
+          "or",
+          "3",
+          [
+            "not",
+            "0"
+          ]
+        ]
+      ]
+    },
+    "reason": "Legacy loose assertion coerces numeric AST/value strings. Shared protocol intentionally checks exact value types; keep the original expectation here rather than recording JS output."
+  },
+  {
+    "id": "upstream-assertion:test/test.js:101:1",
+    "group": "LPE tests / should parse UI stack expressions",
+    "origin": "test/test.js:101",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "parse",
+      "source": "mlp(filter(id=[12,3]||title~\"abc\"),filter(id=2),filter(id=3241324132))"
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        "mlp",
+        [
+          "filter",
+          [
+            "or",
+            [
+              "=",
+              "id",
+              [
+                "[",
+                "12",
+                "3"
+              ]
+            ],
+            [
+              "~",
+              "title",
+              [
+                "\"",
+                "abc"
+              ]
+            ]
+          ]
+        ],
+        [
+          "filter",
+          [
+            "=",
+            "id",
+            "2"
+          ]
+        ],
+        [
+          "filter",
+          [
+            "=",
+            "id",
+            "3241324132"
+          ]
+        ]
+      ]
+    },
+    "reason": "Legacy loose assertion coerces numeric AST/value strings. Shared protocol intentionally checks exact value types; keep the original expectation here rather than recording JS output."
+  },
+  {
+    "id": "upstream-assertion:test/test.js:103:1",
+    "group": "LPE tests / should parse UI stack expressions",
+    "origin": "test/test.js:103",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "parse",
+      "source": "mlp(filter(id=[12,3]),filter(id=2),filter(pt=7&&qty=1)).ddl(234)"
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        ".",
+        [
+          "mlp",
+          [
+            "filter",
+            [
+              "=",
+              "id",
+              [
+                "[",
+                "12",
+                "3"
+              ]
+            ]
+          ],
+          [
+            "filter",
+            [
+              "=",
+              "id",
+              "2"
+            ]
+          ],
+          [
+            "filter",
+            [
+              "and",
+              [
+                "=",
+                "pt",
+                "7"
+              ],
+              [
+                "=",
+                "qty",
+                "1"
+              ]
+            ]
+          ]
+        ],
+        [
+          "ddl",
+          "234"
+        ]
+      ]
+    },
+    "reason": "Legacy loose assertion coerces numeric AST/value strings. Shared protocol intentionally checks exact value types; keep the original expectation here rather than recording JS output."
+  },
+  {
+    "id": "upstream-assertion:test/test.js:105:1",
+    "group": "LPE tests / should parse UI stack expressions",
+    "origin": "test/test.js:105",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "parse",
+      "source": "mlp([1,2,3],[3,4,5],[20,33,4422274183274832676487168124214]).djl(3,title~'по названиям')"
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        ".",
+        [
+          "mlp",
+          [
+            "[",
+            "1",
+            "2",
+            "3"
+          ],
+          [
+            "[",
+            "3",
+            "4",
+            "5"
+          ],
+          [
+            "[",
+            "20",
+            "33",
+            "4422274183274832676487168124214"
+          ]
+        ],
+        [
+          "djl",
+          "3",
+          [
+            "~",
+            "title",
+            [
+              "'",
+              "по названиям"
+            ]
+          ]
+        ]
+      ]
+    },
+    "reason": "Legacy loose assertion coerces numeric AST/value strings. Shared protocol intentionally checks exact value types; keep the original expectation here rather than recording JS output."
+  },
+  {
+    "id": "upstream-assertion:test/test.js:109:1",
+    "group": "LPE tests / should parse named logical expressions a.k.a. where expressions",
+    "origin": "test/test.js:109",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "parse",
+      "source": "where(id=[12,3] and title~\"abc\" or id=2 and id=3241324132)"
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        "where",
+        [
+          "and",
+          [
+            "=",
+            "id",
+            [
+              "[",
+              "12",
+              "3"
+            ]
+          ],
+          [
+            "or",
+            [
+              "~",
+              "title",
+              [
+                "\"",
+                "abc"
+              ]
+            ],
+            [
+              "and",
+              [
+                "=",
+                "id",
+                "2"
+              ],
+              [
+                "=",
+                "id",
+                "3241324132"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "reason": "Legacy loose assertion coerces numeric AST/value strings. Shared protocol intentionally checks exact value types; keep the original expectation here rather than recording JS output."
+  },
+  {
+    "id": "upstream-assertion:test/test.js:111:1",
+    "group": "LPE tests / should parse named logical expressions a.k.a. where expressions",
+    "origin": "test/test.js:111",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "parse",
+      "source": "where( 6 and not (3 or (5 and not (4-5))))"
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        "where",
+        [
+          "and",
+          "6",
+          [
+            "not",
+            [
+              "()",
+              [
+                "or",
+                "3",
+                [
+                  "()",
+                  [
+                    "and",
+                    "5",
+                    [
+                      "not",
+                      [
+                        "()",
+                        [
+                          "-",
+                          "4",
+                          "5"
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "reason": "Legacy loose assertion coerces numeric AST/value strings. Shared protocol intentionally checks exact value types; keep the original expectation here rather than recording JS output."
+  },
+  {
+    "id": "upstream-assertion:test/test.js:113:1",
+    "group": "LPE tests / should parse named logical expressions a.k.a. where expressions",
+    "origin": "test/test.js:113",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "parse",
+      "source": "where( 6 and not (3 or (5 and not (4-5))) or not (a and (b or c)) and not (x or not y))"
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        "where",
+        [
+          "and",
+          "6",
+          [
+            "or",
+            [
+              "not",
+              [
+                "()",
+                [
+                  "or",
+                  "3",
+                  [
+                    "()",
+                    [
+                      "and",
+                      "5",
+                      [
+                        "not",
+                        [
+                          "()",
+                          [
+                            "-",
+                            "4",
+                            "5"
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ],
+            [
+              "and",
+              [
+                "not",
+                [
+                  "()",
+                  [
+                    "and",
+                    "a",
+                    [
+                      "()",
+                      [
+                        "or",
+                        "b",
+                        "c"
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "not",
+                [
+                  "()",
+                  [
+                    "or",
+                    "x",
+                    [
+                      "not",
+                      "y"
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "reason": "Legacy loose assertion coerces numeric AST/value strings. Shared protocol intentionally checks exact value types; keep the original expectation here rather than recording JS output."
+  },
+  {
+    "id": "upstream-assertion:test/test.js:115:1",
+    "group": "LPE tests / should parse named logical expressions a.k.a. where expressions",
+    "origin": "test/test.js:115",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "parse",
+      "source": "where((a and b or c) or (avg(d) < avg(e)) or (e = 20 and parse_kv(locations.src_id)))"
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        "where",
+        [
+          "or",
+          [
+            "()",
+            [
+              "and",
+              "a",
+              [
+                "or",
+                "b",
+                "c"
+              ]
+            ]
+          ],
+          [
+            "or",
+            [
+              "()",
+              [
+                "<",
+                [
+                  "avg",
+                  "d"
+                ],
+                [
+                  "avg",
+                  "e"
+                ]
+              ]
+            ],
+            [
+              "()",
+              [
+                "and",
+                [
+                  "=",
+                  "e",
+                  "20"
+                ],
+                [
+                  "parse_kv",
+                  [
+                    ".",
+                    "locations",
+                    "src_id"
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "reason": "Legacy loose assertion coerces numeric AST/value strings. Shared protocol intentionally checks exact value types; keep the original expectation here rather than recording JS output."
+  },
+  {
+    "id": "upstream-assertion:test/test.js:119:1",
+    "group": "LPE tests / should parse named logical expressions a.k.a. where expressions",
+    "origin": "test/test.js:119",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "parse",
+      "source": "where((a && b || c) or (avg(d) < avg(e)) || (e = 20 and parse_kv(locations.src_id)))"
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        "where",
+        [
+          "or",
+          [
+            "()",
+            [
+              "and",
+              "a",
+              [
+                "or",
+                "b",
+                "c"
+              ]
+            ]
+          ],
+          [
+            "or",
+            [
+              "()",
+              [
+                "<",
+                [
+                  "avg",
+                  "d"
+                ],
+                [
+                  "avg",
+                  "e"
+                ]
+              ]
+            ],
+            [
+              "()",
+              [
+                "and",
+                [
+                  "=",
+                  "e",
+                  "20"
+                ],
+                [
+                  "parse_kv",
+                  [
+                    ".",
+                    "locations",
+                    "src_id"
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "reason": "Legacy loose assertion coerces numeric AST/value strings. Shared protocol intentionally checks exact value types; keep the original expectation here rather than recording JS output."
+  },
+  {
+    "id": "upstream-assertion:test/test.js:129:1",
+    "group": "LPE tests / should parse if expressions with grouping",
+    "origin": "test/test.js:129",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "parse",
+      "source": "if(a=b).if(x>4).yexx().nox().noab()"
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        ".",
+        [
+          "if",
+          [
+            "=",
+            "a",
+            "b"
+          ]
+        ],
+        [
+          "if",
+          [
+            ">",
+            "x",
+            "4"
+          ]
+        ],
+        [
+          "yexx"
+        ],
+        [
+          "nox"
+        ],
+        [
+          "noab"
+        ]
+      ]
+    },
+    "reason": "Legacy loose assertion coerces numeric AST/value strings. Shared protocol intentionally checks exact value types; keep the original expectation here rather than recording JS output."
+  },
+  {
+    "id": "upstream-assertion:test/test.js:141:1",
+    "group": "LPE tests / should eval if expressions",
+    "origin": "test/test.js:141",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "begin(1,2,3)",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": "3"
+    },
+    "reason": "Legacy loose assertion coerces numeric AST/value strings. Shared protocol intentionally checks exact value types; keep the original expectation here rather than recording JS output."
+  },
+  {
+    "id": "upstream-assertion:test/test.js:147:1",
+    "group": "LPE tests / should eval if expressions",
+    "origin": "test/test.js:147",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "if(true,1,2)",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": "1"
+    },
+    "reason": "Legacy loose assertion coerces numeric AST/value strings. Shared protocol intentionally checks exact value types; keep the original expectation here rather than recording JS output."
+  },
+  {
+    "id": "upstream-assertion:test/test.js:158:1",
+    "group": "LPE tests / should eval Javascript RegExp with context",
+    "origin": "test/test.js:158",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "evalAst",
+      "ast": [
+        "_call_obj_meth_",
+        [
+          "RegExp",
+          "delete",
+          "i"
+        ],
+        "test",
+        [
+          ".-",
+          "context",
+          "sql"
+        ]
+      ],
+      "context": {
+        "context": {
+          "sql": "deleTe"
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": true
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test.js:159:1",
+    "group": "LPE tests / should eval Javascript RegExp with context",
+    "origin": "test/test.js:159",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "evalAst",
+      "ast": [
+        "_call_obj_meth_",
+        [
+          "RegExp",
+          "delete",
+          "i"
+        ],
+        "test",
+        [
+          ".-",
+          "context",
+          "sql"
+        ]
+      ],
+      "context": {
+        "context": {
+          "sql": "abc\nselect or update or deleTe"
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": true
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test.js:160:1",
+    "group": "LPE tests / should eval Javascript RegExp with context",
+    "origin": "test/test.js:160",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "evalAst",
+      "ast": [
+        "false?",
+        [
+          "_call_obj_meth_",
+          [
+            "RegExp",
+            "update|drop|truncate|insert|alter|grant|delete",
+            "i"
+          ],
+          "test",
+          [
+            ".-",
+            "context",
+            "sql"
+          ]
+        ]
+      ],
+      "context": {
+        "context": {
+          "sql": "abc\nselect or update or deleTe"
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": false
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test.js:161:1",
+    "group": "LPE tests / should eval Javascript RegExp with context",
+    "origin": "test/test.js:161",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "evalAst",
+      "ast": [
+        "false?",
+        [
+          "_call_obj_meth_",
+          [
+            "RegExp",
+            "update|drop|truncate|insert|alter|grant|delete",
+            "i"
+          ],
+          "test",
+          [
+            ".-",
+            "context",
+            "sql"
+          ]
+        ]
+      ],
+      "context": {
+        "context": {
+          "sql": "abc\nselect * from table where a is not null"
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": true
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test.js:165:1",
+    "group": "LPE tests / should eval Javascript RegExp with context (LPE)",
+    "origin": "test/test.js:165",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "RegExp(\"delete\",\"i\").invoke(test, context.sql)",
+      "context": {
+        "context": {
+          "sql": "deleTe"
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": true
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test.js:166:1",
+    "group": "LPE tests / should eval Javascript RegExp with context (LPE)",
+    "origin": "test/test.js:166",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "RegExp(\"delete\",\"i\").invoke(test, context.sql).not()",
+      "context": {
+        "context": {
+          "sql": "deleTe"
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": false
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "doc-example:src/context/logical.js:96:1",
+    "group": "docs / src/context/logical.js",
+    "origin": "src/context/logical.js:96",
+    "evidence": "doc-example",
+    "request": {
+      "op": "eval",
+      "source": "strictEq(1, 2, 3)"
+    },
+    "expected": {
+      "ok": true,
+      "value": true
+    },
+    "reason": "Doc examples call strictEq under the strictNe documentation; the prose expectations contradict the actual expression. Do not rewrite expected values from observed results."
+  },
+  {
+    "id": "doc-example:src/context/logical.js:97:1",
+    "group": "docs / src/context/logical.js",
+    "origin": "src/context/logical.js:97",
+    "evidence": "doc-example",
+    "request": {
+      "op": "eval",
+      "source": "strictEq(1, 1, 2)"
+    },
+    "expected": {
+      "ok": true,
+      "value": true
+    },
+    "reason": "Doc examples call strictEq under the strictNe documentation; the prose expectations contradict the actual expression. Do not rewrite expected values from observed results."
+  },
+  {
+    "id": "doc-example:src/context/logical.js:98:1",
+    "group": "docs / src/context/logical.js",
+    "origin": "src/context/logical.js:98",
+    "evidence": "doc-example",
+    "request": {
+      "op": "eval",
+      "source": "strictEq(1, 1, 1)"
+    },
+    "expected": {
+      "ok": true,
+      "value": false
+    },
+    "reason": "Doc examples call strictEq under the strictNe documentation; the prose expectations contradict the actual expression. Do not rewrite expected values from observed results."
+  },
+  {
+    "id": "doc-example:src/context/logical.js:99:1",
+    "group": "docs / src/context/logical.js",
+    "origin": "src/context/logical.js:99",
+    "evidence": "doc-example",
+    "request": {
+      "op": "eval",
+      "source": "strictEq(1, 1, '1')"
+    },
+    "expected": {
+      "ok": true,
+      "value": true
+    },
+    "reason": "Doc examples call strictEq under the strictNe documentation; the prose expectations contradict the actual expression. Do not rewrite expected values from observed results."
+  },
+  {
+    "id": "doc-example:src/context/math.js:98:1",
+    "group": "docs / src/context/math.js",
+    "origin": "src/context/math.js:98",
+    "evidence": "doc-example",
+    "request": {
+      "op": "eval",
+      "source": "rand()"
+    },
+    "expected": {
+      "ok": true,
+      "value": 0.123456789
+    },
+    "reason": "Illustrative random output is not an expectation. Authored fixtures test range, permutation and sample-size invariants instead."
+  },
+  {
+    "id": "doc-example:src/context/objects.js:280:1",
+    "group": "docs / src/context/objects.js",
+    "origin": "src/context/objects.js:280",
+    "evidence": "doc-example",
+    "request": {
+      "op": "eval",
+      "source": "factorial(5)"
+    },
+    "expected": {
+      "ok": true,
+      "value": 120
+    },
+    "reason": "Example requires surrounding setup, uses unsupported example syntax, or disagrees with the current JS result. Preserved for upstream review; no claimed parity evidence."
+  },
+  {
+    "id": "doc-example:src/context/objects.js:323:1",
+    "group": "docs / src/context/objects.js",
+    "origin": "src/context/objects.js:323",
+    "evidence": "doc-example",
+    "request": {
+      "op": "eval",
+      "source": "factorial(5)"
+    },
+    "expected": {
+      "ok": true,
+      "value": 120
+    },
+    "reason": "Example requires surrounding setup, uses unsupported example syntax, or disagrees with the current JS result. Preserved for upstream review; no claimed parity evidence."
+  },
+  {
+    "id": "doc-example:src/context/objects.js:674:1",
+    "group": "docs / src/context/objects.js",
+    "origin": "src/context/objects.js:674",
+    "evidence": "doc-example",
+    "request": {
+      "op": "eval",
+      "source": "{1, 2, 3}.mapArr({1, 2, 3}, (val, idx) => val * idx)"
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        0,
+        2,
+        6
+      ]
+    },
+    "reason": "Example requires surrounding setup, uses unsupported example syntax, or disagrees with the current JS result. Preserved for upstream review; no claimed parity evidence."
+  },
+  {
+    "id": "doc-example:src/context/objects.js:810:1",
+    "group": "docs / src/context/objects.js",
+    "origin": "src/context/objects.js:810",
+    "evidence": "doc-example",
+    "request": {
+      "op": "eval",
+      "source": "{1, 2, 3}.reduce((acc, val, idx) => acc + val * idx, 0)"
+    },
+    "expected": {
+      "ok": true,
+      "value": 8
+    },
+    "reason": "Example requires surrounding setup, uses unsupported example syntax, or disagrees with the current JS result. Preserved for upstream review; no claimed parity evidence."
+  },
+  {
+    "id": "doc-example:src/context/objects.js:1167:1",
+    "group": "docs / src/context/objects.js",
+    "origin": "src/context/objects.js:1167",
+    "evidence": "doc-example",
+    "request": {
+      "op": "eval",
+      "source": "sample({1, 2, 3, 4, 5}, 3)"
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        3,
+        1,
+        5
+      ]
+    },
+    "reason": "Illustrative random output is not an expectation. Authored fixtures test range, permutation and sample-size invariants instead."
+  },
+  {
+    "id": "doc-example:src/context/objects.js:1168:1",
+    "group": "docs / src/context/objects.js",
+    "origin": "src/context/objects.js:1168",
+    "evidence": "doc-example",
+    "request": {
+      "op": "eval",
+      "source": "sample({1, 2, 3, 4, 5})"
+    },
+    "expected": {
+      "ok": true,
+      "value": 4
+    },
+    "reason": "Illustrative random output is not an expectation. Authored fixtures test range, permutation and sample-size invariants instead."
+  },
+  {
+    "id": "doc-example:src/context/objects.js:1237:1",
+    "group": "docs / src/context/objects.js",
+    "origin": "src/context/objects.js:1237",
+    "evidence": "doc-example",
+    "request": {
+      "op": "eval",
+      "source": "joinObj({a: 12, b: \"test\"}, \"; \", (k, v) => str(k, \": \", v))"
+    },
+    "expected": {
+      "ok": true,
+      "value": "a: 12; b: test"
+    },
+    "reason": "Example requires surrounding setup, uses unsupported example syntax, or disagrees with the current JS result. Preserved for upstream review; no claimed parity evidence."
+  },
+  {
+    "id": "doc-example:src/context/objects.js:1254:1",
+    "group": "docs / src/context/objects.js",
+    "origin": "src/context/objects.js:1254",
+    "evidence": "doc-example",
+    "request": {
+      "op": "eval",
+      "source": "contains({a = 1}, \"a\")"
+    },
+    "expected": {
+      "ok": true,
+      "value": true
+    },
+    "reason": "Example requires surrounding setup, uses unsupported example syntax, or disagrees with the current JS result. Preserved for upstream review; no claimed parity evidence."
+  },
+  {
+    "id": "doc-example:src/context/objects.js:1275:1",
+    "group": "docs / src/context/objects.js",
+    "origin": "src/context/objects.js:1275",
+    "evidence": "doc-example",
+    "request": {
+      "op": "eval",
+      "source": "get({a: 1}, \"a\")"
+    },
+    "expected": {
+      "ok": true,
+      "value": 1
+    },
+    "reason": "Example requires surrounding setup, uses unsupported example syntax, or disagrees with the current JS result. Preserved for upstream review; no claimed parity evidence."
+  },
+  {
+    "id": "doc-example:src/context/objects.js:1276:1",
+    "group": "docs / src/context/objects.js",
+    "origin": "src/context/objects.js:1276",
+    "evidence": "doc-example",
+    "request": {
+      "op": "eval",
+      "source": "get({a: 1}, \"b\")"
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "$lpe": "undefined"
+      }
+    },
+    "reason": "Example requires surrounding setup, uses unsupported example syntax, or disagrees with the current JS result. Preserved for upstream review; no claimed parity evidence."
+  },
+  {
+    "id": "doc-example:src/context/objects.js:1277:1",
+    "group": "docs / src/context/objects.js",
+    "origin": "src/context/objects.js:1277",
+    "evidence": "doc-example",
+    "request": {
+      "op": "eval",
+      "source": "get({a: 1}, \"b\", \"not found\")"
+    },
+    "expected": {
+      "ok": true,
+      "value": "not found"
+    },
+    "reason": "Example requires surrounding setup, uses unsupported example syntax, or disagrees with the current JS result. Preserved for upstream review; no claimed parity evidence."
+  },
+  {
+    "id": "doc-example:src/context/objects.js:1326:1",
+    "group": "docs / src/context/objects.js",
+    "origin": "src/context/objects.js:1326",
+    "evidence": "doc-example",
+    "request": {
+      "op": "eval",
+      "source": "keys((1, 2, a = 1, b = 2))"
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        0,
+        1,
+        "a",
+        "b"
+      ]
+    },
+    "reason": "Example requires surrounding setup, uses unsupported example syntax, or disagrees with the current JS result. Preserved for upstream review; no claimed parity evidence."
+  },
+  {
+    "id": "doc-example:src/context/std.js:54:1",
+    "group": "docs / src/context/std.js",
+    "origin": "src/context/std.js:54",
+    "evidence": "doc-example",
+    "request": {
+      "op": "eval",
+      "source": "begin(x := 12, q(\"x\", \"_\"))"
+    },
+    "expected": {
+      "ok": true,
+      "value": 12
+    },
+    "reason": "Example requires surrounding setup, uses unsupported example syntax, or disagrees with the current JS result. Preserved for upstream review; no claimed parity evidence."
+  },
+  {
+    "id": "doc-example:src/context/std.js:104:1",
+    "group": "docs / src/context/std.js",
+    "origin": "src/context/std.js:104",
+    "evidence": "doc-example",
+    "request": {
+      "op": "eval",
+      "source": "invoke({1, 2, 3}, \"toString\")"
+    },
+    "expected": {
+      "ok": true,
+      "value": "1,2,3"
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "doc-example:src/context/std.js:105:1",
+    "group": "docs / src/context/std.js",
+    "origin": "src/context/std.js:105",
+    "evidence": "doc-example",
+    "request": {
+      "op": "eval",
+      "source": "invoke({1, 2, 3}, \"push\", 4)"
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "doc-example:src/context/std.js:106:1",
+    "group": "docs / src/context/std.js",
+    "origin": "src/context/std.js:106",
+    "evidence": "doc-example",
+    "request": {
+      "op": "eval",
+      "source": "invoke({1, 2, 3}, concat, {4, 5, 6})"
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "doc-example:src/context/std.js:107:1",
+    "group": "docs / src/context/std.js",
+    "origin": "src/context/std.js:107",
+    "evidence": "doc-example",
+    "request": {
+      "op": "eval",
+      "source": "invoke({1, 2, 3}, \"con\" + \"cat\", {4, 5, 6})"
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "doc-example:src/context/std.js:231:1",
+    "group": "docs / src/context/std.js",
+    "origin": "src/context/std.js:231",
+    "evidence": "doc-example",
+    "request": {
+      "op": "eval",
+      "source": "println({1,{1,{1,{1}}}})"
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        1,
+        [
+          1,
+          [
+            1,
+            [
+              1
+            ]
+          ]
+        ]
+      ]
+    },
+    "reason": "Documentation describes console output, not the function return value. Console-output assertions require a separate capture protocol."
+  },
+  {
+    "id": "doc-example:src/context/std.js:247:1",
+    "group": "docs / src/context/std.js",
+    "origin": "src/context/std.js:247",
+    "evidence": "doc-example",
+    "request": {
+      "op": "eval",
+      "source": "prn({1,{1,{1,{1}}}})"
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        1,
+        [
+          1,
+          [
+            1,
+            [
+              1
+            ]
+          ]
+        ]
+      ]
+    },
+    "reason": "Documentation describes console output, not the function return value. Console-output assertions require a separate capture protocol."
+  },
+  {
+    "id": "doc-example:src/context/strings.js:260:1",
+    "group": "docs / src/context/strings.js",
+    "origin": "src/context/strings.js:260",
+    "evidence": "doc-example",
+    "request": {
+      "op": "eval",
+      "source": "replace(\"helloween\", RegExp(r\"(e{2,})\"), \"[$1]\")"
+    },
+    "expected": {
+      "ok": true,
+      "value": "hellow[ee]n"
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "doc-example:src/context/strings.js:278:1",
+    "group": "docs / src/context/strings.js",
+    "origin": "src/context/strings.js:278",
+    "evidence": "doc-example",
+    "request": {
+      "op": "eval",
+      "source": "replaceAll(\"helloween engeneer\", RegExp(r\"([en]+)\", \"g\"), \"[$1]\")"
+    },
+    "expected": {
+      "ok": true,
+      "value": "h[e]llow[een] [en]g[enee]r"
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "doc-example:src/context/variables.js:28:1",
+    "group": "docs / src/context/variables.js",
+    "origin": "src/context/variables.js:28",
+    "evidence": "doc-example",
+    "request": {
+      "op": "eval",
+      "source": "assign(obj.key, 20)"
+    },
+    "expected": {
+      "ok": true,
+      "value": 20
+    },
+    "reason": "Example requires surrounding setup, uses unsupported example syntax, or disagrees with the current JS result. Preserved for upstream review; no claimed parity evidence."
+  },
+  {
+    "id": "doc-example:src/context/variables.js:29:1",
+    "group": "docs / src/context/variables.js",
+    "origin": "src/context/variables.js:29",
+    "evidence": "doc-example",
+    "request": {
+      "op": "eval",
+      "source": "obj.a := (obj.b := 10)"
+    },
+    "expected": {
+      "ok": true,
+      "value": 10
+    },
+    "reason": "Example requires surrounding setup, uses unsupported example syntax, or disagrees with the current JS result. Preserved for upstream review; no claimed parity evidence."
+  },
+  {
+    "id": "doc-example:src/lib/datetime.js:482:1",
+    "group": "docs / src/lib/datetime.js",
+    "origin": "src/lib/datetime.js:482",
+    "evidence": "doc-example",
+    "request": {
+      "op": "eval",
+      "source": "isod(\"2024-01-15\")"
+    },
+    "expected": {
+      "ok": true,
+      "value": "2024-015"
+    },
+    "reason": "Example requires surrounding setup, uses unsupported example syntax, or disagrees with the current JS result. Preserved for upstream review; no claimed parity evidence."
+  }
+]

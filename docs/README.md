@@ -24,6 +24,7 @@ looks like, and what tests cover it. Read these alongside `../CHANGELOG.md`
 
 ### Engine
 
+- [Rust implementation plan](../rust-impl/README.md) - from-scratch parser and interpreter, compatibility requirements, exclusions, and milestones.
 - [Localization hashes — the CRLF gotcha](./localization-hashes.md) — why all 114 "outdated" warnings on Windows checkouts were a line-endings artifact, and the fix.
 
 ## Conventions used in these docs

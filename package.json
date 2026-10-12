@@ -17,6 +17,9 @@
   "license": "MIT",
   "scripts": {
     "test": "mocha --reporter spec",
+    "test:rust": "cargo test --locked --manifest-path rust-impl/Cargo.toml",
+    "test:parity": "npm run build && cargo build --locked --manifest-path rust-impl/Cargo.toml --bin lpe && node rust-impl/scripts/parity.mjs",
+    "test:all": "node rust-impl/scripts/test-all.mjs",
     "localize": "node scripts/update-loc.js",
     "t": "mocha --reporter spec test/test.js",
     "test-lpe-functions": "mocha --reporter spec test/test-full.js",

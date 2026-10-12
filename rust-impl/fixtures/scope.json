@@ -1,0 +1,146 @@
+{
+  "schemaVersion": 1,
+  "stringDomain": "Valid Unicode representable as UTF-8; object keys have the same restriction.",
+  "excludedScenarioCount": 8,
+  "excludedScenarios": [
+    "Standalone surrogate string input to evaluation or public helpers",
+    "Parsing a string escape that produces a lone surrogate",
+    "Deparsing a lone-surrogate AST string",
+    "Evaluating a string escape that produces a lone surrogate",
+    "Splitting an emoji on the empty separator into surrogate halves",
+    "Slicing only one code unit of an emoji",
+    "Truncating emoji padding to one surrogate code unit",
+    "Supplying lone surrogate halves for later concatenation"
+  ],
+  "countSemantics": "Reviewed scenario categories, not counts of supported features or passing assertions.",
+  "inScope": ["Valid Unicode input and output, including emoji", "JavaScript code-unit lengths and offsets", "String-pattern regex operations", "Ordinary promises and asynchronous callbacks", "Reactive streams, subscriptions, retain/release and mixed Stream/Promise values"],
+  "otherExclusions": ["Native RegExp values", "Arbitrary JavaScript host-object interoperability", "Documentation APIs, data, context preparation and localization tooling (JS/V8-only)"],
+  "v8OnlyReason": "Documentation APIs, data, context preparation and localization tooling remain exclusively in the JS/V8 implementation by agreement; they are not Rust implementation gaps.",
+  "v8OnlyApis": ["makeDoc", "makeDocForContextes", "prepareContext", "DOC", "LOCALE_DOC", "DOC_WARNINGS", "findDoc", "generateSimpleHash", "selectPerfectFunctionName", "localizationUpdate", "LOCALIZATION_OPTIONS"],
+  "v8OnlyTestFiles": ["test/test-doc.js", "test/test-prebuilt-doc.js", "test/test-prepare-context.js"],
+  "jsOnlyBuiltins": [
+    "RegExp",
+    "Array",
+    "Object",
+    "Date",
+    "console",
+    "JSON",
+    "new",
+    "invoke",
+    "_call_obj_meth_",
+    "_get_obj_meth_",
+    "~>"
+  ],
+  "jsOnlyTestGroups": [
+    {
+      "file": "test/test-lisp.js",
+      "line": 518,
+      "name": "LISP tests / ~> JS method dispatch / calls a method on the receiver with this bound",
+      "reason": "Native JavaScript receiver/prototype method dispatch and this binding remain JS/V8-only; parsing and deparsing this syntax remain in scope."
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 525,
+      "name": "LISP tests / ~> JS method dispatch / works with the receiver coming from context",
+      "reason": "Native JavaScript receiver/prototype method dispatch and this binding remain JS/V8-only; parsing and deparsing this syntax remain in scope."
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 529,
+      "name": "LISP tests / ~> JS method dispatch / without parens returns a method bound to the receiver",
+      "reason": "Native JavaScript receiver/prototype method dispatch and this binding remain JS/V8-only; parsing and deparsing this syntax remain in scope."
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 536,
+      "name": "LISP tests / ~> JS method dispatch / chains: each ~> sees the previous result as the new receiver",
+      "reason": "Native JavaScript receiver/prototype method dispatch and this binding remain JS/V8-only; parsing and deparsing this syntax remain in scope."
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 543,
+      "name": "LISP tests / ~> JS method dispatch / works on arrays too (plain JS objects)",
+      "reason": "Native JavaScript receiver/prototype method dispatch and this binding remain JS/V8-only; parsing and deparsing this syntax remain in scope."
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 554,
+      "name": "LISP tests / ~> JS method dispatch / throws when method does not exist on the receiver",
+      "reason": "Native JavaScript receiver/prototype method dispatch and this binding remain JS/V8-only; parsing and deparsing this syntax remain in scope."
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 558,
+      "name": "LISP tests / ~> JS method dispatch / bound-form returns undefined for missing properties (JS-like)",
+      "reason": "Native JavaScript receiver/prototype method dispatch and this binding remain JS/V8-only; parsing and deparsing this syntax remain in scope."
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 562,
+      "name": "LISP tests / ~> JS method dispatch / walks plain JS objects through property chains",
+      "reason": "Native JavaScript receiver/prototype method dispatch and this binding remain JS/V8-only; parsing and deparsing this syntax remain in scope."
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 571,
+      "name": "LISP tests / ~> JS method dispatch / explains clearly when a chain hits null/undefined mid-way",
+      "reason": "Native JavaScript receiver/prototype method dispatch and this binding remain JS/V8-only; parsing and deparsing this syntax remain in scope."
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 576,
+      "name": "LISP tests / ~> JS method dispatch / accepts a string literal on the right (same as bare name)",
+      "reason": "Native JavaScript receiver/prototype method dispatch and this binding remain JS/V8-only; parsing and deparsing this syntax remain in scope."
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 584,
+      "name": "LISP tests / ~> JS method dispatch / accepts (expr) on the right for a runtime-computed key",
+      "reason": "Native JavaScript receiver/prototype method dispatch and this binding remain JS/V8-only; parsing and deparsing this syntax remain in scope."
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 592,
+      "name": "LISP tests / ~> JS method dispatch / mixes static and dynamic keys in a chain",
+      "reason": "Native JavaScript receiver/prototype method dispatch and this binding remain JS/V8-only; parsing and deparsing this syntax remain in scope."
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 597,
+      "name": "LISP tests / ~> JS method dispatch / user's pattern: x := 'document'; window~>(x)",
+      "reason": "Native JavaScript receiver/prototype method dispatch and this binding remain JS/V8-only; parsing and deparsing this syntax remain in scope."
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 384,
+      "name": "LPE Full Test Suite / Object Creation / new / \u0441\u043e\u0437\u0434\u0430\u0451\u0442 \u044d\u043a\u0437\u0435\u043c\u043f\u043b\u044f\u0440 \u0441 \u0430\u0440\u0433\u0443\u043c\u0435\u043d\u0442\u0430\u043c\u0438",
+      "reason": "JavaScript constructor invocation and native object instances remain JS/V8-only."
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1008,
+      "name": "LPE Full Test Suite / String Operations / RegExp / \u0441\u043e\u0437\u0434\u0430\u0451\u0442 RegExp",
+      "reason": "Native JavaScript RegExp objects and their methods remain JS/V8-only; portable string-pattern matching remains in scope."
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1420,
+      "name": "LPE Full Test Suite / Application & Threading / invoke / \u0432\u044b\u0437\u043e\u0432 \u043c\u0435\u0442\u043e\u0434\u0430 \u043f\u043e \u0438\u043c\u0435\u043d\u0438",
+      "reason": "Native JavaScript receiver/prototype method dispatch and this binding remain JS/V8-only; parsing and deparsing this syntax remain in scope."
+    },
+    {
+      "file": "test/test.js",
+      "line": 157,
+      "name": "LPE tests / should eval Javascript RegExp with context",
+      "reason": "Native JavaScript RegExp objects and their methods remain JS/V8-only; portable string-pattern matching remains in scope."
+    },
+    {
+      "file": "test/test.js",
+      "line": 164,
+      "name": "LPE tests / should eval Javascript RegExp with context (LPE)",
+      "reason": "Native JavaScript RegExp objects and their methods remain JS/V8-only; portable string-pattern matching remains in scope."
+    }
+  ],
+  "deferred": [],
+  "portableGapsAreNotExclusions": ["Unverified source test groups", "Regex execution limits and broader ECMAScript edge-case auditing"]
+}

@@ -1,0 +1,5184 @@
+{
+  "groups": [
+    {
+      "file": "test/test-async.js",
+      "line": 25,
+      "kind": "describe",
+      "name": "async tests"
+    },
+    {
+      "file": "test/test-async.js",
+      "line": 26,
+      "kind": "it",
+      "name": "async tests / Promise in add arguments returns promise"
+    },
+    {
+      "file": "test/test-async.js",
+      "line": 33,
+      "kind": "describe",
+      "name": "async tests / VAR ... RETURN with promises"
+    },
+    {
+      "file": "test/test-async.js",
+      "line": 34,
+      "kind": "it",
+      "name": "async tests / VAR ... RETURN with promises / unboxes a promise binding before later VARs see it"
+    },
+    {
+      "file": "test/test-async.js",
+      "line": 39,
+      "kind": "it",
+      "name": "async tests / VAR ... RETURN with promises / chains multiple promise bindings sequentially"
+    },
+    {
+      "file": "test/test-async.js",
+      "line": 46,
+      "kind": "it",
+      "name": "async tests / VAR ... RETURN with promises / handles a promise in the RETURN body"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 4,
+      "kind": "describe",
+      "name": "Calendar function: today"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 5,
+      "kind": "it",
+      "name": "Calendar function: today / should return the current date in the format YYYY-MM-DD"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 11,
+      "kind": "it",
+      "name": "Calendar function: today / should return a string of length 10"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 16,
+      "kind": "it",
+      "name": "Calendar function: today / should return a date string starting with the current year"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 23,
+      "kind": "describe",
+      "name": "Calendar function: dateShift"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 24,
+      "kind": "it",
+      "name": "Calendar function: dateShift / should correctly handle the case when a zero shift in days is specified"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 30,
+      "kind": "it",
+      "name": "Calendar function: dateShift / should correctly handle the case when a zero shift in months is specified"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 36,
+      "kind": "it",
+      "name": "Calendar function: dateShift / should correctly handle the case when a zero shift in years is specified"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 42,
+      "kind": "it",
+      "name": "Calendar function: dateShift / should shift the date forward by the specified number of days"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 48,
+      "kind": "it",
+      "name": "Calendar function: dateShift / should shift the date backward by the specified number of days"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 54,
+      "kind": "it",
+      "name": "Calendar function: dateShift / should shift the date forward by the specified number of months"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 60,
+      "kind": "it",
+      "name": "Calendar function: dateShift / should shift the date backward by the specified number of months"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 66,
+      "kind": "it",
+      "name": "Calendar function: dateShift / should correctly handle the end-of-month carryover"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 72,
+      "kind": "it",
+      "name": "Calendar function: dateShift / should handle leap years when adding days"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 78,
+      "kind": "it",
+      "name": "Calendar function: dateShift / should handle leap years when adding years"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 84,
+      "kind": "it",
+      "name": "Calendar function: dateShift / should shift the date forward by the specified number of years"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 90,
+      "kind": "it",
+      "name": "Calendar function: dateShift / should shift the date backward by the specified number of years"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 96,
+      "kind": "it",
+      "name": "Calendar function: dateShift / should shift the date forward by the specified number of weeks"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 102,
+      "kind": "it",
+      "name": "Calendar function: dateShift / should shift the date backward by the specified number of weeks"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 108,
+      "kind": "it",
+      "name": "Calendar function: dateShift / should handle an array input and return shifted dates for each"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 114,
+      "kind": "it",
+      "name": "Calendar function: dateShift / should correctly shift the date when crossing the year boundary"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 120,
+      "kind": "it",
+      "name": "Calendar function: dateShift / should correctly shift the date forward by multiple time units"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 126,
+      "kind": "it",
+      "name": "Calendar function: dateShift / should correctly handle absurd multi-year shifts"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 132,
+      "kind": "it",
+      "name": "Calendar function: dateShift / should handle negative shifts when the date starts with a negative month"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 139,
+      "kind": "describe",
+      "name": "Calendar function: toStart"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 140,
+      "kind": "it",
+      "name": "Calendar function: toStart / should correctly work with the start of the quarter for dates at the end of the year"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 146,
+      "kind": "it",
+      "name": "Calendar function: toStart / should check for crossing the century boundary when transitioning to the start of the year"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 152,
+      "kind": "it",
+      "name": "Calendar function: toStart / should check for leap years and correctly return the start of February"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 158,
+      "kind": "it",
+      "name": "Calendar function: toStart / should return the start of the week for the specified date"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 164,
+      "kind": "it",
+      "name": "Calendar function: toStart / should return the start of the month for the specified date"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 170,
+      "kind": "it",
+      "name": "Calendar function: toStart / should return the start of the quarter for the specified date"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 176,
+      "kind": "it",
+      "name": "Calendar function: toStart / should return the start of the year for the specified date"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 182,
+      "kind": "it",
+      "name": "Calendar function: toStart / should correctly handle the case without specifying a unit"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 189,
+      "kind": "describe",
+      "name": "Calendar function: toEnd"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 190,
+      "kind": "it",
+      "name": "Calendar function: toEnd / should return the end of the week for the given period"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 196,
+      "kind": "it",
+      "name": "Calendar function: toEnd / should return the end of the month for the given period"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 202,
+      "kind": "it",
+      "name": "Calendar function: toEnd / should return the end of the quarter for the given period"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 208,
+      "kind": "it",
+      "name": "Calendar function: toEnd / should return the end of the year for the given period"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 214,
+      "kind": "it",
+      "name": "Calendar function: toEnd / should return the current date if no time unit is specified"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 221,
+      "kind": "describe",
+      "name": "Calendar function: bound"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 222,
+      "kind": "it",
+      "name": "Calendar function: bound / should return the start and end dates of the week by default"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 231,
+      "kind": "it",
+      "name": "Calendar function: bound / should return the start and end dates of the month for a given date"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 238,
+      "kind": "it",
+      "name": "Calendar function: bound / should return the start and end dates of the quarter for a given date"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 245,
+      "kind": "it",
+      "name": "Calendar function: bound / should return the start and end dates of the year for a given date"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 253,
+      "kind": "describe",
+      "name": "Calendar function: extend"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 254,
+      "kind": "it",
+      "name": "Calendar function: extend / todays date and 5 days ahead"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 260,
+      "kind": "it",
+      "name": "Calendar function: extend / date interval for a week"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 270,
+      "kind": "it",
+      "name": "Calendar function: extend / date interval with a negative value"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 281,
+      "kind": "it",
+      "name": "Calendar function: extend / handles cases when delta is 0"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 287,
+      "kind": "it",
+      "name": "Calendar function: extend / handles unit of measurement \"month\""
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 293,
+      "kind": "it",
+      "name": "Calendar function: extend / handles unit of measurement \"year\""
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 299,
+      "kind": "it",
+      "name": "Calendar function: extend / correctly extends the interval using an array of dates"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 307,
+      "kind": "it",
+      "name": "Calendar function: extend / correctly works with a half-year interval"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 313,
+      "kind": "it",
+      "name": "Calendar function: extend / correctly works with a quarter interval"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 319,
+      "kind": "it",
+      "name": "Calendar function: extend / correctly works with negative delta values in months"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 326,
+      "kind": "describe",
+      "name": "Calendar function: year"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 327,
+      "kind": "it",
+      "name": "Calendar function: year / should return the year from a date in ISO format"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 334,
+      "kind": "it",
+      "name": "Calendar function: year / should correctly handle leap years"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 342,
+      "kind": "describe",
+      "name": "Calendar function: hoty"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 343,
+      "kind": "it",
+      "name": "Calendar function: hoty / should return 1 for the first half of the year"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 349,
+      "kind": "it",
+      "name": "Calendar function: hoty / should return 2 for the second half of the year"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 355,
+      "kind": "it",
+      "name": "Calendar function: hoty / should correctly handle the end of June"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 361,
+      "kind": "it",
+      "name": "Calendar function: hoty / should correctly handle the beginning of July"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 367,
+      "kind": "it",
+      "name": "Calendar function: hoty / should return 1 for a date that coincides with the start of the year"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 374,
+      "kind": "describe",
+      "name": "Calendar function: qoty"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 375,
+      "kind": "it",
+      "name": "Calendar function: qoty / correctly determines the quarter for a date in the first quarter"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 380,
+      "kind": "it",
+      "name": "Calendar function: qoty / correctly determines the quarter for a date in the second quarter"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 385,
+      "kind": "it",
+      "name": "Calendar function: qoty / correctly determines the quarter for a date in the third quarter"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 390,
+      "kind": "it",
+      "name": "Calendar function: qoty / correctly determines the quarter for a date in the fourth quarter"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 395,
+      "kind": "it",
+      "name": "Calendar function: qoty / returns the correct value for the end of the year"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 400,
+      "kind": "it",
+      "name": "Calendar function: qoty / returns the correct value for the start of the year"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 405,
+      "kind": "it",
+      "name": "Calendar function: qoty / works correctly for leap years"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 411,
+      "kind": "describe",
+      "name": "Calendar function: moty"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 412,
+      "kind": "it",
+      "name": "Calendar function: moty / should return the correct month for valid dates"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 423,
+      "kind": "it",
+      "name": "Calendar function: moty / should work with dates at the beginning and end of the month"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 432,
+      "kind": "describe",
+      "name": "Calendar function: woty"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 433,
+      "kind": "it",
+      "name": "Calendar function: woty / should correctly return the week number for the date 2021-01-01"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 440,
+      "kind": "it",
+      "name": "Calendar function: woty / should return 1 for the date 2022-01-03, which is the first Monday of the year"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 447,
+      "kind": "it",
+      "name": "Calendar function: woty / should return week number 10 for 2022-03-07"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 455,
+      "kind": "it",
+      "name": "Calendar function: woty / should return the correct week number at the end of the year, for example 2022-12-31"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 463,
+      "kind": "describe",
+      "name": "Calendar function: doty"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 464,
+      "kind": "it",
+      "name": "Calendar function: doty / should return the correct day number in the year for January 1st"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 470,
+      "kind": "it",
+      "name": "Calendar function: doty / should return the correct day number in the year for December 31st"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 476,
+      "kind": "it",
+      "name": "Calendar function: doty / should correctly handle leap years"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 482,
+      "kind": "it",
+      "name": "Calendar function: doty / should return the correct day number for a random date"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 489,
+      "kind": "describe",
+      "name": "Calendar function: isoy"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 490,
+      "kind": "it",
+      "name": "Calendar function: isoy / should return the year as a string"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 496,
+      "kind": "it",
+      "name": "Calendar function: isoy / should return only the year from the date"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 502,
+      "kind": "it",
+      "name": "Calendar function: isoy / should correctly handle boundary values"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 508,
+      "kind": "it",
+      "name": "Calendar function: isoy / should correctly handle dates in the format YYYY-MM-DD"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 515,
+      "kind": "describe",
+      "name": "Calendar function: isom"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 516,
+      "kind": "it",
+      "name": "Calendar function: isom / should return the year and month as a string"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 522,
+      "kind": "it",
+      "name": "Calendar function: isom / should return only the year and month from the date"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 528,
+      "kind": "it",
+      "name": "Calendar function: isom / should correctly handle boundary values"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 534,
+      "kind": "it",
+      "name": "Calendar function: isom / should correctly handle dates in the format YYYY-MM-DD"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 541,
+      "kind": "describe",
+      "name": "Calendar function: isoq"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 542,
+      "kind": "it",
+      "name": "Calendar function: isoq / should match the format \"YYYY-Qn\" for the given date"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 562,
+      "kind": "it",
+      "name": "Calendar function: isoq / should work correctly when transitioning to the next year"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 571,
+      "kind": "describe",
+      "name": "Calendar function: isow"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 572,
+      "kind": "it",
+      "name": "Calendar function: isow / should return the correct ISO format for the given date"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 580,
+      "kind": "it",
+      "name": "Calendar function: isow / should correctly handle dates that are the first day of the week"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 585,
+      "kind": "it",
+      "name": "Calendar function: isow / should correctly handle dates that are the last days of the week"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 590,
+      "kind": "it",
+      "name": "Calendar function: isow / should assign the correct week number for dates in the New Year"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 596,
+      "kind": "describe",
+      "name": "Calendar function: isod"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 597,
+      "kind": "it",
+      "name": "Calendar function: isod / should return a string with the day of the year in the format YYYY-DD"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 603,
+      "kind": "it",
+      "name": "Calendar function: isod / should correctly handle edge cases, such as January 1st"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 609,
+      "kind": "it",
+      "name": "Calendar function: isod / should correctly handle dates in leap years"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 621,
+      "kind": "describe",
+      "name": "Datetime functions accept D-tagged strings"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 627,
+      "kind": "describe",
+      "name": "Datetime functions accept D-tagged strings / via the parser (D-string in source)"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 628,
+      "kind": "it",
+      "name": "Datetime functions accept D-tagged strings / via the parser (D-string in source) / dateShift accepts D-string"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 634,
+      "kind": "it",
+      "name": "Datetime functions accept D-tagged strings / via the parser (D-string in source) / toStart accepts D-string"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 640,
+      "kind": "it",
+      "name": "Datetime functions accept D-tagged strings / via the parser (D-string in source) / year accepts D-string"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 646,
+      "kind": "it",
+      "name": "Datetime functions accept D-tagged strings / via the parser (D-string in source) / isom accepts D-string"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 654,
+      "kind": "describe",
+      "name": "Datetime functions accept D-tagged strings / via context (D-array bound as a value)"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 655,
+      "kind": "it",
+      "name": "Datetime functions accept D-tagged strings / via context (D-array bound as a value) / dateShift unwraps D-array context value (no longer treated as [start,end] pair)"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 661,
+      "kind": "it",
+      "name": "Datetime functions accept D-tagged strings / via context (D-array bound as a value) / extend unwraps D-array context value"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 667,
+      "kind": "it",
+      "name": "Datetime functions accept D-tagged strings / via context (D-array bound as a value) / toStart unwraps D-array context value"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 673,
+      "kind": "it",
+      "name": "Datetime functions accept D-tagged strings / via context (D-array bound as a value) / toEnd unwraps D-array context value"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 679,
+      "kind": "it",
+      "name": "Datetime functions accept D-tagged strings / via context (D-array bound as a value) / bound unwraps D-array context value"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 685,
+      "kind": "it",
+      "name": "Datetime functions accept D-tagged strings / via context (D-array bound as a value) / year/qoty/moty/isom unwrap D-array context values"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 691,
+      "kind": "it",
+      "name": "Datetime functions accept D-tagged strings / via context (D-array bound as a value) / also handles plain quoted-string context values (no D tag)"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 697,
+      "kind": "it",
+      "name": "Datetime functions accept D-tagged strings / via context (D-array bound as a value) / also handles a quoted-string unit passed via context"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 705,
+      "kind": "describe",
+      "name": "Datetime functions accept D-tagged strings / legitimate [start, end] pairs are NOT mistakenly unwrapped"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 706,
+      "kind": "it",
+      "name": "Datetime functions accept D-tagged strings / legitimate [start, end] pairs are NOT mistakenly unwrapped / dateShift treats a real date pair as [start, end]"
+    },
+    {
+      "file": "test/test-datetime.js",
+      "line": 712,
+      "kind": "it",
+      "name": "Datetime functions accept D-tagged strings / legitimate [start, end] pairs are NOT mistakenly unwrapped / extend treats a real date pair as [start, end]"
+    },
+    {
+      "file": "test/test-deparse-forms-roundtrip.js",
+      "line": 16,
+      "kind": "describe",
+      "name": "LPE deparse special forms roundtrip"
+    },
+    {
+      "file": "test/test-deparse-literals-roundtrip.js",
+      "line": 40,
+      "kind": "describe",
+      "name": "LPE deparse literal round trips"
+    },
+    {
+      "file": "test/test-deparse-operators-roundtrip.js",
+      "line": 19,
+      "kind": "describe",
+      "name": "LPE deparse operator roundtrips"
+    },
+    {
+      "file": "test/test-deparse-operators-roundtrip.js",
+      "line": 22,
+      "kind": "it",
+      "name": "LPE deparse operator roundtrips / preserves every infix operator and its aliases"
+    },
+    {
+      "file": "test/test-deparse-operators-roundtrip.js",
+      "line": 36,
+      "kind": "it",
+      "name": "LPE deparse operator roundtrips / preserves mixed precedence and associativity without adding AST parentheses"
+    },
+    {
+      "file": "test/test-deparse-operators-roundtrip.js",
+      "line": 47,
+      "kind": "it",
+      "name": "LPE deparse operator roundtrips / distinguishes unary operators from binary operators and explicit parentheses"
+    },
+    {
+      "file": "test/test-deparse-operators-roundtrip.js",
+      "line": 60,
+      "kind": "it",
+      "name": "LPE deparse operator roundtrips / preserves computed callees, member access, method calls and pipes"
+    },
+    {
+      "file": "test/test-deparse-operators-roundtrip.js",
+      "line": 73,
+      "kind": "it",
+      "name": "LPE deparse operator roundtrips / preserves functional logical forms that cannot be rendered as an infix chain"
+    },
+    {
+      "file": "test/test-deparse-operators-roundtrip.js",
+      "line": 84,
+      "kind": "it",
+      "name": "LPE deparse operator roundtrips / preserves explicit grouping in function arguments and multiline formatting"
+    },
+    {
+      "file": "test/test-deparse-operators-roundtrip.js",
+      "line": 93,
+      "kind": "it",
+      "name": "LPE deparse operator roundtrips / preserves keyword function names after an argument separator"
+    },
+    {
+      "file": "test/test-deparse.js",
+      "line": 5,
+      "kind": "describe",
+      "name": "LPE deparse"
+    },
+    {
+      "file": "test/test-deparse.js",
+      "line": 7,
+      "kind": "it",
+      "name": "LPE deparse / should deparse primitives"
+    },
+    {
+      "file": "test/test-deparse.js",
+      "line": 18,
+      "kind": "it",
+      "name": "LPE deparse / should deparse binary operators"
+    },
+    {
+      "file": "test/test-deparse.js",
+      "line": 27,
+      "kind": "it",
+      "name": "LPE deparse / should deparse complex expressions"
+    },
+    {
+      "file": "test/test-host-compat.js",
+      "line": 4,
+      "kind": "describe",
+      "name": "Host compatibility"
+    },
+    {
+      "file": "test/test-host-compat.js",
+      "line": 5,
+      "kind": "it",
+      "name": "Host compatibility / exports variable accessors used by host special forms"
+    },
+    {
+      "file": "test/test-host-compat.js",
+      "line": 13,
+      "kind": "it",
+      "name": "Host compatibility / define supports recursive functions"
+    },
+    {
+      "file": "test/test-host-compat.js",
+      "line": 17,
+      "kind": "it",
+      "name": "Host compatibility / define preserves static variables across calls"
+    },
+    {
+      "file": "test/test-host-compat.js",
+      "line": 21,
+      "kind": "it",
+      "name": "Host compatibility / define supports default arguments"
+    },
+    {
+      "file": "test/test-host-compat.js",
+      "line": 25,
+      "kind": "it",
+      "name": "Host compatibility / define retains the layered host context"
+    },
+    {
+      "file": "test/test-host-compat.js",
+      "line": 29,
+      "kind": "it",
+      "name": "Host compatibility / define keeps its functions local"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 29,
+      "kind": "describe",
+      "name": "LISP tests"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 30,
+      "kind": "it",
+      "name": "LISP tests / should resolve js-constants"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 39,
+      "kind": "it",
+      "name": "LISP tests / should resolve built-in lisp constants"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 45,
+      "kind": "it",
+      "name": "LISP tests / should run let special form"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 53,
+      "kind": "describe",
+      "name": "LISP tests / let* (sequential bindings, used by VAR ... RETURN)"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 54,
+      "kind": "it",
+      "name": "LISP tests / let* (sequential bindings, used by VAR ... RETURN) / should evaluate let* with single binding"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 58,
+      "kind": "it",
+      "name": "LISP tests / let* (sequential bindings, used by VAR ... RETURN) / should make later bindings see earlier ones"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 69,
+      "kind": "it",
+      "name": "LISP tests / let* (sequential bindings, used by VAR ... RETURN) / should support multiple body exprs (begin semantics)"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 77,
+      "kind": "describe",
+      "name": "LISP tests / VAR ... RETURN"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 78,
+      "kind": "it",
+      "name": "LISP tests / VAR ... RETURN / parses single VAR to let* form"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 85,
+      "kind": "it",
+      "name": "LISP tests / VAR ... RETURN / parses multiple VARs"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 92,
+      "kind": "it",
+      "name": "LISP tests / VAR ... RETURN / accepts ; as separator between VARs"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 99,
+      "kind": "it",
+      "name": "LISP tests / VAR ... RETURN / accepts := as well as = inside VAR"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 106,
+      "kind": "it",
+      "name": "LISP tests / VAR ... RETURN / evaluates with sequential semantics"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 113,
+      "kind": "it",
+      "name": "LISP tests / VAR ... RETURN / works nested inside an expression"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 120,
+      "kind": "it",
+      "name": "LISP tests / VAR ... RETURN / rejects RETURN without VAR"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 124,
+      "kind": "it",
+      "name": "LISP tests / VAR ... RETURN / rejects VAR without RETURN"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 128,
+      "kind": "it",
+      "name": "LISP tests / VAR ... RETURN / rejects VAR with missing ="
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 132,
+      "kind": "it",
+      "name": "LISP tests / VAR ... RETURN / rejects VAR with missing name"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 137,
+      "kind": "it",
+      "name": "LISP tests / should skip current realization and run lower"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 146,
+      "kind": "it",
+      "name": "LISP tests / should allow hash changes declared with let"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 159,
+      "kind": "it",
+      "name": "LISP tests / operator ="
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 170,
+      "kind": "it",
+      "name": "LISP tests / if"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 187,
+      "kind": "it",
+      "name": "LISP tests / nested struct if"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 191,
+      "kind": "it",
+      "name": "LISP tests / arrays"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 197,
+      "kind": "it",
+      "name": "LISP tests / eval_ast"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 205,
+      "kind": "it",
+      "name": "LISP tests / and or not"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 218,
+      "kind": "it",
+      "name": "LISP tests / get-in"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 229,
+      "kind": "it",
+      "name": "LISP tests / assoc_in"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 301,
+      "kind": "it",
+      "name": "LISP tests / cp"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 329,
+      "kind": "it",
+      "name": "LISP tests / ctx"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 334,
+      "kind": "it",
+      "name": "LISP tests / split"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 346,
+      "kind": "it",
+      "name": "LISP tests / complex"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 369,
+      "kind": "it",
+      "name": "LISP tests / complex"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 460,
+      "kind": "it",
+      "name": "LISP tests / copy to new branch"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 479,
+      "kind": "describe",
+      "name": "LISP tests / hash and {=} empty-hash literal"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 480,
+      "kind": "it",
+      "name": "LISP tests / hash and {=} empty-hash literal / {=} produces an empty hash (not array)"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 486,
+      "kind": "it",
+      "name": "LISP tests / hash and {=} empty-hash literal / {} still produces an empty array"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 492,
+      "kind": "it",
+      "name": "LISP tests / hash and {=} empty-hash literal / {=} parses to [\"hash\"]"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 496,
+      "kind": "it",
+      "name": "LISP tests / hash and {=} empty-hash literal / hash() builtin returns an empty hash"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 502,
+      "kind": "it",
+      "name": "LISP tests / hash and {=} empty-hash literal / hash(a=1, b=2) builds a hash from kwargs"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 506,
+      "kind": "it",
+      "name": "LISP tests / hash and {=} empty-hash literal / does not affect existing {a=1} / {1,2} / {a=1, 2} forms"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 517,
+      "kind": "describe",
+      "name": "LISP tests / ~> JS method dispatch"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 518,
+      "kind": "it",
+      "name": "LISP tests / ~> JS method dispatch / calls a method on the receiver with this bound"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 525,
+      "kind": "it",
+      "name": "LISP tests / ~> JS method dispatch / works with the receiver coming from context"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 529,
+      "kind": "it",
+      "name": "LISP tests / ~> JS method dispatch / without parens returns a method bound to the receiver"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 536,
+      "kind": "it",
+      "name": "LISP tests / ~> JS method dispatch / chains: each ~> sees the previous result as the new receiver"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 543,
+      "kind": "it",
+      "name": "LISP tests / ~> JS method dispatch / works on arrays too (plain JS objects)"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 550,
+      "kind": "it",
+      "name": "LISP tests / ~> JS method dispatch / rejects non-method/non-name on the right side"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 554,
+      "kind": "it",
+      "name": "LISP tests / ~> JS method dispatch / throws when method does not exist on the receiver"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 558,
+      "kind": "it",
+      "name": "LISP tests / ~> JS method dispatch / bound-form returns undefined for missing properties (JS-like)"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 562,
+      "kind": "it",
+      "name": "LISP tests / ~> JS method dispatch / walks plain JS objects through property chains"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 571,
+      "kind": "it",
+      "name": "LISP tests / ~> JS method dispatch / explains clearly when a chain hits null/undefined mid-way"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 576,
+      "kind": "it",
+      "name": "LISP tests / ~> JS method dispatch / accepts a string literal on the right (same as bare name)"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 584,
+      "kind": "it",
+      "name": "LISP tests / ~> JS method dispatch / accepts (expr) on the right for a runtime-computed key"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 592,
+      "kind": "it",
+      "name": "LISP tests / ~> JS method dispatch / mixes static and dynamic keys in a chain"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 597,
+      "kind": "it",
+      "name": "LISP tests / ~> JS method dispatch / user's pattern: x := 'document'; window~>(x)"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 605,
+      "kind": "it",
+      "name": "LISP tests / ~> JS method dispatch / does not interfere with the existing ~ regex-match operator"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 611,
+      "kind": "describe",
+      "name": "LISP tests / slice"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 612,
+      "kind": "it",
+      "name": "LISP tests / slice / slices arrays (existing behavior)"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 617,
+      "kind": "it",
+      "name": "LISP tests / slice / slices strings (substring)"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 623,
+      "kind": "it",
+      "name": "LISP tests / slice / works with dot notation (s.slice(...) is invoke-style)"
+    },
+    {
+      "file": "test/test-lisp.js",
+      "line": 628,
+      "kind": "it",
+      "name": "LISP tests / slice / returns [] for non-array/non-string inputs"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 45,
+      "kind": "describe",
+      "name": "LPE Full Test Suite"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 50,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Constants & Basic Values"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 51,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Constants & Basic Values / boolean constants"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 58,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Constants & Basic Values / null / undefined constants"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 64,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Constants & Basic Values / global constructors"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 79,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Logical Operators"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 80,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Logical Operators / eq / = / equal / =="
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 81,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Logical Operators / eq / = / equal / == / равенство с приведением типов"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 89,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Logical Operators / eq / = / equal / == / распознаёт неравенство"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 98,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Logical Operators / strictEq / ==="
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 99,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Logical Operators / strictEq / === / строгое равенство"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 111,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Logical Operators / strictNe / !=="
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 112,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Logical Operators / strictNe / !== / строгое равенство"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 125,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Logical Operators / neq / != / ne"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 126,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Logical Operators / neq / != / ne / отрицание равенства"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 140,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Logical Operators / lt / <"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 141,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Logical Operators / lt / < / возрастающая последовательность"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 150,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Logical Operators / le / <="
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 151,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Logical Operators / le / <= / нестрогое возрастание"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 160,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Logical Operators / gt / >"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 161,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Logical Operators / gt / > / убывающая последовательность"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 170,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Logical Operators / ge / >="
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 171,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Logical Operators / ge / >= / нестрогое убывание"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 180,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Logical Operators / mixed > >= < <="
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 181,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Logical Operators / mixed > >= < <= / Цепочки сравнения"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 245,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Logical Operators / mixed > >= < <= / После false не выполняется"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 250,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Logical Operators / not"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 251,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Logical Operators / not / логическое отрицание"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 259,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Logical Operators / and / && (short-circuit)"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 260,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Logical Operators / and / && (short-circuit) / возвращает первое ложное или последнее истинное"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 265,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Logical Operators / and / && (short-circuit) / не вычисляет лишние аргументы"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 271,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Logical Operators / or / || (short-circuit)"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 272,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Logical Operators / or / || (short-circuit) / возвращает первое истинное или последнее ложное"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 276,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Logical Operators / or / || (short-circuit) / не вычисляет лишние аргументы"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 281,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Logical Operators / logicalAnd / logical_and"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 282,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Logical Operators / logicalAnd / logical_and / строгий булевый И"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 289,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Logical Operators / logicalOr / logical_or"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 290,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Logical Operators / logicalOr / logical_or / строгий булевый ИЛИ"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 303,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Math Operators"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 304,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Math Operators / add / + / plus"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 305,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Math Operators / add / + / plus / складывает числа"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 309,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Math Operators / add / + / plus / конкатенирует строки при смешении"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 312,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Math Operators / add / + / plus / функции превращает в \"undefined\""
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 317,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Math Operators / minus / - / subtract"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 318,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Math Operators / minus / - / subtract / последовательное вычитание"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 322,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Math Operators / minus / - / subtract / унарный минус"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 328,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Math Operators / multiply / * / mul"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 329,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Math Operators / multiply / * / mul / перемножает аргументы"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 335,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Math Operators / divide / / / div"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 336,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Math Operators / divide / / / div / последовательное деление"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 340,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Math Operators / divide / / / div / обратное число при одном аргументе"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 343,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Math Operators / divide / / / div / крайний случай: деление на 0"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 348,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Math Operators / rand"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 349,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Math Operators / rand / возвращает [0, 1)"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 358,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Math Operators / max"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 359,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Math Operators / max / максимум в массиве"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 362,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Math Operators / max / не-массив → []"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 367,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Math Operators / min"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 368,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Math Operators / min / минимум в массиве"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 371,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Math Operators / min / не-массив → []"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 382,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Object Creation"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 383,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Object Creation / new"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 384,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Object Creation / new / создаёт экземпляр с аргументами"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 391,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Object Creation / vector / {"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 392,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Object Creation / vector / { / создаёт массив"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 402,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Object Creation / list / array / ["
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 403,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Object Creation / list / array / [ / создаёт список"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 410,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Object Creation / tuple"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 411,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Object Creation / tuple / гибридный массив"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 418,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Object Creation / hash"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 419,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Object Creation / hash / пустой хэш"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 424,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Object Creation / hash / создание хэша"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 430,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Object Creation / makeHash"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 431,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Object Creation / makeHash / вычисляет ключи"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 437,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Object Creation / range"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 438,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Object Creation / range / генерирует диапазоны"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 443,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Object Creation / range / нулевой шаг → 1"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 446,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Object Creation / range / пустой диапазон"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 451,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Object Creation / repeat"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 452,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Object Creation / repeat / повторяет значение"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 455,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Object Creation / repeat / перевычисляет выражение каждую итерацию"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 461,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Object Creation / reshape / ⍴"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 462,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Object Creation / reshape / ⍴ / циклическое заполнение"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 467,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Object Creation / zip"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 468,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Object Creation / zip / по максимальной длине"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 473,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Object Creation / zip / по минимальной длине"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 478,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Object Creation / fn"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 479,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Object Creation / fn / анонимная функция"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 482,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Object Creation / fn / работает в map"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 489,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Object Creation / fn / можно вызывать при создании"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 492,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Object Creation / fn / рекурсия"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 497,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Object Creation / ->fn / toFn / defFn"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 498,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Object Creation / ->fn / toFn / defFn / преобразование выражения в функцию"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 501,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Object Creation / ->fn / toFn / defFn / можно вызывать при создании"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 504,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Object Creation / ->fn / toFn / defFn / рекурсия"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 509,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Object Creation / => / lambda"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 510,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Object Creation / => / lambda / один аргумент"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 514,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Object Creation / => / lambda / несколько аргументов"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 517,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Object Creation / => / lambda / можно вызывать при создании"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 520,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Object Creation / => / lambda / рекурсия"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 531,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 532,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / count / length"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 533,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / count / length / длина массива"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 536,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / count / length / длина строки"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 541,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / empty? / empty"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 542,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / empty? / empty / пустой массив"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 546,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / empty? / empty / не-массив → false"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 551,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / reverse"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 552,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / reverse / реверс"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 557,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / slice"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 558,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / slice / срез массива"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 562,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / slice / срез строки"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 566,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / slice / не-массив/строка → []"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 571,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / concat"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 572,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / concat / конкатенация"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 577,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / first"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 578,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / first / первый элемент"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 581,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / first / пустой → null"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 586,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / last"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 587,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / last / последний элемент"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 590,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / last / пустой → undefined"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 595,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / rest"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 596,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / rest / хвост"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 601,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / cons / pushStart"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 602,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / cons / pushStart / добавление в начало"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 607,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / find"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 608,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / find / поиск по значению"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 612,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / find / поиск по предикату"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 617,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / findIndex"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 618,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / findIndex / индекс или -1"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 624,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / map"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 625,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / map / унарная функция"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 628,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / map / не-массив → []"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 633,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / mapit"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 634,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / mapit / переменные it и idx"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 640,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / mapArr"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 641,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / mapArr / доступ к idx и arr"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 646,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / filter"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 647,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / filter / унарный предикат"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 652,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / filterit"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 653,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / filterit / переменные it и idx"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 658,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / filterArr"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 659,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / filterArr / доступ к idx и arr"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 664,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / reduce"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 665,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / reduce / накапливает результат"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 668,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / reduce / не-массив → init"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 673,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / reduceArr"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 674,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / reduceArr / 4 аргумента у fn"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 679,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / sort"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 680,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / sort / сортировка примитивов"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 683,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / sort / компаратор"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 686,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / sort / мутирует исходный массив"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 694,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / sortBy"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 695,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / sortBy / сортировка по ключу"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 702,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / some"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 703,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / some / хотя бы один"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 709,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / every"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 710,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / every / все"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 716,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / flat"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 717,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / flat / разглаживание"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 723,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / frequencies / counter"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 724,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / frequencies / counter / частотный анализ"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 729,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / partition"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 730,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / partition / разбиение на части"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 735,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / distinct"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 736,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / distinct / сохраняет порядок"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 739,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / distinct / кастомный компаратор"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 744,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / union"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 745,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / union / объединение без дублей"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 750,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / intersect"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 751,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / intersect / пересечение"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 756,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / difference"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 757,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / difference / разность"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 762,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / uniques"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 763,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / uniques / уникальные в одном массиве"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 768,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / shuffle"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 769,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / shuffle / сохраняет длину"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 777,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / sample"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 778,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / sample / один элемент по умолчанию"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 782,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / sample / n элементов"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 786,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / sample / n > length → всё"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 792,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / pluck"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 793,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / pluck / извлечение свойства"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 798,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / join"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 799,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / join / склейка массива"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 804,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Array Operations / joinObj"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 805,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Array Operations / joinObj / склейка объекта"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 816,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Hash Operations"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 817,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Hash Operations / contains? / containsKey"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 818,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Hash Operations / contains? / containsKey / own property"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 824,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Hash Operations / get / nth"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 825,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Hash Operations / get / nth / получение значения"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 830,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Hash Operations / get / nth / default"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 835,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Hash Operations / set"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 836,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Hash Operations / set / устанавливает и возвращает объект"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 842,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Hash Operations / del"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 843,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Hash Operations / del / удаляет свойство"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 848,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Hash Operations / keys"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 849,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Hash Operations / keys / массив ключей"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 854,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Hash Operations / vals / values"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 855,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Hash Operations / vals / values / массив значений"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 860,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Hash Operations / entries"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 861,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Hash Operations / entries / пары [k,v]"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 866,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Hash Operations / fromEntries"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 867,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Hash Operations / fromEntries / собирает объект"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 872,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Hash Operations / select"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 873,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Hash Operations / select / выборка ключей"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 876,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Hash Operations / select / выборка индексов массива"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 881,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Hash Operations / omit"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 882,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Hash Operations / omit / исключение ключей"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 887,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Hash Operations / compact"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 888,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Hash Operations / compact / удаляет null/undefined"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 891,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Hash Operations / compact / учитывает глубину"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 896,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Hash Operations / get_in"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 897,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Hash Operations / get_in / вложенное чтение"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 901,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Hash Operations / get_in / отсутствующий путь → undefined"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 906,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Hash Operations / assoc_in"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 907,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Hash Operations / assoc_in / создаёт промежуточные объекты"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 913,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Hash Operations / update_in"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 914,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Hash Operations / update_in / обновляет через функцию"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 917,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Hash Operations / update_in / regexp ключи"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 924,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Hash Operations / cp"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 925,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Hash Operations / cp / копирование между структурами"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 931,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Hash Operations / merge"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 932,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Hash Operations / merge / последний побеждает"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 935,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Hash Operations / merge / кастомный мерджер"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 938,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Hash Operations / merge / full режим"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 944,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Hash Operations / mergeDeep"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 945,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Hash Operations / mergeDeep / рекурсивное слияние"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 950,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Hash Operations / makeStruct"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 951,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Hash Operations / makeStruct / заполняет недостающие поля"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 962,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / String Operations"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 963,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / String Operations / str"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 964,
+      "kind": "it",
+      "name": "LPE Full Test Suite / String Operations / str / конкатенация"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 971,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / String Operations / split"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 972,
+      "kind": "it",
+      "name": "LPE Full Test Suite / String Operations / split / разбиение"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 977,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / String Operations / words"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 978,
+      "kind": "it",
+      "name": "LPE Full Test Suite / String Operations / words / слова по умолчанию"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 981,
+      "kind": "it",
+      "name": "LPE Full Test Suite / String Operations / words / кастомный регекс"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 986,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / String Operations / re_match"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 987,
+      "kind": "it",
+      "name": "LPE Full Test Suite / String Operations / re_match / global match"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 990,
+      "kind": "it",
+      "name": "LPE Full Test Suite / String Operations / re_match / null при неудаче"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 993,
+      "kind": "it",
+      "name": "LPE Full Test Suite / String Operations / re_match / r-strings"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 999,
+      "kind": "it",
+      "name": "LPE Full Test Suite / String Operations / re_match / обычные строки"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1007,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / String Operations / RegExp"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1008,
+      "kind": "it",
+      "name": "LPE Full Test Suite / String Operations / RegExp / создаёт RegExp"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1021,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Type Conversion"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1022,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Type Conversion / toAny"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1025,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Type Conversion / toBool"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1031,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Type Conversion / toInt / toNumber"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1035,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Type Conversion / toStr"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1039,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Type Conversion / jsonParse / read-string"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1042,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Type Conversion / jsonStringify"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1045,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Type Conversion / pr_str / jsonJoin"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1048,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Type Conversion / astToString / []"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1058,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Type Checks"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1059,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Type Checks / isa"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1062,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Type Checks / type"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1066,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Type Checks / classOf"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1071,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Type Checks / isNull"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1076,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Type Checks / isUndef"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1080,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Type Checks / isTrue / isFalse"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1086,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Type Checks / isBool"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1090,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Type Checks / isNumber"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1095,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Type Checks / isNumberLike"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1099,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Type Checks / isString"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1103,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Type Checks / isArray"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1107,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Type Checks / isHash"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1114,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Type Checks / isObj"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1119,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Type Checks / isFunction"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1130,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Variables & Context"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1131,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Variables & Context / := / assign"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1132,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Variables & Context / := / assign / присваивание переменной"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1135,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Variables & Context / := / assign / присваивание свойства"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1141,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Variables & Context / := / assign / цепочка присваиваний"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1146,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Variables & Context / let"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1147,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Variables & Context / let / привязки массивом"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1151,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Variables & Context / let / привязки хэшем"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1155,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Variables & Context / let / привязки функцией"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1159,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Variables & Context / let / затенение внешнего scope"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1166,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Variables & Context / let* / letseq / letstar"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1167,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Variables & Context / let* / letseq / letstar / последовательные привязки"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1170,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Variables & Context / let* / letseq / letstar / пустые привязки → тело"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1175,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Variables & Context / def"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1176,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Variables & Context / def / определение в контексте"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1181,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Variables & Context / undef"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1182,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Variables & Context / undef / удаляет переменную"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1185,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Variables & Context / undef / возвращает удалённое значение"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1188,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Variables & Context / undef / удаляет только из текущего scope"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1193,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Variables & Context / resolve"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1194,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Variables & Context / resolve / разыменование"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1199,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Variables & Context / ctx"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1200,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Variables & Context / ctx / выборка переменных"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1205,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Variables & Context / .- / property"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1206,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Variables & Context / .- / property / чтение"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1209,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Variables & Context / .- / property / запись"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1222,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Control Flow"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1223,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Control Flow / begin"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1224,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Control Flow / begin / возвращает последнее"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1227,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Control Flow / begin / пустой → null"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1232,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Control Flow / if"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1233,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Control Flow / if / первое истинное"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1236,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Control Flow / if / ветка else"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1239,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Control Flow / if / без else → undefined"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1244,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Control Flow / do"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1245,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Control Flow / do / цикл while"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1248,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Control Flow / do / один аргумент → один раз"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1251,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Control Flow / do / защита от бесконечного цикла"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1261,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Control Flow / return"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1262,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Control Flow / return / ранний выход из begin"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1267,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Control Flow / catchReturn"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1268,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Control Flow / catchReturn / ловит return"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1273,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Control Flow / try"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1274,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Control Flow / try / перехват исключения"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1277,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Control Flow / try / нет ошибки → значение"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1282,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Control Flow / nvl / coalesce"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1283,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Control Flow / nvl / coalesce / первый не-null"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1287,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Control Flow / nvl / coalesce / 0 и false — валидные значения"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1291,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Control Flow / nvl / coalesce / все null → null"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1296,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Control Flow / throw"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1297,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Control Flow / throw / выбрасывает"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1308,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Interpreter"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1309,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Interpreter / eval"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1310,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Interpreter / eval / AST в STDLIB"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1315,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Interpreter / eval_ast"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1316,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Interpreter / eval_ast / AST в текущем контексте"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1321,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Interpreter / eval_lpe"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1322,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Interpreter / eval_lpe / строка → код"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1327,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Interpreter / rep"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1328,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Interpreter / rep / eval + stringify"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1333,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Interpreter / return"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1334,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Interpreter / return / begin"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1339,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Interpreter / return / fn"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1358,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Application & Threading"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1359,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Application & Threading / identity / ()"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1360,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Application & Threading / identity / () / возвращает аргумент"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1366,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Application & Threading / ensureThat"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1367,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Application & Threading / ensureThat / returns values without coercion or assertion"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1377,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Application & Threading / ensureThat / preserves object and array references"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1383,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Application & Threading / ensureThat / evaluates its argument once"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1390,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Application & Threading / ensureThat / keeps the filter marker in the parsed AST and supports eval_lisp"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1397,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Application & Threading / ensureThat / passes through SQL expressions produced by a custom context"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1402,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Application & Threading / ensureThat / allows a custom context to override the wrapper"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1407,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Application & Threading / ensureThat / resolves asynchronous arguments"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1413,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Application & Threading / apply"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1414,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Application & Threading / apply / распаковка аргументов"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1419,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Application & Threading / invoke"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1420,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Application & Threading / invoke / вызов метода по имени"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1426,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Application & Threading / . / -> / threadFirst"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1427,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Application & Threading / . / -> / threadFirst / доступ по индексу/ключу"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1433,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Application & Threading / . / -> / threadFirst / цепочка вызовов"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1438,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Application & Threading / .. / ->> / threadLast"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1439,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Application & Threading / .. / ->> / threadLast / подстановка последним"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1450,
+      "kind": "describe",
+      "name": "LPE Full Test Suite / Edge Cases & Integration"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1451,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Edge Cases & Integration / сложный begin + do + if"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1465,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Edge Cases & Integration / цепочка мутаций массива"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1477,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Edge Cases & Integration / построение хэша через pipeline"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1493,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Edge Cases & Integration / ранний return во вложенной fn"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1509,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Edge Cases & Integration / изоляция контекстов"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1520,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Edge Cases & Integration / большой range"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1527,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Edge Cases & Integration / глубоко вложенный assoc_in + get_in"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1538,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Edge Cases & Integration / update_in с созданием промежуточных"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1549,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Edge Cases & Integration / distinct с объектами"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1560,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Edge Cases & Integration / merge массивов по индексу"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1564,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Edge Cases & Integration / пустые коллекции"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1573,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Edge Cases & Integration / типизация краевых значений"
+    },
+    {
+      "file": "test/test-lpe-functions.js",
+      "line": 1580,
+      "kind": "it",
+      "name": "LPE Full Test Suite / Edge Cases & Integration / строковые края"
+    },
+    {
+      "file": "test/test-streams.js",
+      "line": 32,
+      "kind": "describe",
+      "name": "Streams through an external adapter"
+    },
+    {
+      "file": "test/test-streams.js",
+      "line": 33,
+      "kind": "it",
+      "name": "Streams through an external adapter / combines current values and later updates"
+    },
+    {
+      "file": "test/test-streams.js",
+      "line": 49,
+      "kind": "it",
+      "name": "Streams through an external adapter / switches the selected branch and unsubscribes from the previous one"
+    },
+    {
+      "file": "test/test-streams.js",
+      "line": 70,
+      "kind": "it",
+      "name": "Streams through an external adapter / reuses the same returned stream without duplicate subscriptions"
+    },
+    {
+      "file": "test/test-streams.js",
+      "line": 82,
+      "kind": "it",
+      "name": "Streams through an external adapter / can switch from a stream result to a scalar"
+    },
+    {
+      "file": "test/test-streams.js",
+      "line": 94,
+      "kind": "it",
+      "name": "Streams through an external adapter / balances subscriptions when a stream occurs in multiple arguments"
+    },
+    {
+      "file": "test/test-vararg.js",
+      "line": 4,
+      "kind": "describe",
+      "name": "makeVararg tests"
+    },
+    {
+      "file": "test/test-vararg.js",
+      "line": 6,
+      "kind": "describe",
+      "name": "makeVararg tests / basic positional arguments"
+    },
+    {
+      "file": "test/test-vararg.js",
+      "line": 7,
+      "kind": "it",
+      "name": "makeVararg tests / basic positional arguments / should pass positional arguments in order"
+    },
+    {
+      "file": "test/test-vararg.js",
+      "line": 20,
+      "kind": "it",
+      "name": "makeVararg tests / basic positional arguments / should evaluate expressions in positional arguments"
+    },
+    {
+      "file": "test/test-vararg.js",
+      "line": 31,
+      "kind": "it",
+      "name": "makeVararg tests / basic positional arguments / should handle extra positional arguments"
+    },
+    {
+      "file": "test/test-vararg.js",
+      "line": 43,
+      "kind": "describe",
+      "name": "makeVararg tests / named arguments (kwargs)"
+    },
+    {
+      "file": "test/test-vararg.js",
+      "line": 44,
+      "kind": "it",
+      "name": "makeVararg tests / named arguments (kwargs) / should handle named arguments"
+    },
+    {
+      "file": "test/test-vararg.js",
+      "line": 56,
+      "kind": "it",
+      "name": "makeVararg tests / named arguments (kwargs) / should handle mixed positional and named arguments"
+    },
+    {
+      "file": "test/test-vararg.js",
+      "line": 68,
+      "kind": "it",
+      "name": "makeVararg tests / named arguments (kwargs) / should pass extra kwargs not in template"
+    },
+    {
+      "file": "test/test-vararg.js",
+      "line": 80,
+      "kind": "it",
+      "name": "makeVararg tests / named arguments (kwargs) / should evaluate expressions in kwargs"
+    },
+    {
+      "file": "test/test-vararg.js",
+      "line": 92,
+      "kind": "describe",
+      "name": "makeVararg tests / fn type arguments (wrapped in JS function)"
+    },
+    {
+      "file": "test/test-vararg.js",
+      "line": 93,
+      "kind": "it",
+      "name": "makeVararg tests / fn type arguments (wrapped in JS function) / should pass fn-type arguments as callable JS functions"
+    },
+    {
+      "file": "test/test-vararg.js",
+      "line": 106,
+      "kind": "it",
+      "name": "makeVararg tests / fn type arguments (wrapped in JS function) / should evaluate AST when fn-type callback is called"
+    },
+    {
+      "file": "test/test-vararg.js",
+      "line": 119,
+      "kind": "it",
+      "name": "makeVararg tests / fn type arguments (wrapped in JS function) / should handle mixed evaluated and fn-type arguments"
+    },
+    {
+      "file": "test/test-vararg.js",
+      "line": 138,
+      "kind": "it",
+      "name": "makeVararg tests / fn type arguments (wrapped in JS function) / should allow multiple calls to fn-type callback"
+    },
+    {
+      "file": "test/test-vararg.js",
+      "line": 152,
+      "kind": "describe",
+      "name": "makeVararg tests / type patterns (regex matching)"
+    },
+    {
+      "file": "test/test-vararg.js",
+      "line": 153,
+      "kind": "it",
+      "name": "makeVararg tests / type patterns (regex matching) / should match argument names with regex patterns"
+    },
+    {
+      "file": "test/test-vararg.js",
+      "line": 175,
+      "kind": "it",
+      "name": "makeVararg tests / type patterns (regex matching) / should apply fn pattern to extra kwargs not in template"
+    },
+    {
+      "file": "test/test-vararg.js",
+      "line": 209,
+      "kind": "it",
+      "name": "makeVararg tests / type patterns (regex matching) / should allow calling fn-type kwargs multiple times"
+    },
+    {
+      "file": "test/test-vararg.js",
+      "line": 224,
+      "kind": "describe",
+      "name": "makeVararg tests / inline type syntax"
+    },
+    {
+      "file": "test/test-vararg.js",
+      "line": 225,
+      "kind": "it",
+      "name": "makeVararg tests / inline type syntax / should parse inline type from template string"
+    },
+    {
+      "file": "test/test-vararg.js",
+      "line": 243,
+      "kind": "describe",
+      "name": "makeVararg tests / context variable resolution"
+    },
+    {
+      "file": "test/test-vararg.js",
+      "line": 244,
+      "kind": "it",
+      "name": "makeVararg tests / context variable resolution / should resolve context variables in arguments"
+    },
+    {
+      "file": "test/test-vararg.js",
+      "line": 257,
+      "kind": "it",
+      "name": "makeVararg tests / context variable resolution / should defer evaluation for fn-type arguments until called"
+    },
+    {
+      "file": "test/test-vararg.js",
+      "line": 272,
+      "kind": "describe",
+      "name": "makeVararg tests / evaluation order"
+    },
+    {
+      "file": "test/test-vararg.js",
+      "line": 273,
+      "kind": "it",
+      "name": "makeVararg tests / evaluation order / should evaluate arguments in the order they appear in the call"
+    },
+    {
+      "file": "test/test-vararg.js",
+      "line": 299,
+      "kind": "it",
+      "name": "makeVararg tests / evaluation order / should not evaluate fn-type args but still preserve order for others"
+    },
+    {
+      "file": "test/test-vararg.js",
+      "line": 322,
+      "kind": "it",
+      "name": "makeVararg tests / evaluation order / should preserve order with mixed positional and kwargs"
+    },
+    {
+      "file": "test/test-vararg.js",
+      "line": 344,
+      "kind": "describe",
+      "name": "makeVararg tests / edge cases"
+    },
+    {
+      "file": "test/test-vararg.js",
+      "line": 345,
+      "kind": "it",
+      "name": "makeVararg tests / edge cases / should handle empty template"
+    },
+    {
+      "file": "test/test-vararg.js",
+      "line": 356,
+      "kind": "it",
+      "name": "makeVararg tests / edge cases / should handle undefined/missing arguments"
+    },
+    {
+      "file": "test/test-vararg.js",
+      "line": 368,
+      "kind": "it",
+      "name": "makeVararg tests / edge cases / should handle null values"
+    },
+    {
+      "file": "test/test.js",
+      "line": 5,
+      "kind": "describe",
+      "name": "LPE tests"
+    },
+    {
+      "file": "test/test.js",
+      "line": 7,
+      "kind": "it",
+      "name": "LPE tests / should export parse function"
+    },
+    {
+      "file": "test/test.js",
+      "line": 12,
+      "kind": "it",
+      "name": "LPE tests / should export parse unary operators"
+    },
+    {
+      "file": "test/test.js",
+      "line": 18,
+      "kind": "it",
+      "name": "LPE tests / should parse simple expressions"
+    },
+    {
+      "file": "test/test.js",
+      "line": 24,
+      "kind": "it",
+      "name": "LPE tests / should parse arithmetics"
+    },
+    {
+      "file": "test/test.js",
+      "line": 31,
+      "kind": "it",
+      "name": "LPE tests / should parse variables"
+    },
+    {
+      "file": "test/test.js",
+      "line": 37,
+      "kind": "it",
+      "name": "LPE tests / should parse comparision"
+    },
+    {
+      "file": "test/test.js",
+      "line": 51,
+      "kind": "it",
+      "name": "LPE tests / should parse arithmetics priority"
+    },
+    {
+      "file": "test/test.js",
+      "line": 61,
+      "kind": "it",
+      "name": "LPE tests / should parse function calls"
+    },
+    {
+      "file": "test/test.js",
+      "line": 67,
+      "kind": "it",
+      "name": "LPE tests / should parse function arithmetics"
+    },
+    {
+      "file": "test/test.js",
+      "line": 75,
+      "kind": "it",
+      "name": "LPE tests / should parse arithmetics in arguments"
+    },
+    {
+      "file": "test/test.js",
+      "line": 81,
+      "kind": "it",
+      "name": "LPE tests / should parse logical expressions"
+    },
+    {
+      "file": "test/test.js",
+      "line": 92,
+      "kind": "it",
+      "name": "LPE tests / should correctly work with resolvString"
+    },
+    {
+      "file": "test/test.js",
+      "line": 100,
+      "kind": "it",
+      "name": "LPE tests / should parse UI stack expressions"
+    },
+    {
+      "file": "test/test.js",
+      "line": 108,
+      "kind": "it",
+      "name": "LPE tests / should parse named logical expressions a.k.a. where expressions"
+    },
+    {
+      "file": "test/test.js",
+      "line": 124,
+      "kind": "it",
+      "name": "LPE tests / should parse if expressions with grouping"
+    },
+    {
+      "file": "test/test.js",
+      "line": 133,
+      "kind": "it",
+      "name": "LPE tests / should parse :"
+    },
+    {
+      "file": "test/test.js",
+      "line": 140,
+      "kind": "it",
+      "name": "LPE tests / should eval if expressions"
+    },
+    {
+      "file": "test/test.js",
+      "line": 157,
+      "kind": "it",
+      "name": "LPE tests / should eval Javascript RegExp with context"
+    },
+    {
+      "file": "test/test.js",
+      "line": 164,
+      "kind": "it",
+      "name": "LPE tests / should eval Javascript RegExp with context (LPE)"
+    },
+    {
+      "file": "test/test.js",
+      "line": 169,
+      "kind": "it",
+      "name": "LPE tests / should parse tuples and arrows"
+    },
+    {
+      "file": "test/test.js",
+      "line": 178,
+      "kind": "describe",
+      "name": "LPE tests / statement separators"
+    },
+    {
+      "file": "test/test.js",
+      "line": 179,
+      "kind": "it",
+      "name": "LPE tests / statement separators / should accept ; as statement separator"
+    },
+    {
+      "file": "test/test.js",
+      "line": 186,
+      "kind": "it",
+      "name": "LPE tests / statement separators / should accept newline as statement separator"
+    },
+    {
+      "file": "test/test.js",
+      "line": 194,
+      "kind": "it",
+      "name": "LPE tests / statement separators / should reject space-separated statements"
+    },
+    {
+      "file": "test/test.js",
+      "line": 200,
+      "kind": "it",
+      "name": "LPE tests / statement separators / should reject adjacent statements with no separator"
+    },
+    {
+      "file": "test/test.js",
+      "line": 205,
+      "kind": "it",
+      "name": "LPE tests / statement separators / should still allow whitespace within an expression"
+    },
+    {
+      "file": "test/test.js",
+      "line": 213,
+      "kind": "describe",
+      "name": "LPE tests / comments: -- line and /* */ block (DAX/SQL compat)"
+    },
+    {
+      "file": "test/test.js",
+      "line": 214,
+      "kind": "it",
+      "name": "LPE tests / comments: -- line and /* */ block (DAX/SQL compat) / -- starts a line comment when preceded by whitespace"
+    },
+    {
+      "file": "test/test.js",
+      "line": 220,
+      "kind": "it",
+      "name": "LPE tests / comments: -- line and /* */ block (DAX/SQL compat) / -- continues an expression across newlines (mid-expression comment)"
+    },
+    {
+      "file": "test/test.js",
+      "line": 226,
+      "kind": "it",
+      "name": "LPE tests / comments: -- line and /* */ block (DAX/SQL compat) / does NOT treat -- as a comment when it is in arithmetic position (no whitespace before)"
+    },
+    {
+      "file": "test/test.js",
+      "line": 233,
+      "kind": "it",
+      "name": "LPE tests / comments: -- line and /* */ block (DAX/SQL compat) / /* */ starts and ends a block comment"
+    },
+    {
+      "file": "test/test.js",
+      "line": 239,
+      "kind": "it",
+      "name": "LPE tests / comments: -- line and /* */ block (DAX/SQL compat) / /* */ block comment can span multiple lines"
+    },
+    {
+      "file": "test/test.js",
+      "line": 243,
+      "kind": "it",
+      "name": "LPE tests / comments: -- line and /* */ block (DAX/SQL compat) / empty /**/ is allowed"
+    },
+    {
+      "file": "test/test.js",
+      "line": 247,
+      "kind": "it",
+      "name": "LPE tests / comments: -- line and /* */ block (DAX/SQL compat) / // line comments still work (regression guard)"
+    },
+    {
+      "file": "test/test.js",
+      "line": 251,
+      "kind": "it",
+      "name": "LPE tests / comments: -- line and /* */ block (DAX/SQL compat) / comments compose with the ; argument separator"
+    },
+    {
+      "file": "test/test.js",
+      "line": 259,
+      "kind": "describe",
+      "name": "LPE tests / argument separator: ; accepted (DAX-Euro locale compat)"
+    },
+    {
+      "file": "test/test.js",
+      "line": 260,
+      "kind": "it",
+      "name": "LPE tests / argument separator: ; accepted (DAX-Euro locale compat) / parses ; identically to , inside function calls"
+    },
+    {
+      "file": "test/test.js",
+      "line": 266,
+      "kind": "it",
+      "name": "LPE tests / argument separator: ; accepted (DAX-Euro locale compat) / handles mixed , and ; in the same call"
+    },
+    {
+      "file": "test/test.js",
+      "line": 271,
+      "kind": "it",
+      "name": "LPE tests / argument separator: ; accepted (DAX-Euro locale compat) / handles missing-arg edge cases like , does"
+    },
+    {
+      "file": "test/test.js",
+      "line": 280,
+      "kind": "it",
+      "name": "LPE tests / argument separator: ; accepted (DAX-Euro locale compat) / does not affect ; as a top-level statement separator"
+    },
+    {
+      "file": "test/test.js",
+      "line": 285,
+      "kind": "it",
+      "name": "LPE tests / argument separator: ; accepted (DAX-Euro locale compat) / does not affect ; inside nested calls"
+    },
+    {
+      "file": "test/test.js",
+      "line": 294,
+      "kind": "describe",
+      "name": "LPE tests / long expressions"
+    },
+    {
+      "file": "test/test.js",
+      "line": 295,
+      "kind": "it",
+      "name": "LPE tests / long expressions / parses a sum of thousands of terms into one list, in linear time"
+    },
+    {
+      "file": "test/test.js",
+      "line": 306,
+      "kind": "it",
+      "name": "LPE tests / long expressions / still puts the caret line under the token in an error message"
+    }
+  ],
+  "skipped": [
+    {
+      "origin": "test/test-async.js:4",
+      "group": "",
+      "reason": "manual expansion required: FunctionDeclaration"
+    },
+    {
+      "origin": "test/test-async.js:11",
+      "group": "",
+      "reason": "manual expansion required: FunctionDeclaration"
+    },
+    {
+      "origin": "test/test-async.js:28",
+      "group": "async tests / Promise in add arguments returns promise",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-async.js:30",
+      "group": "async tests / Promise in add arguments returns promise",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-async.js:36",
+      "group": "async tests / VAR ... RETURN with promises / unboxes a promise binding before later VARs see it",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-async.js:43",
+      "group": "async tests / VAR ... RETURN with promises / chains multiple promise bindings sequentially",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-async.js:48",
+      "group": "async tests / VAR ... RETURN with promises / handles a promise in the RETURN body",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-datetime.js:8",
+      "group": "Calendar function: today / should return the current date in the format YYYY-MM-DD",
+      "reason": "nonliteral identifier expectedToday"
+    },
+    {
+      "origin": "test/test-datetime.js:13",
+      "group": "Calendar function: today / should return a string of length 10",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-datetime.js:185",
+      "group": "Calendar function: toStart / should correctly handle the case without specifying a unit",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-datetime.js:217",
+      "group": "Calendar function: toEnd / should return the current date if no time unit is specified",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-datetime.js:227",
+      "group": "Calendar function: bound / should return the start and end dates of the week by default",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-datetime.js:228",
+      "group": "Calendar function: bound / should return the start and end dates of the week by default",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-datetime.js:234",
+      "group": "Calendar function: bound / should return the start and end dates of the month for a given date",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-datetime.js:235",
+      "group": "Calendar function: bound / should return the start and end dates of the month for a given date",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-datetime.js:241",
+      "group": "Calendar function: bound / should return the start and end dates of the quarter for a given date",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-datetime.js:242",
+      "group": "Calendar function: bound / should return the start and end dates of the quarter for a given date",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-datetime.js:248",
+      "group": "Calendar function: bound / should return the start and end dates of the year for a given date",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-datetime.js:249",
+      "group": "Calendar function: bound / should return the start and end dates of the year for a given date",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-datetime.js:257",
+      "group": "Calendar function: extend / todays date and 5 days ahead",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-datetime.js:267",
+      "group": "Calendar function: extend / date interval for a week",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-datetime.js:277",
+      "group": "Calendar function: extend / date interval with a negative value",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-datetime.js:278",
+      "group": "Calendar function: extend / date interval with a negative value",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-datetime.js:284",
+      "group": "Calendar function: extend / handles cases when delta is 0",
+      "reason": "nonliteral CallExpression"
+    },
+    {
+      "origin": "test/test-datetime.js:290",
+      "group": "Calendar function: extend / handles unit of measurement \"month\"",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-datetime.js:296",
+      "group": "Calendar function: extend / handles unit of measurement \"year\"",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-datetime.js:304",
+      "group": "Calendar function: extend / correctly extends the interval using an array of dates",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-datetime.js:310",
+      "group": "Calendar function: extend / correctly works with a half-year interval",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-datetime.js:316",
+      "group": "Calendar function: extend / correctly works with a quarter interval",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-datetime.js:322",
+      "group": "Calendar function: extend / correctly works with negative delta values in months",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-datetime.js:493",
+      "group": "Calendar function: isoy / should return the year as a string",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-datetime.js:519",
+      "group": "Calendar function: isom / should return the year and month as a string",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-deparse-forms-roundtrip.js:4",
+      "group": "",
+      "reason": "manual expansion required: FunctionDeclaration"
+    },
+    {
+      "origin": "test/test-deparse-forms-roundtrip.js:52",
+      "group": "LPE deparse special forms roundtrip",
+      "reason": "manual expansion required: ForOfStatement"
+    },
+    {
+      "origin": "test/test-deparse-forms-roundtrip.js:60",
+      "group": "LPE deparse special forms roundtrip",
+      "reason": "manual expansion required: ForOfStatement"
+    },
+    {
+      "origin": "test/test-deparse-literals-roundtrip.js:4",
+      "group": "",
+      "reason": "manual expansion required: FunctionDeclaration"
+    },
+    {
+      "origin": "test/test-deparse-literals-roundtrip.js:41",
+      "group": "LPE deparse literal round trips",
+      "reason": "manual expansion required: ForOfStatement"
+    },
+    {
+      "origin": "test/test-deparse-operators-roundtrip.js:4",
+      "group": "",
+      "reason": "manual expansion required: FunctionDeclaration"
+    },
+    {
+      "origin": "test/test-deparse-operators-roundtrip.js:23",
+      "group": "LPE deparse operator roundtrips / preserves every infix operator and its aliases",
+      "reason": "manual expansion required: ForOfStatement"
+    },
+    {
+      "origin": "test/test-deparse-operators-roundtrip.js:38",
+      "group": "LPE deparse operator roundtrips / preserves mixed precedence and associativity without adding AST parentheses",
+      "reason": "manual expansion required: ForOfStatement"
+    },
+    {
+      "origin": "test/test-deparse-operators-roundtrip.js:48",
+      "group": "LPE deparse operator roundtrips / distinguishes unary operators from binary operators and explicit parentheses",
+      "reason": "manual expansion required: ForOfStatement"
+    },
+    {
+      "origin": "test/test-deparse-operators-roundtrip.js:55",
+      "group": "LPE deparse operator roundtrips / distinguishes unary operators from binary operators and explicit parentheses",
+      "reason": "manual expansion required: ForOfStatement"
+    },
+    {
+      "origin": "test/test-deparse-operators-roundtrip.js:61",
+      "group": "LPE deparse operator roundtrips / preserves computed callees, member access, method calls and pipes",
+      "reason": "manual expansion required: ForOfStatement"
+    },
+    {
+      "origin": "test/test-deparse-operators-roundtrip.js:74",
+      "group": "LPE deparse operator roundtrips / preserves functional logical forms that cannot be rendered as an infix chain",
+      "reason": "manual expansion required: ForOfStatement"
+    },
+    {
+      "origin": "test/test-deparse-operators-roundtrip.js:85",
+      "group": "LPE deparse operator roundtrips / preserves explicit grouping in function arguments and multiline formatting",
+      "reason": "manual expansion required: ForOfStatement"
+    },
+    {
+      "origin": "test/test-deparse-operators-roundtrip.js:94",
+      "group": "LPE deparse operator roundtrips / preserves keyword function names after an argument separator",
+      "reason": "manual expansion required: ForOfStatement"
+    },
+    {
+      "origin": "test/test-deparse-operators-roundtrip.js:101",
+      "group": "LPE deparse operator roundtrips / preserves keyword function names after an argument separator",
+      "reason": "manual expansion required: ForOfStatement"
+    },
+    {
+      "origin": "test/test-host-compat.js:7",
+      "group": "Host compatibility / exports variable accessors used by host special forms",
+      "reason": "unsupported API $var$"
+    },
+    {
+      "origin": "test/test-host-compat.js:8",
+      "group": "Host compatibility / exports variable accessors used by host special forms",
+      "reason": "unsupported API $getvar$"
+    },
+    {
+      "origin": "test/test-host-compat.js:9",
+      "group": "Host compatibility / exports variable accessors used by host special forms",
+      "reason": "unsupported API $setvar$"
+    },
+    {
+      "origin": "test/test-host-compat.js:10",
+      "group": "Host compatibility / exports variable accessors used by host special forms",
+      "reason": "unsupported API $var$"
+    },
+    {
+      "origin": "test/test-host-compat.js:32",
+      "group": "Host compatibility / define keeps its functions local",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-lisp.js:140",
+      "group": "LISP tests / should skip current realization and run lower",
+      "reason": "nonliteral MemberExpression"
+    },
+    {
+      "origin": "test/test-lisp.js:483",
+      "group": "LISP tests / hash and {=} empty-hash literal / {=} produces an empty hash (not array)",
+      "reason": "unsupported API Array.isArray"
+    },
+    {
+      "origin": "test/test-lisp.js:489",
+      "group": "LISP tests / hash and {=} empty-hash literal / {} still produces an empty array",
+      "reason": "unsupported API Array.isArray"
+    },
+    {
+      "origin": "test/test-lisp.js:499",
+      "group": "LISP tests / hash and {=} empty-hash literal / hash() builtin returns an empty hash",
+      "reason": "unsupported API Array.isArray"
+    },
+    {
+      "origin": "test/test-lisp.js:510",
+      "group": "LISP tests / hash and {=} empty-hash literal / does not affect existing {a=1} / {1,2} / {a=1, 2} forms",
+      "reason": "unsupported API Array.isArray"
+    },
+    {
+      "origin": "test/test-lisp.js:511",
+      "group": "LISP tests / hash and {=} empty-hash literal / does not affect existing {a=1} / {1,2} / {a=1, 2} forms",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-lisp.js:512",
+      "group": "LISP tests / hash and {=} empty-hash literal / does not affect existing {a=1} / {1,2} / {a=1, 2} forms",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-lisp.js:513",
+      "group": "LISP tests / hash and {=} empty-hash literal / does not affect existing {a=1} / {1,2} / {a=1, 2} forms",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-lisp.js:531",
+      "group": "LISP tests / ~> JS method dispatch / without parens returns a method bound to the receiver",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-lisp.js:532",
+      "group": "LISP tests / ~> JS method dispatch / without parens returns a method bound to the receiver",
+      "reason": "unsupported API fn"
+    },
+    {
+      "origin": "test/test-lisp.js:533",
+      "group": "LISP tests / ~> JS method dispatch / without parens returns a method bound to the receiver",
+      "reason": "unsupported API fn"
+    },
+    {
+      "origin": "test/test-lisp.js:564",
+      "group": "LISP tests / ~> JS method dispatch / walks plain JS objects through property chains",
+      "reason": "nonliteral identifier ctx"
+    },
+    {
+      "origin": "test/test-lisp.js:567",
+      "group": "LISP tests / ~> JS method dispatch / walks plain JS objects through property chains",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-lisp.js:568",
+      "group": "LISP tests / ~> JS method dispatch / walks plain JS objects through property chains",
+      "reason": "unsupported API greet"
+    },
+    {
+      "origin": "test/test-lisp.js:581",
+      "group": "LISP tests / ~> JS method dispatch / accepts a string literal on the right (same as bare name)",
+      "reason": "unsupported API fn"
+    },
+    {
+      "origin": "test/test-lpe-functions.js:5",
+      "group": "",
+      "reason": "manual expansion required: FunctionDeclaration"
+    },
+    {
+      "origin": "test/test-lpe-functions.js:9",
+      "group": "",
+      "reason": "manual expansion required: FunctionDeclaration"
+    },
+    {
+      "origin": "test/test-lpe-functions.js:13",
+      "group": "",
+      "reason": "manual expansion required: FunctionDeclaration"
+    },
+    {
+      "origin": "test/test-lpe-functions.js:17",
+      "group": "",
+      "reason": "manual expansion required: FunctionDeclaration"
+    },
+    {
+      "origin": "test/test-lpe-functions.js:21",
+      "group": "",
+      "reason": "manual expansion required: FunctionDeclaration"
+    },
+    {
+      "origin": "test/test-lpe-functions.js:25",
+      "group": "",
+      "reason": "manual expansion required: FunctionDeclaration"
+    },
+    {
+      "origin": "test/test-lpe-functions.js:30",
+      "group": "",
+      "reason": "manual expansion required: FunctionDeclaration"
+    },
+    {
+      "origin": "test/test-lpe-functions.js:34",
+      "group": "",
+      "reason": "manual expansion required: FunctionDeclaration"
+    },
+    {
+      "origin": "test/test-lpe-functions.js:38",
+      "group": "",
+      "reason": "manual expansion required: FunctionDeclaration"
+    },
+    {
+      "origin": "test/test-lpe-functions.js:65",
+      "group": "LPE Full Test Suite / Constants & Basic Values / global constructors",
+      "reason": "nonliteral identifier Array"
+    },
+    {
+      "origin": "test/test-lpe-functions.js:66",
+      "group": "LPE Full Test Suite / Constants & Basic Values / global constructors",
+      "reason": "nonliteral identifier Object"
+    },
+    {
+      "origin": "test/test-lpe-functions.js:67",
+      "group": "LPE Full Test Suite / Constants & Basic Values / global constructors",
+      "reason": "nonliteral identifier Date"
+    },
+    {
+      "origin": "test/test-lpe-functions.js:68",
+      "group": "LPE Full Test Suite / Constants & Basic Values / global constructors",
+      "reason": "nonliteral identifier JSON"
+    },
+    {
+      "origin": "test/test-lpe-functions.js:350",
+      "group": "LPE Full Test Suite / Math Operators / rand / возвращает [0, 1)",
+      "reason": "manual expansion required: ForStatement"
+    },
+    {
+      "origin": "test/test-lpe-functions.js:394",
+      "group": "LPE Full Test Suite / Object Creation / vector / { / создаёт массив",
+      "reason": "nonliteral CallExpression"
+    },
+    {
+      "origin": "test/test-lpe-functions.js:396",
+      "group": "LPE Full Test Suite / Object Creation / vector / { / создаёт массив",
+      "reason": "nonliteral CallExpression"
+    },
+    {
+      "origin": "test/test-lpe-functions.js:412",
+      "group": "LPE Full Test Suite / Object Creation / tuple / гибридный массив",
+      "reason": "nonliteral CallExpression"
+    },
+    {
+      "origin": "test/test-lpe-functions.js:413",
+      "group": "LPE Full Test Suite / Object Creation / tuple / гибридный массив",
+      "reason": "nonliteral CallExpression"
+    },
+    {
+      "origin": "test/test-lpe-functions.js:414",
+      "group": "LPE Full Test Suite / Object Creation / tuple / гибридный массив",
+      "reason": "nonliteral CallExpression"
+    },
+    {
+      "origin": "test/test-lpe-functions.js:838",
+      "group": "LPE Full Test Suite / Hash Operations / set / устанавливает и возвращает объект",
+      "reason": "nonliteral CallExpression"
+    },
+    {
+      "origin": "test/test-lpe-functions.js:919",
+      "group": "LPE Full Test Suite / Hash Operations / update_in / regexp ключи",
+      "reason": "nonliteral MemberExpression"
+    },
+    {
+      "origin": "test/test-lpe-functions.js:920",
+      "group": "LPE Full Test Suite / Hash Operations / update_in / regexp ключи",
+      "reason": "nonliteral MemberExpression"
+    },
+    {
+      "origin": "test/test-lpe-functions.js:1136",
+      "group": "LPE Full Test Suite / Variables & Context / := / assign / присваивание свойства",
+      "reason": "nonliteral CallExpression"
+    },
+    {
+      "origin": "test/test-lpe-functions.js:1157",
+      "group": "LPE Full Test Suite / Variables & Context / let / привязки функцией",
+      "reason": "nonliteral ArrowFunctionExpression"
+    },
+    {
+      "origin": "test/test-lpe-functions.js:1378",
+      "group": "LPE Full Test Suite / Application & Threading / ensureThat / preserves object and array references",
+      "reason": "manual expansion required: ForOfStatement"
+    },
+    {
+      "origin": "test/test-lpe-functions.js:1386",
+      "group": "LPE Full Test Suite / Application & Threading / ensureThat / evaluates its argument once",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-lpe-functions.js:1387",
+      "group": "LPE Full Test Suite / Application & Threading / ensureThat / evaluates its argument once",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-lpe-functions.js:1399",
+      "group": "LPE Full Test Suite / Application & Threading / ensureThat / passes through SQL expressions produced by a custom context",
+      "reason": "nonliteral identifier context"
+    },
+    {
+      "origin": "test/test-lpe-functions.js:1404",
+      "group": "LPE Full Test Suite / Application & Threading / ensureThat / allows a custom context to override the wrapper",
+      "reason": "nonliteral identifier context"
+    },
+    {
+      "origin": "test/test-lpe-functions.js:1409",
+      "group": "LPE Full Test Suite / Application & Threading / ensureThat / resolves asynchronous arguments",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-streams.js:5",
+      "group": "",
+      "reason": "manual expansion required: FunctionDeclaration"
+    },
+    {
+      "origin": "test/test-streams.js:38",
+      "group": "Streams through an external adapter / combines current values and later updates",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-streams.js:40",
+      "group": "Streams through an external adapter / combines current values and later updates",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-streams.js:42",
+      "group": "Streams through an external adapter / combines current values and later updates",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-streams.js:44",
+      "group": "Streams through an external adapter / combines current values and later updates",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-streams.js:45",
+      "group": "Streams through an external adapter / combines current values and later updates",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-streams.js:46",
+      "group": "Streams through an external adapter / combines current values and later updates",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-streams.js:55",
+      "group": "Streams through an external adapter / switches the selected branch and unsubscribes from the previous one",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-streams.js:57",
+      "group": "Streams through an external adapter / switches the selected branch and unsubscribes from the previous one",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-streams.js:58",
+      "group": "Streams through an external adapter / switches the selected branch and unsubscribes from the previous one",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-streams.js:59",
+      "group": "Streams through an external adapter / switches the selected branch and unsubscribes from the previous one",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-streams.js:61",
+      "group": "Streams through an external adapter / switches the selected branch and unsubscribes from the previous one",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-streams.js:63",
+      "group": "Streams through an external adapter / switches the selected branch and unsubscribes from the previous one",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-streams.js:65",
+      "group": "Streams through an external adapter / switches the selected branch and unsubscribes from the previous one",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-streams.js:66",
+      "group": "Streams through an external adapter / switches the selected branch and unsubscribes from the previous one",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-streams.js:67",
+      "group": "Streams through an external adapter / switches the selected branch and unsubscribes from the previous one",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-streams.js:76",
+      "group": "Streams through an external adapter / reuses the same returned stream without duplicate subscriptions",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-streams.js:77",
+      "group": "Streams through an external adapter / reuses the same returned stream without duplicate subscriptions",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-streams.js:79",
+      "group": "Streams through an external adapter / reuses the same returned stream without duplicate subscriptions",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-streams.js:88",
+      "group": "Streams through an external adapter / can switch from a stream result to a scalar",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-streams.js:89",
+      "group": "Streams through an external adapter / can switch from a stream result to a scalar",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-streams.js:90",
+      "group": "Streams through an external adapter / can switch from a stream result to a scalar",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-streams.js:99",
+      "group": "Streams through an external adapter / balances subscriptions when a stream occurs in multiple arguments",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-streams.js:101",
+      "group": "Streams through an external adapter / balances subscriptions when a stream occurs in multiple arguments",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-streams.js:102",
+      "group": "Streams through an external adapter / balances subscriptions when a stream occurs in multiple arguments",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:17",
+      "group": "makeVararg tests / basic positional arguments / should pass positional arguments in order",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:28",
+      "group": "makeVararg tests / basic positional arguments / should evaluate expressions in positional arguments",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:39",
+      "group": "makeVararg tests / basic positional arguments / should handle extra positional arguments",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:53",
+      "group": "makeVararg tests / named arguments (kwargs) / should handle named arguments",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:65",
+      "group": "makeVararg tests / named arguments (kwargs) / should handle mixed positional and named arguments",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:77",
+      "group": "makeVararg tests / named arguments (kwargs) / should pass extra kwargs not in template",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:88",
+      "group": "makeVararg tests / named arguments (kwargs) / should evaluate expressions in kwargs",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:102",
+      "group": "makeVararg tests / fn type arguments (wrapped in JS function) / should pass fn-type arguments as callable JS functions",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:103",
+      "group": "makeVararg tests / fn type arguments (wrapped in JS function) / should pass fn-type arguments as callable JS functions",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:116",
+      "group": "makeVararg tests / fn type arguments (wrapped in JS function) / should evaluate AST when fn-type callback is called",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:132",
+      "group": "makeVararg tests / fn type arguments (wrapped in JS function) / should handle mixed evaluated and fn-type arguments",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:133",
+      "group": "makeVararg tests / fn type arguments (wrapped in JS function) / should handle mixed evaluated and fn-type arguments",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:134",
+      "group": "makeVararg tests / fn type arguments (wrapped in JS function) / should handle mixed evaluated and fn-type arguments",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:135",
+      "group": "makeVararg tests / fn type arguments (wrapped in JS function) / should handle mixed evaluated and fn-type arguments",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:148",
+      "group": "makeVararg tests / fn type arguments (wrapped in JS function) / should allow multiple calls to fn-type callback",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:168",
+      "group": "makeVararg tests / type patterns (regex matching) / should match argument names with regex patterns",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:169",
+      "group": "makeVararg tests / type patterns (regex matching) / should match argument names with regex patterns",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:170",
+      "group": "makeVararg tests / type patterns (regex matching) / should match argument names with regex patterns",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:171",
+      "group": "makeVararg tests / type patterns (regex matching) / should match argument names with regex patterns",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:172",
+      "group": "makeVararg tests / type patterns (regex matching) / should match argument names with regex patterns",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:201",
+      "group": "makeVararg tests / type patterns (regex matching) / should apply fn pattern to extra kwargs not in template",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:202",
+      "group": "makeVararg tests / type patterns (regex matching) / should apply fn pattern to extra kwargs not in template",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:203",
+      "group": "makeVararg tests / type patterns (regex matching) / should apply fn pattern to extra kwargs not in template",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:204",
+      "group": "makeVararg tests / type patterns (regex matching) / should apply fn pattern to extra kwargs not in template",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:205",
+      "group": "makeVararg tests / type patterns (regex matching) / should apply fn pattern to extra kwargs not in template",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:206",
+      "group": "makeVararg tests / type patterns (regex matching) / should apply fn pattern to extra kwargs not in template",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:220",
+      "group": "makeVararg tests / type patterns (regex matching) / should allow calling fn-type kwargs multiple times",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:237",
+      "group": "makeVararg tests / inline type syntax / should parse inline type from template string",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:238",
+      "group": "makeVararg tests / inline type syntax / should parse inline type from template string",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:239",
+      "group": "makeVararg tests / inline type syntax / should parse inline type from template string",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:254",
+      "group": "makeVararg tests / context variable resolution / should resolve context variables in arguments",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:266",
+      "group": "makeVararg tests / context variable resolution / should defer evaluation for fn-type arguments until called",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:267",
+      "group": "makeVararg tests / context variable resolution / should defer evaluation for fn-type arguments until called",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:268",
+      "group": "makeVararg tests / context variable resolution / should defer evaluation for fn-type arguments until called",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:292",
+      "group": "makeVararg tests / evaluation order / should evaluate arguments in the order they appear in the call",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:293",
+      "group": "makeVararg tests / evaluation order / should evaluate arguments in the order they appear in the call",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:294",
+      "group": "makeVararg tests / evaluation order / should evaluate arguments in the order they appear in the call",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:295",
+      "group": "makeVararg tests / evaluation order / should evaluate arguments in the order they appear in the call",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:296",
+      "group": "makeVararg tests / evaluation order / should evaluate arguments in the order they appear in the call",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:317",
+      "group": "makeVararg tests / evaluation order / should not evaluate fn-type args but still preserve order for others",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:318",
+      "group": "makeVararg tests / evaluation order / should not evaluate fn-type args but still preserve order for others",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:319",
+      "group": "makeVararg tests / evaluation order / should not evaluate fn-type args but still preserve order for others",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:340",
+      "group": "makeVararg tests / evaluation order / should preserve order with mixed positional and kwargs",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:353",
+      "group": "makeVararg tests / edge cases / should handle empty template",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:365",
+      "group": "makeVararg tests / edge cases / should handle undefined/missing arguments",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test-vararg.js:376",
+      "group": "makeVararg tests / edge cases / should handle null values",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test.js:145",
+      "group": "LPE tests / should eval if expressions",
+      "reason": "unsupported API JSON.parse"
+    },
+    {
+      "origin": "test/test.js:261",
+      "group": "LPE tests / argument separator: ; accepted (DAX-Euro locale compat) / parses ; identically to , inside function calls",
+      "reason": "nonliteral CallExpression"
+    },
+    {
+      "origin": "test/test.js:262",
+      "group": "LPE tests / argument separator: ; accepted (DAX-Euro locale compat) / parses ; identically to , inside function calls",
+      "reason": "nonliteral CallExpression"
+    },
+    {
+      "origin": "test/test.js:274",
+      "group": "LPE tests / argument separator: ; accepted (DAX-Euro locale compat) / handles missing-arg edge cases like , does",
+      "reason": "nonliteral CallExpression"
+    },
+    {
+      "origin": "test/test.js:275",
+      "group": "LPE tests / argument separator: ; accepted (DAX-Euro locale compat) / handles missing-arg edge cases like , does",
+      "reason": "nonliteral CallExpression"
+    },
+    {
+      "origin": "test/test.js:276",
+      "group": "LPE tests / argument separator: ; accepted (DAX-Euro locale compat) / handles missing-arg edge cases like , does",
+      "reason": "nonliteral CallExpression"
+    },
+    {
+      "origin": "test/test.js:277",
+      "group": "LPE tests / argument separator: ; accepted (DAX-Euro locale compat) / handles missing-arg edge cases like , does",
+      "reason": "nonliteral CallExpression"
+    },
+    {
+      "origin": "test/test.js:300",
+      "group": "LPE tests / long expressions / parses a sum of thousands of terms into one list, in linear time",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test.js:301",
+      "group": "LPE tests / long expressions / parses a sum of thousands of terms into one list, in linear time",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test.js:302",
+      "group": "LPE tests / long expressions / parses a sum of thousands of terms into one list, in linear time",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test.js:315",
+      "group": "LPE tests / long expressions / still puts the caret line under the token in an error message",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test.js:317",
+      "group": "LPE tests / long expressions / still puts the caret line under the token in an error message",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "test/test.js:318",
+      "group": "LPE tests / long expressions / still puts the caret line under the token in an error message",
+      "reason": "unsupported API tuple.first.map"
+    },
+    {
+      "origin": "test/test.js:319",
+      "group": "LPE tests / long expressions / still puts the caret line under the token in an error message",
+      "reason": "actual is not a direct API call"
+    },
+    {
+      "origin": "src/context/objects.js:21",
+      "reason": "nonliteral doc expectation: Unexpected token (1:5)"
+    },
+    {
+      "origin": "src/context/objects.js:42",
+      "reason": "nonliteral doc expectation: Unexpected token, expected \",\" (1:8)"
+    },
+    {
+      "origin": "src/context/objects.js:76",
+      "reason": "nonliteral doc expectation: Unexpected token, expected \",\" (1:11)"
+    },
+    {
+      "origin": "src/context/objects.js:78",
+      "reason": "nonliteral doc expectation: Unexpected token, expected \",\" (1:2)"
+    },
+    {
+      "origin": "src/context/objects.js:202",
+      "reason": "multiline doc example requires manual fixture"
+    },
+    {
+      "origin": "src/context/objects.js:208",
+      "reason": "multiline doc example requires manual fixture"
+    },
+    {
+      "origin": "src/context/objects.js:276",
+      "reason": "nonliteral doc expectation: Unexpected token (1:8)"
+    },
+    {
+      "origin": "src/context/objects.js:368",
+      "reason": "nonliteral doc expectation: Unexpected token (1:8)"
+    },
+    {
+      "origin": "src/context/objects.js:369",
+      "reason": "nonliteral doc expectation: Unexpected token (1:8)"
+    },
+    {
+      "origin": "src/context/objects.js:370",
+      "reason": "nonliteral doc expectation: Unexpected token (1:12)"
+    },
+    {
+      "origin": "src/context/objects.js:421",
+      "reason": "nonliteral doc expectation: Unexpected token, expected \",\" (1:11)"
+    },
+    {
+      "origin": "src/context/objects.js:778",
+      "reason": "multiline doc example requires manual fixture"
+    },
+    {
+      "origin": "src/context/objects.js:807",
+      "reason": "multiline doc example requires manual fixture"
+    },
+    {
+      "origin": "src/context/objects.js:809",
+      "reason": "multiline doc example requires manual fixture"
+    },
+    {
+      "origin": "src/context/objects.js:844",
+      "reason": "nonliteral doc expectation: Unexpected token, expected \",\" (1:18)"
+    },
+    {
+      "origin": "src/context/objects.js:845",
+      "reason": "nonliteral doc expectation: Unexpected token, expected \",\" (1:18)"
+    },
+    {
+      "origin": "src/context/objects.js:849",
+      "reason": "multiline doc example requires manual fixture"
+    },
+    {
+      "origin": "src/context/objects.js:850",
+      "reason": "multiline doc example requires manual fixture"
+    },
+    {
+      "origin": "src/context/objects.js:854",
+      "reason": "multiline doc example requires manual fixture"
+    },
+    {
+      "origin": "src/context/objects.js:855",
+      "reason": "multiline doc example requires manual fixture"
+    },
+    {
+      "origin": "src/context/objects.js:971",
+      "reason": "nonliteral doc expectation: Unterminated string constant. (1:2)"
+    },
+    {
+      "origin": "src/context/objects.js:1169",
+      "reason": "nonliteral doc expectation: Unexpected token (1:2)"
+    },
+    {
+      "origin": "src/context/objects.js:1388",
+      "reason": "nonliteral doc expectation: Unexpected token, expected \",\" (1:11)"
+    },
+    {
+      "origin": "src/context/objects.js:1389",
+      "reason": "nonliteral doc expectation: Unexpected token, expected \",\" (1:8)"
+    },
+    {
+      "origin": "src/context/objects.js:1436",
+      "reason": "nonliteral doc expectation: Unexpected token, expected \",\" (1:14)"
+    },
+    {
+      "origin": "src/context/objects.js:1488",
+      "reason": "nonliteral doc expectation: Invalid shorthand property initializer. (1:13)"
+    },
+    {
+      "origin": "src/context/objects.js:1568",
+      "reason": "multiline doc example requires manual fixture"
+    },
+    {
+      "origin": "src/context/objects.js:1681",
+      "reason": "multiline doc example requires manual fixture"
+    },
+    {
+      "origin": "src/context/objects.js:1723",
+      "reason": "nonliteral doc expectation: Unexpected token (1:11)"
+    },
+    {
+      "origin": "src/context/objects.js:1785",
+      "reason": "nonliteral doc expectation: Unexpected token (1:17)"
+    },
+    {
+      "origin": "src/context/objects.js:1786",
+      "reason": "nonliteral doc expectation: Unexpected token (1:17)"
+    },
+    {
+      "origin": "src/context/objects.js:1835",
+      "reason": "multiline doc example requires manual fixture"
+    },
+    {
+      "origin": "src/context/objects.js:1836",
+      "reason": "nonliteral doc expectation: Unexpected token, expected \",\" (1:12)"
+    },
+    {
+      "origin": "src/context/std.js:136",
+      "reason": "nonliteral doc expectation: Unexpected token (1:5)"
+    },
+    {
+      "origin": "src/context/std.js:223",
+      "reason": "nonliteral doc expectation: Unexpected token (1:1)"
+    },
+    {
+      "origin": "src/context/std.js:230",
+      "reason": "nonliteral doc expectation: Unexpected token (1:6)"
+    },
+    {
+      "origin": "src/context/std.js:246",
+      "reason": "nonliteral doc expectation: Unexpected token (1:2)"
+    },
+    {
+      "origin": "src/context/std.js:262",
+      "reason": "nonliteral doc expectation: Unexpected token (1:6)"
+    },
+    {
+      "origin": "src/context/std.js:263",
+      "reason": "nonliteral doc expectation: Unexpected token (1:2)"
+    },
+    {
+      "origin": "src/context/std.js:264",
+      "reason": "nonliteral doc expectation: nonliteral identifier Array"
+    },
+    {
+      "origin": "src/context/std.js:296",
+      "reason": "nonliteral doc expectation: Unexpected token (1:6)"
+    },
+    {
+      "origin": "src/context/std.js:389",
+      "reason": "multiline doc example requires manual fixture"
+    },
+    {
+      "origin": "src/context/std.js:433",
+      "reason": "multiline doc example requires manual fixture"
+    },
+    {
+      "origin": "src/context/strings.js:90",
+      "reason": "multiline doc example requires manual fixture"
+    },
+    {
+      "origin": "src/context/strings.js:141",
+      "reason": "nonliteral doc expectation: Unexpected token (1:7)"
+    },
+    {
+      "origin": "src/context/strings.js:142",
+      "reason": "multiline doc example requires manual fixture"
+    },
+    {
+      "origin": "src/context/strings.js:143",
+      "reason": "multiline doc example requires manual fixture"
+    },
+    {
+      "origin": "src/context/strings.js:160",
+      "reason": "nonliteral doc expectation: nonliteral RegExpLiteral"
+    },
+    {
+      "origin": "src/context/strings.js:279",
+      "reason": "multiline doc example requires manual fixture"
+    },
+    {
+      "origin": "src/context/strings.js:331",
+      "reason": "nonliteral doc expectation: nonliteral identifier flase"
+    },
+    {
+      "origin": "src/context/types.js:102",
+      "reason": "nonliteral doc expectation: Unexpected token (1:3)"
+    },
+    {
+      "origin": "src/context/variables.js:113",
+      "reason": "nonliteral doc expectation: nonliteral identifier Alice"
+    },
+    {
+      "origin": "src/context/variables.js:259",
+      "reason": "multiline doc example requires manual fixture"
+    },
+    {
+      "origin": "src/context/variables.js:264",
+      "reason": "multiline doc example requires manual fixture"
+    },
+    {
+      "origin": "src/context/variables.js:270",
+      "reason": "multiline doc example requires manual fixture"
+    },
+    {
+      "origin": "src/context/variables.js:279",
+      "reason": "multiline doc example requires manual fixture"
+    },
+    {
+      "origin": "src/context/variables.js:331",
+      "reason": "nonliteral doc expectation: Unexpected token (1:9)"
+    },
+    {
+      "origin": "src/context/variables.js:417",
+      "reason": "multiline doc example requires manual fixture"
+    },
+    {
+      "origin": "src/context/variables.js:423",
+      "reason": "multiline doc example requires manual fixture"
+    },
+    {
+      "origin": "src/context/variables.js:430",
+      "reason": "multiline doc example requires manual fixture"
+    },
+    {
+      "origin": "src/lib/datetime.js:34",
+      "reason": "nonliteral doc expectation: Unexpected token, expected \",\" (1:22)"
+    },
+    {
+      "origin": "src/lib/datetime.js:70",
+      "reason": "nonliteral doc expectation: Unexpected token (1:9)"
+    },
+    {
+      "origin": "src/lib/datetime.js:130",
+      "reason": "nonliteral doc expectation: Unexpected token (1:7)"
+    },
+    {
+      "origin": "src/lib/datetime.js:177",
+      "reason": "nonliteral doc expectation: Unexpected token (1:6)"
+    },
+    {
+      "origin": "src/lib/datetime.js:224",
+      "reason": "nonliteral doc expectation: Unexpected token (1:8)"
+    },
+    {
+      "origin": "src/lib/datetime.js:395",
+      "reason": "nonliteral doc expectation: Unexpected token, expected \",\" (1:16)"
+    }
+  ],
+  "excludedTestFiles": [
+    {
+      "file": "test/test-doc.js",
+      "reason": "Documentation APIs, data, context preparation and localization tooling remain exclusively in the JS/V8 implementation by agreement; they are not Rust implementation gaps."
+    },
+    {
+      "file": "test/test-prebuilt-doc.js",
+      "reason": "Documentation APIs, data, context preparation and localization tooling remain exclusively in the JS/V8 implementation by agreement; they are not Rust implementation gaps."
+    },
+    {
+      "file": "test/test-prepare-context.js",
+      "reason": "Documentation APIs, data, context preparation and localization tooling remain exclusively in the JS/V8 implementation by agreement; they are not Rust implementation gaps."
+    }
+  ]
+}
