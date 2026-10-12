@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="assets/readme-banner.svg" alt="LPE — Lux Path Expressions. Parse an expression, inspect its AST, evaluate the result." width="100%">
-</p>
-
 # Lux Path Expressions
 
 **A JavaScript engine for parsing and evaluating expressions.**

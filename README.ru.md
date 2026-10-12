@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="assets/readme-banner.svg" alt="LPE — Lux Path Expressions. Разбор выражения, просмотр AST и вычисление результата." width="100%">
-</p>
-
 # Lux Path Expressions
 
 **Движок разбора и вычисления выражений на JavaScript.**
