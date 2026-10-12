@@ -4,9 +4,22 @@ import {resolve} from 'node:path';
 import {mkdtempSync, readFileSync, statSync, rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {artifact} from './artifacts.mjs';
-import {Worker, expectation, initialExpectation} from './parity.mjs';
+import {Worker, expectation, initialExpectation, rustWorkerCommand} from './parity.mjs';
 import {encode, decode, root, fixtures, require} from './shared.mjs';
 import {compatibilityScope} from './source-analysis.mjs';
+
+test('Rust workers select native or WASI commands without shell parsing', () => {
+  assert.deepStrictEqual(rustWorkerCommand(), [resolve(root, 'rust-impl/target/debug/lpe'), []]);
+  assert.deepStrictEqual(rustWorkerCommand({rust: 'native binary'}), [resolve('native binary'), []]);
+  assert.deepStrictEqual(rustWorkerCommand({wasm: 'component file.wasm'}),
+    ['wasmtime', ['run', '--env', 'TZ=UTC', resolve('component file.wasm')]]);
+  assert.deepStrictEqual(rustWorkerCommand({wasm: 'lpe.wasm', wasmtime: '/runtime path/wasmtime'}),
+    ['/runtime path/wasmtime', ['run', '--env', 'TZ=UTC', resolve('lpe.wasm')]]);
+  assert.throws(() => rustWorkerCommand({wasm: 'lpe.wasm', rust: 'lpe'}), /mutually exclusive/);
+  assert.throws(() => rustWorkerCommand({wasmtime: 'wasmtime'}), /requires --wasm/);
+  assert.throws(() => rustWorkerCommand({'js-only': true, wasm: 'lpe.wasm'}), /cannot select/);
+  assert.throws(() => rustWorkerCommand({'js-only': true, rust: 'lpe'}), /cannot select/);
+});
 
 test('documentation stays available in JS but is excluded from Rust parity', async () => {
   const lpe = require(resolve(root, 'dist/lpe.js'));

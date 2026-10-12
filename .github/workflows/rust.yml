@@ -77,6 +77,54 @@ jobs:
       - name: Run embedding example
         run: cargo run --locked --manifest-path rust-impl/Cargo.toml --example embedding
 
+  wasm:
+    name: WASI 0.3 / Rust 1.100
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+        with:
+          # Rust 1.100.0-beta.4; this newer toolchain is isolated to the WASM job.
+          toolchain: beta-2026-10-05
+          targets: wasm32-wasip3
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          workspaces: rust-impl -> target
+          key: wasm32-wasip3
+          save-if: ${{ github.ref == 'refs/heads/rustaple' }}
+      - uses: bytecodealliance/actions/wasmtime/setup@9152e710e9f7182e4c29ad218e4f335a7b203613 # v1
+        with:
+          version: v49.0.2
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "26"
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install JS reference dependencies
+        run: npm ci
+      - name: Build and test WASI component against JS
+        run: npm run test:wasm
+      - name: Upload tested WASI component
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: lpe-wasm32-wasip3
+          path: rust-impl/target/wasm32-wasip3/release/lpe.wasm
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload WASM compatibility reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: wasm-compatibility-reports
+          path: |
+            rust-impl/reports/wasm-parity.json
+            rust-impl/coverage.json
+          if-no-files-found: warn
+          retention-days: 14
+
   compatibility:
     name: JS / Rust compatibility
     runs-on: ubuntu-24.04
