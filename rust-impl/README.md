@@ -49,6 +49,29 @@ Each request uses a fresh interpreter; embedding the library allows reuse.
 
 The response is `{"ok":true,"value":42.0}` (JSON numeric formatting may vary).
 
+## GitHub CI
+
+[Rust CI](../.github/workflows/rust.yml) runs on every pull request targeting
+`rustaple` and every push to that branch. There are no path filters: changes to
+the JavaScript reference must also pass compatibility checks. Pushes to
+`ci/rust-*` branches also run the workflow, allowing CI changes to be tested
+in a fork before merging.
+
+- Linux and macOS: release library/CLI builds, native tests, and the embedding
+  example on stable Rust.
+- Linux: the same build and native checks on Rust 1.92.0, the minimum supported
+  Rust version. Formatting and Clippy run on stable Rust with warnings treated
+  as errors.
+- Linux with Node 26 and stable Rust: `npm ci` followed by `npm run test:all`,
+  including the original JS suite, native and vendored regex tests, opt-in JS
+  reference tests, fixture freshness, shared parity, and the strict coverage gate.
+
+Compatibility reports are uploaded for 14 days, including after failures when
+available. The tracked coverage inventory may be unchanged if the suite fails
+before generating a fresh report; consult the job log and parity report together.
+The workflow uses read-only repository permissions and pinned action revisions.
+It does not publish crates, create releases, or deploy artifacts.
+
 ## Embedding and ownership
 
 See [examples/embedding.rs](examples/embedding.rs) for parsing, evaluation, context
