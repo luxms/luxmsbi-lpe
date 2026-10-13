@@ -1,0 +1,937 @@
+lpe:vbox(
+    hbox(
+        wrap(
+        "Легенда:" + wrap(svg("graph-arrow-increase", width="14", height="14", marginRight="0.25rem", color="#1D1D1D") + "+х/-х", tag="div", display="flex", alignItems="center", justifyContent="center", borderRadius="16px", padding="0.25rem 0.625rem", margin="0 0.25rem",color="#1D1D1D",backgroundColor="#E5E5E5") + "—прирост в натуральном выражении к предыдущему месяцу" + wrap("+х%/-х%", tag="div", display="flex", alignItems="center", justifyContent="center", borderRadius="16px", padding="0.25rem 0.625rem", margin="0 0.25rem",color="#1D1D1D",backgroundColor="#E5E5E5") + "— дельта к АППГ",
+        display="flex",alignItems="center", color="rgba(0,0,0,0.5)", fontSize="1rem",fontWeight=600,lineHeight="1.5rem"
+        ) @(null, hash("flexGrow", "1"))
+    ) @(null, hash("height","auto","marginBottom", "2rem")),
+
+    wrap(
+        "Экономика",
+        color="#000",
+        fontSize="2rem",
+        fontWeight=600,
+        tag="div"
+    ) @(60, hash(
+        "marginBottom", "1rem",
+        "width", "100%",
+    )),
+      vbox(vbox(
+    wrap(
+        "Туриндустрия",
+        fontSize="1.75rem",
+        fontWeight=600,
+        lineHeight="2.5rem",
+        letterSpacing="0%",
+        tag="div",
+        color="rgba(29, 29, 29, 1)"
+    ) @(40, hash(
+        "marginBottom", "1rem",
+        "width", "100%"
+    )),
+
+    hbox(
+        hbox(
+            #454 @(null, hash(
+               "width", "100%",
+               "height", "100%",
+            )),
+            hbox(
+                #972 @(null, hash(
+                     "height", "auto",
+                     "width", "161px",
+                     "marginRight", "10px",
+                )),
+                wrap(
+                            shareTourismTabs.mapIt(
+                                wrap(
+                                    it.title,
+                                    tag="div",
+                                    display="flex",
+                                    alignItems="center",
+                                    borderRadius="8px",
+                                    padding="0.5rem 1rem",
+                                    flexGrow=1,
+                                    justifyContent="center",
+                                    fontSize="1rem",
+                                    lineHeight="1.375rem",
+                                    color=if(activeShareTourismTabs.id = it.id, "#4457EC", "#A6A6A6"),
+                                    backgroundColor=if(activeShareTourismTabs.id = it.id, "#fff", "transparent"),
+                                    cursor="pointer",
+                                    onClick=begin(activeShareTourismTabs <- it)
+                                )
+                            ),
+                            tag="div",
+                            display="flex",
+                            alignItems="center",
+                            padding="0.25rem",
+                            backgroundColor="#1D1D1D0D",
+                            color="#fff",
+                            borderRadius="12px"
+                        ) @(360, hash("height", "100px", "width", "160px")),
+            ) @(null, hash(
+                     "height", "auto",
+                     "zIndex", 99,
+                     "position", "absolute",
+                     "width", "330px",
+                     "right", 10
+                )),
+
+        ) @(null, hash(
+            "flexGrow", 1,
+            "width", "50%",
+            "background", "#fff",
+            "borderRadius", "24px",
+            "padding", "10px",
+            "height", "495px",
+            "marginRight", "1rem",
+        )),
+
+        vbox(
+                vbox(
+                        wrap("Валовая добавленная стоимость туристской индустрии экономики субъекта Российской Федерации", fontSize="1rem", fontWeight=500, lineHeight="1rem", width="100%", letterSpacing="0%", tag="div", color="rgba(29, 29, 29, 1)") @(12, hash("flexGrow", 1, "marginBottom", "0.5rem")),
+                        wrap("млн руб.", fontSize="1rem", fontWeight=400, lineHeight="1rem", width="100%", letterSpacing="0%", tag="div", color="#4F4F4F") @(12, hash("flexGrow", 1)),
+                        hbox(
+                        #958 @(320, hash("height", "60px", "flexGrow", 1, "maxWidth", "320px")),
+                        wrap(
+                            grossValueTabs.mapIt(
+                                wrap(
+                                    it.title,
+                                    tag="div",
+                                    display="flex",
+                                    alignItems="center",
+                                    borderRadius="8px",
+                                    padding="0.5rem 1rem",
+                                    flexGrow=1,
+                                    justifyContent="center",
+                                    fontSize="1rem",
+                                    lineHeight="1.375rem",
+                                    color=if(activeGrossValueTabsTabs.id = it.id, "#4457EC", "#A6A6A6"),
+                                    backgroundColor=if(activeGrossValueTabsTabs.id = it.id, "#fff", "transparent"),
+                                    cursor="pointer",
+                                    onClick=begin(activeGrossValueTabsTabs <- it)
+                                )
+                            ),
+                            tag="div",
+                            display="flex",
+                            alignItems="center",
+                            padding="0.25rem",
+                            backgroundColor="#1D1D1D0D",
+                            color="#fff",
+                            borderRadius="12px"
+                        ) @(360, hash("height", "50px", "marginTop", "12px", "width", "160px")),
+                        ),
+                    ) @(450, hash("flexGrow", 1, "height", "50px", "marginBottom", "5rem", "width", "100%", "maxWidth", "100%")),
+                    hbox(
+            #452 @(null, hash(
+               "width", "70%",
+               "height", "100%",
+               "padding", "0 100px"
+            )),
+            #453 @(null, hash(
+               "width", "30%",
+               "height", "60%",
+               "marginTop", "4rem"
+            )),
+        ) @(null, hash(
+               "width", "100%",
+               "height", "100%",
+            )),
+
+        ) @(null, hash(
+            "paddingTop", "10px",
+            "borderTop", '1px solid #D7D7D7',
+            "flexGrow", 1,
+            "width", "50%",
+            "background", "#fff",
+            "borderRadius", "24px",
+            "padding", "10px",
+             "height", "auto",
+        ))
+
+    ) @(null, hash(
+       "height", "auto",
+       "marginBottom", "1rem"
+    )),
+
+    hbox(
+        vbox(
+            #455 @(null, hash(
+               "width", "100%",
+               "height", "100%",
+            )),
+            #957 @(null, hash(
+                     "height", "auto",
+                     "zIndex", 99,
+                     "position", "absolute",
+                     "width", "532px",
+                     "right", 10
+                )),
+        ) @(null, hash(
+            "flexGrow", 1,
+            "width", "50%",
+            "background", "#fff",
+            "borderRadius", "24px",
+            "padding", "10px",
+            "height", "495px",
+            "marginRight", "1rem",
+        )),
+
+        hbox(
+            #456 @(null, hash(
+               "width", "100%",
+               "height", "100%",
+            )),
+            #975 @(null, hash(
+                     "height", "auto",
+                     "zIndex", 99,
+                     "position", "absolute",
+                     "width", "301px",
+                     "right", 10
+                )),
+
+        ) @(null, hash(
+            "paddingTop", "10px",
+            "borderTop", '1px solid #D7D7D7',
+            "flexGrow", 1,
+            "width", "50%",
+            "background", "#fff",
+            "borderRadius", "24px",
+            "padding", "10px",
+             "height", "auto",
+        ))
+    ) @(null, hash(
+       "height", "auto",
+       "marginBottom", "1rem"
+    )),
+    hbox(
+        vbox(
+            hbox(
+            #460 @(null, hash(
+               "width", "100%",
+               "height", "100%",
+            )),
+            #974 @(null, hash(
+                     "height", "auto",
+                     "zIndex", 99,
+                     "position", "absolute",
+                     "width", "161px",
+                     "right", 10
+                )),
+            ) @(null, hash(
+            "flexGrow", 1,
+            "width", "100%",
+            "height", "50%",
+            "background", "#fff",
+            "marginBottom", "0.5rem",
+            "borderRadius", "24px",
+            "padding", "10px",
+             "height", "auto",
+        )),
+            hbox(
+            #461 @(null, hash(
+               "width", "100%",
+               "height", "100%",
+            )),
+            hbox(
+                #976 @(null, hash(
+                     "height", "auto",
+                     "width", "350px",
+                )),
+                wrap(
+                            averageMonthlyTabs.mapIt(
+                                wrap(
+                                    it.title,
+                                    tag="div",
+                                    display="flex",
+                                    alignItems="center",
+                                    borderRadius="8px",
+                                    padding="0.5rem 1rem",
+                                    flexGrow=1,
+                                    justifyContent="center",
+                                    fontSize="1rem",
+                                    lineHeight="1.375rem",
+                                    color=if(activeAverageMonthlyTabs.id = it.id, "#4457EC", "#A6A6A6"),
+                                    backgroundColor=if(activeAverageMonthlyTabs.id = it.id, "#fff", "transparent"),
+                                    cursor="pointer",
+                                    onClick=begin(activeAverageMonthlyTabs <- it)
+                                )
+                            ),
+                            tag="div",
+                            display="flex",
+                            alignItems="center",
+                            padding="0.25rem",
+                            backgroundColor="#1D1D1D0D",
+                            color="#fff",
+                            borderRadius="12px"
+                        ) @(360, hash("height", "100px", "width", "290px")),
+            ) @(null, hash(
+                     "height", "auto",
+                     "zIndex", 99,
+                     "position", "absolute",
+                     "left", 10,
+                     "top", 65,
+                     "width", "580px",
+                )),
+            ) @(null, hash(
+            "flexGrow", 1,
+            "width", "100%",
+            "height", "50%",
+            "background", "#fff",
+            "marginTop", "0.5rem",
+            "borderRadius", "24px",
+            "padding", "10px",
+             "height", "auto",
+        )),
+        ) @(null, hash(
+            "flexGrow", 1,
+            "width", "50%",
+            "height", "695px",
+            "marginRight", "1rem",
+        )),
+
+        hbox(
+            #459 @(null, hash(
+               "width", "100%",
+               "height", "100%",
+            )),
+            hbox(
+                #973 @(null, hash(
+                     "height", "auto",
+                     "width", "190px",
+                )),
+                wrap(
+                            averageNumberTabs.mapIt(
+                                wrap(
+                                    it.title,
+                                    tag="div",
+                                    display="flex",
+                                    alignItems="center",
+                                    borderRadius="8px",
+                                    padding="0.5rem 1rem",
+                                    flexGrow=1,
+                                    justifyContent="center",
+                                    fontSize="1rem",
+                                    lineHeight="1.375rem",
+                                    color=if(activeAverageNumberTabs.id = it.id, "#4457EC", "#A6A6A6"),
+                                    backgroundColor=if(activeAverageNumberTabs.id = it.id, "#fff", "transparent"),
+                                    cursor="pointer",
+                                    onClick=begin(activeAverageNumberTabs <- it)
+                                )
+                            ),
+                            tag="div",
+                            display="flex",
+                            alignItems="center",
+                            padding="0.25rem",
+                            backgroundColor="#1D1D1D0D",
+                            color="#fff",
+                            borderRadius="12px"
+                        ) @(360, hash("height", "100px", "width", "290px")),
+            ) @(null, hash(
+                     "height", "auto",
+                     "zIndex", 99,
+                     "position", "absolute",
+                     "width", "450px",
+                     "left", 10,
+                     "top", 70,
+                )),
+
+        ) @(null, hash(
+            "paddingTop", "10px",
+            "borderTop", '1px solid #D7D7D7',
+            "flexGrow", 1,
+            "width", "50%",
+            "background", "#fff",
+            "borderRadius", "24px",
+            "padding", "10px",
+             "height", "auto",
+        ))
+    ) @(null, hash(
+       "height", "auto",
+       "marginBottom", "1rem"
+    )),
+
+
+    ) @(null, hash(
+        "maxWidth", "100%",
+        "padding","12px 12px 0",
+        "borderRadius","24px",
+        "backgroundColor","rgba(227, 227, 240, 1)",
+        "height", "auto",
+        "marginBottom", "1rem"
+    )),
+    ) @(null, hash(
+        "height", "auto",
+        "marginBottom", "1rem"
+    )),
+    vbox(vbox(
+    wrap(
+        "КСР",
+        fontSize="1.75rem",
+        fontWeight=600,
+        lineHeight="2.5rem",
+        letterSpacing="0%",
+        tag="div",
+        color="rgba(29, 29, 29, 1)"
+    ) @(40, hash(
+        "marginBottom", "1rem",
+        "width", "100%"
+    )),
+
+    hbox(
+        vbox(
+                hbox(
+                    vbox(
+                        wrap("Доходы КСР", fontSize="1rem", fontWeight=500, lineHeight="1rem", width="100%", letterSpacing="0%", tag="div", color="rgba(29, 29, 29, 1)") @(12, hash("flexGrow", 1)),
+                        hbox(
+                            #978 @(75, hash("height", "auto", "flexGrow", 1, "width", "340px")),
+                            wrap(
+                            incomeKsrTabs.mapIt(
+                                wrap(
+                                    it.title,
+                                    tag="div",
+                                    display="flex",
+                                    alignItems="center",
+                                    borderRadius="8px",
+                                    padding="0.5rem 1rem",
+                                    flexGrow=1,
+                                    justifyContent="center",
+                                    fontSize="1rem",
+                                    lineHeight="1.375rem",
+                                    color=if(activeIncomeKsrTabs.id = it.id, "#4457EC", "#A6A6A6"),
+                                    backgroundColor=if(activeIncomeKsrTabs.id = it.id, "#fff", "transparent"),
+                                    cursor="pointer",
+                                    onClick=begin(activeIncomeKsrTabs <- it)
+                                )
+                            ),
+                            tag="div",
+                            display="flex",
+                            alignItems="center",
+                            padding="0.25rem",
+                            backgroundColor="#1D1D1D0D",
+                            color="#fff",
+                            borderRadius="12px",
+                            marginTop="14px"
+                        ) @(360, hash("height", "100px", "width", "180px")),
+                        ) @(75, hash("height", "auto", "flexGrow", 1, "width", "490px")),
+                    ) @(450, hash("flexGrow", 1, "height", "100px", "marginBottom", "5rem", "width", "450px")),
+
+                    hbox(
+                        #472 @(300, hash("height", "75px", "flexGrow", 1, "borderRight", "1px solid rgba(29, 29, 29, 0.15)", "width", "150px")),
+                        #471 @(150, hash("height", "75px", "flexGrow", 1, "width", "100px"))
+                    ) @(150, hash("flexGrow", 1, "height", "78px", "width", "auto", "borderRadius", "0.5rem", "border", "1px solid rgba(29, 29, 29, 0.15)"))
+                ) @(428, hash("height", "80px", "flexGrow", 1, "gap", "150px")),
+
+                hbox(
+                    #469 @(341, hash("height", "360px", "flexGrow", 1)),
+                    #470 @(341, hash("height", "220px", "flexGrow", 1, "marginTop", "4rem",))
+                ) @(150, hash("flexGrow", 1, "height", "341px", "width", "auto")),
+            ) @(null, hash("flexGrow", 1,
+            "width", "50%",
+            "background", "#fff",
+            "borderRadius", "24px",
+            "padding", "10px",
+            "height", "495px",
+            "marginRight", "0.5rem",)),
+
+        vbox(
+                hbox(
+                    vbox(
+                        wrap("Доходность КСР на номер", fontSize="1rem", fontWeight=500, lineHeight="1rem", width="100%", letterSpacing="0%", tag="div", color="rgba(29, 29, 29, 1)") @(12, hash("flexGrow", 1)),
+                        #979 @(75, hash("height", "auto", "flexGrow", 1)),
+                    ) @(450, hash("flexGrow", 1, "height", "100px", "marginBottom", "5rem", "width", "450px")),
+
+                    hbox(
+                        #483 @(300, hash("height", "75px", "flexGrow", 1, "borderRight", "1px solid rgba(29, 29, 29, 0.15)", "width", "150px")),
+                        #482 @(150, hash("height", "75px", "flexGrow", 1, "width", "100px"))
+                    ) @(150, hash("flexGrow", 1, "height", "78px", "width", "auto", "borderRadius", "0.5rem", "border", "1px solid rgba(29, 29, 29, 0.15)"))
+                ) @(428, hash("height", "80px", "flexGrow", 1, "gap", "150px")),
+
+                hbox(
+                    #479 @(341, hash("height", "360px", "flexGrow", 1)),
+                    #480 @(341, hash("height", "220px", "flexGrow", 1, "marginTop", "4rem",))
+                ) @(150, hash("flexGrow", 1, "height", "341px", "width", "auto")),
+            ) @(null, hash("flexGrow", 1,
+            "width", "50%",
+            "background", "#fff",
+            "borderRadius", "24px",
+            "padding", "10px",
+            "height", "495px",
+            "marginLeft", "0.5rem",))
+
+    ) @(null, hash(
+       "height", "auto",
+       "marginBottom", "1rem"
+    )),
+
+    hbox(
+        vbox(
+            #467 @(null, hash(
+               "width", "100%",
+               "height", "100%",
+            )),
+            hbox(
+                #981 @(null, hash(
+                     "height", "auto",
+                     "width", "161px",
+                     "marginRight", "10px",
+                )),
+                wrap(
+                            hotelRevenueTabs.mapIt(
+                                wrap(
+                                    it.title,
+                                    tag="div",
+                                    display="flex",
+                                    alignItems="center",
+                                    borderRadius="8px",
+                                    padding="0.5rem 1rem",
+                                    flexGrow=1,
+                                    justifyContent="center",
+                                    fontSize="1rem",
+                                    lineHeight="1.375rem",
+                                    color=if(activeHotelRevenueTabs.id = it.id, "#4457EC", "#A6A6A6"),
+                                    backgroundColor=if(activeHotelRevenueTabs.id = it.id, "#fff", "transparent"),
+                                    cursor="pointer",
+                                    onClick=begin(activeHotelRevenueTabs <- it)
+                                )
+                            ),
+                            tag="div",
+                            display="flex",
+                            alignItems="center",
+                            padding="0.25rem",
+                            backgroundColor="#1D1D1D0D",
+                            color="#fff",
+                            borderRadius="12px"
+                        ) @(360, hash("height", "100px", "width", "160px")),
+            ) @(null, hash(
+                     "height", "auto",
+                     "zIndex", 99,
+                     "position", "absolute",
+                     "width", "330px",
+                     "right", 10
+                )),
+        ) @(null, hash(
+            "flexGrow", 1,
+            "width", "50%",
+            "background", "#fff",
+            "borderRadius", "24px",
+            "padding", "10px",
+            "height", "351px",
+            "marginRight", "1rem",
+        )),
+
+        hbox(
+            #463 @(null, hash(
+               "width", "100%",
+               "height", "100%",
+            )),
+            #984 @(null, hash(
+                     "height", "auto",
+                     "zIndex", 99,
+                     "position", "absolute",
+                     "width", "311px",
+                     "right", 10
+                )),
+
+        ) @(null, hash(
+            "paddingTop", "10px",
+            "borderTop", '1px solid #D7D7D7',
+            "flexGrow", 1,
+            "width", "50%",
+            "background", "#fff",
+            "borderRadius", "24px",
+            "padding", "10px",
+             "height", "351px",
+        ))
+    ) @(null, hash(
+       "height", "auto",
+       "marginBottom", "1rem"
+    )),
+    hbox(
+        vbox(
+            #466 @(null, hash(
+               "width", "100%",
+               "height", "100%",
+            )),
+            #980 @(null, hash(
+                     "height", "auto",
+                     "zIndex", 99,
+                     "position", "absolute",
+                     "width", "161px",
+                     "right", 10
+                )),
+        ) @(null, hash(
+            "flexGrow", 1,
+            "width", "50%",
+            "background", "#fff",
+            "borderRadius", "24px",
+            "padding", "10px",
+            "height", "351px",
+            "marginRight", "1rem",
+        )),
+
+        hbox(
+            #464 @(null, hash(
+               "width", "100%",
+               "height", "100%",
+            )),
+            #982 @(null, hash(
+                     "height", "auto",
+                     "zIndex", 99,
+                     "position", "absolute",
+                     "width", "161px",
+                     "right", 10
+                )),
+
+        ) @(null, hash(
+            "paddingTop", "10px",
+            "borderTop", '1px solid #D7D7D7',
+            "flexGrow", 1,
+            "width", "50%",
+            "background", "#fff",
+            "borderRadius", "24px",
+            "padding", "10px",
+             "height", "351px",
+        ))
+    ) @(null, hash(
+       "height", "auto",
+       "marginBottom", "1rem"
+    )),
+
+
+    ) @(null, hash(
+        "maxWidth", "100%",
+        "padding","12px 12px 0",
+        "borderRadius","24px",
+        "backgroundColor","rgba(227, 227, 240, 1)",
+        "height", "auto",
+        "marginBottom", "1rem"
+    )),
+    vbox(vbox(
+    wrap(
+        "Налоги",
+        fontSize="1.75rem",
+        fontWeight=600,
+        lineHeight="2.5rem",
+        letterSpacing="0%",
+        tag="div",
+        color="rgba(29, 29, 29, 1)"
+    ) @(40, hash(
+        "marginBottom", "1rem",
+        "width", "100%"
+    )),
+    hbox(
+        vbox(
+            #491 @(null, hash(
+               "width", "100%",
+               "height", "100%",
+            )),
+            hbox(
+                #989 @(null, hash(
+                     "height", "auto",
+                     "width", "501px",
+                     "marginRight", "10px",
+                )),
+                wrap(
+                            taxesTourismTabs.mapIt(
+                                wrap(
+                                    it.title,
+                                    tag="div",
+                                    display="flex",
+                                    alignItems="center",
+                                    borderRadius="8px",
+                                    padding="0.5rem 1rem",
+                                    flexGrow=1,
+                                    justifyContent="center",
+                                    fontSize="1rem",
+                                    lineHeight="1.375rem",
+                                    color=if(activeTaxesTourismTabs.id = it.id, "#4457EC", "#A6A6A6"),
+                                    backgroundColor=if(activeTaxesTourismTabs.id = it.id, "#fff", "transparent"),
+                                    cursor="pointer",
+                                    onClick=begin(activeTaxesTourismTabs <- it)
+                                )
+                            ),
+                            tag="div",
+                            display="flex",
+                            alignItems="center",
+                            padding="0.25rem",
+                            backgroundColor="#1D1D1D0D",
+                            color="#fff",
+                            borderRadius="12px"
+                        ) @(360, hash("height", "100px", "width", "160px")),
+            ) @(null, hash(
+                     "height", "auto",
+                     "zIndex", 99,
+                     "position", "absolute",
+                     "width", "630px",
+                     "top", 70,
+                     "left", 10
+                )),
+        ) @(null, hash(
+            "flexGrow", 1,
+            "width", "50%",
+            "background", "#fff",
+            "borderRadius", "24px",
+            "padding", "10px",
+            "height", "433px",
+            "marginRight", "1rem",
+        )),
+
+        hbox(
+            #507 @(null, hash(
+               "width", "100%",
+               "height", "100%",
+            )),
+            hbox(
+                        #503 @(300, hash("height", "75px", "flexGrow", 1, "borderRight", "1px solid rgba(29, 29, 29, 0.15)", "width", "170px")),
+                        #504 @(150, hash("height", "75px", "flexGrow", 1, "width", "150px"))
+                    ) @(150, hash("flexGrow", 1, "height", "78px", "width", "auto", "borderRadius", "0.5rem", "border", "1px solid rgba(29, 29, 29, 0.15)", "position", "absolute", "right", 0)),
+            #985 @(null, hash(
+                     "height", "auto",
+                     "zIndex", 99,
+                     "position", "absolute",
+                     "width", "301px",
+                     "left", 10,
+                     "top", 30,
+                )),
+
+        ) @(null, hash(
+            "paddingTop", "10px",
+            "borderTop", '1px solid #D7D7D7',
+            "flexGrow", 1,
+            "width", "50%",
+            "background", "#fff",
+            "borderRadius", "24px",
+            "padding", "10px",
+            "height", "433px",
+        ))
+    ) @(null, hash(
+       "height", "auto",
+       "marginBottom", "1rem"
+    )),
+    hbox(
+        vbox(
+            hbox(
+            #492 @(null, hash(
+               "width", "100%",
+               "height", "100%",
+            )),
+            hbox(
+                        #493 @(300, hash("height", "75px", "flexGrow", 1, "borderRight", "1px solid rgba(29, 29, 29, 0.15)", "width", "170px")),
+                        #494 @(150, hash("height", "75px", "flexGrow", 1, "width", "150px"))
+                    ) @(150, hash("flexGrow", 1, "height", "78px", "width", "auto", "borderRadius", "0.5rem", "border", "1px solid rgba(29, 29, 29, 0.15)", "position", "absolute", "right", 0)),
+            #986 @(null, hash(
+                     "height", "auto",
+                     "zIndex", 99,
+                     "position", "absolute",
+                     "width", "301px",
+                     "left", 10,
+                     "top", 30,
+                )),
+            ) @(null, hash(
+            "flexGrow", 1,
+            "width", "100%",
+            "height", "50%",
+            "background", "#fff",
+            "marginBottom", "0.5rem",
+            "borderRadius", "24px",
+            "padding", "10px",
+             "height", "auto",
+        )),
+            hbox(
+            #502 @(null, hash(
+               "width", "100%",
+               "height", "100%",
+            )),
+            hbox(
+                        #498 @(300, hash("height", "75px", "flexGrow", 1, "borderRight", "1px solid rgba(29, 29, 29, 0.15)", "width", "170px")),
+                        #499 @(150, hash("height", "75px", "flexGrow", 1, "width", "150px"))
+                    ) @(150, hash("flexGrow", 1, "height", "78px", "width", "auto", "borderRadius", "0.5rem", "border", "1px solid rgba(29, 29, 29, 0.15)", "position", "absolute", "right", 0)),
+            #987 @(null, hash(
+                     "height", "auto",
+                     "zIndex", 99,
+                     "position", "absolute",
+                     "width", "301px",
+                     "left", 10,
+                     "top", 30,
+                )),
+            ) @(null, hash(
+            "flexGrow", 1,
+            "width", "100%",
+            "height", "50%",
+            "background", "#fff",
+            "marginTop", "0.5rem",
+            "borderRadius", "24px",
+            "padding", "10px",
+             "height", "auto",
+        )),
+        ) @(null, hash(
+            "flexGrow", 1,
+            "width", "50%",
+            "height", "695px",
+            "marginRight", "1rem",
+        )),
+        vbox(
+        vbox(
+                        wrap("Объем турналога, подлежащего уплате в бюджет", fontSize="1rem", fontWeight=500, lineHeight="1rem", width="100%", letterSpacing="0%", tag="div", color="rgba(29, 29, 29, 1)") @(12, hash("flexGrow", 1)),
+                        #988 @(75, hash("height", "auto", "flexGrow", 1)),
+                    ) @(450, hash("flexGrow", 1, "height", "100px", "width", "450px", "maxHeight", "100px")),
+
+        hbox(
+                #515 @(300, hash("height", "102px", "flexGrow", 1, "borderRight", "1px solid rgba(29, 29, 29, 0.15)", "width", "150px")),
+                #516 @(300, hash("height", "102px", "flexGrow", 1, "borderRight", "1px solid rgba(29, 29, 29, 0.15)", "width", "150px")),
+                #517 @(150, hash("height", "102px", "flexGrow", 1, "width", "100px"))
+        ) @(150, hash("flexGrow", 1, "height", "104px", "width", "auto", "maxHeight", "104px", "borderRadius", "0.5rem", "border", "1px solid rgba(29, 29, 29, 0.15)", "marginBottom", "1rem")),
+            #520 @(null, hash(
+               "width", "100%",
+               "height", "auto",
+               "marginBottom", "5px",
+            )),
+            hbox(
+                #521 @(null, hash(
+               "width", "50%",
+               "height", "auto",
+               "padding", "0 50px",
+                )),
+                #522 @(null, hash(
+                "width", "50%",
+                "height", "60%",
+                "marginTop", "4rem",
+                )),
+            ) @(null, hash(
+               "width", "100%",
+               "height", "320px",
+               "borderTop", "1px solid rgba(29, 29, 29, 0.15)",
+            )),
+
+        ) @(null, hash(
+            "paddingTop", "10px",
+            "borderTop", '1px solid #D7D7D7',
+            "flexGrow", 1,
+            "width", "50%",
+            "background", "#fff",
+            "borderRadius", "24px",
+            "padding", "10px",
+            "height", "796px",
+        ))
+    ) @(null, hash(
+       "height", "auto",
+       "marginBottom", "1rem"
+    )),
+
+
+    ) @(null, hash(
+        "maxWidth", "100%",
+        "padding","12px 12px 0",
+        "borderRadius","24px",
+        "backgroundColor","rgba(227, 227, 240, 1)",
+        "height", "auto",
+        "marginBottom", "1rem"
+    )),
+    ) @(null, hash(
+        "height", "auto",
+        "marginBottom", "1rem"
+    )),
+    vbox(vbox(
+    wrap(
+        "Производительность труда",
+        fontSize="1.75rem",
+        fontWeight=600,
+        lineHeight="2.5rem",
+        letterSpacing="0%",
+        tag="div",
+        color="rgba(29, 29, 29, 1)"
+    ) @(40, hash(
+        "marginBottom", "1rem",
+        "width", "100%"
+    )),
+
+    hbox(
+            #546 @(null, hash(
+               "width", "100%",
+               "height", "100%",
+            )),
+            #992 @(null, hash(
+                     "height", "auto",
+                     "zIndex", 99,
+                     "position", "absolute",
+                     "width", "161px",
+                     "right", 10
+                )),
+
+        ) @(null, hash(
+            "paddingTop", "10px",
+            "borderTop", '1px solid #D7D7D7',
+            "flexGrow", 1,
+            "width", "100%",
+            "background", "#fff",
+            "borderRadius", "24px",
+            "padding", "10px",
+            "height", "388px",
+            "marginBottom", "1rem",
+        )),
+
+    hbox(
+        vbox(
+                hbox(
+                    vbox(
+                        wrap("Количество предприятий, которым оказаны адресные меры поддержки", fontSize="1rem", fontWeight=500, lineHeight="1rem", width="100%", letterSpacing="0%", tag="div", color="rgba(29, 29, 29, 1)") @(12, hash("flexGrow", 1)),
+                        #993 @(75, hash("height", "auto", "flexGrow", 1)),
+                    ) @(450, hash("flexGrow", 1, "height", "100px", "marginBottom", "5rem", "width", "450px")),
+
+                    hbox(
+                        #525 @(300, hash("height", "75px", "flexGrow", 1, "borderRight", "1px solid rgba(29, 29, 29, 0.15)", "width", "150px")),
+                        #526 @(150, hash("height", "75px", "flexGrow", 1, "width", "100px"))
+                    ) @(150, hash("flexGrow", 1, "height", "78px", "width", "auto", "borderRadius", "0.5rem", "border", "1px solid rgba(29, 29, 29, 0.15)"))
+                ) @(428, hash("height", "80px", "flexGrow", 1, "gap", "150px")),
+
+                hbox(
+                    #528 @(341, hash("height", "360px", "flexGrow", 1)),
+                    #529 @(341, hash("height", "220px", "flexGrow", 1, "marginTop", "4rem",))
+                ) @(150, hash("flexGrow", 1, "height", "341px", "width", "auto")),
+            ) @(null, hash("flexGrow", 1,
+            "width", "50%",
+            "background", "#fff",
+            "borderRadius", "24px",
+            "padding", "10px",
+            "height", "495px",
+            "marginRight", "0.5rem",)),
+
+        vbox(
+                hbox(
+                    vbox(
+                        wrap("Количество предприятий, внедривших коробочные решения", fontSize="1rem", fontWeight=500, lineHeight="1rem", width="100%", letterSpacing="0%", tag="div", color="rgba(29, 29, 29, 1)") @(12, hash("flexGrow", 1)),
+                        #994 @(75, hash("height", "auto", "flexGrow", 1)),
+                    ) @(450, hash("flexGrow", 1, "height", "100px", "marginBottom", "5rem", "width", "450px")),
+                ) @(428, hash("height", "80px", "flexGrow", 1, "gap", "150px")),
+
+                hbox(
+                    #533 @(341, hash("height", "360px", "flexGrow", 1)),
+                    #534 @(341, hash("height", "220px", "flexGrow", 1, "marginTop", "4rem",))
+                ) @(150, hash("flexGrow", 1, "height", "341px", "width", "auto")),
+            ) @(null, hash("flexGrow", 1,
+            "width", "50%",
+            "background", "#fff",
+            "borderRadius", "24px",
+            "padding", "10px",
+            "height", "495px",
+            "marginLeft", "0.5rem",))
+
+    ) @(null, hash(
+       "height", "auto",
+       "marginBottom", "1rem"
+    )),
+    ) @(null, hash(
+       "height", "auto",
+    )),
+
+    ) @(null, hash(
+        "maxWidth", "100%",
+        "padding","12px 12px 0",
+        "borderRadius","24px",
+        "backgroundColor","rgba(227, 227, 240, 1)",
+        "height", "auto",
+        "marginBottom", "1rem"
+    )),
+    )
+)

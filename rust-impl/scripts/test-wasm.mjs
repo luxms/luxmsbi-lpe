@@ -11,6 +11,8 @@ mkdirSync(new URL('../reports/', import.meta.url), {recursive: true});
 const commands = [
   [wasmtime, ['--version']],
   [process.execPath, ['node_modules/webpack-cli/bin/cli.js']],
+  [process.execPath, ['rust-impl/scripts/generate-fixtures.mjs', '--check']],
+  [process.execPath, ['--test', 'rust-impl/scripts/test-production-layout.mjs']],
   ['npm', ['run', 'build:wasm']],
   [wasmtime, ['run', `rust-impl/target/${target}/release/examples/embedding.wasm`]],
   [process.execPath, ['--test', 'rust-impl/scripts/test-wasm-protocol.mjs']],

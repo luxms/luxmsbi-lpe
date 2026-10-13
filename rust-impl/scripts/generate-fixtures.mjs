@@ -188,4 +188,5 @@ writeFileSync(resolve(root, 'rust-impl/fixtures/extraction.json'), `${JSON.strin
 console.log(`Extracted ${accepted.length} independent assertions/examples; quarantined ${quarantine.length}; recorded ${skipped.length} omissions across ${groups.length} test groups.`);
 await import('./authored-fixtures.mjs');
 await import('./roundtrip-fixtures.mjs');
+await import('./production-layout-fixtures.mjs');
 console.log(cli.check ? 'Generated artifacts are current (read-only check).' : 'Generated artifacts updated.');
