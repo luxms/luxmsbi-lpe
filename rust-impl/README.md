@@ -40,6 +40,11 @@ original JS bundle are used only by development-time reference tests. The test
 runner invokes Mocha programmatically to avoid the old CLI's incompatibility
 with newer Node releases. Existing JS sources and tests remain unchanged.
 
+The [production layout fixture](fixtures/production/README.md) adds full-script
+parser/deparser regressions and context-independent title/color evaluation
+checks from a real application layout. It runs in the native and WASI shared
+compatibility suites; application rendering and event handlers are not mocked.
+
 The `lpe` binary accepts newline-delimited UTF-8 JSON requests, with one response
 per line. See [fixtures/protocol.md](fixtures/protocol.md) for the test protocol.
 Each request uses a fresh interpreter; embedding the library allows reuse.
@@ -81,10 +86,11 @@ npm ci
 npm run test:wasm
 ```
 
-`test:wasm` builds the JS reference and release WASM command, runs the embedding
-example inside Wasmtime, checks protocol boundaries, and compares every shared
-fixture against JS before enforcing the strict coverage gate. `WASMTIME` may
-point to a specific Wasmtime executable. Results are written to
+`test:wasm` builds the JS reference, checks generated fixture freshness and the
+production layout's JS regressions, then builds the release WASM command, runs
+the embedding example inside Wasmtime, checks protocol boundaries, and compares
+every shared fixture against JS before enforcing the strict coverage gate.
+`WASMTIME` may point to a specific Wasmtime executable. Results are written to
 `rust-impl/reports/wasm-parity.json`, with `rustTarget: "wasm32-wasip3"`.
 Native subprocess tests and non-UTC timezone tests remain in the native jobs;
 this command does not run the native Rust test binaries inside WASM.

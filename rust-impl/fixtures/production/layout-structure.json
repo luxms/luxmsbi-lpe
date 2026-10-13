@@ -1,0 +1,32 @@
+{
+  "root": "vbox",
+  "calls": {
+    "vbox": 27,
+    "@": 153,
+    "hbox": 45,
+    "wrap": 29,
+    "+": 2,
+    "\"": 1277,
+    "svg": 1,
+    "=": 260,
+    "tuple": 153,
+    "hash": 153,
+    "#": 64,
+    ".": 42,
+    "mapIt": 7,
+    "if": 14,
+    "begin": 7,
+    "<-": 7,
+    "'": 8
+  },
+  "widgets": [454, 972, 958, 452, 453, 455, 957, 456, 975, 460, 974, 461, 976, 459, 973, 978, 472, 471, 469, 470, 979, 483, 482, 479, 480, 467, 981, 463, 984, 466, 980, 464, 982, 491, 989, 507, 503, 504, 985, 492, 493, 494, 986, 502, 498, 499, 987, 988, 515, 516, 517, 520, 521, 522, 546, 992, 993, 525, 526, 528, 529, 994, 533, 534],
+  "tabs": [
+    ["shareTourismTabs", "activeShareTourismTabs"],
+    ["grossValueTabs", "activeGrossValueTabsTabs"],
+    ["averageMonthlyTabs", "activeAverageMonthlyTabs"],
+    ["averageNumberTabs", "activeAverageNumberTabs"],
+    ["incomeKsrTabs", "activeIncomeKsrTabs"],
+    ["hotelRevenueTabs", "activeHotelRevenueTabs"],
+    ["taxesTourismTabs", "activeTaxesTourismTabs"]
+  ]
+}
