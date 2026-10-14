@@ -73,7 +73,7 @@ _context["\""] = _context["'"] = _context["q"] = makeSF((ast, ctx, rs) => {
   for (const f of flags.filter(f => f !== '_')) {
     const func = $getvar$(ctx, `str>${f}`, rs);
     if (isFunction(func)) {
-      return EVAL([`str>${f}`, String(ast[0])], ctx, rs);
+      return EVAL([`str>${f}`, ["'", String(ast[0])]], ctx, rs);
     }
   }
 
