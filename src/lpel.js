@@ -83,7 +83,9 @@ const OPNOLF = [
 
 const STRFLAGS = [
   "r", "f"
-]
+];
+
+let fStringId = 0;
 
 
 /**
@@ -142,11 +144,24 @@ export function tokenize(s, options) {
    * @param {Array<string> =} flags Флаги для парсинга строки `STRFLAGS`
    *                        - `r`: Парсить как регулярное выражение: \ не считается символом экранирования
    *                        - `f`: Парсить как форматную строку (при открытии фигурной скобки все внутри считается LPE кодом)
-   * @returns {{str: string, type: ("string_double"|"string_single"|"string_column"), tokens: Array<*>}}
+   * @returns {{str: string, type: ("string_double"|"string_single"|"string_column"), tokens: Array<*>, fid: number}}
    */
   const nextString = (flags) => {
     let c = s.charAt(i);
     const startSymbol = c;
+    /**
+     * Итоговые токены для обычных строк:
+     * "string_single" ["'", str, ...flags]
+     * Для f строк
+     * "string_format_start" [flags, fid]
+     * "string_single" ["'", str, fid]
+     * ...tokens
+     * "string_single" ["'", str, fid]
+     * ...tokens
+     * "string_single" ["'", str, fid]
+     * "string_format_end" undefined
+     */
+    const fid = ++fStringId;
 
     /** @type {'string_double' | 'string_single' | 'string_column'}  */
     const type =
@@ -213,7 +228,7 @@ export function tokenize(s, options) {
         }
         c = s.charAt(i);
         if (c !== "{") {
-          tokens.push(make(type, [startSymbol, str]));
+          tokens.push(make(type, [startSymbol, str, fid]));
           tokens.push(...tokenize(s.slice(i), { ...options, fstring: true }).map(el => {
             el.from += i;
             el.to += i;
@@ -232,7 +247,7 @@ export function tokenize(s, options) {
       i += 1;
     }
     i += 1;
-    return {type, str, tokens};
+    return {type, str, tokens, fid};
   };
 
   let c;                                                                                            // The current character.
@@ -269,14 +284,14 @@ export function tokenize(s, options) {
         const flags = extractStringFlags(name);
         const visibleFlags = flags.filter((flag) => !["r", "f"].includes(flag));
         const isFString = flags.includes("f");
+        const { str, type, tokens, fid } = nextString(flags);
         if (isFString) {
-          result.push(make("string_format_start", visibleFlags));
+          result.push(make("string_format_start", [visibleFlags, fid]));
         }
-        const { str, type, tokens } = nextString(flags);
         result.push(...tokens);
-        result.push(make(type, [c, str, ...(isFString ? [] : visibleFlags)]));                                                    // set the value [', str, strType]
+        result.push(make(type, [c, str, ...(isFString ? [fid] : visibleFlags)]));                                                    // set the value [', str, strType]
         if (isFString) {
-          result.push(make("string_format_end", undefined));
+          result.push(make("string_format_end", fid));
         }
       } else {
         result.push(make('name', name));
