@@ -839,19 +839,37 @@ const make_parse = function (opt = {}) {
 
   symbol("string_format_end");
   prefix("string_format_start", function () {
+    const fid = this.sexpr?.[1] ?? 0;
+    // Для m_token мы проверяем id, для m_tokens[] type
+    const isFLiteral = (token) => ["string_single", "string_double", "(string_literal_double)", "(string_literal_single)"]
+      .includes(token.type ?? token.id) && (token.value?.[2] === fid || token.sexpr?.[2] === fid);
     let a = [];
     const strtype = m_token.sexpr[0];
     // Newlines inside a [...] literal are whitespace, like inside (...).
     while (m_token.id === 'LF') advance();
     while (m_token.id !== "string_format_end") {
-      a.push(expression(0));
+      if (isFLiteral(m_token)) {
+        // Это кусочек не-lpe строки
+        const fstringPart = expression(10000);
+        fstringPart.sexpr.splice(2, 1);
+        a.push(fstringPart);
+      } else {
+        const nextPartIndex = m_tokens.findIndex((token, idx) => idx >= m_token_nr && (isFLiteral(token) || (token.type === "string_format_end" && token.value === fid)));
+        const savedTokens = m_tokens;
+        m_tokens = m_tokens.slice(0, nextPartIndex);
+        a.push(expression(0));
+        m_tokens = savedTokens;
+      }
+      if (m_token.id === "(end)") {
+        advance();
+      }
       while (m_token.id === 'LF') advance();
     }
     this.closurePosition = [m_token.from, m_token.to];
     advance("string_format_end");
     this.first = a;
     this.arity = "unary";
-    this.sexpr = ["f" + strtype, this.sexpr].concat(a.map((el) => el.sexpr));
+    this.sexpr = ["f" + strtype, this.sexpr?.[0]].concat(a.map((el) => el.sexpr));
     return this;
   });
 

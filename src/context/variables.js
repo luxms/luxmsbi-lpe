@@ -441,6 +441,7 @@ _context["define"] = makeSF((ast, ctx, rs) => {
       throw new Error('Last argument of define must be <String> ("func body at quotes")');
     }
     body = body[1];
+    // @ts-ignore
     let fargs = [];
     const functionName = safeKey(last[1]);
     safeSet(statics, functionName, {});
@@ -469,6 +470,7 @@ _context["define"] = makeSF((ast, ctx, rs) => {
       if (ths) ths = safeGet(ths, functionName);
       return EVAL(
         ["let",
+          // @ts-ignore
           [["this", ths || {}], ...fargs.map((x, i) => [x[0], ast[i] || x[1]])],
           parse(body)],
         ctx,
