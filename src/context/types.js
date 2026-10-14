@@ -280,22 +280,6 @@ _context["str>JSON"] = _context["strToJson"] = (obj) => {
 
 
 
-_context["str>JSON"] = _context["strToJson"] = (obj) => {
-  /**
-   * Преобразовать строку в JSON объект.
-   *
-   * @usage JSON"value"
-   * @param value [any] Строковое представление JSON объекта
-   *
-   * @example JSON'{"a": true, "b": [1, 2, 3]}' => {a: true, b: [1,2,3]}
-   *          fJSON'{{"a": {1 + 1}}' => {a: 2}
-   * @category Строковые префиксы | 1
-   */
-  return JSON.parse(obj);
-};
-
-
-
 _context["str>AST"] = _context["strToAST"] = (obj) => {
   /**
    * Преобразовать LPE строку в AST дерево.
