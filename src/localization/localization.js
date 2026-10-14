@@ -5420,6 +5420,93 @@ export const LOCALE_DOC = {
 
 
 
+//#region strToAST
+    "strToAST": {
+      en: `/**
+            * Transform LPE string to AST-tree.
+            *
+            * @usage AST"value"
+            * @param value [any] LPE string
+            *
+            * @example AST'1 + 3' => ["+", 1, 3]
+            *          fAST'begin(x := 10; {{1, x, {3*2}}.map(el => el * 2))' => ["begin", [":=","x",10], [".", ["vector",1,"x",6], ["map",["=>","el",["*","el",2]]] ]]
+            * @category String prefix | 5
+            */`,
+      ru: `/**
+            * Преобразовать LPE строку в AST дерево.
+            *
+            * @usage AST"value"
+            * @param value [any] LPE строка
+            *
+            * @example AST'1 + 3' => ["+", 1, 3]
+            *          fAST'begin(x := 10; {{1, x, {3*2}}.map(el => el * 2))' => ["begin", [":=","x",10], [".", ["vector",1,"x",6], ["map",["=>","el",["*","el",2]]] ]]
+            * @category Строковые префиксы | 5
+            */`,
+      hash: 186075021,
+    },
+//#endregion strToAST
+
+
+
+
+//#region strToEVAL
+    "strToEVAL": {
+      en: `/**
+            * Execute LPE expression.
+            *
+            * @usage EVAL"value"
+            * @param value [any] LPE string
+            *
+            * @example EVAL'1 + 3' => 4
+            *          fEVAL'begin(x := 10; {{1, x, {3*2}}.map(el => el * 2))' => [2, 20, 12]
+            * @category String prefix | 6
+            */`,
+      ru: `/**
+            * Выполняет LPE.
+            *
+            * @usage EVAL"value"
+            * @param value [any] LPE строка
+            *
+            * @example EVAL'1 + 3' => 4
+            *          fEVAL'begin(x := 10; {{1, x, {3*2}}.map(el => el * 2))' => [2, 20, 12]
+            * @category Строковые префиксы | 6
+            */`,
+      hash: 540922086,
+    },
+//#endregion strToEVAL
+
+
+
+
+//#region strToJson
+    "strToJson": {
+      en: `/**
+            * Transform string to JSON object.
+            *
+            * @usage JSON"value"
+            * @param value [any] String representation of a JSON object
+            *
+            * @example JSON'{"a": true, "b": [1, 2, 3]}' => {a: true, b: [1,2,3]}
+            *          fJSON'{{"a": {1 + 1}}' => {a: 2}
+            * @category String prefix | 1
+            */`,
+      ru: `/**
+            * Преобразовать строку в JSON объект.
+            *
+            * @usage JSON"value"
+            * @param value [any] Строковое представление JSON объекта
+            *
+            * @example JSON'{"a": true, "b": [1, 2, 3]}' => {a: true, b: [1,2,3]}
+            *          fJSON'{{"a": {1 + 1}}' => {a: 2}
+            * @category Строковые префиксы | 1
+            */`,
+      hash: 1064385873,
+    },
+//#endregion strToJson
+
+
+
+
 //#region threadFirst
     "threadFirst": {
       en: `/**
