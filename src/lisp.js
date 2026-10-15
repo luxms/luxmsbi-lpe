@@ -32,7 +32,8 @@ import CONTEXT_LOGICAL from './context/logical';
 import CONTEXT_MATH from './context/math';
 import CONTEXT_STRINGS from './context/strings';
 import CONTEXT_OBJECTS from './context/objects';
-import {DATE_TIME} from './lib/datetime';
+import { DATE_FUNCTIONS } from "./lib/date/date";
+import { TIME_FUNCTIONS } from "./lib/date/time";
 import { findDoc, makeDoc, selectPerfectFunctionName } from "./lib/doc";
 import { isArray, isArrayFunction, isFunction, isHash, isSF, isSkip, isString } from "./lib/utils";
 
@@ -80,7 +81,8 @@ export const STDLIB = {
   ...CONTEXT_MATH,
   ...CONTEXT_STRINGS,
   ...CONTEXT_OBJECTS,
-  ...DATE_TIME,
+  ...DATE_FUNCTIONS,
+  ...TIME_FUNCTIONS,
 
 };
 
