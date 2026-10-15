@@ -1,4 +1,7 @@
 use crate::{Ast, Error, Result, Value};
+#[path = "controls.rs"]
+mod controls;
+pub use controls::{ControlUsage, RuntimeControls, RuntimeLimits};
 #[path = "streams.rs"]
 mod streams;
 use futures::future::LocalBoxFuture;
@@ -122,6 +125,13 @@ impl<T> Default for Arena<T> {
     }
 }
 impl<T: Clone> Arena<T> {
+    fn with<R>(&self, id: usize, f: impl FnOnce(&T) -> R) -> Option<R> {
+        let storage = self.0.borrow();
+        let value = storage.slots.get(id & INDEX_MASK)?;
+        (value.generation == id >> SHIFT).then_some(())?;
+        value.value.as_ref().map(f)
+    }
+
     fn insert(&mut self, value: T) -> usize {
         let mut storage = self.0.borrow_mut();
         if let Some(index) = storage.free.pop() {
@@ -311,6 +321,9 @@ pub struct Runtime {
     budget: Rc<Cell<usize>>,
     depth: Rc<Cell<usize>>,
     cancelled: Arc<AtomicBool>,
+    controls: Option<RuntimeControls>,
+    control: controls::ControlSlot,
+    last_control: Option<Rc<controls::EvaluationControl>>,
     pub output: Vec<String>,
     output_log: Rc<RefCell<Vec<String>>>,
 }
@@ -352,6 +365,9 @@ impl Runtime {
             budget: self.budget.clone(),
             depth: Rc::new(Cell::new(self.depth.get())),
             cancelled: self.cancelled.clone(),
+            controls: self.controls.clone(),
+            control: Rc::new(RefCell::new(self.control.borrow().clone())),
+            last_control: self.last_control.clone(),
             output: vec![],
             output_log: self.output_log.clone(),
         }
@@ -381,6 +397,9 @@ impl Runtime {
             budget: Rc::new(Cell::new(1_000_000)),
             depth: Rc::new(Cell::new(0)),
             cancelled: Arc::new(AtomicBool::new(false)),
+            controls: None,
+            control: Rc::default(),
+            last_control: None,
             output: vec![],
             output_log: Rc::default(),
         };
@@ -461,6 +480,9 @@ impl Runtime {
         self.cancelled.clone()
     }
     pub fn tick(&mut self) -> Result<()> {
+        if self.controls_active() {
+            return self.control_checkpoint();
+        }
         if self.cancelled.load(Ordering::Relaxed) {
             return Err(Error::new("Cancelled", "Evaluation cancelled"));
         }
@@ -901,8 +923,15 @@ impl Runtime {
         match value {
             Value::Array(id) => self
                 .arrays
-                .get(*id)
-                .ok_or_else(|| Error::new("InvalidHandle", "Expired array")),
+                .with(*id, |values| {
+                    if self.controls_active() {
+                        for value in values {
+                            self.charge_value(value)?;
+                        }
+                    }
+                    Ok(values.clone())
+                })
+                .ok_or_else(|| Error::new("InvalidHandle", "Expired array"))?,
             _ => Err(Error::new("TypeError", "Expected array")),
         }
     }
@@ -910,8 +939,16 @@ impl Runtime {
         match value {
             Value::Object(id) => self
                 .objects
-                .get(*id)
-                .ok_or_else(|| Error::new("InvalidHandle", "Expired object")),
+                .with(*id, |values| {
+                    if self.controls_active() {
+                        for (key, value) in values {
+                            self.charge_intermediate(key.len())?;
+                            self.charge_value(value)?;
+                        }
+                    }
+                    Ok(values.clone())
+                })
+                .ok_or_else(|| Error::new("InvalidHandle", "Expired object"))?,
             _ => Err(Error::new("TypeError", "Expected object")),
         }
     }
@@ -984,6 +1021,24 @@ impl Runtime {
         }
     }
     pub fn set(&mut self, value: &Value, key: &str, new: Value) -> Result<Value> {
+        if self.controls_active() {
+            self.charge_value(&new)?;
+            self.charge_intermediate(key.len())?;
+            if let Value::Array(id) = value {
+                let len = self.arrays.with(*id, Vec::len).unwrap_or(0);
+                let end = if key == "length" {
+                    match new {
+                        Value::Number(n) if n >= 0.0 && n.fract() == 0.0 => n as usize,
+                        _ => len,
+                    }
+                } else {
+                    array_index(key).map_or(len, |n| n.saturating_add(1))
+                };
+                let extra = end.saturating_sub(len);
+                self.charge_items::<Value>(extra)?;
+                self.charge_items::<usize>(extra)?;
+            }
+        }
         match value {
             Value::Object(id) => {
                 self.objects
@@ -1469,13 +1524,20 @@ impl Runtime {
         futures::executor::block_on(self.eval_async(ast, options))
     }
     pub async fn eval_async(&mut self, ast: &Ast, options: &EvalOptions) -> Result<Value> {
-        self.steps.set(0);
-        self.budget.set(options.max_steps);
+        let nested = self.controls_active();
+        let _control_scope = self.enter_controls(options);
+        if !nested {
+            self.steps.set(0);
+            self.budget.set(options.max_steps);
+        } else {
+            self.budget.set(self.budget.get().min(options.max_steps));
+        }
         self.tasks
             .borrow_mut()
             .retain(|task| task.strong_count() > 0);
         let _roots = self.task(ast, self.global);
         let cancelled = self.cancelled.clone();
+        let control = self.control.borrow().clone();
         let global = self.global;
         let mut evaluation = async {
             let value = self.eval_in(ast, global, options).await?;
@@ -1484,13 +1546,24 @@ impl Runtime {
         .boxed_local();
         let result = futures::future::poll_fn(move |cx| {
             if cancelled.load(Ordering::Relaxed) {
-                std::task::Poll::Ready(Err(Error::new("Cancelled", "Evaluation cancelled")))
+                let error = Error::new("Cancelled", "Evaluation cancelled");
+                std::task::Poll::Ready(Err(control
+                    .as_ref()
+                    .map_or(error.clone(), |c| c.fail(error))))
             } else {
+                if let Some(control) = &control {
+                    if let Err(error) = control.work() {
+                        return std::task::Poll::Ready(Err(error));
+                    }
+                }
                 evaluation.as_mut().poll(cx)
             }
         })
         .await;
         self.output = self.output_log.borrow().clone();
+        if let Some(control) = self.control.borrow().as_ref() {
+            control.status()?;
+        }
         result
     }
     pub fn eval_in<'a>(
@@ -1501,6 +1574,7 @@ impl Runtime {
     ) -> LocalBoxFuture<'a, Result<Value>> {
         Box::pin(async move {
             self.tick()?;
+            self.control_depth(options)?;
             // Host special forms may collect while this lexical scope is active.
             let roots = self.task(ast, env);
             if self.depth.get() >= options.max_depth {
@@ -1616,7 +1690,7 @@ impl Runtime {
                         return Ok(result);
                     }
                 }
-                _ => Ok(self.from_json(ast)),
+                _ => self.checked_from_json(ast),
             }
         })
     }
@@ -1715,6 +1789,7 @@ impl Runtime {
     ) -> LocalBoxFuture<'a, Result<Value>> {
         Box::pin(async move {
             self.tick()?;
+            self.control_depth(options)?;
             let roots = self.task(&Ast::Null, env);
             roots.retain_task_value(&function);
             for value in &args {
@@ -1906,12 +1981,11 @@ impl Runtime {
             };
             let mut names = vec![];
             let mut types = IndexMap::new();
-            let inline_type = crate::regexp::RegExp::new(r"^(.*):\s*(\w+)$", "")?;
+            let inline_type = crate::regexp::RegExp::new(self, r"^(.*):\s*(\w+)$", "")?;
             for entry in template {
                 if let Some(name) = entry.as_str() {
-                    if let Some((name, ty)) =
-                        name.rsplit_once(':').filter(|_| inline_type.is_match(name))
-                    {
+                    let matches = inline_type.is_match(self, name)?;
+                    if let Some((name, ty)) = name.rsplit_once(':').filter(|_| matches) {
                         names.push(name.to_owned());
                         types.insert(name.trim().to_owned(), ty.trim().to_lowercase());
                     } else {
@@ -1960,18 +2034,24 @@ impl Runtime {
             let mut values = vec![];
             for (i, ast) in arguments.iter().enumerate() {
                 let name = &arg_names[i];
-                let ty = types
-                    .get(name)
-                    .cloned()
-                    .or_else(|| {
-                        types.iter().find_map(|(p, t)| {
-                            crate::regexp::RegExp::new(&format!("^{p}$"), "")
-                                .ok()
-                                .filter(|r| r.is_match(name))
-                                .map(|_| t.clone())
-                        })
-                    })
-                    .unwrap_or("any".into());
+                let mut ty = types.get(name).cloned();
+                if ty.is_none() {
+                    for (p, t) in &types {
+                        let regex = crate::regexp::RegExp::new(self, &format!("^{p}$"), "");
+                        if let Err(error) = &regex {
+                            if error.kind != "SyntaxError" {
+                                return Err(error.clone());
+                            }
+                        }
+                        if let Ok(regex) = regex {
+                            if regex.is_match(self, name)? {
+                                ty = Some(t.clone());
+                                break;
+                            }
+                        }
+                    }
+                }
+                let ty = ty.unwrap_or("any".into());
                 let value = if ty == "any" {
                     self.eval_in(ast, env, options).await?
                 } else {

@@ -12,7 +12,8 @@ pub mod value;
 pub use deparser::deparse;
 pub use parser::parse;
 pub use runtime::{
-    EnvId, EvalOptions, Runtime, StreamContext, StreamResolver, StreamStats, StreamSubscription,
+    ControlUsage, EnvId, EvalOptions, Runtime, RuntimeControls, RuntimeLimits, StreamContext,
+    StreamResolver, StreamStats, StreamSubscription,
 };
 pub use value::Value;
 pub type Ast = serde_json::Value;

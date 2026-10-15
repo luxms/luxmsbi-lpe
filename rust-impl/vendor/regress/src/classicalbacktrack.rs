@@ -193,6 +193,9 @@ impl<'a, Input: InputIndexer> MatchAttempter<'a, Input> {
         // Drive the iteration min times.
         // That tells us the min position.
         for _ in 0..min {
+            if !input.checkpoint() {
+                return None;
+            }
             if !matcher.matches(input, dir, &mut pos) {
                 return None;
             }
@@ -201,6 +204,9 @@ impl<'a, Input: InputIndexer> MatchAttempter<'a, Input> {
 
         // Drive it up to the max.
         for _ in 0..(max - min) {
+            if !input.checkpoint() {
+                return None;
+            }
             let saved = pos;
             if !matcher.matches(input, dir, &mut pos) {
                 pos = saved;
@@ -221,6 +227,9 @@ impl<'a, Input: InputIndexer> MatchAttempter<'a, Input> {
         matcher: Scm,
     ) -> Input::Position {
         for _ in 0..limit {
+            if !input.checkpoint() {
+                return pos;
+            }
             let saved = pos;
             if !matcher.matches(input, dir, &mut pos) {
                 pos = saved;
@@ -500,6 +509,9 @@ impl<'a, Input: InputIndexer> MatchAttempter<'a, Input> {
         _dir: Dir,
     ) -> bool {
         loop {
+            if !input.checkpoint() {
+                return false;
+            }
             // We always have a single Exhausted instruction backstopping our stack,
             // so we do not need to check for empty bts.
             debug_assert!(!self.bts.is_empty(), "Backtrack stack should not be empty");
@@ -643,6 +655,9 @@ impl<'a, Input: InputIndexer> MatchAttempter<'a, Input> {
         // to.
         #[allow(clippy::never_loop)]
         'nextinsn: loop {
+            if !input.checkpoint() {
+                return None;
+            }
             'backtrack: loop {
                 // Helper macro to either increment ip and go to the next insn, or backtrack.
                 macro_rules! next_or_bt {
@@ -983,6 +998,9 @@ impl<'a, Input: InputIndexer> MatchAttempter<'a, Input> {
             if self.try_backtrack(input, &mut ip, &mut pos, dir) {
                 continue 'nextinsn;
             } else {
+                if !input.checkpoint() {
+                    return None;
+                }
                 // We have exhausted the backtracking stack.
                 debug_assert!(self.bts.len() == 1, "Should have exhausted backtrack stack");
                 return None;
@@ -1071,6 +1089,9 @@ impl<Input: InputIndexer> BacktrackExecutor<'_, Input> {
     ) -> Option<Match> {
         let inp = self.input;
         loop {
+            if !inp.checkpoint() {
+                return None;
+            }
             // Find the next start location, or None if none.
             // Don't try this unless CODE_UNITS_ARE_BYTES - i.e. don't do byte searches
             // on UTF-16 or UCS2.

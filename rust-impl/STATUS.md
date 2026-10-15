@@ -60,9 +60,9 @@ failing fixtures rather than inferring coverage from a passing sibling suite.
 
 ## Required follow-up
 
-1. Add interruptible regex compilation/search or enforce external execution
-   limits before accepting unrestricted untrusted patterns. Runtime budget
-   checks occur between matches, not inside `regress` backtracking. Broader
+1. Opt-in runtime controls now poll inside regex searches and compiler input;
+   compiler internals and heap accounting still have gaps documented in
+   `RUNTIME-CONTROLS.md`. Enforce external limits when a hard quota is needed. Broader
    ECMAScript/Unicode edge-case auditing remains necessary; the passing corpus
    is not a claim of complete V8 conformance.
 2. Add target-platform CI and broader sustained-workload memory/performance

@@ -57,6 +57,12 @@ where
     /// This is true for ASCII and UTF8, but not for UCS2 or UTF16.
     const CODE_UNITS_ARE_BYTES: bool;
 
+    /// Cooperative search checkpoint. Ordinary inputs have no control overhead.
+    #[inline(always)]
+    fn checkpoint(&self) -> bool {
+        true
+    }
+
     /// \return whether we are using unicode for case-folding.
     fn unicode(&self) -> bool;
 
@@ -150,6 +156,123 @@ where
         pos: &mut Self::Position,
         bytes: &[u8; N],
     ) -> bool;
+}
+
+/// Search-local control, deliberately not a thread-local or global callback.
+#[cfg(feature = "utf16")]
+#[derive(Clone, Copy)]
+pub(crate) struct ControlledInput<'a, I> {
+    pub input: I,
+    pub poll: &'a dyn Fn() -> bool,
+}
+
+#[cfg(feature = "utf16")]
+impl<I: core::fmt::Debug> core::fmt::Debug for ControlledInput<'_, I> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_tuple("ControlledInput").field(&self.input).finish()
+    }
+}
+
+#[cfg(feature = "utf16")]
+impl<I: InputIndexer> InputIndexer for ControlledInput<'_, I> {
+    type Element = I::Element;
+    type CharProps = I::CharProps;
+    type Position = I::Position;
+    const CODE_UNITS_ARE_BYTES: bool = I::CODE_UNITS_ARE_BYTES;
+
+    fn checkpoint(&self) -> bool {
+        (self.poll)()
+    }
+    fn unicode(&self) -> bool {
+        self.input.unicode()
+    }
+    fn subinput(&self, range: Range<Self::Position>) -> Self {
+        Self {
+            input: self.input.subinput(range),
+            poll: self.poll,
+        }
+    }
+    fn next_right(&self, pos: &mut Self::Position) -> Option<Self::Element> {
+        self.input.next_right(pos)
+    }
+    fn next_left(&self, pos: &mut Self::Position) -> Option<Self::Element> {
+        self.input.next_left(pos)
+    }
+    fn next_right_pos(&self, pos: Self::Position) -> Option<Self::Position> {
+        self.input.next_right_pos(pos)
+    }
+    fn next_left_pos(&self, pos: Self::Position) -> Option<Self::Position> {
+        self.input.next_left_pos(pos)
+    }
+    fn peek_byte_right(&self, pos: Self::Position) -> Option<u8> {
+        self.input.peek_byte_right(pos)
+    }
+    fn peek_byte_left(&self, pos: Self::Position) -> Option<u8> {
+        self.input.peek_byte_left(pos)
+    }
+    fn left_end(&self) -> Self::Position {
+        self.input.left_end()
+    }
+    fn right_end(&self) -> Self::Position {
+        self.input.right_end()
+    }
+    fn try_move_right(&self, pos: Self::Position, amt: usize) -> Option<Self::Position> {
+        self.input.try_move_right(pos, amt)
+    }
+    fn try_move_left(&self, pos: Self::Position, amt: usize) -> Option<Self::Position> {
+        self.input.try_move_left(pos, amt)
+    }
+    fn pos_to_offset(&self, pos: Self::Position) -> usize {
+        self.input.pos_to_offset(pos)
+    }
+    fn find_bytes<S: bytesearch::ByteSearcher>(
+        &self,
+        pos: Self::Position,
+        search: &S,
+    ) -> Option<Self::Position> {
+        self.input.find_bytes(pos, search)
+    }
+    fn subrange_eq<D: Direction>(
+        &self,
+        dir: D,
+        pos: &mut Self::Position,
+        range: Range<Self::Position>,
+    ) -> bool {
+        let _ = dir;
+        let len = range.end - range.start;
+        let endpoint = if D::FORWARD {
+            self.input.try_move_right(*pos, len)
+        } else {
+            self.input.try_move_left(*pos, len)
+        };
+        let Some(endpoint) = endpoint else {
+            return false;
+        };
+        let mut at = if D::FORWARD { *pos } else { endpoint };
+        // Preserve the original raw-unit comparison and cursor advance, even
+        // on mismatch. Chunks may split a surrogate pair: do not decode them.
+        *pos = endpoint;
+        for offset in (0..len).step_by(64) {
+            let start = range.start + offset;
+            let end = range.start + (offset + 64).min(len);
+            if !self.checkpoint()
+                || !self
+                    .input
+                    .subrange_eq(crate::cursor::Forward::new(), &mut at, start..end)
+            {
+                return false;
+            }
+        }
+        true
+    }
+    fn match_bytes<const N: usize, D: Direction>(
+        &self,
+        dir: D,
+        pos: &mut Self::Position,
+        bytes: &[u8; N],
+    ) -> bool {
+        self.input.match_bytes(dir, pos, bytes)
+    }
 }
 
 /// \return the length of a UTF8 sequence starting with this byte.
@@ -1288,5 +1411,53 @@ impl<'a> InputIndexer for Ucs2Input<'a> {
         _bytes: &[u8; N],
     ) -> bool {
         panic!("Should never be matching bytes for ucs2");
+    }
+}
+
+#[cfg(all(test, feature = "utf16"))]
+mod control_tests {
+    use super::*;
+    use crate::cursor::{Backward, Forward};
+
+    fn compare<I: InputIndexer, D: Direction>(input: I, dir: D) {
+        let controlled = ControlledInput {
+            input,
+            poll: &|| true,
+        };
+        for (start, end) in [
+            (0, 0),
+            (0, 1),
+            (0, 64),
+            (0, 65),
+            (63, 65),
+            (64, 65),
+            (0, 66),
+        ] {
+            for offset in [0, 1, 63, 64, 65, 66, 67, 128, 130, 132] {
+                let range = (input.left_end() + start)..(input.left_end() + end);
+                let mut plain_pos = input.left_end() + offset;
+                let mut controlled_pos = plain_pos;
+                let expected = input.subrange_eq(dir, &mut plain_pos, range.clone());
+                let actual = controlled.subrange_eq(dir, &mut controlled_pos, range);
+                assert_eq!(actual, expected, "range={start}..{end}, at={offset}");
+                assert_eq!(
+                    controlled_pos, plain_pos,
+                    "range={start}..{end}, at={offset}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn controlled_raw_comparisons_preserve_cursor_on_success_mismatch_and_short_input() {
+        let mut text = vec![97; 63];
+        text.extend([0xd83d, 0xde00, 98]);
+        text.extend_from_within(..);
+        for unicode in [false, true] {
+            compare(Utf16Input::new(&text, unicode), Forward::new());
+            compare(Utf16Input::new(&text, unicode), Backward::new());
+            compare(Ucs2Input::new(&text, unicode), Forward::new());
+            compare(Ucs2Input::new(&text, unicode), Backward::new());
+        }
     }
 }

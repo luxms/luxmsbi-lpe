@@ -50,6 +50,10 @@ name = "regress"
 path = "src/lib.rs"
 
 [[test]]
+name = "search_control"
+path = "tests/search_control.rs"
+
+[[test]]
 name = "anchored_optimization"
 path = "tests/anchored_optimization.rs"
 

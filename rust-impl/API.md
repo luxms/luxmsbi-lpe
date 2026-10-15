@@ -126,11 +126,11 @@ flags and preserves global/sticky matching, captures, named groups, and `d`
 indices. Unicode `u`/`v` matching and legacy code-unit matching are distinct;
 the public input/output contract remains UTF-8.
 
-Regex compilation and a single backtracking search cannot currently be
-interrupted by the runtime work budget or cancellation. Checks occur between
-matches. Do not expose unrestricted patterns to untrusted callers without
-external execution limits; a hard regex execution limit remains a release
-hardening requirement.
+Without opt-in controls, the historical checks remain between matches.
+`RuntimeControls` adds same-thread host polling and deterministic work accounting
+inside UTF-16/UCS-2 searches, plus bounded compiler input and compiler-input
+polling. This is cooperative, not a hard time or heap quota. See
+[Runtime controls](RUNTIME-CONTROLS.md) for the API, accounting coverage and gaps.
 
 ## Explicit exclusions
 
