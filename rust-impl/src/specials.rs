@@ -759,9 +759,15 @@ pub async fn call(
                 )
                 .await
             } else {
-                let value = rt.eval_in(&arg(args, 1), env, options).await?;
+                let value = if rt.legacy_context_enabled() && args.get(1).is_none() {
+                    Value::Undefined
+                } else {
+                    rt.eval_in(&arg(args, 1), env, options).await?
+                };
                 let key = raw_string(rt, &target);
-                if name == "def" {
+                if rt.legacy_context_enabled() {
+                    rt.assign_async(env, &key, value, options).await
+                } else if name == "def" {
                     rt.unbox(
                         vec![value],
                         StreamContext::new(env, options).with_asts(args),

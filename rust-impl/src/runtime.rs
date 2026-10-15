@@ -309,6 +309,7 @@ pub struct Runtime {
     envs: Arena<Environment>,
     global: EnvId,
     library: EnvId,
+    legacy_context: bool,
     literals: Arena<Value>,
     array_properties: Rc<RefCell<HashMap<usize, IndexMap<String, Value>>>>,
     array_holes: Rc<RefCell<HashMap<usize, HashSet<usize>>>>,
@@ -353,6 +354,7 @@ impl Runtime {
             envs: self.envs.clone(),
             global: self.global,
             library: self.library,
+            legacy_context: self.legacy_context,
             literals: self.literals.clone(),
             array_properties: self.array_properties.clone(),
             array_holes: self.array_holes.clone(),
@@ -385,6 +387,7 @@ impl Runtime {
             envs: Arena::default(),
             global: 0,
             library: 0,
+            legacy_context: false,
             literals: Arena::default(),
             promises: PromiseArena::default(),
             streams: Arena::default(),
@@ -461,6 +464,16 @@ impl Runtime {
     }
     pub fn global_env(&self) -> EnvId {
         self.global
+    }
+    /// Opt into the bounded 1.6.7 context profile before starting evaluation.
+    /// Undefined bindings fall through; bare nonliteral functions evaluate to
+    /// their identifier. Variable special forms use `assign_async` semantics.
+    /// Library writes are rejected, not enabled by this profile.
+    pub fn set_legacy_context(&mut self, enabled: bool) {
+        self.legacy_context = enabled;
+    }
+    pub(crate) fn legacy_context_enabled(&self) -> bool {
+        self.legacy_context
     }
     pub fn push_context(&mut self, values: IndexMap<String, Value>) -> EnvId {
         self.global = self.new_env(values, vec![self.global]);
@@ -734,18 +747,24 @@ impl Runtime {
             let e = self.envs.get(*frame).unwrap();
             if let Some(backing @ Value::Object(_)) = &e.backing {
                 if self.has_own(backing, name) {
-                    return Ok((self.get(backing, name), position + 1));
+                    let value = self.get(backing, name);
+                    if !self.legacy_context || !matches!(value, Value::Undefined) {
+                        return Ok((value, position + 1));
+                    }
                 }
             }
             if let Some(value) = e.values.get(name) {
-                if !callable
+                if !self.legacy_context
+                    && !callable
                     && e.library
                     && options.disallow_lib_functions_getting
                     && value.is_callable()
                 {
                     continue;
                 }
-                return Ok((value.clone(), position + 1));
+                if !self.legacy_context || !matches!(value, Value::Undefined) {
+                    return Ok((value.clone(), position + 1));
+                }
             }
             if let Some(value) = e.values.get(&format!("sf:{name}")) {
                 if value.is_callable() {
@@ -807,18 +826,24 @@ impl Runtime {
                             return Ok((value, position + 1));
                         }
                     } else if self.has_own(backing, name) {
-                        return Ok((self.get(backing, name), position + 1));
+                        let value = self.get(backing, name);
+                        if !self.legacy_context || !matches!(value, Value::Undefined) {
+                            return Ok((value, position + 1));
+                        }
                     }
                 }
                 if let Some(value) = e.values.get(name) {
-                    if !callable
+                    if !self.legacy_context
+                        && !callable
                         && e.library
                         && options.disallow_lib_functions_getting
                         && value.is_callable()
                     {
                         continue;
                     }
-                    return Ok((value.clone(), position + 1));
+                    if !self.legacy_context || !matches!(value, Value::Undefined) {
+                        return Ok((value.clone(), position + 1));
+                    }
                 }
                 if let Some(hook) = e.hook {
                     if let Some(v) = hook(name, options)? {
@@ -886,6 +911,187 @@ impl Runtime {
             .values
             .insert(name.into(), value.clone());
         Ok(value)
+    }
+    /// Assign an already evaluated RHS without resetting execution budgets.
+    /// With the default profile this delegates to the original synchronous
+    /// `assign`. In the legacy profile undefined is a read sentinel, missing
+    /// names are created in the head frame and return undefined, and existing
+    /// function contexts receive a setter call whose result is returned.
+    pub fn assign_async<'a>(
+        &'a mut self,
+        env: EnvId,
+        name: &'a str,
+        value: Value,
+        options: &'a EvalOptions,
+    ) -> LocalBoxFuture<'a, Result<Value>> {
+        Box::pin(async move {
+            if !self.legacy_context {
+                return self.assign(env, name, value);
+            }
+            let roots = self.task(&Ast::Null, env);
+            roots.retain_task_value(&value);
+            if matches!(value, Value::Undefined) {
+                return Ok(self
+                    .legacy_assignment_lookup(env, name, options)
+                    .await?
+                    .unwrap_or(Value::Undefined));
+            }
+            self.legacy_assign_in(env, name, value, options, 0).await
+        })
+    }
+
+    // Unlike ordinary expression lookup, 1.6.7 def/assign call $var$ without
+    // options. Callback data is {}, while native limits still apply to calls.
+    async fn legacy_frame_value(
+        &mut self,
+        env: EnvId,
+        name: &str,
+        options: &EvalOptions,
+    ) -> Result<Option<Value>> {
+        self.tick()?;
+        let frame = self
+            .envs
+            .get(env)
+            .ok_or_else(|| Error::new("InvalidHandle", "Invalid context"))?;
+        if let Some(backing) = frame.backing {
+            let value = if backing.is_callable() {
+                let empty_options = self.object(IndexMap::new());
+                self.call_with_options(
+                    backing,
+                    vec![Value::String(name.into()), Value::Undefined, empty_options],
+                    env,
+                    options,
+                )
+                .await?
+            } else {
+                self.get(&backing, name)
+            };
+            if !matches!(value, Value::Undefined) {
+                return Ok(Some(value));
+            }
+        }
+        if let Some(value) = frame.values.get(name) {
+            if !matches!(value, Value::Undefined) {
+                return Ok(Some(value.clone()));
+            }
+        }
+        if let Some(hook) = frame.hook {
+            let lookup_options = EvalOptions {
+                resolve_string: false,
+                disallow_lib_functions_getting: false,
+                ..options.clone()
+            };
+            // Some(Undefined) remains an authoritative missing-name mask;
+            // None falls through, just like an undefined own property.
+            if let Some(value) = hook(name, &lookup_options)? {
+                return Ok(Some(value));
+            }
+        }
+        if frame.library && name == "Hashmap" {
+            return Ok(Some(self.object(IndexMap::new())));
+        }
+        Ok(None)
+    }
+
+    async fn legacy_assignment_lookup(
+        &mut self,
+        env: EnvId,
+        name: &str,
+        options: &EvalOptions,
+    ) -> Result<Option<Value>> {
+        let mut frames = vec![];
+        self.flatten_env(env, &mut frames, &mut HashSet::new());
+        for frame in frames {
+            if let Some(value) = self.legacy_frame_value(frame, name, options).await? {
+                return Ok(Some(value));
+            }
+        }
+        Ok(None)
+    }
+
+    fn legacy_assign_in<'a>(
+        &'a mut self,
+        env: EnvId,
+        name: &'a str,
+        value: Value,
+        options: &'a EvalOptions,
+        depth: usize,
+    ) -> LocalBoxFuture<'a, Result<Value>> {
+        Box::pin(async move {
+            if depth >= options.max_depth {
+                return Err(Error::new(
+                    "LimitError",
+                    "Assignment context depth exceeded",
+                ));
+            }
+            let own = self.legacy_frame_value(env, name, options).await?;
+            if own.as_ref().is_some_and(|v| !matches!(v, Value::Undefined)) {
+                return self.legacy_write_frame(env, name, value, options).await;
+            }
+            if own.is_none() {
+                let parents = self
+                    .envs
+                    .get(env)
+                    .ok_or_else(|| Error::new("InvalidHandle", "Invalid context"))?
+                    .parents;
+                for parent in parents {
+                    match self.legacy_assignment_lookup(parent, name, options).await? {
+                        Some(Value::Undefined) => break,
+                        Some(_) => {
+                            // JS re-enters a matched nested context for writes.
+                            // Re-probe only across that boundary, never twice
+                            // for a direct function-context getter/setter pair.
+                            return self
+                                .legacy_assign_in(parent, name, value, options, depth + 1)
+                                .await;
+                        }
+                        None => {}
+                    }
+                }
+            }
+            self.legacy_write_frame(env, name, value, options).await?;
+            Ok(Value::Undefined)
+        })
+    }
+
+    async fn legacy_write_frame(
+        &mut self,
+        env: EnvId,
+        name: &str,
+        value: Value,
+        options: &EvalOptions,
+    ) -> Result<Value> {
+        let frame = self
+            .envs
+            .get(env)
+            .ok_or_else(|| Error::new("InvalidHandle", "Invalid context"))?;
+        if frame.library {
+            return Err(Error::new(
+                "Unsupported",
+                format!("Legacy assignment cannot mutate library binding {name}"),
+            ));
+        }
+        match frame.backing {
+            Some(function) if function.is_callable() => {
+                let empty_options = self.object(IndexMap::new());
+                self.call_with_options(
+                    function,
+                    vec![Value::String(name.into()), value, empty_options],
+                    env,
+                    options,
+                )
+                .await
+            }
+            Some(object @ Value::Object(_)) => self.set(&object, name, value),
+            _ => {
+                self.envs
+                    .get_mut(env)
+                    .unwrap()
+                    .values
+                    .insert(name.into(), value.clone());
+                Ok(value)
+            }
+        }
     }
     pub fn undefine(&mut self, env: EnvId, name: &str) -> Value {
         let mut frames = vec![];
@@ -1594,7 +1800,12 @@ impl Runtime {
             match ast {
                 Json::String(name) => {
                     let value = self.lookup_async(env, name, options, false).await?;
-                    if self.preserve_promises.get() {
+                    if self.legacy_context
+                        && value.is_callable()
+                        && !matches!(&value, Value::Builtin(name) if matches!(name.as_str(), "Array" | "Object" | "Date"))
+                    {
+                        Ok(Value::String(name.clone()))
+                    } else if self.preserve_promises.get() {
                         Ok(value)
                     } else {
                         self.resolve_value(value).await
