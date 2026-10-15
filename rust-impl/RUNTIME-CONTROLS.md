@@ -155,3 +155,10 @@ cargo clippy --locked --offline --manifest-path rust-impl/Cargo.toml --all-targe
 `tests/runtime_controls.rs`, the compiler-input unit test, and vendor
 `tests/search_control.rs` use deterministic budgets rather than timing races.
 PostgreSQL adapter integration and SQLSTATE verification belong to the host.
+
+The combined controls and opt-in legacy-context changes passed 299 core tests
+(five pre-existing optional audits ignored), 565 vendor tests (one ignored),
+formatting and strict all-target core Clippy on 2026-10-15. A combined regression
+checks that legacy assignment loops share the work budget and that recovery
+retains the selected undefined-binding semantics. This is dependency evidence,
+not an installed PostgreSQL or WASI execution result.

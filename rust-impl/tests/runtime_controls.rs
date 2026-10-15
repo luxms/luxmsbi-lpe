@@ -402,3 +402,28 @@ fn mapped_and_filtered_owned_strings_are_charged_before_retention() {
         }
     }
 }
+
+#[test]
+fn legacy_binding_profile_shares_controls_and_recovers_without_resetting_semantics() {
+    for legacy in [false, true] {
+        let mut rt = controlled(300, 1_000_000);
+        rt.set_legacy_context(legacy);
+        let ast = json!(["let", {"x":0}, ["do", true, ["def", "x", ["+", "x", 1]]]]);
+        let error = rt.eval_ast(&ast, &EvalOptions::default()).unwrap_err();
+        assert_eq!(error.kind, "LimitError");
+        assert!(error.message.contains("work"));
+        assert_eq!(rt.control_usage().work, 300);
+
+        rt.set_global("x", Value::Number(7.0));
+        let ast = json!(["let", [["x", ["get", {}, "missing"]]], "x"]);
+        assert_eq!(
+            rt.eval_ast(&ast, &EvalOptions::default()).unwrap(),
+            if legacy {
+                Value::Number(7.0)
+            } else {
+                Value::Undefined
+            }
+        );
+        assert_eq!(rt.eval("2+3").unwrap(), Value::Number(5.0));
+    }
+}
