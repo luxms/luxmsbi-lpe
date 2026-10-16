@@ -540,6 +540,77 @@ impl Regex {
         )
     }
 
+    /// Find one UTF-16 match with cooperative control inside the search engine.
+    /// The callback is invoked for search positions, VM instructions, backtracking,
+    /// character-loop iterations and backreference comparisons. Its first error is
+    /// returned unchanged, never confused with no match (including in lookarounds).
+    /// It must return normally, not panic or unwind across an FFI boundary.
+    /// Compilation and engine allocations are not resource-limited by this API.
+    #[cfg(feature = "utf16")]
+    pub fn find_from_utf16_with_control<E>(
+        &self,
+        text: &[u16],
+        start: usize,
+        poll: impl FnMut() -> Result<(), E>,
+    ) -> Result<Option<Match>, E> {
+        self.find_with_control(Utf16Input::new(text, self.cr.flags.unicode), start, poll)
+    }
+
+    /// UCS-2 counterpart of [`Regex::find_from_utf16_with_control`].
+    #[cfg(feature = "utf16")]
+    pub fn find_from_ucs2_with_control<E>(
+        &self,
+        text: &[u16],
+        start: usize,
+        poll: impl FnMut() -> Result<(), E>,
+    ) -> Result<Option<Match>, E> {
+        self.find_with_control(Ucs2Input::new(text, self.cr.flags.unicode), start, poll)
+    }
+
+    #[cfg(feature = "utf16")]
+    fn find_with_control<I: InputIndexer, E>(
+        &self,
+        input: I,
+        start: usize,
+        poll: impl FnMut() -> Result<(), E>,
+    ) -> Result<Option<Match>, E> {
+        let state = core::cell::RefCell::new((poll, None));
+        let checkpoint = || {
+            let mut state = state.borrow_mut();
+            if state.1.is_some() {
+                return false;
+            }
+            match state.0() {
+                Ok(()) => true,
+                Err(error) => {
+                    state.1 = Some(error);
+                    false
+                }
+            }
+        };
+        // Poll before allocating per-search engine state as well.
+        let found = if checkpoint() {
+            let input = indexing::ControlledInput {
+                input,
+                poll: &checkpoint,
+            };
+            exec::Matches::new(
+                super::classicalbacktrack::BacktrackExecutor::new(
+                    input,
+                    MatchAttempter::new(&self.cr, input.left_end()),
+                ),
+                start,
+            )
+            .next()
+        } else {
+            None
+        };
+        match state.into_inner().1 {
+            Some(error) => Err(error),
+            None => Ok(found),
+        }
+    }
+
     /// Replaces the first match of the regex in `text` with the replacement string.
     ///
     /// The replacement string may contain capture group references in the form `$1`, `$2`, etc.,

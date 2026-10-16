@@ -157,6 +157,7 @@ fn slice_index(n: f64, len: usize) -> usize {
 }
 
 fn append_joined(
+    rt: &Runtime,
     output: &mut Vec<u16>,
     part: &[u16],
     separator: &[u16],
@@ -177,9 +178,9 @@ fn append_joined(
         ));
     }
     if !first {
-        output.extend_from_slice(separator);
+        rt.append_units(output, separator)?;
     }
-    output.extend_from_slice(part);
+    rt.append_units(output, part)?;
     Ok(())
 }
 
@@ -210,6 +211,7 @@ fn check_reshape_allocation(rt: &mut Runtime, values: &[Value], count: usize) ->
             return Err(limit());
         }
     }
+    rt.charge_intermediate(bytes)?;
     Ok(())
 }
 
@@ -484,11 +486,11 @@ fn update_in<'a>(
         let key = property_key(rt, &path[0])?;
         let keys = if regex_enabled && key.len() >= 2 && key.starts_with('/') && key.ends_with('/')
         {
-            let re = crate::regexp::RegExp::new(&key[1..key.len() - 1], "")?;
+            let re = crate::regexp::RegExp::new(rt, &key[1..key.len() - 1], "")?;
             let mut keys = Vec::new();
             for k in rt.keys(&obj) {
                 rt.tick()?;
-                if re.is_match(&k) {
+                if re.is_match(rt, &k)? {
                     keys.push(k);
                 }
             }
@@ -528,6 +530,7 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
             let mut values = Vec::new();
             for v in args {
                 rt.tick()?;
+                rt.charge_value(v)?;
                 values.push(v.clone());
             }
             rt.array(values)
@@ -545,6 +548,7 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
             let mut result = Vec::new();
             while if step > 0.0 { start < end } else { start > end } {
                 rt.tick()?;
+                rt.charge_items::<Value>(1)?;
                 result.push(Value::Number(start));
                 start += step;
             }
@@ -584,10 +588,13 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
             }
             for i in 0..len {
                 rt.tick()?;
+                rt.charge_items::<Value>(1)?;
                 let mut row = Vec::new();
                 for array in &arrays {
                     rt.tick()?;
-                    row.push(rt.get(array, &i.to_string()));
+                    let value = rt.get(array, &i.to_string());
+                    rt.charge_value(&value)?;
+                    row.push(value);
                 }
                 rows.push(rt.array(row));
             }
@@ -616,14 +623,14 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
                 rt.to_number(&b)
             };
             if matches!(&a, Value::String(_) | Value::Utf16(_)) {
-                let units = rt.to_utf16(&a);
+                let units = rt.checked_to_utf16(&a)?;
                 let lo = slice_index(start, units.len());
                 let hi = if name == "rest" || matches!(c, Value::Undefined) {
                     units.len()
                 } else {
                     slice_index(rt.to_number(&c), units.len())
                 };
-                rt.string_from_utf16(units[lo..hi.max(lo)].to_vec())
+                rt.copy_units_value(&units[lo..hi.max(lo)])?
             } else if is_array(&a) {
                 let len = length(rt, &a);
                 let lo = slice_index(start, len);
@@ -713,6 +720,7 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
                 let key = i.to_string();
                 if !matches!(name, "find" | "findIndex") && !has(rt, &a, &key) {
                     if matches!(name, "map" | "mapArr") {
+                        rt.charge_items::<Value>(1)?;
                         result.push(Value::Undefined);
                         holes.push(i);
                     }
@@ -739,9 +747,13 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
                     invoke(rt, &b, argv).await?
                 };
                 match name {
-                    "map" | "mapArr" => result.push(out),
+                    "map" | "mapArr" => {
+                        rt.charge_value(&out)?;
+                        result.push(out);
+                    }
                     "filter" | "filterArr" => {
                         if out.truthy() {
+                            rt.charge_value(&item)?;
                             result.push(item);
                         }
                     }
@@ -825,6 +837,7 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
                             r += 1;
                             i
                         };
+                        rt.charge_value(&values[i])?;
                         sorted.push(values[i].clone());
                     }
                 }
@@ -1060,7 +1073,7 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
             let sep = if matches!(b, Value::Undefined) {
                 vec![b',' as u16]
             } else {
-                rt.to_utf16(&b)
+                rt.checked_to_utf16(&b)?
             };
             let mut output = Vec::new();
             let mut first = true;
@@ -1070,9 +1083,9 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
                     let part = if v.is_nullish() {
                         Vec::new()
                     } else {
-                        rt.to_utf16(&v)
+                        rt.checked_to_utf16(&v)?
                     };
-                    append_joined(&mut output, &part, &sep, first)?;
+                    append_joined(rt, &mut output, &part, &sep, first)?;
                     first = false;
                 }
             } else if is_collection(&a) {
@@ -1084,16 +1097,16 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
                         if v.is_nullish() {
                             Vec::new()
                         } else {
-                            rt.to_utf16(&v)
+                            rt.checked_to_utf16(&v)?
                         }
                     } else {
-                        rt.to_utf16(&v)
+                        rt.checked_to_utf16(&v)?
                     };
-                    append_joined(&mut output, &part, &sep, first)?;
+                    append_joined(rt, &mut output, &part, &sep, first)?;
                     first = false;
                 }
             }
-            rt.string_from_utf16(output)
+            rt.checked_string_from_utf16(output)?
         }
         "contains?" | "containsKey" => Value::Bool(has(rt, &a, &property_key(rt, &b)?)),
         "get" | "nth" => {

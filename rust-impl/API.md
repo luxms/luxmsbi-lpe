@@ -12,7 +12,7 @@ evidence and remaining coverage gaps are recorded in `coverage.json`.
 | `eval_lisp` | `Runtime::eval_ast`, `eval_async` |
 | `EVAL` | `Runtime::eval_in` with an explicit environment |
 | `STDLIB` | Standard-library environment installed by `Runtime::new` |
-| `$getvar$`, `$setvar$`, `$var$` | `lookup`, `lookup_async`, `assign`, `undefine` |
+| `$getvar$`, `$setvar$`, `$var$` | `lookup`, `lookup_async`, `assign`, opt-in `assign_async`, `undefine` |
 | `makeSF` | `register_special` with raw AST arguments |
 | `makeVararg` | `register_vararg`, `register_vararg_host` |
 | `makeSkipForm` | `skip_form` |
@@ -37,6 +37,20 @@ lexer/resource errors may have no diagnostic. This is not a reconstruction of
 the complete JS error tree or all diagnostic wording. UTF-16 span indices match
 JS internally; source and JSON input/output remain UTF-8. Ordinary `parse` and
 `parse_with_options` retain their existing error interface.
+
+## Legacy contexts
+
+`Runtime::set_legacy_context(true)` enables a bounded 1.6.7 context profile.
+It defaults to false and must be selected before evaluation. It changes
+undefined-slot lookup, bare callable evaluation, and variable assignment through
+`def`, `assign`, and `:=`. `assign_async(env, name, evaluated_rhs, options)`
+provides the same assignment path to native adapters, including function-backed
+context setters. The original synchronous `assign` is unchanged.
+
+The profile does not enable mutation of marked library frames or claim complete
+1.6.7 compatibility. See [LEGACY_CONTEXT.md](LEGACY_CONTEXT.md) for the exact
+contract, original-JS evidence, stream distinction, remaining boundaries, and
+adapter integration recipe. Ordinary default-profile behavior is unchanged.
 
 ## Host functions
 
@@ -126,11 +140,11 @@ flags and preserves global/sticky matching, captures, named groups, and `d`
 indices. Unicode `u`/`v` matching and legacy code-unit matching are distinct;
 the public input/output contract remains UTF-8.
 
-Regex compilation and a single backtracking search cannot currently be
-interrupted by the runtime work budget or cancellation. Checks occur between
-matches. Do not expose unrestricted patterns to untrusted callers without
-external execution limits; a hard regex execution limit remains a release
-hardening requirement.
+Without opt-in controls, the historical checks remain between matches.
+`RuntimeControls` adds same-thread host polling and deterministic work accounting
+inside UTF-16/UCS-2 searches, plus bounded compiler input and compiler-input
+polling. This is cooperative, not a hard time or heap quota. See
+[Runtime controls](RUNTIME-CONTROLS.md) for the API, accounting coverage and gaps.
 
 ## Explicit exclusions
 

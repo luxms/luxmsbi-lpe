@@ -1,0 +1,5985 @@
+{
+  "provenance": {
+    "jsVersion": "1.6.7",
+    "bundle": {
+      "label": "lpe-sql dist/lpe.js",
+      "sha256": "ce5658d90caea7715d59ba44d86dad1263693e9147ca7c8c9781573dc9ac4ad2"
+    },
+    "reference": {
+      "label": "@luxms/lpe 1.6.7 dist/lpe.js",
+      "sha256": "4b1df77caf5257447969c734f2702aa125e7b7c8030cf42cfea1e8eb269abbb9"
+    },
+    "observations": "Executed unmodified JS, without rewriting sources. Function/undefined results use portable output tags."
+  },
+  "libraryMutation": {
+    "js": {
+      "value": [
+        8,
+        8
+      ]
+    },
+    "nativePolicy": "Unsupported; library frames are read-only in this opt-in profile."
+  },
+  "streamAssignments": [
+    {
+      "op": "def",
+      "expected": {
+        "sameResult": true,
+        "sameBinding": true,
+        "value": 6,
+        "events": []
+      }
+    },
+    {
+      "op": "assign",
+      "expected": {
+        "sameResult": true,
+        "sameBinding": true,
+        "value": 6,
+        "events": []
+      }
+    },
+    {
+      "op": ":=",
+      "expected": {
+        "sameResult": true,
+        "sameBinding": true,
+        "value": 6,
+        "events": []
+      }
+    }
+  ],
+  "boundaries": [
+    {
+      "id": "list-leading-assignment",
+      "ast": [
+        "list",
+        [
+          ":=",
+          "x",
+          8
+        ],
+        "x"
+      ],
+      "js": {
+        "value": [
+          [
+            ":=",
+            "x",
+            8
+          ],
+          "x"
+        ]
+      },
+      "native": {
+        "value": [
+          {
+            "$lpe": "undefined"
+          },
+          8
+        ]
+      },
+      "reason": "JS list leading := syntax is outside the context profile; ordinary variable assignment is covered separately."
+    }
+  ],
+  "cases": [
+    {
+      "id": "bare-library/add/true/true",
+      "kind": "ast",
+      "ast": "add",
+      "context": {},
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": "add"
+      }
+    },
+    {
+      "id": "raw-library/add/true/true",
+      "kind": "ast",
+      "ast": [
+        "resolve",
+        "add"
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": {
+          "$lpe": "function"
+        }
+      }
+    },
+    {
+      "id": "bare-library/fn/true/true",
+      "kind": "ast",
+      "ast": "fn",
+      "context": {},
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": "fn"
+      }
+    },
+    {
+      "id": "raw-library/fn/true/true",
+      "kind": "ast",
+      "ast": [
+        "resolve",
+        "fn"
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": {
+          "$lpe": "function"
+        }
+      }
+    },
+    {
+      "id": "bare-closure/true/true",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "f",
+            [
+              "fn",
+              [],
+              4
+            ]
+          ]
+        ],
+        "f"
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": "f"
+      }
+    },
+    {
+      "id": "raw-closure/true/true",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "f",
+            [
+              "fn",
+              [],
+              4
+            ]
+          ]
+        ],
+        [
+          "resolve",
+          "f"
+        ]
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": {
+          "$lpe": "function"
+        }
+      }
+    },
+    {
+      "id": "call-closure/true/true",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "f",
+            [
+              "fn",
+              [],
+              4
+            ]
+          ]
+        ],
+        [
+          "f"
+        ]
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": 4
+      }
+    },
+    {
+      "id": "missing/true/true",
+      "kind": "ast",
+      "ast": "x",
+      "context": {},
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": "x"
+      }
+    },
+    {
+      "id": "closure-missing/number/true/true",
+      "kind": "ast",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          "x"
+        ]
+      ],
+      "context": {
+        "x": 2
+      },
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": 2
+      }
+    },
+    {
+      "id": "closure-undefined/number/true/true",
+      "kind": "ast",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          "x"
+        ],
+        [
+          "get",
+          {},
+          [
+            "q",
+            "missing"
+          ]
+        ]
+      ],
+      "context": {
+        "x": 2
+      },
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": 2
+      }
+    },
+    {
+      "id": "let-undefined/number/true/true",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "x",
+            [
+              "get",
+              {},
+              [
+                "q",
+                "missing"
+              ]
+            ]
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": 2
+      },
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": 2
+      }
+    },
+    {
+      "id": "let-null/number/true/true",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "x",
+            null
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": 2
+      },
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": null
+      }
+    },
+    {
+      "id": "closure-missing/null/true/true",
+      "kind": "ast",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          "x"
+        ]
+      ],
+      "context": {
+        "x": null
+      },
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": null
+      }
+    },
+    {
+      "id": "closure-undefined/null/true/true",
+      "kind": "ast",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          "x"
+        ],
+        [
+          "get",
+          {},
+          [
+            "q",
+            "missing"
+          ]
+        ]
+      ],
+      "context": {
+        "x": null
+      },
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": null
+      }
+    },
+    {
+      "id": "let-undefined/null/true/true",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "x",
+            [
+              "get",
+              {},
+              [
+                "q",
+                "missing"
+              ]
+            ]
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": null
+      },
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": null
+      }
+    },
+    {
+      "id": "let-null/null/true/true",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "x",
+            null
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": null
+      },
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": null
+      }
+    },
+    {
+      "id": "closure-missing/false/true/true",
+      "kind": "ast",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          "x"
+        ]
+      ],
+      "context": {
+        "x": false
+      },
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": false
+      }
+    },
+    {
+      "id": "closure-undefined/false/true/true",
+      "kind": "ast",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          "x"
+        ],
+        [
+          "get",
+          {},
+          [
+            "q",
+            "missing"
+          ]
+        ]
+      ],
+      "context": {
+        "x": false
+      },
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": false
+      }
+    },
+    {
+      "id": "let-undefined/false/true/true",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "x",
+            [
+              "get",
+              {},
+              [
+                "q",
+                "missing"
+              ]
+            ]
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": false
+      },
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": false
+      }
+    },
+    {
+      "id": "let-null/false/true/true",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "x",
+            null
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": false
+      },
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": null
+      }
+    },
+    {
+      "id": "closure-missing/zero/true/true",
+      "kind": "ast",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          "x"
+        ]
+      ],
+      "context": {
+        "x": 0
+      },
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": 0
+      }
+    },
+    {
+      "id": "closure-undefined/zero/true/true",
+      "kind": "ast",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          "x"
+        ],
+        [
+          "get",
+          {},
+          [
+            "q",
+            "missing"
+          ]
+        ]
+      ],
+      "context": {
+        "x": 0
+      },
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": 0
+      }
+    },
+    {
+      "id": "let-undefined/zero/true/true",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "x",
+            [
+              "get",
+              {},
+              [
+                "q",
+                "missing"
+              ]
+            ]
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": 0
+      },
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": 0
+      }
+    },
+    {
+      "id": "let-null/zero/true/true",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "x",
+            null
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": 0
+      },
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": null
+      }
+    },
+    {
+      "id": "bare-library/add/true/false",
+      "kind": "ast",
+      "ast": "add",
+      "context": {},
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": "add"
+      }
+    },
+    {
+      "id": "raw-library/add/true/false",
+      "kind": "ast",
+      "ast": [
+        "resolve",
+        "add"
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": {
+          "$lpe": "function"
+        }
+      }
+    },
+    {
+      "id": "bare-library/fn/true/false",
+      "kind": "ast",
+      "ast": "fn",
+      "context": {},
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": "fn"
+      }
+    },
+    {
+      "id": "raw-library/fn/true/false",
+      "kind": "ast",
+      "ast": [
+        "resolve",
+        "fn"
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": {
+          "$lpe": "function"
+        }
+      }
+    },
+    {
+      "id": "bare-closure/true/false",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "f",
+            [
+              "fn",
+              [],
+              4
+            ]
+          ]
+        ],
+        "f"
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": "f"
+      }
+    },
+    {
+      "id": "raw-closure/true/false",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "f",
+            [
+              "fn",
+              [],
+              4
+            ]
+          ]
+        ],
+        [
+          "resolve",
+          "f"
+        ]
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": {
+          "$lpe": "function"
+        }
+      }
+    },
+    {
+      "id": "call-closure/true/false",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "f",
+            [
+              "fn",
+              [],
+              4
+            ]
+          ]
+        ],
+        [
+          "f"
+        ]
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": 4
+      }
+    },
+    {
+      "id": "missing/true/false",
+      "kind": "ast",
+      "ast": "x",
+      "context": {},
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": "x"
+      }
+    },
+    {
+      "id": "closure-missing/number/true/false",
+      "kind": "ast",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          "x"
+        ]
+      ],
+      "context": {
+        "x": 2
+      },
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": 2
+      }
+    },
+    {
+      "id": "closure-undefined/number/true/false",
+      "kind": "ast",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          "x"
+        ],
+        [
+          "get",
+          {},
+          [
+            "q",
+            "missing"
+          ]
+        ]
+      ],
+      "context": {
+        "x": 2
+      },
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": 2
+      }
+    },
+    {
+      "id": "let-undefined/number/true/false",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "x",
+            [
+              "get",
+              {},
+              [
+                "q",
+                "missing"
+              ]
+            ]
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": 2
+      },
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": 2
+      }
+    },
+    {
+      "id": "let-null/number/true/false",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "x",
+            null
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": 2
+      },
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": null
+      }
+    },
+    {
+      "id": "closure-missing/null/true/false",
+      "kind": "ast",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          "x"
+        ]
+      ],
+      "context": {
+        "x": null
+      },
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": null
+      }
+    },
+    {
+      "id": "closure-undefined/null/true/false",
+      "kind": "ast",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          "x"
+        ],
+        [
+          "get",
+          {},
+          [
+            "q",
+            "missing"
+          ]
+        ]
+      ],
+      "context": {
+        "x": null
+      },
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": null
+      }
+    },
+    {
+      "id": "let-undefined/null/true/false",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "x",
+            [
+              "get",
+              {},
+              [
+                "q",
+                "missing"
+              ]
+            ]
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": null
+      },
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": null
+      }
+    },
+    {
+      "id": "let-null/null/true/false",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "x",
+            null
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": null
+      },
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": null
+      }
+    },
+    {
+      "id": "closure-missing/false/true/false",
+      "kind": "ast",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          "x"
+        ]
+      ],
+      "context": {
+        "x": false
+      },
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": false
+      }
+    },
+    {
+      "id": "closure-undefined/false/true/false",
+      "kind": "ast",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          "x"
+        ],
+        [
+          "get",
+          {},
+          [
+            "q",
+            "missing"
+          ]
+        ]
+      ],
+      "context": {
+        "x": false
+      },
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": false
+      }
+    },
+    {
+      "id": "let-undefined/false/true/false",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "x",
+            [
+              "get",
+              {},
+              [
+                "q",
+                "missing"
+              ]
+            ]
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": false
+      },
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": false
+      }
+    },
+    {
+      "id": "let-null/false/true/false",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "x",
+            null
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": false
+      },
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": null
+      }
+    },
+    {
+      "id": "closure-missing/zero/true/false",
+      "kind": "ast",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          "x"
+        ]
+      ],
+      "context": {
+        "x": 0
+      },
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": 0
+      }
+    },
+    {
+      "id": "closure-undefined/zero/true/false",
+      "kind": "ast",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          "x"
+        ],
+        [
+          "get",
+          {},
+          [
+            "q",
+            "missing"
+          ]
+        ]
+      ],
+      "context": {
+        "x": 0
+      },
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": 0
+      }
+    },
+    {
+      "id": "let-undefined/zero/true/false",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "x",
+            [
+              "get",
+              {},
+              [
+                "q",
+                "missing"
+              ]
+            ]
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": 0
+      },
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": 0
+      }
+    },
+    {
+      "id": "let-null/zero/true/false",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "x",
+            null
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": 0
+      },
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": null
+      }
+    },
+    {
+      "id": "bare-library/add/false/true",
+      "kind": "ast",
+      "ast": "add",
+      "context": {},
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": "add"
+      }
+    },
+    {
+      "id": "raw-library/add/false/true",
+      "kind": "ast",
+      "ast": [
+        "resolve",
+        "add"
+      ],
+      "context": {},
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": {
+          "$lpe": "function"
+        }
+      }
+    },
+    {
+      "id": "bare-library/fn/false/true",
+      "kind": "ast",
+      "ast": "fn",
+      "context": {},
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": "fn"
+      }
+    },
+    {
+      "id": "raw-library/fn/false/true",
+      "kind": "ast",
+      "ast": [
+        "resolve",
+        "fn"
+      ],
+      "context": {},
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": {
+          "$lpe": "function"
+        }
+      }
+    },
+    {
+      "id": "bare-closure/false/true",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "f",
+            [
+              "fn",
+              [],
+              4
+            ]
+          ]
+        ],
+        "f"
+      ],
+      "context": {},
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": "f"
+      }
+    },
+    {
+      "id": "raw-closure/false/true",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "f",
+            [
+              "fn",
+              [],
+              4
+            ]
+          ]
+        ],
+        [
+          "resolve",
+          "f"
+        ]
+      ],
+      "context": {},
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": {
+          "$lpe": "function"
+        }
+      }
+    },
+    {
+      "id": "call-closure/false/true",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "f",
+            [
+              "fn",
+              [],
+              4
+            ]
+          ]
+        ],
+        [
+          "f"
+        ]
+      ],
+      "context": {},
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": 4
+      }
+    },
+    {
+      "id": "missing/false/true",
+      "kind": "ast",
+      "ast": "x",
+      "context": {},
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    {
+      "id": "closure-missing/number/false/true",
+      "kind": "ast",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          "x"
+        ]
+      ],
+      "context": {
+        "x": 2
+      },
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": 2
+      }
+    },
+    {
+      "id": "closure-undefined/number/false/true",
+      "kind": "ast",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          "x"
+        ],
+        [
+          "get",
+          {},
+          [
+            "q",
+            "missing"
+          ]
+        ]
+      ],
+      "context": {
+        "x": 2
+      },
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": 2
+      }
+    },
+    {
+      "id": "let-undefined/number/false/true",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "x",
+            [
+              "get",
+              {},
+              [
+                "q",
+                "missing"
+              ]
+            ]
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": 2
+      },
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": 2
+      }
+    },
+    {
+      "id": "let-null/number/false/true",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "x",
+            null
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": 2
+      },
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": null
+      }
+    },
+    {
+      "id": "closure-missing/null/false/true",
+      "kind": "ast",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          "x"
+        ]
+      ],
+      "context": {
+        "x": null
+      },
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": null
+      }
+    },
+    {
+      "id": "closure-undefined/null/false/true",
+      "kind": "ast",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          "x"
+        ],
+        [
+          "get",
+          {},
+          [
+            "q",
+            "missing"
+          ]
+        ]
+      ],
+      "context": {
+        "x": null
+      },
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": null
+      }
+    },
+    {
+      "id": "let-undefined/null/false/true",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "x",
+            [
+              "get",
+              {},
+              [
+                "q",
+                "missing"
+              ]
+            ]
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": null
+      },
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": null
+      }
+    },
+    {
+      "id": "let-null/null/false/true",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "x",
+            null
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": null
+      },
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": null
+      }
+    },
+    {
+      "id": "closure-missing/false/false/true",
+      "kind": "ast",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          "x"
+        ]
+      ],
+      "context": {
+        "x": false
+      },
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": false
+      }
+    },
+    {
+      "id": "closure-undefined/false/false/true",
+      "kind": "ast",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          "x"
+        ],
+        [
+          "get",
+          {},
+          [
+            "q",
+            "missing"
+          ]
+        ]
+      ],
+      "context": {
+        "x": false
+      },
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": false
+      }
+    },
+    {
+      "id": "let-undefined/false/false/true",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "x",
+            [
+              "get",
+              {},
+              [
+                "q",
+                "missing"
+              ]
+            ]
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": false
+      },
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": false
+      }
+    },
+    {
+      "id": "let-null/false/false/true",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "x",
+            null
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": false
+      },
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": null
+      }
+    },
+    {
+      "id": "closure-missing/zero/false/true",
+      "kind": "ast",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          "x"
+        ]
+      ],
+      "context": {
+        "x": 0
+      },
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": 0
+      }
+    },
+    {
+      "id": "closure-undefined/zero/false/true",
+      "kind": "ast",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          "x"
+        ],
+        [
+          "get",
+          {},
+          [
+            "q",
+            "missing"
+          ]
+        ]
+      ],
+      "context": {
+        "x": 0
+      },
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": 0
+      }
+    },
+    {
+      "id": "let-undefined/zero/false/true",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "x",
+            [
+              "get",
+              {},
+              [
+                "q",
+                "missing"
+              ]
+            ]
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": 0
+      },
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": 0
+      }
+    },
+    {
+      "id": "let-null/zero/false/true",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "x",
+            null
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": 0
+      },
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true
+      },
+      "expected": {
+        "value": null
+      }
+    },
+    {
+      "id": "bare-library/add/false/false",
+      "kind": "ast",
+      "ast": "add",
+      "context": {},
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": "add"
+      }
+    },
+    {
+      "id": "raw-library/add/false/false",
+      "kind": "ast",
+      "ast": [
+        "resolve",
+        "add"
+      ],
+      "context": {},
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": {
+          "$lpe": "function"
+        }
+      }
+    },
+    {
+      "id": "bare-library/fn/false/false",
+      "kind": "ast",
+      "ast": "fn",
+      "context": {},
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": "fn"
+      }
+    },
+    {
+      "id": "raw-library/fn/false/false",
+      "kind": "ast",
+      "ast": [
+        "resolve",
+        "fn"
+      ],
+      "context": {},
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": {
+          "$lpe": "function"
+        }
+      }
+    },
+    {
+      "id": "bare-closure/false/false",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "f",
+            [
+              "fn",
+              [],
+              4
+            ]
+          ]
+        ],
+        "f"
+      ],
+      "context": {},
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": "f"
+      }
+    },
+    {
+      "id": "raw-closure/false/false",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "f",
+            [
+              "fn",
+              [],
+              4
+            ]
+          ]
+        ],
+        [
+          "resolve",
+          "f"
+        ]
+      ],
+      "context": {},
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": {
+          "$lpe": "function"
+        }
+      }
+    },
+    {
+      "id": "call-closure/false/false",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "f",
+            [
+              "fn",
+              [],
+              4
+            ]
+          ]
+        ],
+        [
+          "f"
+        ]
+      ],
+      "context": {},
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": 4
+      }
+    },
+    {
+      "id": "missing/false/false",
+      "kind": "ast",
+      "ast": "x",
+      "context": {},
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    {
+      "id": "closure-missing/number/false/false",
+      "kind": "ast",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          "x"
+        ]
+      ],
+      "context": {
+        "x": 2
+      },
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": 2
+      }
+    },
+    {
+      "id": "closure-undefined/number/false/false",
+      "kind": "ast",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          "x"
+        ],
+        [
+          "get",
+          {},
+          [
+            "q",
+            "missing"
+          ]
+        ]
+      ],
+      "context": {
+        "x": 2
+      },
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": 2
+      }
+    },
+    {
+      "id": "let-undefined/number/false/false",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "x",
+            [
+              "get",
+              {},
+              [
+                "q",
+                "missing"
+              ]
+            ]
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": 2
+      },
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": 2
+      }
+    },
+    {
+      "id": "let-null/number/false/false",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "x",
+            null
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": 2
+      },
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": null
+      }
+    },
+    {
+      "id": "closure-missing/null/false/false",
+      "kind": "ast",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          "x"
+        ]
+      ],
+      "context": {
+        "x": null
+      },
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": null
+      }
+    },
+    {
+      "id": "closure-undefined/null/false/false",
+      "kind": "ast",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          "x"
+        ],
+        [
+          "get",
+          {},
+          [
+            "q",
+            "missing"
+          ]
+        ]
+      ],
+      "context": {
+        "x": null
+      },
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": null
+      }
+    },
+    {
+      "id": "let-undefined/null/false/false",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "x",
+            [
+              "get",
+              {},
+              [
+                "q",
+                "missing"
+              ]
+            ]
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": null
+      },
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": null
+      }
+    },
+    {
+      "id": "let-null/null/false/false",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "x",
+            null
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": null
+      },
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": null
+      }
+    },
+    {
+      "id": "closure-missing/false/false/false",
+      "kind": "ast",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          "x"
+        ]
+      ],
+      "context": {
+        "x": false
+      },
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": false
+      }
+    },
+    {
+      "id": "closure-undefined/false/false/false",
+      "kind": "ast",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          "x"
+        ],
+        [
+          "get",
+          {},
+          [
+            "q",
+            "missing"
+          ]
+        ]
+      ],
+      "context": {
+        "x": false
+      },
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": false
+      }
+    },
+    {
+      "id": "let-undefined/false/false/false",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "x",
+            [
+              "get",
+              {},
+              [
+                "q",
+                "missing"
+              ]
+            ]
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": false
+      },
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": false
+      }
+    },
+    {
+      "id": "let-null/false/false/false",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "x",
+            null
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": false
+      },
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": null
+      }
+    },
+    {
+      "id": "closure-missing/zero/false/false",
+      "kind": "ast",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          "x"
+        ]
+      ],
+      "context": {
+        "x": 0
+      },
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": 0
+      }
+    },
+    {
+      "id": "closure-undefined/zero/false/false",
+      "kind": "ast",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          "x"
+        ],
+        [
+          "get",
+          {},
+          [
+            "q",
+            "missing"
+          ]
+        ]
+      ],
+      "context": {
+        "x": 0
+      },
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": 0
+      }
+    },
+    {
+      "id": "let-undefined/zero/false/false",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "x",
+            [
+              "get",
+              {},
+              [
+                "q",
+                "missing"
+              ]
+            ]
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": 0
+      },
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": 0
+      }
+    },
+    {
+      "id": "let-null/zero/false/false",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "x",
+            null
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": 0
+      },
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": false
+      },
+      "expected": {
+        "value": null
+      }
+    },
+    {
+      "id": "def/new",
+      "kind": "ast",
+      "ast": [
+        "def",
+        "x",
+        8
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    {
+      "id": "def/new-readback",
+      "kind": "ast",
+      "ast": [
+        "list",
+        [
+          "begin",
+          [
+            "def",
+            "x",
+            8
+          ]
+        ],
+        "x"
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": [
+          {
+            "$lpe": "undefined"
+          },
+          8
+        ]
+      }
+    },
+    {
+      "id": "def/existing/2",
+      "kind": "ast",
+      "ast": [
+        "def",
+        "x",
+        8
+      ],
+      "context": {
+        "x": 2
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": 8
+      }
+    },
+    {
+      "id": "def/undefined-shadow/2",
+      "kind": "ast",
+      "ast": [
+        "list",
+        [
+          "let",
+          [
+            [
+              "x",
+              [
+                "get",
+                {},
+                [
+                  "q",
+                  "missing"
+                ]
+              ]
+            ]
+          ],
+          [
+            "def",
+            "x",
+            8
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": 2
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": [
+          8,
+          8
+        ]
+      }
+    },
+    {
+      "id": "def/existing/null",
+      "kind": "ast",
+      "ast": [
+        "def",
+        "x",
+        8
+      ],
+      "context": {
+        "x": null
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": 8
+      }
+    },
+    {
+      "id": "def/undefined-shadow/null",
+      "kind": "ast",
+      "ast": [
+        "list",
+        [
+          "let",
+          [
+            [
+              "x",
+              [
+                "get",
+                {},
+                [
+                  "q",
+                  "missing"
+                ]
+              ]
+            ]
+          ],
+          [
+            "def",
+            "x",
+            8
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": null
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": [
+          8,
+          8
+        ]
+      }
+    },
+    {
+      "id": "def/existing/false",
+      "kind": "ast",
+      "ast": [
+        "def",
+        "x",
+        8
+      ],
+      "context": {
+        "x": false
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": 8
+      }
+    },
+    {
+      "id": "def/undefined-shadow/false",
+      "kind": "ast",
+      "ast": [
+        "list",
+        [
+          "let",
+          [
+            [
+              "x",
+              [
+                "get",
+                {},
+                [
+                  "q",
+                  "missing"
+                ]
+              ]
+            ]
+          ],
+          [
+            "def",
+            "x",
+            8
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": false
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": [
+          8,
+          8
+        ]
+      }
+    },
+    {
+      "id": "def/existing/0",
+      "kind": "ast",
+      "ast": [
+        "def",
+        "x",
+        8
+      ],
+      "context": {
+        "x": 0
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": 8
+      }
+    },
+    {
+      "id": "def/undefined-shadow/0",
+      "kind": "ast",
+      "ast": [
+        "list",
+        [
+          "let",
+          [
+            [
+              "x",
+              [
+                "get",
+                {},
+                [
+                  "q",
+                  "missing"
+                ]
+              ]
+            ]
+          ],
+          [
+            "def",
+            "x",
+            8
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": 0
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": [
+          8,
+          8
+        ]
+      }
+    },
+    {
+      "id": "def/existing/\"x\"",
+      "kind": "ast",
+      "ast": [
+        "def",
+        "x",
+        8
+      ],
+      "context": {
+        "x": "x"
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": 8
+      }
+    },
+    {
+      "id": "def/undefined-shadow/\"x\"",
+      "kind": "ast",
+      "ast": [
+        "list",
+        [
+          "let",
+          [
+            [
+              "x",
+              [
+                "get",
+                {},
+                [
+                  "q",
+                  "missing"
+                ]
+              ]
+            ]
+          ],
+          [
+            "def",
+            "x",
+            8
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": "x"
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": [
+          8,
+          8
+        ]
+      }
+    },
+    {
+      "id": "def/rhs-once",
+      "kind": "ast",
+      "ast": [
+        "list",
+        [
+          "begin",
+          [
+            "def",
+            "x",
+            [
+              "begin",
+              [
+                "assign",
+                "n",
+                [
+                  "+",
+                  "n",
+                  1
+                ]
+              ],
+              8
+            ]
+          ]
+        ],
+        "n"
+      ],
+      "context": {
+        "x": 2,
+        "n": 0
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": [
+          8,
+          1
+        ]
+      }
+    },
+    {
+      "id": "def/rhs-creates-target",
+      "kind": "ast",
+      "ast": [
+        "def",
+        "x",
+        [
+          "begin",
+          [
+            "def",
+            "x",
+            3
+          ],
+          8
+        ]
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": 8
+      }
+    },
+    {
+      "id": "def/read-sentinel",
+      "kind": "ast",
+      "ast": [
+        "def",
+        "x",
+        [
+          "get",
+          {},
+          [
+            "q",
+            "missing"
+          ]
+        ]
+      ],
+      "context": {
+        "x": 2
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": 2
+      }
+    },
+    {
+      "id": "def/missing-rhs",
+      "kind": "ast",
+      "ast": [
+        "def",
+        "x"
+      ],
+      "context": {
+        "x": 2
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": 2
+      }
+    },
+    {
+      "id": "def/missing-rhs-absent",
+      "kind": "ast",
+      "ast": [
+        "def",
+        "x"
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    {
+      "id": "def/function-read",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "f",
+            [
+              "fn",
+              [],
+              4
+            ]
+          ]
+        ],
+        [
+          "def",
+          "f",
+          [
+            "get",
+            {},
+            [
+              "q",
+              "missing"
+            ]
+          ]
+        ]
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": {
+          "$lpe": "function"
+        }
+      }
+    },
+    {
+      "id": "def/function-write",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "f",
+            [
+              "fn",
+              [],
+              4
+            ]
+          ]
+        ],
+        [
+          "def",
+          "f",
+          8
+        ]
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": 8
+      }
+    },
+    {
+      "id": "def/function-param-write",
+      "kind": "ast",
+      "ast": [
+        "list",
+        [
+          [
+            "fn",
+            [
+              "x"
+            ],
+            [
+              "def",
+              "x",
+              8
+            ]
+          ],
+          [
+            "get",
+            {},
+            [
+              "q",
+              "missing"
+            ]
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": 2
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": [
+          8,
+          8
+        ]
+      }
+    },
+    {
+      "id": "def/override",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "def",
+            [
+              "fn",
+              [
+                "a",
+                "b"
+              ],
+              [
+                "+",
+                "a",
+                "b"
+              ]
+            ]
+          ]
+        ],
+        [
+          "def",
+          2,
+          3
+        ]
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": 5
+      }
+    },
+    {
+      "id": "assign/new",
+      "kind": "ast",
+      "ast": [
+        "assign",
+        "x",
+        8
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    {
+      "id": "assign/new-readback",
+      "kind": "ast",
+      "ast": [
+        "list",
+        [
+          "begin",
+          [
+            "assign",
+            "x",
+            8
+          ]
+        ],
+        "x"
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": [
+          {
+            "$lpe": "undefined"
+          },
+          8
+        ]
+      }
+    },
+    {
+      "id": "assign/existing/2",
+      "kind": "ast",
+      "ast": [
+        "assign",
+        "x",
+        8
+      ],
+      "context": {
+        "x": 2
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": 8
+      }
+    },
+    {
+      "id": "assign/undefined-shadow/2",
+      "kind": "ast",
+      "ast": [
+        "list",
+        [
+          "let",
+          [
+            [
+              "x",
+              [
+                "get",
+                {},
+                [
+                  "q",
+                  "missing"
+                ]
+              ]
+            ]
+          ],
+          [
+            "assign",
+            "x",
+            8
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": 2
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": [
+          8,
+          8
+        ]
+      }
+    },
+    {
+      "id": "assign/existing/null",
+      "kind": "ast",
+      "ast": [
+        "assign",
+        "x",
+        8
+      ],
+      "context": {
+        "x": null
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": 8
+      }
+    },
+    {
+      "id": "assign/undefined-shadow/null",
+      "kind": "ast",
+      "ast": [
+        "list",
+        [
+          "let",
+          [
+            [
+              "x",
+              [
+                "get",
+                {},
+                [
+                  "q",
+                  "missing"
+                ]
+              ]
+            ]
+          ],
+          [
+            "assign",
+            "x",
+            8
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": null
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": [
+          8,
+          8
+        ]
+      }
+    },
+    {
+      "id": "assign/existing/false",
+      "kind": "ast",
+      "ast": [
+        "assign",
+        "x",
+        8
+      ],
+      "context": {
+        "x": false
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": 8
+      }
+    },
+    {
+      "id": "assign/undefined-shadow/false",
+      "kind": "ast",
+      "ast": [
+        "list",
+        [
+          "let",
+          [
+            [
+              "x",
+              [
+                "get",
+                {},
+                [
+                  "q",
+                  "missing"
+                ]
+              ]
+            ]
+          ],
+          [
+            "assign",
+            "x",
+            8
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": false
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": [
+          8,
+          8
+        ]
+      }
+    },
+    {
+      "id": "assign/existing/0",
+      "kind": "ast",
+      "ast": [
+        "assign",
+        "x",
+        8
+      ],
+      "context": {
+        "x": 0
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": 8
+      }
+    },
+    {
+      "id": "assign/undefined-shadow/0",
+      "kind": "ast",
+      "ast": [
+        "list",
+        [
+          "let",
+          [
+            [
+              "x",
+              [
+                "get",
+                {},
+                [
+                  "q",
+                  "missing"
+                ]
+              ]
+            ]
+          ],
+          [
+            "assign",
+            "x",
+            8
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": 0
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": [
+          8,
+          8
+        ]
+      }
+    },
+    {
+      "id": "assign/existing/\"x\"",
+      "kind": "ast",
+      "ast": [
+        "assign",
+        "x",
+        8
+      ],
+      "context": {
+        "x": "x"
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": 8
+      }
+    },
+    {
+      "id": "assign/undefined-shadow/\"x\"",
+      "kind": "ast",
+      "ast": [
+        "list",
+        [
+          "let",
+          [
+            [
+              "x",
+              [
+                "get",
+                {},
+                [
+                  "q",
+                  "missing"
+                ]
+              ]
+            ]
+          ],
+          [
+            "assign",
+            "x",
+            8
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": "x"
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": [
+          8,
+          8
+        ]
+      }
+    },
+    {
+      "id": "assign/rhs-once",
+      "kind": "ast",
+      "ast": [
+        "list",
+        [
+          "begin",
+          [
+            "assign",
+            "x",
+            [
+              "begin",
+              [
+                "assign",
+                "n",
+                [
+                  "+",
+                  "n",
+                  1
+                ]
+              ],
+              8
+            ]
+          ]
+        ],
+        "n"
+      ],
+      "context": {
+        "x": 2,
+        "n": 0
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": [
+          8,
+          1
+        ]
+      }
+    },
+    {
+      "id": "assign/rhs-creates-target",
+      "kind": "ast",
+      "ast": [
+        "assign",
+        "x",
+        [
+          "begin",
+          [
+            "def",
+            "x",
+            3
+          ],
+          8
+        ]
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": 8
+      }
+    },
+    {
+      "id": "assign/read-sentinel",
+      "kind": "ast",
+      "ast": [
+        "assign",
+        "x",
+        [
+          "get",
+          {},
+          [
+            "q",
+            "missing"
+          ]
+        ]
+      ],
+      "context": {
+        "x": 2
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": 2
+      }
+    },
+    {
+      "id": "assign/missing-rhs",
+      "kind": "ast",
+      "ast": [
+        "assign",
+        "x"
+      ],
+      "context": {
+        "x": 2
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": 2
+      }
+    },
+    {
+      "id": "assign/missing-rhs-absent",
+      "kind": "ast",
+      "ast": [
+        "assign",
+        "x"
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    {
+      "id": "assign/function-read",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "f",
+            [
+              "fn",
+              [],
+              4
+            ]
+          ]
+        ],
+        [
+          "assign",
+          "f",
+          [
+            "get",
+            {},
+            [
+              "q",
+              "missing"
+            ]
+          ]
+        ]
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": {
+          "$lpe": "function"
+        }
+      }
+    },
+    {
+      "id": "assign/function-write",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "f",
+            [
+              "fn",
+              [],
+              4
+            ]
+          ]
+        ],
+        [
+          "assign",
+          "f",
+          8
+        ]
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": 8
+      }
+    },
+    {
+      "id": "assign/function-param-write",
+      "kind": "ast",
+      "ast": [
+        "list",
+        [
+          [
+            "fn",
+            [
+              "x"
+            ],
+            [
+              "assign",
+              "x",
+              8
+            ]
+          ],
+          [
+            "get",
+            {},
+            [
+              "q",
+              "missing"
+            ]
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": 2
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": [
+          8,
+          8
+        ]
+      }
+    },
+    {
+      "id": "assign/override",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "assign",
+            [
+              "fn",
+              [
+                "a",
+                "b"
+              ],
+              [
+                "+",
+                "a",
+                "b"
+              ]
+            ]
+          ]
+        ],
+        [
+          "assign",
+          2,
+          3
+        ]
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": 5
+      }
+    },
+    {
+      "id": ":=/new",
+      "kind": "ast",
+      "ast": [
+        ":=",
+        "x",
+        8
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    {
+      "id": ":=/new-readback",
+      "kind": "ast",
+      "ast": [
+        "list",
+        [
+          "begin",
+          [
+            ":=",
+            "x",
+            8
+          ]
+        ],
+        "x"
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": [
+          {
+            "$lpe": "undefined"
+          },
+          8
+        ]
+      }
+    },
+    {
+      "id": ":=/existing/2",
+      "kind": "ast",
+      "ast": [
+        ":=",
+        "x",
+        8
+      ],
+      "context": {
+        "x": 2
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": 8
+      }
+    },
+    {
+      "id": ":=/undefined-shadow/2",
+      "kind": "ast",
+      "ast": [
+        "list",
+        [
+          "let",
+          [
+            [
+              "x",
+              [
+                "get",
+                {},
+                [
+                  "q",
+                  "missing"
+                ]
+              ]
+            ]
+          ],
+          [
+            ":=",
+            "x",
+            8
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": 2
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": [
+          8,
+          8
+        ]
+      }
+    },
+    {
+      "id": ":=/existing/null",
+      "kind": "ast",
+      "ast": [
+        ":=",
+        "x",
+        8
+      ],
+      "context": {
+        "x": null
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": 8
+      }
+    },
+    {
+      "id": ":=/undefined-shadow/null",
+      "kind": "ast",
+      "ast": [
+        "list",
+        [
+          "let",
+          [
+            [
+              "x",
+              [
+                "get",
+                {},
+                [
+                  "q",
+                  "missing"
+                ]
+              ]
+            ]
+          ],
+          [
+            ":=",
+            "x",
+            8
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": null
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": [
+          8,
+          8
+        ]
+      }
+    },
+    {
+      "id": ":=/existing/false",
+      "kind": "ast",
+      "ast": [
+        ":=",
+        "x",
+        8
+      ],
+      "context": {
+        "x": false
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": 8
+      }
+    },
+    {
+      "id": ":=/undefined-shadow/false",
+      "kind": "ast",
+      "ast": [
+        "list",
+        [
+          "let",
+          [
+            [
+              "x",
+              [
+                "get",
+                {},
+                [
+                  "q",
+                  "missing"
+                ]
+              ]
+            ]
+          ],
+          [
+            ":=",
+            "x",
+            8
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": false
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": [
+          8,
+          8
+        ]
+      }
+    },
+    {
+      "id": ":=/existing/0",
+      "kind": "ast",
+      "ast": [
+        ":=",
+        "x",
+        8
+      ],
+      "context": {
+        "x": 0
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": 8
+      }
+    },
+    {
+      "id": ":=/undefined-shadow/0",
+      "kind": "ast",
+      "ast": [
+        "list",
+        [
+          "let",
+          [
+            [
+              "x",
+              [
+                "get",
+                {},
+                [
+                  "q",
+                  "missing"
+                ]
+              ]
+            ]
+          ],
+          [
+            ":=",
+            "x",
+            8
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": 0
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": [
+          8,
+          8
+        ]
+      }
+    },
+    {
+      "id": ":=/existing/\"x\"",
+      "kind": "ast",
+      "ast": [
+        ":=",
+        "x",
+        8
+      ],
+      "context": {
+        "x": "x"
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": 8
+      }
+    },
+    {
+      "id": ":=/undefined-shadow/\"x\"",
+      "kind": "ast",
+      "ast": [
+        "list",
+        [
+          "let",
+          [
+            [
+              "x",
+              [
+                "get",
+                {},
+                [
+                  "q",
+                  "missing"
+                ]
+              ]
+            ]
+          ],
+          [
+            ":=",
+            "x",
+            8
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": "x"
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": [
+          8,
+          8
+        ]
+      }
+    },
+    {
+      "id": ":=/rhs-once",
+      "kind": "ast",
+      "ast": [
+        "list",
+        [
+          "begin",
+          [
+            ":=",
+            "x",
+            [
+              "begin",
+              [
+                "assign",
+                "n",
+                [
+                  "+",
+                  "n",
+                  1
+                ]
+              ],
+              8
+            ]
+          ]
+        ],
+        "n"
+      ],
+      "context": {
+        "x": 2,
+        "n": 0
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": [
+          8,
+          1
+        ]
+      }
+    },
+    {
+      "id": ":=/rhs-creates-target",
+      "kind": "ast",
+      "ast": [
+        ":=",
+        "x",
+        [
+          "begin",
+          [
+            "def",
+            "x",
+            3
+          ],
+          8
+        ]
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": 8
+      }
+    },
+    {
+      "id": ":=/read-sentinel",
+      "kind": "ast",
+      "ast": [
+        ":=",
+        "x",
+        [
+          "get",
+          {},
+          [
+            "q",
+            "missing"
+          ]
+        ]
+      ],
+      "context": {
+        "x": 2
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": 2
+      }
+    },
+    {
+      "id": ":=/missing-rhs",
+      "kind": "ast",
+      "ast": [
+        ":=",
+        "x"
+      ],
+      "context": {
+        "x": 2
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": 2
+      }
+    },
+    {
+      "id": ":=/missing-rhs-absent",
+      "kind": "ast",
+      "ast": [
+        ":=",
+        "x"
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    {
+      "id": ":=/function-read",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "f",
+            [
+              "fn",
+              [],
+              4
+            ]
+          ]
+        ],
+        [
+          ":=",
+          "f",
+          [
+            "get",
+            {},
+            [
+              "q",
+              "missing"
+            ]
+          ]
+        ]
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": {
+          "$lpe": "function"
+        }
+      }
+    },
+    {
+      "id": ":=/function-write",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "f",
+            [
+              "fn",
+              [],
+              4
+            ]
+          ]
+        ],
+        [
+          ":=",
+          "f",
+          8
+        ]
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": 8
+      }
+    },
+    {
+      "id": ":=/function-param-write",
+      "kind": "ast",
+      "ast": [
+        "list",
+        [
+          [
+            "fn",
+            [
+              "x"
+            ],
+            [
+              ":=",
+              "x",
+              8
+            ]
+          ],
+          [
+            "get",
+            {},
+            [
+              "q",
+              "missing"
+            ]
+          ]
+        ],
+        "x"
+      ],
+      "context": {
+        "x": 2
+      },
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": [
+          8,
+          8
+        ]
+      }
+    },
+    {
+      "id": ":=/override",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            ":=",
+            [
+              "fn",
+              [
+                "a",
+                "b"
+              ],
+              [
+                "+",
+                "a",
+                "b"
+              ]
+            ]
+          ]
+        ],
+        [
+          ":=",
+          2,
+          3
+        ]
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": 5
+      }
+    },
+    {
+      "id": "property-assignment",
+      "kind": "ast",
+      "ast": [
+        "let",
+        [
+          [
+            "o",
+            {}
+          ]
+        ],
+        [
+          "list",
+          [
+            "assign",
+            [
+              ".",
+              "o",
+              [
+                "q",
+                "x"
+              ]
+            ],
+            8
+          ],
+          "o"
+        ]
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": [
+          8,
+          {
+            "x": 8
+          }
+        ]
+      }
+    },
+    {
+      "id": "function-setter-via-eval-ast",
+      "kind": "ast",
+      "ast": [
+        "eval_ast",
+        [
+          "list",
+          [
+            "q",
+            "let"
+          ],
+          [
+            "fn",
+            [
+              "name",
+              "value"
+            ],
+            [
+              "if",
+              [
+                "=",
+                "name",
+                [
+                  "q",
+                  "x"
+                ]
+              ],
+              [
+                "if",
+                [
+                  "=",
+                  "value",
+                  [
+                    "get",
+                    {},
+                    [
+                      "q",
+                      "missing"
+                    ]
+                  ]
+                ],
+                4,
+                9
+              ],
+              [
+                "get",
+                {},
+                [
+                  "q",
+                  "missing"
+                ]
+              ]
+            ]
+          ],
+          [
+            "`",
+            [
+              "list",
+              [
+                "def",
+                "x",
+                8
+              ],
+              "x"
+            ]
+          ]
+        ]
+      ],
+      "context": {},
+      "options": {
+        "resolveString": true
+      },
+      "expected": {
+        "value": [
+          9,
+          4
+        ]
+      }
+    },
+    {
+      "id": "def/host-direct",
+      "op": "def",
+      "kind": "host",
+      "expected": {
+        "value": 9,
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": "def/host-nested",
+      "op": "def",
+      "nested": true,
+      "kind": "host",
+      "expected": {
+        "value": 9,
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": "def/host-undefined-shadow",
+      "op": "def",
+      "shadow": "undefined",
+      "kind": "host",
+      "expected": {
+        "value": 9,
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": "def/host-null-shadow",
+      "op": "def",
+      "shadow": "null",
+      "kind": "host",
+      "expected": {
+        "value": 8,
+        "events": [
+          {
+            "event": "rhs"
+          }
+        ],
+        "written": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    {
+      "id": "def/host-absent",
+      "op": "def",
+      "getter": [
+        {
+          "$lpe": "undefined"
+        }
+      ],
+      "kind": "host",
+      "expected": {
+        "value": {
+          "$lpe": "undefined"
+        },
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": "def/host-absent-nested",
+      "op": "def",
+      "getter": [
+        {
+          "$lpe": "undefined"
+        }
+      ],
+      "nested": true,
+      "kind": "host",
+      "expected": {
+        "value": {
+          "$lpe": "undefined"
+        },
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          }
+        ],
+        "written": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    {
+      "id": "def/host-getter-changes",
+      "op": "def",
+      "getter": [
+        4,
+        {
+          "$lpe": "undefined"
+        }
+      ],
+      "nested": true,
+      "kind": "host",
+      "expected": {
+        "value": {
+          "$lpe": "undefined"
+        },
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": "def/host-rhs-before-getter",
+      "op": "def",
+      "rhsUpdatesGetter": true,
+      "kind": "host",
+      "expected": {
+        "value": 9,
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": "def/host-undefined-read",
+      "op": "def",
+      "read": true,
+      "kind": "host",
+      "expected": {
+        "value": 4,
+        "events": [
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          }
+        ],
+        "written": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    {
+      "id": "def/host-undefined-read-nested",
+      "op": "def",
+      "read": true,
+      "nested": true,
+      "kind": "host",
+      "expected": {
+        "value": 4,
+        "events": [
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          }
+        ],
+        "written": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    {
+      "id": "def/host-missing-rhs",
+      "op": "def",
+      "missingRhs": true,
+      "kind": "host",
+      "expected": {
+        "value": 4,
+        "events": [
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          }
+        ],
+        "written": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    {
+      "id": "def/host-setter-null",
+      "op": "def",
+      "setter": null,
+      "kind": "host",
+      "expected": {
+        "value": null,
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": "def/host-setter-false",
+      "op": "def",
+      "setter": false,
+      "kind": "host",
+      "expected": {
+        "value": false,
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": "def/host-setter-undefined",
+      "op": "def",
+      "setter": {
+        "$lpe": "undefined"
+      },
+      "kind": "host",
+      "expected": {
+        "value": {
+          "$lpe": "undefined"
+        },
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": "def/host-getter-null",
+      "op": "def",
+      "getter": [
+        null
+      ],
+      "kind": "host",
+      "expected": {
+        "value": 9,
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": "def/host-getter-false",
+      "op": "def",
+      "getter": [
+        false
+      ],
+      "kind": "host",
+      "expected": {
+        "value": 9,
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": "def/host-rhs-error",
+      "op": "def",
+      "error": "rhs",
+      "kind": "host",
+      "expected": {
+        "error": "rhs failure",
+        "events": [
+          {
+            "event": "rhs"
+          }
+        ],
+        "written": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    {
+      "id": "def/host-getter-error",
+      "op": "def",
+      "error": "get",
+      "kind": "host",
+      "expected": {
+        "error": "get failure",
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          }
+        ],
+        "written": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    {
+      "id": "def/host-setter-error",
+      "op": "def",
+      "error": "set",
+      "kind": "host",
+      "expected": {
+        "error": "set failure",
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    {
+      "id": "assign/host-direct",
+      "op": "assign",
+      "kind": "host",
+      "expected": {
+        "value": 9,
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": "assign/host-nested",
+      "op": "assign",
+      "nested": true,
+      "kind": "host",
+      "expected": {
+        "value": 9,
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": "assign/host-undefined-shadow",
+      "op": "assign",
+      "shadow": "undefined",
+      "kind": "host",
+      "expected": {
+        "value": 9,
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": "assign/host-null-shadow",
+      "op": "assign",
+      "shadow": "null",
+      "kind": "host",
+      "expected": {
+        "value": 8,
+        "events": [
+          {
+            "event": "rhs"
+          }
+        ],
+        "written": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    {
+      "id": "assign/host-absent",
+      "op": "assign",
+      "getter": [
+        {
+          "$lpe": "undefined"
+        }
+      ],
+      "kind": "host",
+      "expected": {
+        "value": {
+          "$lpe": "undefined"
+        },
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": "assign/host-absent-nested",
+      "op": "assign",
+      "getter": [
+        {
+          "$lpe": "undefined"
+        }
+      ],
+      "nested": true,
+      "kind": "host",
+      "expected": {
+        "value": {
+          "$lpe": "undefined"
+        },
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          }
+        ],
+        "written": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    {
+      "id": "assign/host-getter-changes",
+      "op": "assign",
+      "getter": [
+        4,
+        {
+          "$lpe": "undefined"
+        }
+      ],
+      "nested": true,
+      "kind": "host",
+      "expected": {
+        "value": {
+          "$lpe": "undefined"
+        },
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": "assign/host-rhs-before-getter",
+      "op": "assign",
+      "rhsUpdatesGetter": true,
+      "kind": "host",
+      "expected": {
+        "value": 9,
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": "assign/host-undefined-read",
+      "op": "assign",
+      "read": true,
+      "kind": "host",
+      "expected": {
+        "value": 4,
+        "events": [
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          }
+        ],
+        "written": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    {
+      "id": "assign/host-undefined-read-nested",
+      "op": "assign",
+      "read": true,
+      "nested": true,
+      "kind": "host",
+      "expected": {
+        "value": 4,
+        "events": [
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          }
+        ],
+        "written": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    {
+      "id": "assign/host-missing-rhs",
+      "op": "assign",
+      "missingRhs": true,
+      "kind": "host",
+      "expected": {
+        "value": 4,
+        "events": [
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          }
+        ],
+        "written": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    {
+      "id": "assign/host-setter-null",
+      "op": "assign",
+      "setter": null,
+      "kind": "host",
+      "expected": {
+        "value": null,
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": "assign/host-setter-false",
+      "op": "assign",
+      "setter": false,
+      "kind": "host",
+      "expected": {
+        "value": false,
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": "assign/host-setter-undefined",
+      "op": "assign",
+      "setter": {
+        "$lpe": "undefined"
+      },
+      "kind": "host",
+      "expected": {
+        "value": {
+          "$lpe": "undefined"
+        },
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": "assign/host-getter-null",
+      "op": "assign",
+      "getter": [
+        null
+      ],
+      "kind": "host",
+      "expected": {
+        "value": 9,
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": "assign/host-getter-false",
+      "op": "assign",
+      "getter": [
+        false
+      ],
+      "kind": "host",
+      "expected": {
+        "value": 9,
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": "assign/host-rhs-error",
+      "op": "assign",
+      "error": "rhs",
+      "kind": "host",
+      "expected": {
+        "error": "rhs failure",
+        "events": [
+          {
+            "event": "rhs"
+          }
+        ],
+        "written": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    {
+      "id": "assign/host-getter-error",
+      "op": "assign",
+      "error": "get",
+      "kind": "host",
+      "expected": {
+        "error": "get failure",
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          }
+        ],
+        "written": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    {
+      "id": "assign/host-setter-error",
+      "op": "assign",
+      "error": "set",
+      "kind": "host",
+      "expected": {
+        "error": "set failure",
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    {
+      "id": ":=/host-direct",
+      "op": ":=",
+      "kind": "host",
+      "expected": {
+        "value": 9,
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": ":=/host-nested",
+      "op": ":=",
+      "nested": true,
+      "kind": "host",
+      "expected": {
+        "value": 9,
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": ":=/host-undefined-shadow",
+      "op": ":=",
+      "shadow": "undefined",
+      "kind": "host",
+      "expected": {
+        "value": 9,
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": ":=/host-null-shadow",
+      "op": ":=",
+      "shadow": "null",
+      "kind": "host",
+      "expected": {
+        "value": 8,
+        "events": [
+          {
+            "event": "rhs"
+          }
+        ],
+        "written": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    {
+      "id": ":=/host-absent",
+      "op": ":=",
+      "getter": [
+        {
+          "$lpe": "undefined"
+        }
+      ],
+      "kind": "host",
+      "expected": {
+        "value": {
+          "$lpe": "undefined"
+        },
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": ":=/host-absent-nested",
+      "op": ":=",
+      "getter": [
+        {
+          "$lpe": "undefined"
+        }
+      ],
+      "nested": true,
+      "kind": "host",
+      "expected": {
+        "value": {
+          "$lpe": "undefined"
+        },
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          }
+        ],
+        "written": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    {
+      "id": ":=/host-getter-changes",
+      "op": ":=",
+      "getter": [
+        4,
+        {
+          "$lpe": "undefined"
+        }
+      ],
+      "nested": true,
+      "kind": "host",
+      "expected": {
+        "value": {
+          "$lpe": "undefined"
+        },
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": ":=/host-rhs-before-getter",
+      "op": ":=",
+      "rhsUpdatesGetter": true,
+      "kind": "host",
+      "expected": {
+        "value": 9,
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": ":=/host-undefined-read",
+      "op": ":=",
+      "read": true,
+      "kind": "host",
+      "expected": {
+        "value": 4,
+        "events": [
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          }
+        ],
+        "written": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    {
+      "id": ":=/host-undefined-read-nested",
+      "op": ":=",
+      "read": true,
+      "nested": true,
+      "kind": "host",
+      "expected": {
+        "value": 4,
+        "events": [
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          }
+        ],
+        "written": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    {
+      "id": ":=/host-missing-rhs",
+      "op": ":=",
+      "missingRhs": true,
+      "kind": "host",
+      "expected": {
+        "value": 4,
+        "events": [
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          }
+        ],
+        "written": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    {
+      "id": ":=/host-setter-null",
+      "op": ":=",
+      "setter": null,
+      "kind": "host",
+      "expected": {
+        "value": null,
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": ":=/host-setter-false",
+      "op": ":=",
+      "setter": false,
+      "kind": "host",
+      "expected": {
+        "value": false,
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": ":=/host-setter-undefined",
+      "op": ":=",
+      "setter": {
+        "$lpe": "undefined"
+      },
+      "kind": "host",
+      "expected": {
+        "value": {
+          "$lpe": "undefined"
+        },
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": ":=/host-getter-null",
+      "op": ":=",
+      "getter": [
+        null
+      ],
+      "kind": "host",
+      "expected": {
+        "value": 9,
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": ":=/host-getter-false",
+      "op": ":=",
+      "getter": [
+        false
+      ],
+      "kind": "host",
+      "expected": {
+        "value": 9,
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": 8
+      }
+    },
+    {
+      "id": ":=/host-rhs-error",
+      "op": ":=",
+      "error": "rhs",
+      "kind": "host",
+      "expected": {
+        "error": "rhs failure",
+        "events": [
+          {
+            "event": "rhs"
+          }
+        ],
+        "written": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    {
+      "id": ":=/host-getter-error",
+      "op": ":=",
+      "error": "get",
+      "kind": "host",
+      "expected": {
+        "error": "get failure",
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          }
+        ],
+        "written": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    {
+      "id": ":=/host-setter-error",
+      "op": ":=",
+      "error": "set",
+      "kind": "host",
+      "expected": {
+        "error": "set failure",
+        "events": [
+          {
+            "event": "rhs"
+          },
+          {
+            "event": "get",
+            "value": {
+              "$lpe": "undefined"
+            },
+            "options": {}
+          },
+          {
+            "event": "set",
+            "value": 8,
+            "options": {}
+          }
+        ],
+        "written": {
+          "$lpe": "undefined"
+        }
+      }
+    }
+  ]
+}

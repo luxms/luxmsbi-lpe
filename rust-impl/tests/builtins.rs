@@ -1,16 +1,30 @@
 use futures::executor::block_on;
 use futures::FutureExt;
 use indexmap::IndexMap;
-use lpe::{Error, Result, Runtime, Value};
+use lpe::{parse, Ast, Error, Result, Value};
+use runtime::{EnvId, EvalOptions, Runtime, RuntimeControls, RuntimeLimits};
 use std::cell::RefCell;
 use std::rc::Rc;
 
-// Exercise the dispatch contract without making the implementation module public.
+// Compile private dispatch and its runtime together so resource helpers stay
+// crate-private. Keep this integration target for the existing audit scripts.
 #[path = "../src/builtins.rs"]
 mod builtins;
 #[allow(dead_code)]
+#[path = "../src/collections.rs"]
+mod collections;
+#[allow(dead_code)]
+#[path = "../src/datetime.rs"]
+mod datetime;
+#[allow(dead_code)]
 #[path = "../src/regexp.rs"]
 mod regexp;
+#[allow(dead_code, unused_imports, clippy::wrong_self_convention)]
+#[path = "../src/runtime.rs"]
+mod runtime;
+#[allow(dead_code)]
+#[path = "../src/specials.rs"]
+mod specials;
 
 fn s(value: &str) -> Value {
     Value::String(value.into())

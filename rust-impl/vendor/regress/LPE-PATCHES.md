@@ -30,6 +30,15 @@ this copy through `[patch.crates-io]` in `rust-impl/Cargo.toml`.
    mode. Restore the complete second escape when an attempted pair fails.
    Group identifiers still decode Unicode in every mode, including actual
    surrogate pairs in a code-unit pattern.
+5. Add `find_from_utf16_with_control` and `find_from_ucs2_with_control` returning
+   `Result<Option<Match>, E>` from a synchronous `FnMut() -> Result<(), E>` hook.
+   Search positions, instruction dispatch, backtracking, optimized character
+   loops, and backreference comparisons contain checkpoints. The first error
+   is latched, including inside negative lookarounds. Case-sensitive references
+   compare raw units in 64-unit chunks with the original cursor semantics;
+   case-insensitive references retain the original character comparison.
+   Ordinary inputs use an inline no-op checkpoint. No global state, thread,
+   signal handler, or panic-based cancellation is used.
 
 The normalized crate manifest registers the added regression test targets.
 Three upstream test groups used braced code-point escapes without `u` while
@@ -49,5 +58,7 @@ npm run test:all
 ```
 
 The LPE aggregate suite also runs the upstream engine tests with `utf16` enabled.
-Matching uses a backtracking engine without a per-search cancellation/budget
-hook; see `../../API.md` for the embedding restriction.
+The controlled APIs bound search work when the caller supplies a finite budget.
+They do not account engine heap allocations or interrupt compilation. LPE adds
+its own compiler-input polling and controlled pattern-size restriction; see
+`../../RUNTIME-CONTROLS.md` for the remaining embedding restrictions.
