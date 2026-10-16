@@ -1,6 +1,8 @@
 import { except } from "../lib/exception.js";
 import { isArray, isBoolean, isFunction, isHash, isNumber, isNumberLike, isObj, isString, makeSF } from "../lib/utils.js";
 import { EVAL } from "../lisp";
+import unbox from "../lisp.unbox.js";
+import { parse } from "../lpep.js";
 
 /** @type {ContextFunctionsObject} */
 const _context = {};
@@ -258,4 +260,56 @@ _context["[]"] = _context["astToString"] = makeSF((ast, ctx, rs) => {
    * @category Преобразование типов | 51
    */
   return String(ast[0]);
+});
+
+
+
+_context["str>JSON"] = _context["strToJson"] = (obj) => {
+  /**
+   * Преобразовать строку в JSON объект.
+   *
+   * @usage JSON"value"
+   * @param value [any] Строковое представление JSON объекта
+   *
+   * @example JSON'{"a": true, "b": [1, 2, 3]}' => {a: true, b: [1,2,3]}
+   *          fJSON'{{"a": {1 + 1}}' => {a: 2}
+   * @category Строковые префиксы | 1
+   */
+  return JSON.parse(obj);
+};
+
+
+
+_context["str>AST"] = _context["strToAST"] = (obj) => {
+  /**
+   * Преобразовать LPE строку в AST дерево.
+   *
+   * @usage AST"value"
+   * @param value [any] LPE строка
+   *
+   * @example AST'1 + 3' => ["+", 1, 3]
+   *          fAST'begin(x := 10; {{1, x, {3*2}}.map(el => el * 2))' => ["begin", [":=","x",10], [".", ["vector",1,"x",6], ["map",["=>","el",["*","el",2]]] ]]
+   * @category Строковые префиксы | 5
+   */
+  return parse(obj);
+};
+
+
+
+_context["str>EVAL"] = _context["strToEVAL"] = makeSF((ast, ctx, rs) => {
+  /**
+   * Выполняет LPE.
+   *
+   * @usage EVAL"value"
+   * @param value [any] LPE строка
+   *
+   * @example EVAL'1 + 3' => 4
+   *          fEVAL'begin(x := 10; {{1, x, {3*2}}.map(el => el * 2))' => [2, 20, 12]
+   * @category Строковые префиксы | 6
+   */
+  return unbox(
+    [EVAL(ast[0], ctx, rs)],
+    ([code]) => EVAL(parse(String(code)), ctx, rs),
+    rs?.streamAdapter,
+  );
 });

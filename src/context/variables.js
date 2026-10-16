@@ -234,9 +234,9 @@ _context["def"] = makeSF((ast, ctx, rs) => {
   // update current environment
   const value = EVAL(ast[1], ctx, rs);
   return unbox(
-    [value],
-    ([value]) => {
-      const result = $setvar$(ctx, ast[0], value, rs);
+    [isArray(ast[0]) ? EVAL(ast[0], ctx, rs) : ast[0], value],
+    ([name, value]) => {
+      const result = $setvar$(ctx, name, value, rs);
       return result;
     },
     rs?.streamAdapter,
@@ -440,8 +440,10 @@ _context["define"] = makeSF((ast, ctx, rs) => {
       throw new Error('Last argument of define must be <String> ("func body at quotes")');
     }
     body = body[1];
+    // @ts-ignore
     let fargs = [];
     statics[last[1]] = {};
+    // @ts-ignore
     last.slice(2, last.length - 1).forEach((v) => {
       let name = v;
       let val = undefined;
@@ -459,6 +461,7 @@ _context["define"] = makeSF((ast, ctx, rs) => {
       }
     });
 
+    // @ts-ignore
     context[last[1]] = makeSF((ast, ctx, rs) => {
       if (!body) {
         return false;
@@ -467,6 +470,7 @@ _context["define"] = makeSF((ast, ctx, rs) => {
       if (ths) ths = ths[last[1]];
       return EVAL(
         ["let",
+          // @ts-ignore
           [["this", ths || {}], ...fargs.map((x, i) => [x[0], ast[i] || x[1]])],
           parse(body)],
         ctx,
