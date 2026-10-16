@@ -16,7 +16,7 @@
   "author": "Dmitry Dorofeev",
   "license": "MIT",
   "scripts": {
-    "test": "mocha --reporter spec",
+    "test": "mocha --recursive --reporter spec",
     "localize": "node scripts/update-loc.js",
     "t": "mocha --reporter spec test/test.js",
     "test-lpe-functions": "mocha --reporter spec test/test-full.js",
