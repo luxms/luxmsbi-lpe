@@ -40,6 +40,7 @@ pub fn assign_async<'a>(
 | Lookup of own `Undefined` | Continue to parent frames, including undefined or omitted closure parameters. Do not remove the slot. |
 | Lookup of null, false, zero | Stop at that binding; these are not missing. |
 | Bare nonliteral callable expression | Return its identifier string, including with `resolveString: false`. |
+| Callable result of a legacy `fn` body | Return the function itself; do not invoke it. This result-call policy is captured when the closure is created. |
 | Explicit `resolve`, `lookup`, `lookup_async` | Return the actual callable, not its identifier. Legacy lookup does not filter library callables using `disallowLibFunctionsGetting`. |
 | Defined RHS, existing binding | Write the matched frame; return its assigned value or function setter's result. |
 | Defined RHS, missing binding | Write the head frame and return `Undefined`, ignoring a function setter's result. |
@@ -61,6 +62,59 @@ embedding to mask native-only names without exposing a library fallback.
 Use `lookup_async` for function-backed environments; synchronous `lookup` does
 not execute function contexts. Existing Array/Object/Date literal-callable
 handling is preserved, not expanded into JavaScript host constructors.
+
+## Closure result policy
+
+The pinned JS 1.7.3 implementation deliberately routes `fn` through `->fn`:
+`src/context/objects.js` delegates at the end of `fn`, and `->fn` invokes a
+callable body result with the outer call's arguments. Original JS 1.6.7 differs:
+its `fn` directly returns `EVAL(body, ...)`, while `->fn`, `toFn`, `defFn`, `=>`,
+and `lambda` still perform the automatic call. This is a versioned contract,
+not a suspected JS bug.
+
+| Constructor | Default native / JS 1.7.3 | Legacy profile / JS 1.6.7 |
+| --- | --- | --- |
+| `fn` | Auto-call a callable body result | Return the callable unchanged |
+| `->fn`, `toFn`, `defFn`, `=>`, `lambda` | Auto-call | Auto-call |
+| Host API `Runtime::closure` | Existing auto-call behavior | Existing auto-call behavior |
+
+For `[["fn", [], ["fn", [], 7]]]`, the default profile returns 7; legacy returns
+a callable that produces 7 only when explicitly invoked. This also prevents
+premature effects and exceptions in the returned function. Ordinary scalar
+results and errors from the outer body retain their existing handling.
+
+The private per-closure `call_result` flag records the constructor's policy.
+Changing `set_legacy_context` after creation does not change that flag in either
+direction. This does not freeze every lookup/profile behavior of an existing
+closure; the existing runtime/task profile rules still apply. Captured options,
+environment rooting, cancellation, and budgets remain on the existing paths.
+There is no new public API, macro behavior, V8 facility, or serialization marker.
+
+`fixtures/closure-return.json` records 150 source cases and 300 profile outcomes
+from the unchanged 1.6.7 bundle/reference and this checkout's normal 1.7.3 build.
+It includes aliases, scopes, explicit later calls, errors, effect order,
+argument evaluation, returned host/library functions, and nested returns in
+both string-resolution modes. JS error strings are retained; only the extra
+`Error: ` prefix on noncallable messages is normalized to match native messages.
+Function and undefined values use the existing fixture tags, not SQL JSONB.
+
+Regenerate/check with explicit read-only legacy artifacts, from `rust-impl`:
+
+```sh
+node scripts/closure-return-fixtures.mjs \
+  --bundle="$LPE_SQL_BUNDLE" \
+  --reference="$LPE_167_BUNDLE" \
+  --version-file="$LPE_167_PACKAGE_JSON"
+```
+
+Add `--write` only to refresh after reviewing source changes. Normal tests need
+no external legacy checkout: `tests/closure-return.rs` replays both profiles,
+and `scripts/closure-return-js.test.cjs` verifies the 1.7.3 side as part of
+`npm run test:all`. Eight focused Rust tests also cover profile toggling, host
+API compatibility, GC-retained lexical scope, deferred errors/effects, budget
+enforcement, suspended task propagation, and cancellation. This follow-up
+does not claim complete historical closure, macro, Promise/Stream, or evaluator
+compatibility, and does not change the existing remaining boundaries below.
 
 ## Library policy
 

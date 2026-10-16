@@ -259,6 +259,7 @@ enum Function {
         body: Ast,
         env: EnvId,
         options: EvalOptions,
+        call_result: bool,
     },
     Native(Native),
     Sync(Rc<dyn Fn(Vec<Value>) -> Result<Value>>),
@@ -468,6 +469,7 @@ impl Runtime {
     /// Opt into the bounded 1.6.7 context profile before starting evaluation.
     /// Undefined bindings fall through; bare nonliteral functions evaluate to
     /// their identifier. Variable special forms use `assign_async` semantics.
+    /// Legacy `fn` closures return callable body results without invoking them.
     /// Library writes are rejected, not enabled by this profile.
     pub fn set_legacy_context(&mut self, enabled: bool) {
         self.legacy_context = enabled;
@@ -710,11 +712,22 @@ impl Runtime {
         env: EnvId,
         options: EvalOptions,
     ) -> Value {
+        self.closure_with_result_call(params, body, env, options, true)
+    }
+    pub(crate) fn closure_with_result_call(
+        &mut self,
+        params: Vec<String>,
+        body: Ast,
+        env: EnvId,
+        options: EvalOptions,
+        call_result: bool,
+    ) -> Value {
         let value = Value::Function(self.functions.insert(Function::Closure {
             params,
             body,
             env,
             options,
+            call_result,
         }));
         self.retain_task_value(&value);
         value
@@ -2052,6 +2065,7 @@ impl Runtime {
                         body,
                         env: captured,
                         options,
+                        call_result,
                     } => {
                         let mut bindings = IndexMap::new();
                         bindings.insert("$this$".into(), Value::Function(id));
@@ -2064,7 +2078,7 @@ impl Runtime {
                         let local = self.new_env(bindings, vec![captured]);
                         match self.eval_in(&body, local, &options).await {
                             Err(e) if e.kind == "Return" => Ok(e.value.unwrap_or(Value::Undefined)),
-                            Ok(v) if v.is_callable() => {
+                            Ok(v) if call_result && v.is_callable() => {
                                 self.call_with_options(v, args, local, &options).await
                             }
                             result => result,

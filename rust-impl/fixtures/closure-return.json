@@ -1,0 +1,5089 @@
+{
+  "provenance": {
+    "legacyVersion": "1.6.7",
+    "modernVersion": "1.7.3",
+    "baseRevision": "e8320de1a86aaaebe218a4f467aba44dc58daab7",
+    "bundleSha256": "ce5658d90caea7715d59ba44d86dad1263693e9147ca7c8c9781573dc9ac4ad2",
+    "referenceSha256": "4b1df77caf5257447969c734f2702aa125e7b7c8030cf42cfea1e8eb269abbb9",
+    "modernSha256": "0a5c9482f319a144f1480a6f1287acfff2371075386d7802592cf740f27cfb06"
+  },
+  "contract": "Only legacy fn returns callable results directly; aliases and the modern profile auto-call.",
+  "cases": [
+    {
+      "id": "fn/scalar/resolve-true",
+      "ast": [
+        [
+          "fn",
+          [],
+          [
+            "+",
+            2,
+            3
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "value": 5,
+        "events": []
+      }
+    },
+    {
+      "id": "fn/returned-fn/resolve-true",
+      "ast": [
+        [
+          "fn",
+          [],
+          [
+            "fn",
+            [],
+            7
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": {
+          "$lpe": "function"
+        },
+        "events": []
+      },
+      "modern": {
+        "value": 7,
+        "events": []
+      }
+    },
+    {
+      "id": "fn/forwarded-arguments/resolve-true",
+      "ast": [
+        [
+          "fn",
+          [],
+          [
+            "fn",
+            [
+              "n"
+            ],
+            "n"
+          ]
+        ],
+        9
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": {
+          "$lpe": "function"
+        },
+        "events": []
+      },
+      "modern": {
+        "value": 9,
+        "events": []
+      }
+    },
+    {
+      "id": "fn/captured-scope/resolve-true",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          [
+            "fn",
+            [],
+            [
+              "+",
+              "x",
+              1
+            ]
+          ]
+        ],
+        4
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": {
+          "$lpe": "function"
+        },
+        "events": []
+      },
+      "modern": {
+        "value": 5,
+        "events": []
+      }
+    },
+    {
+      "id": "fn/explicit-second-call/resolve-true",
+      "ast": [
+        [
+          [
+            "fn",
+            [],
+            [
+              "fn",
+              [],
+              7
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 7,
+        "events": []
+      },
+      "modern": {
+        "error": "7 is not a function",
+        "events": []
+      }
+    },
+    {
+      "id": "fn/outer-error/resolve-true",
+      "ast": [
+        [
+          "fn",
+          [],
+          [
+            "throw",
+            [
+              "q",
+              "outer failure"
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "error": "outer failure",
+        "events": []
+      },
+      "modern": {
+        "error": "outer failure",
+        "events": []
+      }
+    },
+    {
+      "id": "fn/deferred-error/resolve-true",
+      "ast": [
+        [
+          "fn",
+          [],
+          [
+            "fn",
+            [],
+            [
+              "throw",
+              [
+                "q",
+                "inner failure"
+              ]
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": {
+          "$lpe": "function"
+        },
+        "events": []
+      },
+      "modern": {
+        "error": "inner failure",
+        "events": []
+      }
+    },
+    {
+      "id": "fn/effect-order/resolve-true",
+      "ast": [
+        [
+          "fn",
+          [],
+          [
+            "begin",
+            [
+              "mark",
+              [
+                "q",
+                "outer"
+              ]
+            ],
+            [
+              "fn",
+              [],
+              [
+                "begin",
+                [
+                  "mark",
+                  [
+                    "q",
+                    "inner"
+                  ]
+                ],
+                7
+              ]
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": {
+          "$lpe": "function"
+        },
+        "events": [
+          "outer"
+        ]
+      },
+      "modern": {
+        "value": 7,
+        "events": [
+          "outer",
+          "inner"
+        ]
+      }
+    },
+    {
+      "id": "fn/argument-once/resolve-true",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          [
+            "fn",
+            [],
+            [
+              "mark",
+              "x"
+            ]
+          ]
+        ],
+        [
+          "mark",
+          4
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": {
+          "$lpe": "function"
+        },
+        "events": [
+          4
+        ]
+      },
+      "modern": {
+        "value": 4,
+        "events": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "id": "fn/returned-library/resolve-true",
+      "ast": [
+        [
+          "fn",
+          [],
+          [
+            "resolve",
+            "+"
+          ]
+        ],
+        2,
+        3
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": {
+          "$lpe": "function"
+        },
+        "events": []
+      },
+      "modern": {
+        "value": {
+          "$lpe": "undefined"
+        },
+        "events": []
+      }
+    },
+    {
+      "id": "fn/returned-host/resolve-true",
+      "ast": [
+        [
+          "fn",
+          [],
+          [
+            "resolve",
+            "mark"
+          ]
+        ],
+        9
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": {
+          "$lpe": "function"
+        },
+        "events": []
+      },
+      "modern": {
+        "value": 9,
+        "events": [
+          9
+        ]
+      }
+    },
+    {
+      "id": "fn/nested-functions/resolve-true",
+      "ast": [
+        [
+          "fn",
+          [],
+          [
+            "fn",
+            [],
+            [
+              "fn",
+              [],
+              7
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": {
+          "$lpe": "function"
+        },
+        "events": []
+      },
+      "modern": {
+        "value": 7,
+        "events": []
+      }
+    },
+    {
+      "id": "->fn/scalar/resolve-true",
+      "ast": [
+        [
+          "->fn",
+          [
+            "+",
+            2,
+            3
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "value": 5,
+        "events": []
+      }
+    },
+    {
+      "id": "->fn/returned-fn/resolve-true",
+      "ast": [
+        [
+          "->fn",
+          [
+            "fn",
+            [],
+            7
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 7,
+        "events": []
+      },
+      "modern": {
+        "value": 7,
+        "events": []
+      }
+    },
+    {
+      "id": "->fn/forwarded-arguments/resolve-true",
+      "ast": [
+        [
+          "->fn",
+          [
+            "fn",
+            [
+              "n"
+            ],
+            "n"
+          ]
+        ],
+        9
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 9,
+        "events": []
+      },
+      "modern": {
+        "value": 9,
+        "events": []
+      }
+    },
+    {
+      "id": "->fn/captured-scope/resolve-true",
+      "ast": [
+        [
+          "->fn",
+          [
+            "fn",
+            [],
+            [
+              "+",
+              "x",
+              1
+            ]
+          ],
+          "x"
+        ],
+        4
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "value": 5,
+        "events": []
+      }
+    },
+    {
+      "id": "->fn/explicit-second-call/resolve-true",
+      "ast": [
+        [
+          [
+            "->fn",
+            [
+              "fn",
+              [],
+              7
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "error": "7 is not a function",
+        "events": []
+      },
+      "modern": {
+        "error": "7 is not a function",
+        "events": []
+      }
+    },
+    {
+      "id": "->fn/outer-error/resolve-true",
+      "ast": [
+        [
+          "->fn",
+          [
+            "throw",
+            [
+              "q",
+              "outer failure"
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "error": "outer failure",
+        "events": []
+      },
+      "modern": {
+        "error": "outer failure",
+        "events": []
+      }
+    },
+    {
+      "id": "->fn/deferred-error/resolve-true",
+      "ast": [
+        [
+          "->fn",
+          [
+            "fn",
+            [],
+            [
+              "throw",
+              [
+                "q",
+                "inner failure"
+              ]
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "error": "inner failure",
+        "events": []
+      },
+      "modern": {
+        "error": "inner failure",
+        "events": []
+      }
+    },
+    {
+      "id": "->fn/effect-order/resolve-true",
+      "ast": [
+        [
+          "->fn",
+          [
+            "begin",
+            [
+              "mark",
+              [
+                "q",
+                "outer"
+              ]
+            ],
+            [
+              "fn",
+              [],
+              [
+                "begin",
+                [
+                  "mark",
+                  [
+                    "q",
+                    "inner"
+                  ]
+                ],
+                7
+              ]
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 7,
+        "events": [
+          "outer",
+          "inner"
+        ]
+      },
+      "modern": {
+        "value": 7,
+        "events": [
+          "outer",
+          "inner"
+        ]
+      }
+    },
+    {
+      "id": "->fn/argument-once/resolve-true",
+      "ast": [
+        [
+          "->fn",
+          [
+            "fn",
+            [],
+            [
+              "mark",
+              "x"
+            ]
+          ],
+          "x"
+        ],
+        [
+          "mark",
+          4
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 4,
+        "events": [
+          4,
+          4
+        ]
+      },
+      "modern": {
+        "value": 4,
+        "events": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "id": "->fn/returned-library/resolve-true",
+      "ast": [
+        [
+          "->fn",
+          [
+            "resolve",
+            "+"
+          ]
+        ],
+        2,
+        3
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "value": {
+          "$lpe": "undefined"
+        },
+        "events": []
+      }
+    },
+    {
+      "id": "->fn/returned-host/resolve-true",
+      "ast": [
+        [
+          "->fn",
+          [
+            "resolve",
+            "mark"
+          ]
+        ],
+        9
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 9,
+        "events": [
+          9
+        ]
+      },
+      "modern": {
+        "value": 9,
+        "events": [
+          9
+        ]
+      }
+    },
+    {
+      "id": "->fn/nested-functions/resolve-true",
+      "ast": [
+        [
+          "->fn",
+          [
+            "fn",
+            [],
+            [
+              "fn",
+              [],
+              7
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": {
+          "$lpe": "function"
+        },
+        "events": []
+      },
+      "modern": {
+        "value": 7,
+        "events": []
+      }
+    },
+    {
+      "id": "toFn/scalar/resolve-true",
+      "ast": [
+        [
+          "toFn",
+          [
+            "+",
+            2,
+            3
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "value": 5,
+        "events": []
+      }
+    },
+    {
+      "id": "toFn/returned-fn/resolve-true",
+      "ast": [
+        [
+          "toFn",
+          [
+            "fn",
+            [],
+            7
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 7,
+        "events": []
+      },
+      "modern": {
+        "value": 7,
+        "events": []
+      }
+    },
+    {
+      "id": "toFn/forwarded-arguments/resolve-true",
+      "ast": [
+        [
+          "toFn",
+          [
+            "fn",
+            [
+              "n"
+            ],
+            "n"
+          ]
+        ],
+        9
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 9,
+        "events": []
+      },
+      "modern": {
+        "value": 9,
+        "events": []
+      }
+    },
+    {
+      "id": "toFn/captured-scope/resolve-true",
+      "ast": [
+        [
+          "toFn",
+          [
+            "fn",
+            [],
+            [
+              "+",
+              "x",
+              1
+            ]
+          ],
+          "x"
+        ],
+        4
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "value": 5,
+        "events": []
+      }
+    },
+    {
+      "id": "toFn/explicit-second-call/resolve-true",
+      "ast": [
+        [
+          [
+            "toFn",
+            [
+              "fn",
+              [],
+              7
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "error": "7 is not a function",
+        "events": []
+      },
+      "modern": {
+        "error": "7 is not a function",
+        "events": []
+      }
+    },
+    {
+      "id": "toFn/outer-error/resolve-true",
+      "ast": [
+        [
+          "toFn",
+          [
+            "throw",
+            [
+              "q",
+              "outer failure"
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "error": "outer failure",
+        "events": []
+      },
+      "modern": {
+        "error": "outer failure",
+        "events": []
+      }
+    },
+    {
+      "id": "toFn/deferred-error/resolve-true",
+      "ast": [
+        [
+          "toFn",
+          [
+            "fn",
+            [],
+            [
+              "throw",
+              [
+                "q",
+                "inner failure"
+              ]
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "error": "inner failure",
+        "events": []
+      },
+      "modern": {
+        "error": "inner failure",
+        "events": []
+      }
+    },
+    {
+      "id": "toFn/effect-order/resolve-true",
+      "ast": [
+        [
+          "toFn",
+          [
+            "begin",
+            [
+              "mark",
+              [
+                "q",
+                "outer"
+              ]
+            ],
+            [
+              "fn",
+              [],
+              [
+                "begin",
+                [
+                  "mark",
+                  [
+                    "q",
+                    "inner"
+                  ]
+                ],
+                7
+              ]
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 7,
+        "events": [
+          "outer",
+          "inner"
+        ]
+      },
+      "modern": {
+        "value": 7,
+        "events": [
+          "outer",
+          "inner"
+        ]
+      }
+    },
+    {
+      "id": "toFn/argument-once/resolve-true",
+      "ast": [
+        [
+          "toFn",
+          [
+            "fn",
+            [],
+            [
+              "mark",
+              "x"
+            ]
+          ],
+          "x"
+        ],
+        [
+          "mark",
+          4
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 4,
+        "events": [
+          4,
+          4
+        ]
+      },
+      "modern": {
+        "value": 4,
+        "events": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "id": "toFn/returned-library/resolve-true",
+      "ast": [
+        [
+          "toFn",
+          [
+            "resolve",
+            "+"
+          ]
+        ],
+        2,
+        3
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "value": {
+          "$lpe": "undefined"
+        },
+        "events": []
+      }
+    },
+    {
+      "id": "toFn/returned-host/resolve-true",
+      "ast": [
+        [
+          "toFn",
+          [
+            "resolve",
+            "mark"
+          ]
+        ],
+        9
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 9,
+        "events": [
+          9
+        ]
+      },
+      "modern": {
+        "value": 9,
+        "events": [
+          9
+        ]
+      }
+    },
+    {
+      "id": "toFn/nested-functions/resolve-true",
+      "ast": [
+        [
+          "toFn",
+          [
+            "fn",
+            [],
+            [
+              "fn",
+              [],
+              7
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": {
+          "$lpe": "function"
+        },
+        "events": []
+      },
+      "modern": {
+        "value": 7,
+        "events": []
+      }
+    },
+    {
+      "id": "defFn/scalar/resolve-true",
+      "ast": [
+        [
+          "defFn",
+          [
+            "+",
+            2,
+            3
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "value": 5,
+        "events": []
+      }
+    },
+    {
+      "id": "defFn/returned-fn/resolve-true",
+      "ast": [
+        [
+          "defFn",
+          [
+            "fn",
+            [],
+            7
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 7,
+        "events": []
+      },
+      "modern": {
+        "value": 7,
+        "events": []
+      }
+    },
+    {
+      "id": "defFn/forwarded-arguments/resolve-true",
+      "ast": [
+        [
+          "defFn",
+          [
+            "fn",
+            [
+              "n"
+            ],
+            "n"
+          ]
+        ],
+        9
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 9,
+        "events": []
+      },
+      "modern": {
+        "value": 9,
+        "events": []
+      }
+    },
+    {
+      "id": "defFn/captured-scope/resolve-true",
+      "ast": [
+        [
+          "defFn",
+          [
+            "fn",
+            [],
+            [
+              "+",
+              "x",
+              1
+            ]
+          ],
+          "x"
+        ],
+        4
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "value": 5,
+        "events": []
+      }
+    },
+    {
+      "id": "defFn/explicit-second-call/resolve-true",
+      "ast": [
+        [
+          [
+            "defFn",
+            [
+              "fn",
+              [],
+              7
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "error": "7 is not a function",
+        "events": []
+      },
+      "modern": {
+        "error": "7 is not a function",
+        "events": []
+      }
+    },
+    {
+      "id": "defFn/outer-error/resolve-true",
+      "ast": [
+        [
+          "defFn",
+          [
+            "throw",
+            [
+              "q",
+              "outer failure"
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "error": "outer failure",
+        "events": []
+      },
+      "modern": {
+        "error": "outer failure",
+        "events": []
+      }
+    },
+    {
+      "id": "defFn/deferred-error/resolve-true",
+      "ast": [
+        [
+          "defFn",
+          [
+            "fn",
+            [],
+            [
+              "throw",
+              [
+                "q",
+                "inner failure"
+              ]
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "error": "inner failure",
+        "events": []
+      },
+      "modern": {
+        "error": "inner failure",
+        "events": []
+      }
+    },
+    {
+      "id": "defFn/effect-order/resolve-true",
+      "ast": [
+        [
+          "defFn",
+          [
+            "begin",
+            [
+              "mark",
+              [
+                "q",
+                "outer"
+              ]
+            ],
+            [
+              "fn",
+              [],
+              [
+                "begin",
+                [
+                  "mark",
+                  [
+                    "q",
+                    "inner"
+                  ]
+                ],
+                7
+              ]
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 7,
+        "events": [
+          "outer",
+          "inner"
+        ]
+      },
+      "modern": {
+        "value": 7,
+        "events": [
+          "outer",
+          "inner"
+        ]
+      }
+    },
+    {
+      "id": "defFn/argument-once/resolve-true",
+      "ast": [
+        [
+          "defFn",
+          [
+            "fn",
+            [],
+            [
+              "mark",
+              "x"
+            ]
+          ],
+          "x"
+        ],
+        [
+          "mark",
+          4
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 4,
+        "events": [
+          4,
+          4
+        ]
+      },
+      "modern": {
+        "value": 4,
+        "events": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "id": "defFn/returned-library/resolve-true",
+      "ast": [
+        [
+          "defFn",
+          [
+            "resolve",
+            "+"
+          ]
+        ],
+        2,
+        3
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "value": {
+          "$lpe": "undefined"
+        },
+        "events": []
+      }
+    },
+    {
+      "id": "defFn/returned-host/resolve-true",
+      "ast": [
+        [
+          "defFn",
+          [
+            "resolve",
+            "mark"
+          ]
+        ],
+        9
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 9,
+        "events": [
+          9
+        ]
+      },
+      "modern": {
+        "value": 9,
+        "events": [
+          9
+        ]
+      }
+    },
+    {
+      "id": "defFn/nested-functions/resolve-true",
+      "ast": [
+        [
+          "defFn",
+          [
+            "fn",
+            [],
+            [
+              "fn",
+              [],
+              7
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": {
+          "$lpe": "function"
+        },
+        "events": []
+      },
+      "modern": {
+        "value": 7,
+        "events": []
+      }
+    },
+    {
+      "id": "=>/scalar/resolve-true",
+      "ast": [
+        [
+          "=>",
+          [
+            "tuple"
+          ],
+          [
+            "+",
+            2,
+            3
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "value": 5,
+        "events": []
+      }
+    },
+    {
+      "id": "=>/returned-fn/resolve-true",
+      "ast": [
+        [
+          "=>",
+          [
+            "tuple"
+          ],
+          [
+            "fn",
+            [],
+            7
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 7,
+        "events": []
+      },
+      "modern": {
+        "value": 7,
+        "events": []
+      }
+    },
+    {
+      "id": "=>/forwarded-arguments/resolve-true",
+      "ast": [
+        [
+          "=>",
+          [
+            "tuple"
+          ],
+          [
+            "fn",
+            [
+              "n"
+            ],
+            "n"
+          ]
+        ],
+        9
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 9,
+        "events": []
+      },
+      "modern": {
+        "value": 9,
+        "events": []
+      }
+    },
+    {
+      "id": "=>/captured-scope/resolve-true",
+      "ast": [
+        [
+          "=>",
+          [
+            "tuple",
+            "x"
+          ],
+          [
+            "fn",
+            [],
+            [
+              "+",
+              "x",
+              1
+            ]
+          ]
+        ],
+        4
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "value": 5,
+        "events": []
+      }
+    },
+    {
+      "id": "=>/explicit-second-call/resolve-true",
+      "ast": [
+        [
+          [
+            "=>",
+            [
+              "tuple"
+            ],
+            [
+              "fn",
+              [],
+              7
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "error": "7 is not a function",
+        "events": []
+      },
+      "modern": {
+        "error": "7 is not a function",
+        "events": []
+      }
+    },
+    {
+      "id": "=>/outer-error/resolve-true",
+      "ast": [
+        [
+          "=>",
+          [
+            "tuple"
+          ],
+          [
+            "throw",
+            [
+              "q",
+              "outer failure"
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "error": "outer failure",
+        "events": []
+      },
+      "modern": {
+        "error": "outer failure",
+        "events": []
+      }
+    },
+    {
+      "id": "=>/deferred-error/resolve-true",
+      "ast": [
+        [
+          "=>",
+          [
+            "tuple"
+          ],
+          [
+            "fn",
+            [],
+            [
+              "throw",
+              [
+                "q",
+                "inner failure"
+              ]
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "error": "inner failure",
+        "events": []
+      },
+      "modern": {
+        "error": "inner failure",
+        "events": []
+      }
+    },
+    {
+      "id": "=>/effect-order/resolve-true",
+      "ast": [
+        [
+          "=>",
+          [
+            "tuple"
+          ],
+          [
+            "begin",
+            [
+              "mark",
+              [
+                "q",
+                "outer"
+              ]
+            ],
+            [
+              "fn",
+              [],
+              [
+                "begin",
+                [
+                  "mark",
+                  [
+                    "q",
+                    "inner"
+                  ]
+                ],
+                7
+              ]
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 7,
+        "events": [
+          "outer",
+          "inner"
+        ]
+      },
+      "modern": {
+        "value": 7,
+        "events": [
+          "outer",
+          "inner"
+        ]
+      }
+    },
+    {
+      "id": "=>/argument-once/resolve-true",
+      "ast": [
+        [
+          "=>",
+          [
+            "tuple",
+            "x"
+          ],
+          [
+            "fn",
+            [],
+            [
+              "mark",
+              "x"
+            ]
+          ]
+        ],
+        [
+          "mark",
+          4
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 4,
+        "events": [
+          4,
+          4
+        ]
+      },
+      "modern": {
+        "value": 4,
+        "events": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "id": "=>/returned-library/resolve-true",
+      "ast": [
+        [
+          "=>",
+          [
+            "tuple"
+          ],
+          [
+            "resolve",
+            "+"
+          ]
+        ],
+        2,
+        3
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "value": {
+          "$lpe": "undefined"
+        },
+        "events": []
+      }
+    },
+    {
+      "id": "=>/returned-host/resolve-true",
+      "ast": [
+        [
+          "=>",
+          [
+            "tuple"
+          ],
+          [
+            "resolve",
+            "mark"
+          ]
+        ],
+        9
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 9,
+        "events": [
+          9
+        ]
+      },
+      "modern": {
+        "value": 9,
+        "events": [
+          9
+        ]
+      }
+    },
+    {
+      "id": "=>/nested-functions/resolve-true",
+      "ast": [
+        [
+          "=>",
+          [
+            "tuple"
+          ],
+          [
+            "fn",
+            [],
+            [
+              "fn",
+              [],
+              7
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": {
+          "$lpe": "function"
+        },
+        "events": []
+      },
+      "modern": {
+        "value": 7,
+        "events": []
+      }
+    },
+    {
+      "id": "lambda/scalar/resolve-true",
+      "ast": [
+        [
+          "lambda",
+          [
+            "tuple"
+          ],
+          [
+            "+",
+            2,
+            3
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "value": 5,
+        "events": []
+      }
+    },
+    {
+      "id": "lambda/returned-fn/resolve-true",
+      "ast": [
+        [
+          "lambda",
+          [
+            "tuple"
+          ],
+          [
+            "fn",
+            [],
+            7
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 7,
+        "events": []
+      },
+      "modern": {
+        "value": 7,
+        "events": []
+      }
+    },
+    {
+      "id": "lambda/forwarded-arguments/resolve-true",
+      "ast": [
+        [
+          "lambda",
+          [
+            "tuple"
+          ],
+          [
+            "fn",
+            [
+              "n"
+            ],
+            "n"
+          ]
+        ],
+        9
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 9,
+        "events": []
+      },
+      "modern": {
+        "value": 9,
+        "events": []
+      }
+    },
+    {
+      "id": "lambda/captured-scope/resolve-true",
+      "ast": [
+        [
+          "lambda",
+          [
+            "tuple",
+            "x"
+          ],
+          [
+            "fn",
+            [],
+            [
+              "+",
+              "x",
+              1
+            ]
+          ]
+        ],
+        4
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "value": 5,
+        "events": []
+      }
+    },
+    {
+      "id": "lambda/explicit-second-call/resolve-true",
+      "ast": [
+        [
+          [
+            "lambda",
+            [
+              "tuple"
+            ],
+            [
+              "fn",
+              [],
+              7
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "error": "7 is not a function",
+        "events": []
+      },
+      "modern": {
+        "error": "7 is not a function",
+        "events": []
+      }
+    },
+    {
+      "id": "lambda/outer-error/resolve-true",
+      "ast": [
+        [
+          "lambda",
+          [
+            "tuple"
+          ],
+          [
+            "throw",
+            [
+              "q",
+              "outer failure"
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "error": "outer failure",
+        "events": []
+      },
+      "modern": {
+        "error": "outer failure",
+        "events": []
+      }
+    },
+    {
+      "id": "lambda/deferred-error/resolve-true",
+      "ast": [
+        [
+          "lambda",
+          [
+            "tuple"
+          ],
+          [
+            "fn",
+            [],
+            [
+              "throw",
+              [
+                "q",
+                "inner failure"
+              ]
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "error": "inner failure",
+        "events": []
+      },
+      "modern": {
+        "error": "inner failure",
+        "events": []
+      }
+    },
+    {
+      "id": "lambda/effect-order/resolve-true",
+      "ast": [
+        [
+          "lambda",
+          [
+            "tuple"
+          ],
+          [
+            "begin",
+            [
+              "mark",
+              [
+                "q",
+                "outer"
+              ]
+            ],
+            [
+              "fn",
+              [],
+              [
+                "begin",
+                [
+                  "mark",
+                  [
+                    "q",
+                    "inner"
+                  ]
+                ],
+                7
+              ]
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 7,
+        "events": [
+          "outer",
+          "inner"
+        ]
+      },
+      "modern": {
+        "value": 7,
+        "events": [
+          "outer",
+          "inner"
+        ]
+      }
+    },
+    {
+      "id": "lambda/argument-once/resolve-true",
+      "ast": [
+        [
+          "lambda",
+          [
+            "tuple",
+            "x"
+          ],
+          [
+            "fn",
+            [],
+            [
+              "mark",
+              "x"
+            ]
+          ]
+        ],
+        [
+          "mark",
+          4
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 4,
+        "events": [
+          4,
+          4
+        ]
+      },
+      "modern": {
+        "value": 4,
+        "events": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "id": "lambda/returned-library/resolve-true",
+      "ast": [
+        [
+          "lambda",
+          [
+            "tuple"
+          ],
+          [
+            "resolve",
+            "+"
+          ]
+        ],
+        2,
+        3
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "value": {
+          "$lpe": "undefined"
+        },
+        "events": []
+      }
+    },
+    {
+      "id": "lambda/returned-host/resolve-true",
+      "ast": [
+        [
+          "lambda",
+          [
+            "tuple"
+          ],
+          [
+            "resolve",
+            "mark"
+          ]
+        ],
+        9
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 9,
+        "events": [
+          9
+        ]
+      },
+      "modern": {
+        "value": 9,
+        "events": [
+          9
+        ]
+      }
+    },
+    {
+      "id": "lambda/nested-functions/resolve-true",
+      "ast": [
+        [
+          "lambda",
+          [
+            "tuple"
+          ],
+          [
+            "fn",
+            [],
+            [
+              "fn",
+              [],
+              7
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": {
+          "$lpe": "function"
+        },
+        "events": []
+      },
+      "modern": {
+        "value": 7,
+        "events": []
+      }
+    },
+    {
+      "id": "lexical-AST-parameter/resolve-true",
+      "ast": [
+        [
+          [
+            "fn",
+            [
+              "$AST$"
+            ],
+            [
+              "fn",
+              [],
+              [
+                "$AST$",
+                2,
+                3
+              ]
+            ]
+          ],
+          [
+            "fn",
+            [
+              "a",
+              "b"
+            ],
+            [
+              "+",
+              "a",
+              "b"
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "error": "5 is not a function",
+        "events": []
+      }
+    },
+    {
+      "id": "quoted-factory/resolve-true",
+      "ast": [
+        "`",
+        [
+          [
+            "fn",
+            [],
+            [
+              "fn",
+              [],
+              7
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": [
+          [
+            "fn",
+            [],
+            [
+              "fn",
+              [],
+              7
+            ]
+          ]
+        ],
+        "events": []
+      },
+      "modern": {
+        "value": [
+          [
+            "fn",
+            [],
+            [
+              "fn",
+              [],
+              7
+            ]
+          ]
+        ],
+        "events": []
+      }
+    },
+    {
+      "id": "returned-function-in-container/resolve-true",
+      "ast": [
+        "list",
+        [
+          [
+            "fn",
+            [],
+            [
+              "fn",
+              [],
+              7
+            ]
+          ]
+        ],
+        9
+      ],
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": [
+          {
+            "$lpe": "function"
+          },
+          9
+        ],
+        "events": []
+      },
+      "modern": {
+        "value": [
+          7,
+          9
+        ],
+        "events": []
+      }
+    },
+    {
+      "id": "fn/scalar/resolve-false",
+      "ast": [
+        [
+          "fn",
+          [],
+          [
+            "+",
+            2,
+            3
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "value": 5,
+        "events": []
+      }
+    },
+    {
+      "id": "fn/returned-fn/resolve-false",
+      "ast": [
+        [
+          "fn",
+          [],
+          [
+            "fn",
+            [],
+            7
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": {
+          "$lpe": "function"
+        },
+        "events": []
+      },
+      "modern": {
+        "value": 7,
+        "events": []
+      }
+    },
+    {
+      "id": "fn/forwarded-arguments/resolve-false",
+      "ast": [
+        [
+          "fn",
+          [],
+          [
+            "fn",
+            [
+              "n"
+            ],
+            "n"
+          ]
+        ],
+        9
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": {
+          "$lpe": "function"
+        },
+        "events": []
+      },
+      "modern": {
+        "value": 9,
+        "events": []
+      }
+    },
+    {
+      "id": "fn/captured-scope/resolve-false",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          [
+            "fn",
+            [],
+            [
+              "+",
+              "x",
+              1
+            ]
+          ]
+        ],
+        4
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": {
+          "$lpe": "function"
+        },
+        "events": []
+      },
+      "modern": {
+        "value": 5,
+        "events": []
+      }
+    },
+    {
+      "id": "fn/explicit-second-call/resolve-false",
+      "ast": [
+        [
+          [
+            "fn",
+            [],
+            [
+              "fn",
+              [],
+              7
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 7,
+        "events": []
+      },
+      "modern": {
+        "error": "7 is not a function",
+        "events": []
+      }
+    },
+    {
+      "id": "fn/outer-error/resolve-false",
+      "ast": [
+        [
+          "fn",
+          [],
+          [
+            "throw",
+            [
+              "q",
+              "outer failure"
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "error": "outer failure",
+        "events": []
+      },
+      "modern": {
+        "error": "outer failure",
+        "events": []
+      }
+    },
+    {
+      "id": "fn/deferred-error/resolve-false",
+      "ast": [
+        [
+          "fn",
+          [],
+          [
+            "fn",
+            [],
+            [
+              "throw",
+              [
+                "q",
+                "inner failure"
+              ]
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": {
+          "$lpe": "function"
+        },
+        "events": []
+      },
+      "modern": {
+        "error": "inner failure",
+        "events": []
+      }
+    },
+    {
+      "id": "fn/effect-order/resolve-false",
+      "ast": [
+        [
+          "fn",
+          [],
+          [
+            "begin",
+            [
+              "mark",
+              [
+                "q",
+                "outer"
+              ]
+            ],
+            [
+              "fn",
+              [],
+              [
+                "begin",
+                [
+                  "mark",
+                  [
+                    "q",
+                    "inner"
+                  ]
+                ],
+                7
+              ]
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": {
+          "$lpe": "function"
+        },
+        "events": [
+          "outer"
+        ]
+      },
+      "modern": {
+        "value": 7,
+        "events": [
+          "outer",
+          "inner"
+        ]
+      }
+    },
+    {
+      "id": "fn/argument-once/resolve-false",
+      "ast": [
+        [
+          "fn",
+          [
+            "x"
+          ],
+          [
+            "fn",
+            [],
+            [
+              "mark",
+              "x"
+            ]
+          ]
+        ],
+        [
+          "mark",
+          4
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": {
+          "$lpe": "function"
+        },
+        "events": [
+          4
+        ]
+      },
+      "modern": {
+        "value": 4,
+        "events": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "id": "fn/returned-library/resolve-false",
+      "ast": [
+        [
+          "fn",
+          [],
+          [
+            "resolve",
+            "+"
+          ]
+        ],
+        2,
+        3
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": {
+          "$lpe": "function"
+        },
+        "events": []
+      },
+      "modern": {
+        "value": {
+          "$lpe": "undefined"
+        },
+        "events": []
+      }
+    },
+    {
+      "id": "fn/returned-host/resolve-false",
+      "ast": [
+        [
+          "fn",
+          [],
+          [
+            "resolve",
+            "mark"
+          ]
+        ],
+        9
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": {
+          "$lpe": "function"
+        },
+        "events": []
+      },
+      "modern": {
+        "value": 9,
+        "events": [
+          9
+        ]
+      }
+    },
+    {
+      "id": "fn/nested-functions/resolve-false",
+      "ast": [
+        [
+          "fn",
+          [],
+          [
+            "fn",
+            [],
+            [
+              "fn",
+              [],
+              7
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": {
+          "$lpe": "function"
+        },
+        "events": []
+      },
+      "modern": {
+        "value": 7,
+        "events": []
+      }
+    },
+    {
+      "id": "->fn/scalar/resolve-false",
+      "ast": [
+        [
+          "->fn",
+          [
+            "+",
+            2,
+            3
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "value": 5,
+        "events": []
+      }
+    },
+    {
+      "id": "->fn/returned-fn/resolve-false",
+      "ast": [
+        [
+          "->fn",
+          [
+            "fn",
+            [],
+            7
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 7,
+        "events": []
+      },
+      "modern": {
+        "value": 7,
+        "events": []
+      }
+    },
+    {
+      "id": "->fn/forwarded-arguments/resolve-false",
+      "ast": [
+        [
+          "->fn",
+          [
+            "fn",
+            [
+              "n"
+            ],
+            "n"
+          ]
+        ],
+        9
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 9,
+        "events": []
+      },
+      "modern": {
+        "value": 9,
+        "events": []
+      }
+    },
+    {
+      "id": "->fn/captured-scope/resolve-false",
+      "ast": [
+        [
+          "->fn",
+          [
+            "fn",
+            [],
+            [
+              "+",
+              "x",
+              1
+            ]
+          ],
+          "x"
+        ],
+        4
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "value": 5,
+        "events": []
+      }
+    },
+    {
+      "id": "->fn/explicit-second-call/resolve-false",
+      "ast": [
+        [
+          [
+            "->fn",
+            [
+              "fn",
+              [],
+              7
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "error": "7 is not a function",
+        "events": []
+      },
+      "modern": {
+        "error": "7 is not a function",
+        "events": []
+      }
+    },
+    {
+      "id": "->fn/outer-error/resolve-false",
+      "ast": [
+        [
+          "->fn",
+          [
+            "throw",
+            [
+              "q",
+              "outer failure"
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "error": "outer failure",
+        "events": []
+      },
+      "modern": {
+        "error": "outer failure",
+        "events": []
+      }
+    },
+    {
+      "id": "->fn/deferred-error/resolve-false",
+      "ast": [
+        [
+          "->fn",
+          [
+            "fn",
+            [],
+            [
+              "throw",
+              [
+                "q",
+                "inner failure"
+              ]
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "error": "inner failure",
+        "events": []
+      },
+      "modern": {
+        "error": "inner failure",
+        "events": []
+      }
+    },
+    {
+      "id": "->fn/effect-order/resolve-false",
+      "ast": [
+        [
+          "->fn",
+          [
+            "begin",
+            [
+              "mark",
+              [
+                "q",
+                "outer"
+              ]
+            ],
+            [
+              "fn",
+              [],
+              [
+                "begin",
+                [
+                  "mark",
+                  [
+                    "q",
+                    "inner"
+                  ]
+                ],
+                7
+              ]
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 7,
+        "events": [
+          "outer",
+          "inner"
+        ]
+      },
+      "modern": {
+        "value": 7,
+        "events": [
+          "outer",
+          "inner"
+        ]
+      }
+    },
+    {
+      "id": "->fn/argument-once/resolve-false",
+      "ast": [
+        [
+          "->fn",
+          [
+            "fn",
+            [],
+            [
+              "mark",
+              "x"
+            ]
+          ],
+          "x"
+        ],
+        [
+          "mark",
+          4
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 4,
+        "events": [
+          4,
+          4
+        ]
+      },
+      "modern": {
+        "value": 4,
+        "events": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "id": "->fn/returned-library/resolve-false",
+      "ast": [
+        [
+          "->fn",
+          [
+            "resolve",
+            "+"
+          ]
+        ],
+        2,
+        3
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "value": {
+          "$lpe": "undefined"
+        },
+        "events": []
+      }
+    },
+    {
+      "id": "->fn/returned-host/resolve-false",
+      "ast": [
+        [
+          "->fn",
+          [
+            "resolve",
+            "mark"
+          ]
+        ],
+        9
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 9,
+        "events": [
+          9
+        ]
+      },
+      "modern": {
+        "value": 9,
+        "events": [
+          9
+        ]
+      }
+    },
+    {
+      "id": "->fn/nested-functions/resolve-false",
+      "ast": [
+        [
+          "->fn",
+          [
+            "fn",
+            [],
+            [
+              "fn",
+              [],
+              7
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": {
+          "$lpe": "function"
+        },
+        "events": []
+      },
+      "modern": {
+        "value": 7,
+        "events": []
+      }
+    },
+    {
+      "id": "toFn/scalar/resolve-false",
+      "ast": [
+        [
+          "toFn",
+          [
+            "+",
+            2,
+            3
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "value": 5,
+        "events": []
+      }
+    },
+    {
+      "id": "toFn/returned-fn/resolve-false",
+      "ast": [
+        [
+          "toFn",
+          [
+            "fn",
+            [],
+            7
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 7,
+        "events": []
+      },
+      "modern": {
+        "value": 7,
+        "events": []
+      }
+    },
+    {
+      "id": "toFn/forwarded-arguments/resolve-false",
+      "ast": [
+        [
+          "toFn",
+          [
+            "fn",
+            [
+              "n"
+            ],
+            "n"
+          ]
+        ],
+        9
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 9,
+        "events": []
+      },
+      "modern": {
+        "value": 9,
+        "events": []
+      }
+    },
+    {
+      "id": "toFn/captured-scope/resolve-false",
+      "ast": [
+        [
+          "toFn",
+          [
+            "fn",
+            [],
+            [
+              "+",
+              "x",
+              1
+            ]
+          ],
+          "x"
+        ],
+        4
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "value": 5,
+        "events": []
+      }
+    },
+    {
+      "id": "toFn/explicit-second-call/resolve-false",
+      "ast": [
+        [
+          [
+            "toFn",
+            [
+              "fn",
+              [],
+              7
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "error": "7 is not a function",
+        "events": []
+      },
+      "modern": {
+        "error": "7 is not a function",
+        "events": []
+      }
+    },
+    {
+      "id": "toFn/outer-error/resolve-false",
+      "ast": [
+        [
+          "toFn",
+          [
+            "throw",
+            [
+              "q",
+              "outer failure"
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "error": "outer failure",
+        "events": []
+      },
+      "modern": {
+        "error": "outer failure",
+        "events": []
+      }
+    },
+    {
+      "id": "toFn/deferred-error/resolve-false",
+      "ast": [
+        [
+          "toFn",
+          [
+            "fn",
+            [],
+            [
+              "throw",
+              [
+                "q",
+                "inner failure"
+              ]
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "error": "inner failure",
+        "events": []
+      },
+      "modern": {
+        "error": "inner failure",
+        "events": []
+      }
+    },
+    {
+      "id": "toFn/effect-order/resolve-false",
+      "ast": [
+        [
+          "toFn",
+          [
+            "begin",
+            [
+              "mark",
+              [
+                "q",
+                "outer"
+              ]
+            ],
+            [
+              "fn",
+              [],
+              [
+                "begin",
+                [
+                  "mark",
+                  [
+                    "q",
+                    "inner"
+                  ]
+                ],
+                7
+              ]
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 7,
+        "events": [
+          "outer",
+          "inner"
+        ]
+      },
+      "modern": {
+        "value": 7,
+        "events": [
+          "outer",
+          "inner"
+        ]
+      }
+    },
+    {
+      "id": "toFn/argument-once/resolve-false",
+      "ast": [
+        [
+          "toFn",
+          [
+            "fn",
+            [],
+            [
+              "mark",
+              "x"
+            ]
+          ],
+          "x"
+        ],
+        [
+          "mark",
+          4
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 4,
+        "events": [
+          4,
+          4
+        ]
+      },
+      "modern": {
+        "value": 4,
+        "events": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "id": "toFn/returned-library/resolve-false",
+      "ast": [
+        [
+          "toFn",
+          [
+            "resolve",
+            "+"
+          ]
+        ],
+        2,
+        3
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "value": {
+          "$lpe": "undefined"
+        },
+        "events": []
+      }
+    },
+    {
+      "id": "toFn/returned-host/resolve-false",
+      "ast": [
+        [
+          "toFn",
+          [
+            "resolve",
+            "mark"
+          ]
+        ],
+        9
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 9,
+        "events": [
+          9
+        ]
+      },
+      "modern": {
+        "value": 9,
+        "events": [
+          9
+        ]
+      }
+    },
+    {
+      "id": "toFn/nested-functions/resolve-false",
+      "ast": [
+        [
+          "toFn",
+          [
+            "fn",
+            [],
+            [
+              "fn",
+              [],
+              7
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": {
+          "$lpe": "function"
+        },
+        "events": []
+      },
+      "modern": {
+        "value": 7,
+        "events": []
+      }
+    },
+    {
+      "id": "defFn/scalar/resolve-false",
+      "ast": [
+        [
+          "defFn",
+          [
+            "+",
+            2,
+            3
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "value": 5,
+        "events": []
+      }
+    },
+    {
+      "id": "defFn/returned-fn/resolve-false",
+      "ast": [
+        [
+          "defFn",
+          [
+            "fn",
+            [],
+            7
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 7,
+        "events": []
+      },
+      "modern": {
+        "value": 7,
+        "events": []
+      }
+    },
+    {
+      "id": "defFn/forwarded-arguments/resolve-false",
+      "ast": [
+        [
+          "defFn",
+          [
+            "fn",
+            [
+              "n"
+            ],
+            "n"
+          ]
+        ],
+        9
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 9,
+        "events": []
+      },
+      "modern": {
+        "value": 9,
+        "events": []
+      }
+    },
+    {
+      "id": "defFn/captured-scope/resolve-false",
+      "ast": [
+        [
+          "defFn",
+          [
+            "fn",
+            [],
+            [
+              "+",
+              "x",
+              1
+            ]
+          ],
+          "x"
+        ],
+        4
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "value": 5,
+        "events": []
+      }
+    },
+    {
+      "id": "defFn/explicit-second-call/resolve-false",
+      "ast": [
+        [
+          [
+            "defFn",
+            [
+              "fn",
+              [],
+              7
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "error": "7 is not a function",
+        "events": []
+      },
+      "modern": {
+        "error": "7 is not a function",
+        "events": []
+      }
+    },
+    {
+      "id": "defFn/outer-error/resolve-false",
+      "ast": [
+        [
+          "defFn",
+          [
+            "throw",
+            [
+              "q",
+              "outer failure"
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "error": "outer failure",
+        "events": []
+      },
+      "modern": {
+        "error": "outer failure",
+        "events": []
+      }
+    },
+    {
+      "id": "defFn/deferred-error/resolve-false",
+      "ast": [
+        [
+          "defFn",
+          [
+            "fn",
+            [],
+            [
+              "throw",
+              [
+                "q",
+                "inner failure"
+              ]
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "error": "inner failure",
+        "events": []
+      },
+      "modern": {
+        "error": "inner failure",
+        "events": []
+      }
+    },
+    {
+      "id": "defFn/effect-order/resolve-false",
+      "ast": [
+        [
+          "defFn",
+          [
+            "begin",
+            [
+              "mark",
+              [
+                "q",
+                "outer"
+              ]
+            ],
+            [
+              "fn",
+              [],
+              [
+                "begin",
+                [
+                  "mark",
+                  [
+                    "q",
+                    "inner"
+                  ]
+                ],
+                7
+              ]
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 7,
+        "events": [
+          "outer",
+          "inner"
+        ]
+      },
+      "modern": {
+        "value": 7,
+        "events": [
+          "outer",
+          "inner"
+        ]
+      }
+    },
+    {
+      "id": "defFn/argument-once/resolve-false",
+      "ast": [
+        [
+          "defFn",
+          [
+            "fn",
+            [],
+            [
+              "mark",
+              "x"
+            ]
+          ],
+          "x"
+        ],
+        [
+          "mark",
+          4
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 4,
+        "events": [
+          4,
+          4
+        ]
+      },
+      "modern": {
+        "value": 4,
+        "events": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "id": "defFn/returned-library/resolve-false",
+      "ast": [
+        [
+          "defFn",
+          [
+            "resolve",
+            "+"
+          ]
+        ],
+        2,
+        3
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "value": {
+          "$lpe": "undefined"
+        },
+        "events": []
+      }
+    },
+    {
+      "id": "defFn/returned-host/resolve-false",
+      "ast": [
+        [
+          "defFn",
+          [
+            "resolve",
+            "mark"
+          ]
+        ],
+        9
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 9,
+        "events": [
+          9
+        ]
+      },
+      "modern": {
+        "value": 9,
+        "events": [
+          9
+        ]
+      }
+    },
+    {
+      "id": "defFn/nested-functions/resolve-false",
+      "ast": [
+        [
+          "defFn",
+          [
+            "fn",
+            [],
+            [
+              "fn",
+              [],
+              7
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": {
+          "$lpe": "function"
+        },
+        "events": []
+      },
+      "modern": {
+        "value": 7,
+        "events": []
+      }
+    },
+    {
+      "id": "=>/scalar/resolve-false",
+      "ast": [
+        [
+          "=>",
+          [
+            "tuple"
+          ],
+          [
+            "+",
+            2,
+            3
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "value": 5,
+        "events": []
+      }
+    },
+    {
+      "id": "=>/returned-fn/resolve-false",
+      "ast": [
+        [
+          "=>",
+          [
+            "tuple"
+          ],
+          [
+            "fn",
+            [],
+            7
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 7,
+        "events": []
+      },
+      "modern": {
+        "value": 7,
+        "events": []
+      }
+    },
+    {
+      "id": "=>/forwarded-arguments/resolve-false",
+      "ast": [
+        [
+          "=>",
+          [
+            "tuple"
+          ],
+          [
+            "fn",
+            [
+              "n"
+            ],
+            "n"
+          ]
+        ],
+        9
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 9,
+        "events": []
+      },
+      "modern": {
+        "value": 9,
+        "events": []
+      }
+    },
+    {
+      "id": "=>/captured-scope/resolve-false",
+      "ast": [
+        [
+          "=>",
+          [
+            "tuple",
+            "x"
+          ],
+          [
+            "fn",
+            [],
+            [
+              "+",
+              "x",
+              1
+            ]
+          ]
+        ],
+        4
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "value": 5,
+        "events": []
+      }
+    },
+    {
+      "id": "=>/explicit-second-call/resolve-false",
+      "ast": [
+        [
+          [
+            "=>",
+            [
+              "tuple"
+            ],
+            [
+              "fn",
+              [],
+              7
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "error": "7 is not a function",
+        "events": []
+      },
+      "modern": {
+        "error": "7 is not a function",
+        "events": []
+      }
+    },
+    {
+      "id": "=>/outer-error/resolve-false",
+      "ast": [
+        [
+          "=>",
+          [
+            "tuple"
+          ],
+          [
+            "throw",
+            [
+              "q",
+              "outer failure"
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "error": "outer failure",
+        "events": []
+      },
+      "modern": {
+        "error": "outer failure",
+        "events": []
+      }
+    },
+    {
+      "id": "=>/deferred-error/resolve-false",
+      "ast": [
+        [
+          "=>",
+          [
+            "tuple"
+          ],
+          [
+            "fn",
+            [],
+            [
+              "throw",
+              [
+                "q",
+                "inner failure"
+              ]
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "error": "inner failure",
+        "events": []
+      },
+      "modern": {
+        "error": "inner failure",
+        "events": []
+      }
+    },
+    {
+      "id": "=>/effect-order/resolve-false",
+      "ast": [
+        [
+          "=>",
+          [
+            "tuple"
+          ],
+          [
+            "begin",
+            [
+              "mark",
+              [
+                "q",
+                "outer"
+              ]
+            ],
+            [
+              "fn",
+              [],
+              [
+                "begin",
+                [
+                  "mark",
+                  [
+                    "q",
+                    "inner"
+                  ]
+                ],
+                7
+              ]
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 7,
+        "events": [
+          "outer",
+          "inner"
+        ]
+      },
+      "modern": {
+        "value": 7,
+        "events": [
+          "outer",
+          "inner"
+        ]
+      }
+    },
+    {
+      "id": "=>/argument-once/resolve-false",
+      "ast": [
+        [
+          "=>",
+          [
+            "tuple",
+            "x"
+          ],
+          [
+            "fn",
+            [],
+            [
+              "mark",
+              "x"
+            ]
+          ]
+        ],
+        [
+          "mark",
+          4
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 4,
+        "events": [
+          4,
+          4
+        ]
+      },
+      "modern": {
+        "value": 4,
+        "events": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "id": "=>/returned-library/resolve-false",
+      "ast": [
+        [
+          "=>",
+          [
+            "tuple"
+          ],
+          [
+            "resolve",
+            "+"
+          ]
+        ],
+        2,
+        3
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "value": {
+          "$lpe": "undefined"
+        },
+        "events": []
+      }
+    },
+    {
+      "id": "=>/returned-host/resolve-false",
+      "ast": [
+        [
+          "=>",
+          [
+            "tuple"
+          ],
+          [
+            "resolve",
+            "mark"
+          ]
+        ],
+        9
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 9,
+        "events": [
+          9
+        ]
+      },
+      "modern": {
+        "value": 9,
+        "events": [
+          9
+        ]
+      }
+    },
+    {
+      "id": "=>/nested-functions/resolve-false",
+      "ast": [
+        [
+          "=>",
+          [
+            "tuple"
+          ],
+          [
+            "fn",
+            [],
+            [
+              "fn",
+              [],
+              7
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": {
+          "$lpe": "function"
+        },
+        "events": []
+      },
+      "modern": {
+        "value": 7,
+        "events": []
+      }
+    },
+    {
+      "id": "lambda/scalar/resolve-false",
+      "ast": [
+        [
+          "lambda",
+          [
+            "tuple"
+          ],
+          [
+            "+",
+            2,
+            3
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "value": 5,
+        "events": []
+      }
+    },
+    {
+      "id": "lambda/returned-fn/resolve-false",
+      "ast": [
+        [
+          "lambda",
+          [
+            "tuple"
+          ],
+          [
+            "fn",
+            [],
+            7
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 7,
+        "events": []
+      },
+      "modern": {
+        "value": 7,
+        "events": []
+      }
+    },
+    {
+      "id": "lambda/forwarded-arguments/resolve-false",
+      "ast": [
+        [
+          "lambda",
+          [
+            "tuple"
+          ],
+          [
+            "fn",
+            [
+              "n"
+            ],
+            "n"
+          ]
+        ],
+        9
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 9,
+        "events": []
+      },
+      "modern": {
+        "value": 9,
+        "events": []
+      }
+    },
+    {
+      "id": "lambda/captured-scope/resolve-false",
+      "ast": [
+        [
+          "lambda",
+          [
+            "tuple",
+            "x"
+          ],
+          [
+            "fn",
+            [],
+            [
+              "+",
+              "x",
+              1
+            ]
+          ]
+        ],
+        4
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "value": 5,
+        "events": []
+      }
+    },
+    {
+      "id": "lambda/explicit-second-call/resolve-false",
+      "ast": [
+        [
+          [
+            "lambda",
+            [
+              "tuple"
+            ],
+            [
+              "fn",
+              [],
+              7
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "error": "7 is not a function",
+        "events": []
+      },
+      "modern": {
+        "error": "7 is not a function",
+        "events": []
+      }
+    },
+    {
+      "id": "lambda/outer-error/resolve-false",
+      "ast": [
+        [
+          "lambda",
+          [
+            "tuple"
+          ],
+          [
+            "throw",
+            [
+              "q",
+              "outer failure"
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "error": "outer failure",
+        "events": []
+      },
+      "modern": {
+        "error": "outer failure",
+        "events": []
+      }
+    },
+    {
+      "id": "lambda/deferred-error/resolve-false",
+      "ast": [
+        [
+          "lambda",
+          [
+            "tuple"
+          ],
+          [
+            "fn",
+            [],
+            [
+              "throw",
+              [
+                "q",
+                "inner failure"
+              ]
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "error": "inner failure",
+        "events": []
+      },
+      "modern": {
+        "error": "inner failure",
+        "events": []
+      }
+    },
+    {
+      "id": "lambda/effect-order/resolve-false",
+      "ast": [
+        [
+          "lambda",
+          [
+            "tuple"
+          ],
+          [
+            "begin",
+            [
+              "mark",
+              [
+                "q",
+                "outer"
+              ]
+            ],
+            [
+              "fn",
+              [],
+              [
+                "begin",
+                [
+                  "mark",
+                  [
+                    "q",
+                    "inner"
+                  ]
+                ],
+                7
+              ]
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 7,
+        "events": [
+          "outer",
+          "inner"
+        ]
+      },
+      "modern": {
+        "value": 7,
+        "events": [
+          "outer",
+          "inner"
+        ]
+      }
+    },
+    {
+      "id": "lambda/argument-once/resolve-false",
+      "ast": [
+        [
+          "lambda",
+          [
+            "tuple",
+            "x"
+          ],
+          [
+            "fn",
+            [],
+            [
+              "mark",
+              "x"
+            ]
+          ]
+        ],
+        [
+          "mark",
+          4
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 4,
+        "events": [
+          4,
+          4
+        ]
+      },
+      "modern": {
+        "value": 4,
+        "events": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "id": "lambda/returned-library/resolve-false",
+      "ast": [
+        [
+          "lambda",
+          [
+            "tuple"
+          ],
+          [
+            "resolve",
+            "+"
+          ]
+        ],
+        2,
+        3
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "value": {
+          "$lpe": "undefined"
+        },
+        "events": []
+      }
+    },
+    {
+      "id": "lambda/returned-host/resolve-false",
+      "ast": [
+        [
+          "lambda",
+          [
+            "tuple"
+          ],
+          [
+            "resolve",
+            "mark"
+          ]
+        ],
+        9
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 9,
+        "events": [
+          9
+        ]
+      },
+      "modern": {
+        "value": 9,
+        "events": [
+          9
+        ]
+      }
+    },
+    {
+      "id": "lambda/nested-functions/resolve-false",
+      "ast": [
+        [
+          "lambda",
+          [
+            "tuple"
+          ],
+          [
+            "fn",
+            [],
+            [
+              "fn",
+              [],
+              7
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": {
+          "$lpe": "function"
+        },
+        "events": []
+      },
+      "modern": {
+        "value": 7,
+        "events": []
+      }
+    },
+    {
+      "id": "lexical-AST-parameter/resolve-false",
+      "ast": [
+        [
+          [
+            "fn",
+            [
+              "$AST$"
+            ],
+            [
+              "fn",
+              [],
+              [
+                "$AST$",
+                2,
+                3
+              ]
+            ]
+          ],
+          [
+            "fn",
+            [
+              "a",
+              "b"
+            ],
+            [
+              "+",
+              "a",
+              "b"
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": 5,
+        "events": []
+      },
+      "modern": {
+        "error": "5 is not a function",
+        "events": []
+      }
+    },
+    {
+      "id": "quoted-factory/resolve-false",
+      "ast": [
+        "`",
+        [
+          [
+            "fn",
+            [],
+            [
+              "fn",
+              [],
+              7
+            ]
+          ]
+        ]
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": [
+          [
+            "fn",
+            [],
+            [
+              "fn",
+              [],
+              7
+            ]
+          ]
+        ],
+        "events": []
+      },
+      "modern": {
+        "value": [
+          [
+            "fn",
+            [],
+            [
+              "fn",
+              [],
+              7
+            ]
+          ]
+        ],
+        "events": []
+      }
+    },
+    {
+      "id": "returned-function-in-container/resolve-false",
+      "ast": [
+        "list",
+        [
+          [
+            "fn",
+            [],
+            [
+              "fn",
+              [],
+              7
+            ]
+          ]
+        ],
+        9
+      ],
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true,
+        "maxLoopIterations": 100
+      },
+      "legacy": {
+        "value": [
+          {
+            "$lpe": "function"
+          },
+          9
+        ],
+        "events": []
+      },
+      "modern": {
+        "value": [
+          7,
+          9
+        ],
+        "events": []
+      }
+    }
+  ]
+}

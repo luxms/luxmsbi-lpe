@@ -691,7 +691,11 @@ pub async fn call(
                         .unwrap_or_else(|| format!("##ignored-parameter-{i}"))
                 })
                 .collect();
-            Ok(rt.closure(params, body, env, options.clone()))
+            // 1.6.7 fn returns its body result directly; its ->fn/lambda forms
+            // and every 1.7.3 closure still invoke callable results. Capture
+            // this policy at creation, like the lexical environment/options.
+            let call_result = name != "fn" || !rt.legacy_context_enabled();
+            Ok(rt.closure_with_result_call(params, body, env, options.clone(), call_result))
         }
         "def" | ":=" | "assign" => {
             let target = arg(args, 0);
