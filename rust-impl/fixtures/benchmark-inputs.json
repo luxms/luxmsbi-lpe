@@ -1,0 +1,58 @@
+[
+  {
+    "id": "arithmetic",
+    "source": "add(mul(3,7),div(8,2))",
+    "context": {},
+    "expected": 25
+  },
+  {
+    "id": "bindings",
+    "source": "add(mul(price,quantity),tax)",
+    "context": {
+      "price": 12.5,
+      "quantity": 4,
+      "tax": 2
+    },
+    "expected": 52
+  },
+  {
+    "id": "strings",
+    "source": "upper(trim('  hello world  '))",
+    "context": {},
+    "expected": "HELLO WORLD"
+  },
+  {
+    "id": "unicode-strings",
+    "source": "join(split(upper(trim('  Привет 😀 мир  ')),' '),'·')",
+    "context": {},
+    "expected": "ПРИВЕТ·😀·МИР"
+  },
+  {
+    "id": "conditional",
+    "source": "if(eq(status,'active'),mul(price,quantity),0)",
+    "context": {
+      "status": "active",
+      "price": 12.5,
+      "quantity": 4
+    },
+    "expected": 50
+  },
+  {
+    "id": "collections",
+    "source": "join(reverse([1,2,3,4,5]),'-')",
+    "context": {},
+    "expected": "5-4-3-2-1"
+  },
+  {
+    "id": "closure",
+    "source": "let([[f,fn(x,add(x,1))]],f(41))",
+    "context": {},
+    "expected": 42
+  },
+  {
+    "id": "production-layout",
+    "sourceFile": "production/layout.lpe",
+    "parseOnly": true,
+    "scale": 0.002
+  }
+]

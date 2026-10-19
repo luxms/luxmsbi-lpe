@@ -166,27 +166,29 @@ No new controls are installed by the CLI or WASI entry point by default.
 ## Unicode boundary
 
 Input, output, source code, and JSON interchange use UTF-8. Valid Unicode text,
-including non-BMP characters, is supported. JavaScript-compatible operations may
-count or slice UTF-16 code units internally; this is a compatibility detail, not
-an alternate input encoding. Isolated surrogate input or a result containing an
+including non-BMP characters, is supported. Valid strings stay in Rust UTF-8
+storage, and operations use it directly wherever results match JavaScript.
+JavaScript-compatible operations may count or slice UTF-16 code units internally;
+for example, `"😀"` has length two and indexing can produce a surrogate half.
+This is a compatibility detail, not an alternate input encoding. Isolated surrogate input or a result containing an
 isolated surrogate is outside the UTF-8 contract and must produce an error at
 the boundary, not a separate UTF-16 wire representation.
 
 ## Measurement
 
-The arithmetic smoke benchmark separates parsing from repeated evaluation of a
-preparsed AST. It is intentionally small and is not evidence of end-to-end
-application performance or a promised speedup over JavaScript:
+The benchmark suite separates parsing from repeated evaluation of a preparsed
+AST and compares release Rust with warmed JavaScript on shared cases:
 
 ```sh
-cargo run --locked --release --manifest-path rust-impl/Cargo.toml --example benchmark -- 10000
-node rust-impl/scripts/benchmark-js.cjs 10000
+node rust-impl/scripts/benchmark.mjs
+node rust-impl/scripts/benchmark.mjs --require-parity
 ```
 
-Both commands emit iteration count, input, elapsed seconds, and throughput.
-Record compiler/Node versions, host, build profile, and repeated-run variation
-when comparing results. JS results include JIT warm-up; neither program measures
-database work or reactive Streams.
+See [PERFORMANCE.md](PERFORMANCE.md) for methodology, individual commands,
+optimization references, and limitations. Reports include medians, ranges,
+compiler/Node versions, and host details. The explicit acceptance gate fails
+when any measured phase is slower than JavaScript; this is a local benchmark,
+not a claim about database, UI, or all asynchronous application workloads.
 
 ## Scope
 

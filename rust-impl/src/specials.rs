@@ -516,23 +516,39 @@ pub async fn call(
             .await
         }
         "let" => {
-            let bindings = arg(args, 0);
+            let missing_bindings;
+            let bindings = if let Some(bindings) = args.first() {
+                bindings
+            } else {
+                missing_bindings = arg(args, 0);
+                &missing_bindings
+            };
             let kv_array = !(bindings
                 .as_array()
                 .is_some_and(|a| a.first().is_some_and(Ast::is_string))
                 || bindings.get("$lpeInternalLiteral").is_some());
             let values = if !kv_array {
-                vec![rt.eval_in(&bindings, env, options).await?]
+                vec![
+                    if let Some(result) = rt.eval_scoped_immediate(bindings, env, options) {
+                        result?
+                    } else {
+                        rt.eval_in(bindings, env, options).await?
+                    },
+                ]
             } else {
-                let pairs: Vec<(Ast, Ast)> = if let Some(obj) = bindings.as_object() {
-                    obj.iter().map(|(k, v)| (json!(k), v.clone())).collect()
+                let pairs: Vec<(std::borrow::Cow<'_, Ast>, &Ast)> = if let Some(obj) =
+                    bindings.as_object()
+                {
+                    obj.iter()
+                        .map(|(k, v)| (std::borrow::Cow::Owned(json!(k)), v))
+                        .collect()
                 } else if let Some(pairs) = bindings.as_array() {
                     let mut result = vec![];
                     for pair in pairs {
                         let pair = pair.as_array().filter(|p| p.len() == 2).ok_or_else(|| {
                             wrong_type("let bindings must contain [key, value] pairs")
                         })?;
-                        result.push((pair[0].clone(), pair[1].clone()));
+                        result.push((std::borrow::Cow::Borrowed(&pair[0]), &pair[1]));
                     }
                     result
                 } else {
@@ -545,15 +561,26 @@ pub async fn call(
                     let key = if key.is_string() {
                         json!(["$AST$", key])
                     } else {
-                        key
+                        key.into_owned()
                     };
+                    let binding = Ast::Array(vec![json!("list"), key, value.clone()]);
                     values.push(
-                        rt.eval_in(&json!(["list", key, value]), env, options)
-                            .await?,
+                        if let Some(result) = rt.eval_scoped_immediate(&binding, env, options) {
+                            result?
+                        } else {
+                            rt.eval_in(&binding, env, options).await?
+                        },
                     );
                 }
                 values
             };
+            if values
+                .iter()
+                .all(|value| !matches!(value, Value::Stream(_) | Value::Promise(_)))
+            {
+                let local = let_scope(rt, values, kv_array, env)?;
+                return sequence(rt, args.get(1..).unwrap_or(&[]), local, options).await;
+            }
             let body = args.get(1..).unwrap_or(&[]).to_vec();
             rt.unbox(
                 values,
@@ -561,30 +588,7 @@ pub async fn call(
                 Rc::new(move |rt, values, env, options| {
                     let body = body.clone();
                     Box::pin(async move {
-                        let value = if kv_array {
-                            rt.array(values)
-                        } else {
-                            values[0].clone()
-                        };
-                        let value = if matches!(value, Value::Array(_)) {
-                            let mut bindings = IndexMap::new();
-                            for pair in rt.array_values(&value)? {
-                                let pair = rt.array_values(&pair)?;
-                                if pair.len() != 2 {
-                                    return Err(wrong_type(
-                                        "let bindings must contain [key, value] pairs",
-                                    ));
-                                }
-                                let Value::String(key) = &pair[0] else {
-                                    return Err(wrong_type("let binding name must be a string"));
-                                };
-                                bindings.insert(key.clone(), pair[1].clone());
-                            }
-                            rt.object(bindings)
-                        } else {
-                            value
-                        };
-                        let local = rt.env_from_value(value, vec![env])?;
+                        let local = let_scope(rt, values, kv_array, env)?;
                         sequence(rt, &body, local, &options).await
                     })
                 }),
@@ -650,52 +654,7 @@ pub async fn call(
             sequence(rt, args.get(1..).unwrap_or(&[]), local, options).await
         }
         "fn" | "->fn" | "toFn" | "defFn" | "=>" | "lambda" => {
-            let (params, body) = match name {
-                "->fn" | "toFn" | "defFn" => (args.get(1..).unwrap_or(&[]).to_vec(), arg(args, 0)),
-                "fn" => {
-                    let params = arg(args, 0);
-                    let params = if params.is_string() {
-                        vec![params]
-                    } else if let Some(list) = params.as_array() {
-                        let skip = usize::from(list.first().is_some_and(array_constructor));
-                        list[skip..].to_vec()
-                    } else {
-                        return Err(wrong_type("fn args must be VarName | Array<VarName>"));
-                    };
-                    if params.iter().any(|p| !p.is_string()) {
-                        return Err(wrong_type("fn argument names must be strings"));
-                    }
-                    (params, arg(args, 1))
-                }
-                _ => {
-                    let param = arg(args, 0);
-                    let params = if let Some(list) = param.as_array().filter(|a| {
-                        a.first()
-                            .and_then(Ast::as_str)
-                            .is_some_and(|n| matches!(n, "tuple" | "()"))
-                    }) {
-                        list[1..].to_vec()
-                    } else {
-                        vec![param]
-                    };
-                    (params, arg(args, 1))
-                }
-            };
-            // Non-string ->fn parameters are ignored, but retain their argument positions.
-            let params = params
-                .iter()
-                .enumerate()
-                .map(|(i, p)| {
-                    p.as_str()
-                        .map(str::to_owned)
-                        .unwrap_or_else(|| format!("##ignored-parameter-{i}"))
-                })
-                .collect();
-            // 1.6.7 fn returns its body result directly; its ->fn/lambda forms
-            // and every 1.7.3 closure still invoke callable results. Capture
-            // this policy at creation, like the lexical environment/options.
-            let call_result = name != "fn" || !rt.legacy_context_enabled();
-            Ok(rt.closure_with_result_call(params, body, env, options.clone(), call_result))
+            make_closure(rt, name, args, env, options)
         }
         "def" | ":=" | "assign" => {
             let target = arg(args, 0);
@@ -1356,4 +1315,88 @@ async fn define(
     let local = rt.new_env(functions, vec![env]);
     let local = rt.new_env(IndexMap::from([("##static".into(), statics)]), vec![local]);
     sequence(rt, &args[index..], local, options).await
+}
+
+// Closure construction never evaluates its body and cannot suspend.
+pub(crate) fn make_closure(
+    rt: &mut Runtime,
+    name: &str,
+    args: &[Ast],
+    env: EnvId,
+    options: &EvalOptions,
+) -> Result<Value> {
+    let missing = (args.len() < 2).then(|| json!({"$lpe":"undefined"}));
+    let missing = missing.as_ref().unwrap_or(&Ast::Null);
+    let first = args.first().unwrap_or(missing);
+    let (params, body): (&[Ast], &Ast) = match name {
+        "->fn" | "toFn" | "defFn" => (args.get(1..).unwrap_or(&[]), first),
+        "fn" => {
+            let params = if first.is_string() {
+                std::slice::from_ref(first)
+            } else if let Some(list) = first.as_array() {
+                let skip = usize::from(list.first().is_some_and(array_constructor));
+                &list[skip..]
+            } else {
+                return Err(wrong_type("fn args must be VarName | Array<VarName>"));
+            };
+            if params.iter().any(|p| !p.is_string()) {
+                return Err(wrong_type("fn argument names must be strings"));
+            }
+            (params, args.get(1).unwrap_or(missing))
+        }
+        _ => {
+            let params = if let Some(list) = first.as_array().filter(|a| {
+                a.first()
+                    .and_then(Ast::as_str)
+                    .is_some_and(|n| matches!(n, "tuple" | "()"))
+            }) {
+                &list[1..]
+            } else {
+                std::slice::from_ref(first)
+            };
+            (params, args.get(1).unwrap_or(missing))
+        }
+    };
+    // Non-string ->fn parameters are ignored, but retain their argument positions.
+    let params = params
+        .iter()
+        .enumerate()
+        .map(|(i, p)| {
+            p.as_str()
+                .map(str::to_owned)
+                .unwrap_or_else(|| format!("##ignored-parameter-{i}"))
+        })
+        .collect();
+    let body = body.clone();
+    // Legacy fn returns callable results directly; capture the creation profile.
+    let call_result = name != "fn" || !rt.legacy_context_enabled();
+    Ok(rt.closure_with_params(params, body, env, options.clone(), call_result))
+}
+
+fn let_scope(rt: &mut Runtime, values: Vec<Value>, kv_array: bool, env: EnvId) -> Result<EnvId> {
+    let borrowed = if kv_array {
+        None
+    } else {
+        let value = &values[0];
+        if !matches!(value, Value::Array(_)) {
+            return rt.env_from_value(value.clone(), vec![env]);
+        }
+        Some(rt.borrow_array(value)?)
+    };
+    let pairs = borrowed.as_deref().unwrap_or(&values);
+    let mut bindings = IndexMap::with_capacity(pairs.len());
+    for pair in pairs {
+        let pair = rt.borrow_array(pair)?;
+        if pair.len() != 2 {
+            return Err(wrong_type("let bindings must contain [key, value] pairs"));
+        }
+        let Value::String(key) = &pair[0] else {
+            return Err(wrong_type("let binding name must be a string"));
+        };
+        bindings.insert(key.clone(), pair[1].clone());
+    }
+    drop(borrowed);
+    // Pair bindings are a new lexical scope. They do not expose a backing
+    // object, so keep their map directly rather than allocating an extra object.
+    Ok(rt.new_child_env(bindings, env))
 }
