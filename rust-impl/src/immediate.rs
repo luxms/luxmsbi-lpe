@@ -32,6 +32,9 @@ impl Runtime {
         ast: &Ast,
         options: &EvalOptions,
     ) -> Option<Result<Value>> {
+        if self.controls.is_some() || self.controls_active() || self.legacy_context {
+            return None;
+        }
         self.steps.set(0);
         self.budget.set(options.max_steps);
         let result = self.eval_scoped_immediate(ast, self.global, options)?;
@@ -76,6 +79,11 @@ impl Runtime {
         options: &EvalOptions,
         bindings: Option<CallBindings<'_>>,
     ) -> Option<Result<Value>> {
+        // Controlled evaluation can invoke interrupt hooks and uses cumulative
+        // budgets; legacy lookup and callable returns have distinct semantics.
+        if self.controls.is_some() || self.controls_active() || self.legacy_context {
+            return None;
+        }
         let frames = self.env_frames(env);
         for id in frames.iter() {
             let frame = self.envs.borrow(*id)?;

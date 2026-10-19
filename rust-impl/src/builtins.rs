@@ -103,10 +103,9 @@ fn arg(args: &[Value], index: usize) -> &Value {
     args.get(index).unwrap_or(&Value::Undefined)
 }
 
-fn string_receiver(value: &Value) -> Result<Vec<u16>> {
+fn string_receiver(rt: &Runtime, value: &Value) -> Result<Vec<u16>> {
     match value {
-        Value::String(s) => Ok(s.encode_utf16().collect()),
-        Value::Utf16(s) => Ok(s.clone()),
+        Value::String(_) | Value::Utf16(_) => rt.checked_to_utf16(value),
         _ => Err(Error::new(
             "TypeError",
             "String method requires a string receiver",
@@ -141,7 +140,15 @@ fn compare(rt: &Runtime, a: &Value, b: &Value) -> Option<Ordering> {
     }
 }
 
-fn add(rt: &Runtime, a: &Value, b: &Value) -> Value {
+fn add(rt: &Runtime, a: &Value, b: &Value) -> Result<Value> {
+    if rt.controls_active() && matches!(a, Value::Array(_)) {
+        let a = rt.checked_string_from_utf16(rt.checked_to_utf16(a)?)?;
+        return add(rt, &a, b);
+    }
+    if rt.controls_active() && matches!(b, Value::Array(_)) {
+        let b = rt.checked_string_from_utf16(rt.checked_to_utf16(b)?)?;
+        return add(rt, a, &b);
+    }
     let a = if a.is_callable() {
         Value::String("undefined".into())
     } else {
@@ -152,17 +159,19 @@ fn add(rt: &Runtime, a: &Value, b: &Value) -> Value {
     } else {
         primitive(rt, b, false)
     };
-    if let (Value::String(a), Value::String(b)) = (&a, &b) {
+    if let (Value::String(a), Value::String(b), false) = (&a, &b, rt.controls_active()) {
         let mut result = String::with_capacity(a.len() + b.len());
         result.push_str(a);
         result.push_str(b);
-        Value::String(result)
+        Ok(Value::String(result))
     } else if matches!(a, Value::String(_) | Value::Utf16(_))
         || matches!(b, Value::String(_) | Value::Utf16(_))
     {
-        rt.string_from_utf16([rt.to_utf16(&a), rt.to_utf16(&b)].concat())
+        let mut units = rt.checked_to_utf16(&a)?;
+        rt.append_units(&mut units, &rt.checked_to_utf16(&b)?)?;
+        rt.checked_string_from_utf16(units)
     } else {
-        Value::Number(rt.to_number(&a) + rt.to_number(&b))
+        Ok(Value::Number(rt.to_number(&a) + rt.to_number(&b)))
     }
 }
 
@@ -266,7 +275,9 @@ fn json_value<'a>(
                 .map(J::Number)
                 .unwrap_or(J::Null),
             Value::String(_) | Value::Utf16(_) => {
-                J::String(encode_units(&rt.to_utf16(&value), false, 0xf0000))
+                let units = rt.checked_to_utf16(&value)?;
+                rt.charge_size(units.len().checked_mul(8))?;
+                J::String(encode_units(&units, false, 0xf0000))
             }
             Value::Promise(_) => J::Object(serde_json::Map::new()),
             Value::Stream(_) => {
@@ -291,6 +302,7 @@ fn json_value<'a>(
                 let result = if key.0 {
                     let mut values = Vec::new();
                     let length = rt.array_values(&value)?.len();
+                    rt.charge_items::<J>(length)?;
                     for index in 0..length {
                         let key = index.to_string();
                         let item = rt.get(&value, &key);
@@ -300,6 +312,8 @@ fn json_value<'a>(
                 } else {
                     let mut values = serde_json::Map::new();
                     for key in ordered_keys(rt, &value) {
+                        rt.charge_items::<J>(1)?;
+                        rt.charge_intermediate(key.len())?;
                         let item = rt.get(&value, &key);
                         if let Some(item) = json_value(rt, item, key.clone(), parents).await? {
                             values.insert(key, item);
@@ -328,6 +342,22 @@ fn ordered_keys(rt: &Runtime, value: &Value) -> Vec<String> {
 
 fn write_json(rt: &Runtime, value: &serde_json::Value, out: &mut String) -> Result<()> {
     use serde_json::Value as J;
+    rt.control_checkpoint()?;
+    // Charge escaped text before quote/decode materialize their temporary buffers.
+    match value {
+        J::String(text) => {
+            rt.charge_size(text.len().checked_mul(16).and_then(|n| n.checked_add(2)))?
+        }
+        J::Object(values) => {
+            rt.charge_intermediate(2)?;
+            for key in values.keys() {
+                rt.control_checkpoint()?;
+                rt.charge_size(key.len().checked_mul(6).and_then(|n| n.checked_add(4)))?;
+            }
+        }
+        J::Array(values) => rt.charge_size(values.len().checked_add(2))?,
+        _ => rt.charge_intermediate(32)?,
+    }
     match value {
         J::String(text) => out.push_str(&quote_units(&decode_units(text, 0xf0000))),
         J::Number(n) => out.push_str(&rt.to_string(&Value::Number(n.as_f64().unwrap_or(f64::NAN)))),
@@ -364,6 +394,7 @@ fn write_json(rt: &Runtime, value: &serde_json::Value, out: &mut String) -> Resu
 }
 
 async fn stringify(rt: &mut Runtime, value: &Value) -> Result<Option<String>> {
+    rt.charge_value(value)?;
     let Some(value) = json_value(rt, value.clone(), String::new(), &mut Vec::new()).await? else {
         return Ok(None);
     };
@@ -373,7 +404,10 @@ async fn stringify(rt: &mut Runtime, value: &Value) -> Result<Option<String>> {
 }
 
 fn parse_json(rt: &mut Runtime, value: &Value) -> Result<Value> {
-    let source = prepare_json(&rt.to_utf16(value))?;
+    let units = rt.checked_to_utf16(value)?;
+    // This is a conservative payload reservation, not serde's actual heap usage.
+    rt.charge_size(units.len().checked_mul(32))?;
+    let source = prepare_json(&units)?;
     let json: serde_json::Value = serde_json::from_str(&source).map_err(|e| {
         let message = e.to_string();
         Error::new(
@@ -563,49 +597,76 @@ fn change_case(units: &[u16], upper: bool) -> Vec<u16> {
     output
 }
 
-fn index_of(rt: &Runtime, text: &[u16], search: &Value, start: &Value) -> f64 {
-    let search = rt.to_utf16(search);
+fn find_units(rt: &Runtime, text: &[u16], search: &[u16]) -> Result<Option<usize>> {
+    if !rt.controls_active() {
+        return Ok(text.windows(search.len()).position(|s| s == search));
+    }
+    for (i, window) in text.windows(search.len()).enumerate() {
+        rt.control_checkpoint()?;
+        let mut equal = true;
+        for (a, b) in window.chunks(1024).zip(search.chunks(1024)) {
+            rt.control_checkpoint()?;
+            if a != b {
+                equal = false;
+                break;
+            }
+        }
+        if equal {
+            return Ok(Some(i));
+        }
+    }
+    Ok(None)
+}
+
+fn index_of(rt: &Runtime, text: &[u16], search: &Value, start: &Value) -> Result<f64> {
+    let search = rt.checked_to_utf16(search)?;
     let start = rt.to_number(start).max(0.0).min(text.len() as f64) as usize;
     if search.is_empty() {
-        return start as f64;
+        return Ok(start as f64);
     }
-    text[start..]
-        .windows(search.len())
-        .position(|s| s == search)
-        .map_or(-1.0, |i| (start + i) as f64)
+    Ok(find_units(rt, &text[start..], &search)?.map_or(-1.0, |i| (start + i) as f64))
 }
 
 fn pad(rt: &mut Runtime, text: &[u16], length: &Value, fill: &Value, start: bool) -> Result<Value> {
     let length = rt.to_number(length).max(0.0).floor();
-    let text_units = text.to_vec();
     let fill = if matches!(fill, Value::Undefined) {
         vec![32]
     } else {
-        rt.to_utf16(fill)
+        rt.checked_to_utf16(fill)?
     };
-    if length <= text_units.len() as f64 || fill.is_empty() {
-        return Ok(rt.string_from_utf16(text.into()));
+    if length <= text.len() as f64 || fill.is_empty() {
+        rt.charge_items::<u16>(text.len())?;
+        return rt.checked_string_from_utf16(text.into());
     }
     if length > usize::MAX as f64 {
         return Err(Error::new("RangeError", "Invalid string length"));
     }
-    let mut padding = Vec::new();
-    for i in 0..(length as usize - text_units.len()) {
-        rt.tick()?;
-        padding.push(fill[i % fill.len()]);
+    rt.charge_items::<u16>(length as usize)?;
+    let mut units = Vec::new();
+    if !start {
+        units.extend_from_slice(text);
     }
-    let units = if start {
-        [padding, text_units].concat()
-    } else {
-        [text_units, padding].concat()
-    };
-    Ok(rt.string_from_utf16(units))
+    for i in 0..(length as usize - text.len()) {
+        rt.tick()?;
+        units.push(fill[i % fill.len()]);
+    }
+    if start {
+        units.extend_from_slice(text);
+    }
+    rt.checked_string_from_utf16(units)
 }
 
-fn substitution(replacement: &[u16], matched: &[u16], prefix: &[u16], suffix: &[u16]) -> Vec<u16> {
+fn substitution(
+    rt: &Runtime,
+    replacement: &[u16],
+    matched: &[u16],
+    prefix: &[u16],
+    suffix: &[u16],
+) -> Result<Vec<u16>> {
     let mut output = Vec::new();
     let mut chars = replacement.iter().copied().peekable();
     while let Some(c) = chars.next() {
+        rt.control_checkpoint()?;
         if c == 36 {
             let subst = match chars.peek() {
                 Some(36) => Some(&[36][..]),
@@ -616,13 +677,13 @@ fn substitution(replacement: &[u16], matched: &[u16], prefix: &[u16], suffix: &[
             };
             if let Some(subst) = subst {
                 chars.next();
-                output.extend_from_slice(subst);
+                rt.append_units(&mut output, subst)?;
                 continue;
             }
         }
-        output.push(c);
+        rt.append_units(&mut output, &[c])?;
     }
-    output
+    Ok(output)
 }
 
 async fn replace(
@@ -632,11 +693,11 @@ async fn replace(
     replacement: &Value,
     all: bool,
 ) -> Result<Value> {
-    let search = rt.to_utf16(search);
+    let search = rt.checked_to_utf16(search)?;
     let template = if replacement.is_callable() {
         None
     } else {
-        Some(rt.to_utf16(replacement))
+        Some(rt.checked_to_utf16(replacement)?)
     };
     let units = text;
     let needle = &search;
@@ -648,16 +709,13 @@ async fn replace(
         let position = if needle.is_empty() {
             Some(next)
         } else {
-            units[next..]
-                .windows(needle.len())
-                .position(|s| s == needle.as_slice())
-                .map(|i| next + i)
+            find_units(rt, &units[next..], needle)?.map(|i| next + i)
         };
         let Some(position) = position else { break };
         let end = position + needle.len();
-        output.extend_from_slice(&units[cursor..position]);
+        rt.append_units(&mut output, &units[cursor..position])?;
         let replacement = if let Some(template) = &template {
-            substitution(template, &search, &units[..position], &units[end..])
+            substitution(rt, template, &search, &units[..position], &units[end..])?
         } else {
             let env = rt.global_env();
             let value = rt
@@ -671,17 +729,17 @@ async fn replace(
                     env,
                 )
                 .await?;
-            rt.to_utf16(&value)
+            rt.checked_to_utf16(&value)?
         };
-        output.extend(replacement);
+        rt.append_units(&mut output, &replacement)?;
         cursor = end;
         if !all {
             break;
         }
         next = if needle.is_empty() { end + 1 } else { end };
     }
-    output.extend_from_slice(&units[cursor..]);
-    Ok(rt.string_from_utf16(output))
+    rt.append_units(&mut output, &units[cursor..])?;
+    rt.checked_string_from_utf16(output)
 }
 
 // Preserve code units while passing JSON strings through serde_json.
@@ -727,6 +785,7 @@ fn regex_match(
     flags: &Value,
     words: bool,
 ) -> Result<Value> {
+    RegExp::check_pattern(rt, pattern)?;
     let pattern = if matches!(pattern, Value::Undefined) {
         if words {
             "-*[a-zA-Z\u{430}-\u{44f}\u{410}-\u{42f}\u{451}\u{401}_0-9][a-zA-Z\u{430}-\u{44f}\u{410}-\u{42f}\u{451}\u{401}_0-9-]*".encode_utf16().collect()
@@ -734,7 +793,7 @@ fn regex_match(
             Vec::new()
         }
     } else {
-        rt.to_utf16(pattern)
+        rt.checked_to_utf16(pattern)?
     };
     let flags = if words {
         "g".into()
@@ -743,26 +802,29 @@ fn regex_match(
     } else {
         rt.to_string(flags)
     };
-    let regex = RegExp::from_utf16(&pattern, &flags)?;
+    let regex = RegExp::from_utf16(rt, &pattern, &flags)?;
     let mut values = Vec::new();
     let mut offset = 0;
     while offset <= text.len() {
         rt.tick()?;
-        let Some(found) = regex.find(text, offset) else {
+        let Some(found) = regex.find_controlled(rt, text, offset)? else {
             break;
         };
         if regex.global {
-            values.push(rt.string_from_utf16(text[found.range()].into()));
+            rt.charge_items::<Value>(1)?;
+            values.push(rt.copy_units_value(&text[found.range()])?);
         } else {
             let mut capture_values = Vec::new();
             let mut index_values = Vec::new();
             for capture in found.groups() {
                 rt.tick()?;
+                rt.charge_items::<Value>(1)?;
                 capture_values.push(match &capture {
-                    Some(range) => rt.string_from_utf16(text[range.clone()].into()),
+                    Some(range) => rt.copy_units_value(&text[range.clone()])?,
                     None => Value::Undefined,
                 });
                 if regex.indices {
+                    rt.charge_items::<Value>(3)?;
                     index_values.push(match capture {
                         Some(range) => rt.array(vec![
                             Value::Number(range.start as f64),
@@ -783,6 +845,8 @@ fn regex_match(
                 // Duplicate names may occur in disjoint alternatives. Retain the
                 // participating capture and share the numbered indices array.
                 if !groups.contains_key(name.as_ref()) || !matches!(value, Value::Undefined) {
+                    rt.charge_value(value)?;
+                    rt.charge_intermediate(name.len())?;
                     groups.insert(name.to_string(), value.clone());
                     if regex.indices {
                         group_indices.insert(name.to_string(), index_values[index + 1].clone());
@@ -791,7 +855,7 @@ fn regex_match(
             }
             let result = rt.array(capture_values);
             rt.set(&result, "index", Value::Number(found.start() as f64))?;
-            rt.set(&result, "input", rt.string_from_utf16(text.into()))?;
+            rt.set(&result, "input", rt.copy_units_value(text)?)?;
             let groups = if groups.is_empty() {
                 Value::Undefined
             } else {
@@ -846,17 +910,17 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
             for (i, value) in args.iter().enumerate() {
                 rt.tick()?;
                 if i != 0 && name != "str" {
-                    output.push(32);
+                    rt.append_units(&mut output, &[32])?;
                 }
                 let part = if name == "str" {
                     match value {
-                        Value::String(_) | Value::Utf16(_) => rt.to_utf16(value),
+                        Value::String(_) | Value::Utf16(_) => rt.checked_to_utf16(value)?,
                         value if value.is_callable() => {
                             let name = rt.get(value, "lpeName");
                             if name.is_nullish() {
                                 Vec::new()
                             } else {
-                                rt.to_utf16(&name)
+                                rt.checked_to_utf16(&name)?
                             }
                         }
                         _ => stringify(rt, value)
@@ -872,12 +936,12 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
                         .encode_utf16()
                         .collect()
                 };
-                output.extend(part);
+                rt.append_units(&mut output, &part)?;
             }
-            rt.string_from_utf16(output)
+            rt.checked_string_from_utf16(output)?
         }
         "replace" | "replaceAll" => {
-            replace(rt, &string_receiver(a)?, b, c, name == "replaceAll").await?
+            replace(rt, &string_receiver(rt, a)?, b, c, name == "replaceAll").await?
         }
         _ => return Ok(None),
     };
@@ -913,7 +977,7 @@ pub fn call_sync(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option<
             for next in &args[1..] {
                 rt.tick()?;
                 value = match op {
-                    '+' => add(rt, &value, next),
+                    '+' => add(rt, &value, next)?,
                     '-' => Value::Number(rt.to_number(&value) - rt.to_number(next)),
                     '*' => Value::Number(rt.to_number(&value) * rt.to_number(next)),
                     _ => Value::Number(rt.to_number(&value) / rt.to_number(next)),
@@ -972,8 +1036,8 @@ pub fn call_sync(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option<
         "->bool" | "toBool" => Value::Bool(a.truthy()),
         "->int" | "toInt" | "toNumber" => Value::Number(rt.to_number(a)),
         "->str" | "toStr" => match a {
-            Value::String(_) => a.clone(),
-            _ => rt.string_from_utf16(rt.to_utf16(a)),
+            Value::String(_) if !rt.controls_active() => a.clone(),
+            _ => rt.checked_string_from_utf16(rt.checked_to_utf16(a)?)?,
         },
         "read-string" | "jsonParse" | "json_parse" => parse_json(rt, a)?,
         "isa" => Value::Bool(instance_of(a, b)?),
@@ -1002,80 +1066,92 @@ pub fn call_sync(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option<
         )),
         "func?" | "isFunction" => Value::Bool(a.is_callable()),
         "lower" | "upper" => {
-            if let Value::String(s) = a {
-                return Ok(Some(Value::String(if name == "upper" {
-                    s.to_uppercase()
-                } else {
-                    s.to_lowercase()
-                })));
+            if !rt.controls_active() {
+                if let Value::String(s) = a {
+                    return Ok(Some(Value::String(if name == "upper" {
+                        s.to_uppercase()
+                    } else {
+                        s.to_lowercase()
+                    })));
+                }
             }
-            rt.string_from_utf16(change_case(&string_receiver(a)?, name == "upper"))
+            let text = string_receiver(rt, a)?;
+            rt.charge_size(text.len().checked_mul(24))?;
+            rt.checked_string_from_utf16(change_case(&text, name == "upper"))?
         }
         "trim" | "trimStart" | "trimEnd" => {
-            if let Value::String(s) = a {
-                let s = if name != "trimEnd" {
-                    s.trim_start_matches(js_space)
-                } else {
-                    s
-                };
-                let s = if name != "trimStart" {
-                    s.trim_end_matches(js_space)
-                } else {
-                    s
-                };
-                return Ok(Some(Value::String(s.to_owned())));
+            if !rt.controls_active() {
+                if let Value::String(s) = a {
+                    let s = if name != "trimEnd" {
+                        s.trim_start_matches(js_space)
+                    } else {
+                        s
+                    };
+                    let s = if name != "trimStart" {
+                        s.trim_end_matches(js_space)
+                    } else {
+                        s
+                    };
+                    return Ok(Some(Value::String(s.to_owned())));
+                }
             }
-            let text = string_receiver(a)?;
+            let text = string_receiver(rt, a)?;
             let mut start = 0;
             let mut end = text.len();
             if name != "trimEnd" {
                 while start < end && char::from_u32(u32::from(text[start])).is_some_and(js_space) {
+                    rt.control_checkpoint()?;
                     start += 1;
                 }
             }
             if name != "trimStart" {
                 while start < end && char::from_u32(u32::from(text[end - 1])).is_some_and(js_space)
                 {
+                    rt.control_checkpoint()?;
                     end -= 1;
                 }
             }
-            rt.string_from_utf16(text[start..end].to_vec())
+            rt.copy_units_value(&text[start..end])?
         }
         "split" => {
-            if let (Value::String(text), Value::String(separator)) = (a, b) {
-                if !separator.is_empty() {
-                    let mut values = Vec::new();
-                    let mut parts = text.split(separator).peekable();
-                    while let Some(part) = parts.next() {
-                        if parts.peek().is_some() {
-                            rt.tick()?;
+            if !rt.controls_active() {
+                if let (Value::String(text), Value::String(separator)) = (a, b) {
+                    if !separator.is_empty() {
+                        let mut values = Vec::new();
+                        let mut parts = text.split(separator).peekable();
+                        while let Some(part) = parts.next() {
+                            if parts.peek().is_some() {
+                                rt.tick()?;
+                            }
+                            values.push(Value::String(part.to_owned()));
                         }
-                        values.push(Value::String(part.to_owned()));
+                        return Ok(Some(rt.array(values)));
                     }
-                    return Ok(Some(rt.array(values)));
                 }
             }
-            let text = string_receiver(a)?;
+            let text = string_receiver(rt, a)?;
             let mut values = Vec::new();
             if matches!(b, Value::Undefined) {
+                rt.charge_value(a)?;
                 values.push(a.clone());
             } else {
-                let sep = rt.to_utf16(b);
+                let sep = rt.checked_to_utf16(b)?;
                 if sep.is_empty() {
                     for unit in text {
                         rt.tick()?;
-                        values.push(rt.string_from_utf16(vec![unit]));
+                        rt.charge_items::<Value>(1)?;
+                        values.push(rt.copy_units_value(&[unit])?);
                     }
                 } else {
                     let mut cursor = 0;
-                    while let Some(position) =
-                        text[cursor..].windows(sep.len()).position(|s| s == sep)
-                    {
+                    while let Some(position) = find_units(rt, &text[cursor..], &sep)? {
                         rt.tick()?;
-                        values.push(rt.string_from_utf16(text[cursor..cursor + position].to_vec()));
+                        rt.charge_items::<Value>(1)?;
+                        values.push(rt.copy_units_value(&text[cursor..cursor + position])?);
                         cursor += position + sep.len();
                     }
-                    values.push(rt.string_from_utf16(text[cursor..].to_vec()));
+                    rt.charge_items::<Value>(1)?;
+                    values.push(rt.copy_units_value(&text[cursor..])?);
                 }
             }
             rt.array(values)
@@ -1104,7 +1180,7 @@ pub fn call_sync(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option<
                 }
                 Value::Number(result)
             }
-            _ => Value::Number(index_of(rt, &string_receiver(a)?, b, c)),
+            _ => Value::Number(index_of(rt, &string_receiver(rt, a)?, b, c)?),
         },
         "includes" if matches!(a, Value::Array(_)) => {
             let mut found = false;
@@ -1120,23 +1196,25 @@ pub fn call_sync(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option<
             Value::Bool(found)
         }
         "startsWith" | "endsWith" | "includes" => {
-            if let (Value::String(text), Value::String(search)) = (a, b) {
+            if let (Value::String(text), Value::String(search), false) =
+                (a, b, rt.controls_active())
+            {
                 Value::Bool(match name {
                     "startsWith" => text.starts_with(search),
                     "endsWith" => text.ends_with(search),
                     _ => text.contains(search),
                 })
             } else {
-                let text = string_receiver(a)?;
+                let text = string_receiver(rt, a)?;
                 Value::Bool(match name {
                     "startsWith" => text.starts_with(&rt.to_utf16(b)),
                     "endsWith" => text.ends_with(&rt.to_utf16(b)),
-                    _ => index_of(rt, &text, b, &Value::Number(0.0)) >= 0.0,
+                    _ => index_of(rt, &text, b, &Value::Number(0.0))? >= 0.0,
                 })
             }
         }
-        "padStart" | "padEnd" => pad(rt, &string_receiver(a)?, b, c, name == "padStart")?,
-        "words" | "re_match" => regex_match(rt, &string_receiver(a)?, b, c, name == "words")?,
+        "padStart" | "padEnd" => pad(rt, &string_receiver(rt, a)?, b, c, name == "padStart")?,
+        "words" | "re_match" => regex_match(rt, &string_receiver(rt, a)?, b, c, name == "words")?,
         _ => return Ok(None),
     };
     Ok(Some(value))

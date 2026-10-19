@@ -238,8 +238,8 @@ pub async fn call(
     rt.tick()?;
     match name {
         "[]" | "astToString" => {
-            let value = rt.from_json(&arg(args, 0));
-            Ok(rt.string_from_utf16(rt.to_utf16(&value)))
+            let value = rt.checked_from_json(&arg(args, 0))?;
+            rt.checked_string_from_utf16(rt.checked_to_utf16(&value)?)
         }
         "throw" => {
             let mut values = vec![];
@@ -257,7 +257,7 @@ pub async fn call(
             if ast.get("$lpeInternalLiteral").is_some() {
                 rt.eval_in(&ast, env, options).await
             } else {
-                Ok(rt.from_json(&ast))
+                rt.checked_from_json(&ast)
             }
         }
         "\"" | "'" | "q" => {
@@ -269,9 +269,9 @@ pub async fn call(
                 let value = if ast.get("$lpeInternalLiteral").is_some() {
                     rt.eval_in(&ast, env, options).await?
                 } else {
-                    rt.from_json(&ast)
+                    rt.checked_from_json(&ast)?
                 };
-                Ok(rt.string_from_utf16(rt.to_utf16(&value)))
+                rt.checked_string_from_utf16(rt.checked_to_utf16(&value)?)
             }
         }
         "." | "->" | "threadFirst" | ".." | "->>" | "threadLast" => {
@@ -722,9 +722,15 @@ pub async fn call(
                 )
                 .await
             } else {
-                let value = rt.eval_in(&arg(args, 1), env, options).await?;
+                let value = if rt.legacy_context_enabled() && args.get(1).is_none() {
+                    Value::Undefined
+                } else {
+                    rt.eval_in(&arg(args, 1), env, options).await?
+                };
                 let key = raw_string(rt, &target);
-                if name == "def" {
+                if rt.legacy_context_enabled() {
+                    rt.assign_async(env, &key, value, options).await
+                } else if name == "def" {
                     rt.unbox(
                         vec![value],
                         StreamContext::new(env, options).with_asts(args),
@@ -856,10 +862,13 @@ pub async fn call(
                                 "Array allocation limit exceeded",
                             ));
                         }
+                        rt.charge_items::<Value>(count)?;
                         let mut result = vec![];
                         for _ in 0..count {
                             rt.tick()?;
-                            result.push(rt.eval_in(&body, env, &options).await?);
+                            let value = rt.eval_in(&body, env, &options).await?;
+                            rt.charge_owned_payload(&value)?;
+                            result.push(value);
                         }
                         rt.unbox(
                             result,
@@ -903,6 +912,7 @@ pub async fn call(
                         } else {
                             length as usize
                         };
+                        rt.charge_items::<Value>(length)?;
                         let mut result = vec![];
                         let mut holes = vec![];
                         for index in 0..length {
@@ -924,9 +934,11 @@ pub async fn call(
                             );
                             let mapped = caught(rt.eval_in(&body, local, &options).await)?;
                             if map {
+                                rt.charge_owned_payload(&mapped)?;
                                 result.push(mapped);
                             } else if mapped.truthy() {
                                 // JS filterit tests the predicate before unboxing selected elements.
+                                rt.charge_owned_payload(&value)?;
                                 result.push(value);
                             }
                         }
@@ -1356,7 +1368,9 @@ pub(crate) fn make_closure(
         })
         .collect();
     let body = body.clone();
-    Ok(rt.closure_with_params(params, body, env, options.clone()))
+    // Legacy fn returns callable results directly; capture the creation profile.
+    let call_result = name != "fn" || !rt.legacy_context_enabled();
+    Ok(rt.closure_with_params(params, body, env, options.clone(), call_result))
 }
 
 fn let_scope(rt: &mut Runtime, values: Vec<Value>, kv_array: bool, env: EnvId) -> Result<EnvId> {

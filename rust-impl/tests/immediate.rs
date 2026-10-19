@@ -10,6 +10,44 @@ fn outcome(rt: &Runtime, result: Result<Value, Error>) -> String {
 }
 
 #[test]
+fn optimized_expressions_keep_controlled_evaluation_budgets() {
+    use lpe::{RuntimeControls, RuntimeLimits};
+
+    for source in [
+        "42",
+        "add(1,2)",
+        "upper(trim('  Привет 😀  '))",
+        "split('a-b-c','-')",
+        "join(reverse([1,2,3]),'-')",
+        "let([[f,fn(x,add(x,1))]],f(41))",
+    ] {
+        let ast = parse(source).unwrap();
+        for work in [0, 1, 10, 64, 4096] {
+            for bytes in [0, 128, 1_000_000] {
+                let mut sync = Runtime::new();
+                let mut asynchronous = Runtime::new();
+                for rt in [&mut sync, &mut asynchronous] {
+                    rt.set_controls(Some(RuntimeControls::new(RuntimeLimits {
+                        max_work: work,
+                        max_intermediate_bytes: bytes,
+                        ..RuntimeLimits::default()
+                    })))
+                    .unwrap();
+                }
+                let a = sync.eval_ast(&ast, &EvalOptions::default());
+                let b = futures::executor::block_on(
+                    asynchronous.eval_async(&ast, &EvalOptions::default()),
+                );
+                assert_eq!(outcome(&sync, a), outcome(&asynchronous, b), "{source}");
+                assert_eq!(sync.control_usage(), asynchronous.control_usage());
+                assert!(sync.control_usage().work <= work);
+                assert!(sync.control_usage().intermediate_bytes <= bytes);
+            }
+        }
+    }
+}
+
+#[test]
 fn immediate_and_async_evaluation_agree_at_every_budget_and_depth_boundary() {
     for source in [
         "add(mul(3,7),div(8,2))",

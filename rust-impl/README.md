@@ -157,6 +157,12 @@ cancellation flag must also arrange for its executor to poll the future again.
 Blocking native callbacks cannot be interrupted by the interpreter. Resource
 limits are safeguards, not a sandbox for untrusted native callbacks.
 
+Hosts can opt in to `RuntimeControls` for same-thread interrupt polling inside
+evaluation and regex searches, cumulative intermediate-byte reservations, and
+non-relaxable nested work/depth ceilings. See
+[RUNTIME-CONTROLS.md](RUNTIME-CONTROLS.md) for integration and coverage limits.
+No new controls are installed by the CLI or WASI entry point by default.
+
 ## Unicode boundary
 
 Input, output, source code, and JSON interchange use UTF-8. Valid Unicode text,

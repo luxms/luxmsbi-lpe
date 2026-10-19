@@ -18,16 +18,6 @@ pub enum Value {
 }
 
 impl Value {
-    pub(crate) fn is_heap_reference(&self) -> bool {
-        matches!(
-            self,
-            Self::Array(_)
-                | Self::Object(_)
-                | Self::Function(_)
-                | Self::Promise(_)
-                | Self::Stream(_)
-        )
-    }
     pub fn truthy(&self) -> bool {
         match self {
             Self::Undefined | Self::Null => false,

@@ -101,6 +101,9 @@ pub fn backref_icase<Input: InputIndexer, Dir: Direction>(
         ref_input.right_end()
     };
     while let Some(c1) = cursor::next(&ref_input, dir, &mut ref_pos) {
+        if !input.checkpoint() {
+            return false;
+        }
         let mut matched = false;
         if let Some(c2) = cursor::next(input, dir, pos) {
             matched = input.fold_equals(c1, c2)
