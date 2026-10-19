@@ -1,4 +1,6 @@
 use crate::{Ast, Error, Result, Value};
+#[path = "immediate.rs"]
+mod immediate;
 #[path = "streams.rs"]
 mod streams;
 use futures::future::LocalBoxFuture;
@@ -6,8 +8,9 @@ use futures::FutureExt;
 use indexmap::IndexMap;
 use serde_json::{json, Value as Json};
 use std::{
-    cell::{Cell, RefCell, RefMut},
+    cell::{Cell, Ref, RefCell, RefMut},
     collections::{HashMap, HashSet},
+    future::Future,
     rc::{Rc, Weak},
     sync::{
         atomic::{AtomicBool, Ordering},
@@ -113,6 +116,15 @@ fn array_index(key: &str) -> Option<usize> {
         .filter(|n| *n != u32::MAX && n.to_string() == key)
         .map(|n| n as usize)
 }
+// Count JavaScript code units without materializing a UTF-16 buffer.
+fn string_length(value: &Value) -> usize {
+    match value {
+        Value::String(s) if s.is_ascii() => s.len(),
+        Value::String(s) => s.encode_utf16().count(),
+        Value::Utf16(s) => s.len(),
+        _ => unreachable!("string value"),
+    }
+}
 impl<T> Default for Arena<T> {
     fn default() -> Self {
         Self(Rc::new(RefCell::new(ArenaStorage {
@@ -145,6 +157,19 @@ impl<T: Clone> Arena<T> {
             .filter(|s| s.generation == id >> SHIFT)?
             .value
             .clone()
+    }
+    // Borrow arena contents for read-only access; cloning an environment also
+    // clones every binding in the standard library.
+    fn borrow(&self, id: usize) -> Option<Ref<'_, T>> {
+        Ref::filter_map(self.0.borrow(), |storage| {
+            storage
+                .slots
+                .get(id & INDEX_MASK)
+                .filter(|s| s.generation == id >> SHIFT)?
+                .value
+                .as_ref()
+        })
+        .ok()
     }
     fn get_mut(&mut self, id: usize) -> Option<RefMut<'_, T>> {
         RefMut::filter_map(self.0.borrow_mut(), |storage| {
@@ -237,7 +262,8 @@ impl PromiseArena {
 #[derive(Clone)]
 struct Environment {
     values: IndexMap<String, Value>,
-    parents: Vec<EnvId>,
+    parents: smallvec::SmallVec<[EnvId; 1]>,
+    frames: RefCell<Option<Rc<[EnvId]>>>,
     library: bool,
     hook: Option<Lookup>,
     backing: Option<Value>,
@@ -245,8 +271,8 @@ struct Environment {
 #[derive(Clone)]
 enum Function {
     Closure {
-        params: Vec<String>,
-        body: Ast,
+        params: Rc<[String]>,
+        body: Rc<Ast>,
         env: EnvId,
         options: EvalOptions,
     },
@@ -278,9 +304,20 @@ enum Function {
 }
 #[derive(Default)]
 struct TaskRoots {
-    values: Vec<Value>,
+    values: smallvec::SmallVec<[Value; 2]>,
+    env: EnvId,
     envs: Vec<EnvId>,
     literals: Vec<usize>,
+}
+
+// Active synchronous frames only need roots, not a complete runtime facade.
+struct RootGuard(Rc<RefCell<TaskRoots>>);
+impl RootGuard {
+    fn retain_task_value(&self, value: &Value) {
+        if value.is_heap_reference() {
+            self.0.borrow_mut().values.push(value.clone());
+        }
+    }
 }
 
 struct DepthGuard(Rc<Cell<usize>>);
@@ -323,16 +360,29 @@ impl Default for Runtime {
 impl Runtime {
     // Each suspended branch owns a facade. Arena borrows end inside synchronous
     // methods, so futures never share a mutable Runtime reference or a RefMut.
-    fn task(&self, ast: &Ast, env: EnvId) -> Self {
+    fn roots(&self, ast: &Ast, env: EnvId) -> RootGuard {
         let mut values = vec![];
         let mut literals = HashSet::new();
         self.mark_ast_literals(ast, &mut literals, &mut values);
         let roots = Rc::new(RefCell::new(TaskRoots {
-            values,
-            envs: vec![env],
+            values: values.into(),
+            env,
+            envs: Vec::new(),
             literals: literals.into_iter().collect(),
         }));
         self.tasks.borrow_mut().push(Rc::downgrade(&roots));
+        RootGuard(roots)
+    }
+    fn call_roots(&self, function: &Value, args: &[Value], env: EnvId) -> RootGuard {
+        let roots = self.roots(&Ast::Null, env);
+        roots.retain_task_value(function);
+        for value in args {
+            roots.retain_task_value(value);
+        }
+        roots
+    }
+    fn task(&self, ast: &Ast, env: EnvId) -> Self {
+        let roots = self.roots(ast, env).0;
         Self {
             arrays: self.arrays.clone(),
             objects: self.objects.clone(),
@@ -432,7 +482,8 @@ impl Runtime {
         }
         rt.library = rt.envs.insert(Environment {
             values: library,
-            parents: vec![],
+            parents: smallvec::SmallVec::new(),
+            frames: RefCell::default(),
             library: true,
             hook: None,
             backing: None,
@@ -460,7 +511,7 @@ impl Runtime {
     pub fn cancellation_token(&self) -> Arc<AtomicBool> {
         self.cancelled.clone()
     }
-    pub fn tick(&mut self) -> Result<()> {
+    pub fn tick(&self) -> Result<()> {
         if self.cancelled.load(Ordering::Relaxed) {
             return Err(Error::new("Cancelled", "Evaluation cancelled"));
         }
@@ -471,9 +522,24 @@ impl Runtime {
         Ok(())
     }
     pub fn new_env(&mut self, values: IndexMap<String, Value>, parents: Vec<EnvId>) -> EnvId {
+        self.insert_env(values, parents.into())
+    }
+    pub(crate) fn new_child_env(
+        &mut self,
+        values: IndexMap<String, Value>,
+        parent: EnvId,
+    ) -> EnvId {
+        self.insert_env(values, smallvec::smallvec![parent])
+    }
+    fn insert_env(
+        &mut self,
+        values: IndexMap<String, Value>,
+        parents: smallvec::SmallVec<[EnvId; 1]>,
+    ) -> EnvId {
         let id = self.envs.insert(Environment {
             values,
             parents,
+            frames: RefCell::default(),
             library: false,
             hook: None,
             backing: None,
@@ -492,7 +558,8 @@ impl Runtime {
         }
         let id = self.envs.insert(Environment {
             values: IndexMap::new(),
-            parents,
+            parents: parents.into(),
+            frames: RefCell::default(),
             library: false,
             hook: None,
             backing: Some(value),
@@ -675,9 +742,18 @@ impl Runtime {
         env: EnvId,
         options: EvalOptions,
     ) -> Value {
+        self.closure_with_params(params.into(), body, env, options)
+    }
+    pub(crate) fn closure_with_params(
+        &mut self,
+        params: Rc<[String]>,
+        body: Ast,
+        env: EnvId,
+        options: EvalOptions,
+    ) -> Value {
         let value = Value::Function(self.functions.insert(Function::Closure {
             params,
-            body,
+            body: Rc::new(body),
             env,
             options,
         }));
@@ -687,11 +763,47 @@ impl Runtime {
     pub fn skip_form(&mut self, callback: Value, ast: Option<Ast>) -> Value {
         Value::Function(self.functions.insert(Function::Skip { callback, ast }))
     }
+    // Parents never change. Cache only their order, never values or resolutions;
+    // shadowing, hooks, and live object contexts are still looked up each time.
+    fn env_frames(&self, env: EnvId) -> Rc<[EnvId]> {
+        if let Some(frames) = self
+            .envs
+            .borrow(env)
+            .and_then(|e| e.frames.borrow().clone())
+        {
+            return frames;
+        }
+        // Most lexical scopes add one frame to an already resolved parent.
+        // Reuse that order without rebuilding a set for the whole chain.
+        let inherited = self.envs.borrow(env).and_then(|e| {
+            if let [parent] = e.parents.as_slice() {
+                self.envs.borrow(*parent)?.frames.borrow().clone()
+            } else {
+                None
+            }
+        });
+        if let Some(parent) = inherited.filter(|frames| !frames.contains(&env)) {
+            let frames: Rc<[EnvId]> = std::iter::once(env).chain(parent.iter().copied()).collect();
+            *self.envs.borrow(env).unwrap().frames.borrow_mut() = Some(frames.clone());
+            return frames;
+        }
+        let mut frames = Vec::new();
+        let mut seen = HashSet::new();
+        self.flatten_env(env, &mut frames, &mut seen);
+        let complete = frames.len() == seen.len();
+        let frames: Rc<[EnvId]> = frames.into();
+        if complete {
+            if let Some(e) = self.envs.borrow(env) {
+                *e.frames.borrow_mut() = Some(frames.clone());
+            }
+        }
+        frames
+    }
     fn flatten_env(&self, id: EnvId, out: &mut Vec<EnvId>, seen: &mut HashSet<EnvId>) {
         if !seen.insert(id) {
             return;
         }
-        if let Some(env) = self.envs.get(id) {
+        if let Some(env) = self.envs.borrow(id) {
             out.push(id);
             for parent in &env.parents {
                 self.flatten_env(*parent, out, seen);
@@ -706,10 +818,9 @@ impl Runtime {
         callable: bool,
         start: usize,
     ) -> Result<(Value, usize)> {
-        let mut frames = vec![];
-        self.flatten_env(env, &mut frames, &mut HashSet::new());
+        let frames = self.env_frames(env);
         for (position, frame) in frames.iter().enumerate().skip(start) {
-            let e = self.envs.get(*frame).unwrap();
+            let e = self.envs.borrow(*frame).unwrap();
             if let Some(backing @ Value::Object(_)) = &e.backing {
                 if self.has_own(backing, name) {
                     return Ok((self.get(backing, name), position + 1));
@@ -730,12 +841,15 @@ impl Runtime {
                     return Ok((value.clone(), position + 1));
                 }
             }
-            if let Some(hook) = &e.hook {
+            let library = e.library;
+            let hook = e.hook.clone();
+            drop(e);
+            if let Some(hook) = hook {
                 if let Some(value) = hook(name, options)? {
                     return Ok((value, position + 1));
                 }
             }
-            if e.library && name == "Hashmap" {
+            if library && name == "Hashmap" {
                 return Ok((self.object(IndexMap::new()), position + 1));
             }
         }
@@ -757,65 +871,70 @@ impl Runtime {
     ) -> Result<Value> {
         self.find(env, name, options, want_callable, 0).map(|v| v.0)
     }
-    fn find_async<'a>(
+    async fn find_async<'a>(
         &'a mut self,
         env: EnvId,
         name: &'a str,
         options: &'a EvalOptions,
         callable: bool,
         start: usize,
-    ) -> LocalBoxFuture<'a, Result<(Value, usize)>> {
-        Box::pin(async move {
-            let mut frames = vec![];
-            self.flatten_env(env, &mut frames, &mut HashSet::new());
-            for (position, id) in frames.iter().enumerate().skip(start) {
-                let e = self.envs.get(*id).unwrap();
-                if let Some(backing) = &e.backing {
-                    if backing.is_callable() {
-                        let options_value = self.from_json(&json!({"resolveString":options.resolve_string,"wantCallable":callable,"disallowLibFunctionsGetting":options.disallow_lib_functions_getting}));
-                        let value = self
-                            .call_with_options(
-                                backing.clone(),
-                                vec![Value::String(name.into()), Value::Undefined, options_value],
-                                env,
-                                options,
-                            )
-                            .await?;
-                        if !matches!(value, Value::Undefined) {
-                            return Ok((value, position + 1));
-                        }
-                    } else if self.has_own(backing, name) {
-                        return Ok((self.get(backing, name), position + 1));
+    ) -> Result<(Value, usize)> {
+        let frames = self.env_frames(env);
+        for (position, id) in frames.iter().enumerate().skip(start) {
+            let (backing, library, value, hook) = {
+                let e = self.envs.borrow(*id).unwrap();
+                (
+                    e.backing.clone(),
+                    e.library,
+                    e.values.get(name).cloned(),
+                    e.hook.clone(),
+                )
+            };
+            if let Some(backing) = &backing {
+                if backing.is_callable() {
+                    let options_value = self.from_json(&json!({"resolveString":options.resolve_string,"wantCallable":callable,"disallowLibFunctionsGetting":options.disallow_lib_functions_getting}));
+                    let value = self
+                        .call_with_options(
+                            backing.clone(),
+                            vec![Value::String(name.into()), Value::Undefined, options_value],
+                            env,
+                            options,
+                        )
+                        .await?;
+                    if !matches!(value, Value::Undefined) {
+                        return Ok((value, position + 1));
                     }
-                }
-                if let Some(value) = e.values.get(name) {
-                    if !callable
-                        && e.library
-                        && options.disallow_lib_functions_getting
-                        && value.is_callable()
-                    {
-                        continue;
-                    }
-                    return Ok((value.clone(), position + 1));
-                }
-                if let Some(hook) = e.hook {
-                    if let Some(v) = hook(name, options)? {
-                        return Ok((v, position + 1));
-                    }
-                }
-                if e.library && name == "Hashmap" {
-                    return Ok((self.object(IndexMap::new()), position + 1));
+                } else if self.has_own(backing, name) {
+                    return Ok((self.get(backing, name), position + 1));
                 }
             }
-            Ok((
-                if options.resolve_string {
-                    Value::String(name.into())
-                } else {
-                    Value::Undefined
-                },
-                frames.len(),
-            ))
-        })
+            if let Some(value) = value {
+                if !callable
+                    && library
+                    && options.disallow_lib_functions_getting
+                    && value.is_callable()
+                {
+                    continue;
+                }
+                return Ok((value, position + 1));
+            }
+            if let Some(hook) = hook {
+                if let Some(v) = hook(name, options)? {
+                    return Ok((v, position + 1));
+                }
+            }
+            if library && name == "Hashmap" {
+                return Ok((self.object(IndexMap::new()), position + 1));
+            }
+        }
+        Ok((
+            if options.resolve_string {
+                Value::String(name.into())
+            } else {
+                Value::Undefined
+            },
+            frames.len(),
+        ))
     }
     pub fn lookup_async<'a>(
         &'a mut self,
@@ -831,12 +950,11 @@ impl Runtime {
         })
     }
     pub fn assign(&mut self, env: EnvId, name: &str, value: Value) -> Result<Value> {
-        let mut frames = vec![];
-        self.flatten_env(env, &mut frames, &mut HashSet::new());
+        let frames = self.env_frames(env);
         let mut first = None;
-        for id in frames {
+        for id in frames.iter().copied() {
             if let Some(backing @ Value::Object(_)) =
-                self.envs.get(id).and_then(|e| e.backing.clone())
+                self.envs.borrow(id).and_then(|e| e.backing.clone())
             {
                 first.get_or_insert(id);
                 if self.has_own(&backing, name) {
@@ -854,7 +972,8 @@ impl Runtime {
             }
         }
         let id = first.ok_or_else(|| Error::new("ScopeError", "No writable context"))?;
-        if let Some(backing @ Value::Object(_)) = self.envs.get(id).and_then(|e| e.backing.clone())
+        if let Some(backing @ Value::Object(_)) =
+            self.envs.borrow(id).and_then(|e| e.backing.clone())
         {
             return self.set(&backing, name, value);
         }
@@ -866,11 +985,10 @@ impl Runtime {
         Ok(value)
     }
     pub fn undefine(&mut self, env: EnvId, name: &str) -> Value {
-        let mut frames = vec![];
-        self.flatten_env(env, &mut frames, &mut HashSet::new());
-        for id in frames {
+        let frames = self.env_frames(env);
+        for id in frames.iter().copied() {
             if let Some(backing @ Value::Object(_)) =
-                self.envs.get(id).and_then(|e| e.backing.clone())
+                self.envs.borrow(id).and_then(|e| e.backing.clone())
             {
                 if self.has_own(&backing, name) {
                     let v = self.get(&backing, name);
@@ -906,6 +1024,33 @@ impl Runtime {
             _ => Err(Error::new("TypeError", "Expected array")),
         }
     }
+    pub(crate) fn borrow_array(&self, value: &Value) -> Result<Ref<'_, [Value]>> {
+        match value {
+            Value::Array(id) => self
+                .arrays
+                .borrow(*id)
+                .map(|values| Ref::map(values, Vec::as_slice))
+                .ok_or_else(|| Error::new("InvalidHandle", "Expired array")),
+            _ => Err(Error::new("TypeError", "Expected array")),
+        }
+    }
+    pub(crate) fn dense_array_values(&self, value: &Value) -> Option<Vec<Value>> {
+        let Value::Array(id) = value else { return None };
+        if self
+            .array_holes
+            .borrow()
+            .get(id)
+            .is_some_and(|holes| !holes.is_empty())
+            || self
+                .array_properties
+                .borrow()
+                .get(id)
+                .is_some_and(|props| !props.is_empty())
+        {
+            return None;
+        }
+        self.arrays.get(*id)
+    }
     pub fn object_values(&self, value: &Value) -> Result<IndexMap<String, Value>> {
         match value {
             Value::Object(id) => self
@@ -919,12 +1064,12 @@ impl Runtime {
         match value {
             Value::Object(id) => self
                 .objects
-                .get(*id)
+                .borrow(*id)
                 .and_then(|a| a.get(key).cloned())
                 .unwrap_or(Value::Undefined),
             Value::Array(id) => self
                 .arrays
-                .get(*id)
+                .borrow(*id)
                 .map(|a| {
                     if key == "length" {
                         Value::Number(a.len() as f64)
@@ -941,13 +1086,16 @@ impl Runtime {
                 })
                 .unwrap_or(Value::Undefined),
             Value::String(_) | Value::Utf16(_) => {
-                let units = self.to_utf16(value);
                 if key == "length" {
-                    Value::Number(units.len() as f64)
+                    Value::Number(string_length(value) as f64)
                 } else {
                     array_index(key)
-                        .and_then(|i| units.get(i))
-                        .map(|u| self.string_from_utf16(vec![*u]))
+                        .and_then(|i| match value {
+                            Value::String(s) => s.encode_utf16().nth(i),
+                            Value::Utf16(s) => s.get(i).copied(),
+                            _ => unreachable!(),
+                        })
+                        .map(|u| self.string_from_utf16(vec![u]))
                         .unwrap_or(Value::Undefined)
                 }
             }
@@ -959,12 +1107,15 @@ impl Runtime {
     }
     pub fn has_own(&self, value: &Value, key: &str) -> bool {
         match value {
-            Value::Object(id) => self.objects.get(*id).is_some_and(|v| v.contains_key(key)),
+            Value::Object(id) => self
+                .objects
+                .borrow(*id)
+                .is_some_and(|v| v.contains_key(key)),
             Value::Array(id) => {
                 if key == "length" {
                     true
                 } else if let Some(n) = array_index(key) {
-                    self.arrays.get(*id).is_some_and(|v| n < v.len())
+                    self.arrays.borrow(*id).is_some_and(|v| n < v.len())
                         && !self
                             .array_holes
                             .borrow()
@@ -978,7 +1129,7 @@ impl Runtime {
                 }
             }
             Value::String(_) | Value::Utf16(_) => {
-                key == "length" || array_index(key).is_some_and(|n| n < self.to_utf16(value).len())
+                key == "length" || array_index(key).is_some_and(|n| n < string_length(value))
             }
             _ => false,
         }
@@ -1094,7 +1245,7 @@ impl Runtime {
             Value::Object(id) => {
                 let mut keys: Vec<String> = self
                     .objects
-                    .get(*id)
+                    .borrow(*id)
                     .map(|o| o.keys().cloned().collect())
                     .unwrap_or_default();
                 keys.sort_by_key(|k| {
@@ -1106,7 +1257,7 @@ impl Runtime {
                 });
                 keys
             }
-            Value::Array(id) => (0..self.arrays.get(*id).map(|a| a.len()).unwrap_or(0))
+            Value::Array(id) => (0..self.arrays.borrow(*id).map(|a| a.len()).unwrap_or(0))
                 .filter(|n| {
                     !self
                         .array_holes
@@ -1123,9 +1274,9 @@ impl Runtime {
                         .flat_map(|p| p.keys().cloned()),
                 )
                 .collect(),
-            Value::String(_) | Value::Utf16(_) => (0..self.to_utf16(value).len())
-                .map(|n| n.to_string())
-                .collect(),
+            Value::String(_) | Value::Utf16(_) => {
+                (0..string_length(value)).map(|n| n.to_string()).collect()
+            }
             _ => vec![],
         }
     }
@@ -1247,6 +1398,9 @@ impl Runtime {
             (a, b)
         {
             return self.canonical_name(a) == self.canonical_name(b);
+        }
+        if let (Value::String(a), Value::String(b)) = (a, b) {
+            return a == b;
         }
         if matches!(a, Value::String(_) | Value::Utf16(_))
             && matches!(b, Value::String(_) | Value::Utf16(_))
@@ -1466,6 +1620,9 @@ impl Runtime {
         self.eval_ast(&ast, options)
     }
     pub fn eval_ast(&mut self, ast: &Ast, options: &EvalOptions) -> Result<Value> {
+        if let Some(result) = self.eval_immediate(ast, options) {
+            return result;
+        }
         futures::executor::block_on(self.eval_async(ast, options))
     }
     pub async fn eval_async(&mut self, ast: &Ast, options: &EvalOptions) -> Result<Value> {
@@ -1474,22 +1631,29 @@ impl Runtime {
         self.tasks
             .borrow_mut()
             .retain(|task| task.strong_count() > 0);
-        let _roots = self.task(ast, self.global);
         let cancelled = self.cancelled.clone();
         let global = self.global;
-        let mut evaluation = async {
-            let value = self.eval_in(ast, global, options).await?;
-            self.resolve_value(value).await
-        }
-        .boxed_local();
-        let result = futures::future::poll_fn(move |cx| {
-            if cancelled.load(Ordering::Relaxed) {
-                std::task::Poll::Ready(Err(Error::new("Cancelled", "Evaluation cancelled")))
-            } else {
-                evaluation.as_mut().poll(cx)
-            }
-        })
-        .await;
+        let result = {
+            let mut evaluation = std::pin::pin!(async {
+                let value = self.eval_in(ast, global, options).await?;
+                // eval_in roots the AST and scope while running. Retain them here
+                // only if resolving the returned promise can suspend again.
+                if matches!(value, Value::Promise(_)) {
+                    let _roots = self.roots(ast, global);
+                    self.resolve_value(value).await
+                } else {
+                    Ok(value)
+                }
+            });
+            futures::future::poll_fn(move |cx| {
+                if cancelled.load(Ordering::Relaxed) {
+                    std::task::Poll::Ready(Err(Error::new("Cancelled", "Evaluation cancelled")))
+                } else {
+                    evaluation.as_mut().poll(cx)
+                }
+            })
+            .await
+        };
         self.output = self.output_log.borrow().clone();
         result
     }
@@ -1501,8 +1665,6 @@ impl Runtime {
     ) -> LocalBoxFuture<'a, Result<Value>> {
         Box::pin(async move {
             self.tick()?;
-            // Host special forms may collect while this lexical scope is active.
-            let roots = self.task(ast, env);
             if self.depth.get() >= options.max_depth {
                 return Err(Error::new(
                     "LimitError",
@@ -1511,6 +1673,11 @@ impl Runtime {
             }
             self.depth.set(self.depth.get() + 1);
             let _guard = DepthGuard(self.depth.clone());
+            if matches!(ast, Json::Null | Json::Bool(_) | Json::Number(_)) {
+                return Ok(self.from_json(ast));
+            }
+            // Host special forms may collect while this lexical scope is active.
+            let roots = self.roots(ast, env);
             if let Some(id) = ast.get("$lpeInternalLiteral").and_then(Json::as_u64) {
                 return self
                     .literals
@@ -1530,7 +1697,7 @@ impl Runtime {
                 Json::Array(list) => {
                     let mut next = 0;
                     let mut callbacks = vec![];
-                    let mut expression = list.clone();
+                    let mut expression = std::borrow::Cow::Borrowed(list.as_slice());
                     loop {
                         self.tick()?;
                         let operator = if let Some(name) = expression[0].as_str() {
@@ -1541,15 +1708,21 @@ impl Runtime {
                             self.eval_in(&expression[0], env, options).await?
                         };
                         roots.retain_task_value(&operator);
-                        let result = match operator.clone() {
+                        let result = match &operator {
                             Value::Special(name) => {
-                                crate::specials::call(self, &name, &expression[1..], env, options)
+                                // Keep the large special-form future out of every
+                                // ordinary expression frame.
+                                crate::specials::call(self, name, &expression[1..], env, options)
+                                    .boxed_local()
                                     .await?
                             }
                             Value::Function(id)
-                                if matches!(self.functions.get(id), Some(Function::Special(_))) =>
+                                if matches!(
+                                    self.functions.borrow(*id).as_deref(),
+                                    Some(Function::Special(_))
+                                ) =>
                             {
-                                let Some(Function::Special(callback)) = self.functions.get(id)
+                                let Some(Function::Special(callback)) = self.functions.get(*id)
                                 else {
                                     unreachable!()
                                 };
@@ -1558,48 +1731,62 @@ impl Runtime {
                             }
                             Value::Function(id)
                                 if matches!(
-                                    self.functions.get(id),
+                                    self.functions.borrow(*id).as_deref(),
                                     Some(Function::Defined { .. })
                                 ) =>
                             {
-                                self.call_defined(id, &expression[1..], env, options)
+                                self.call_defined(*id, &expression[1..], env, options)
                                     .await?
                             }
                             Value::Function(id)
                                 if matches!(
-                                    self.functions.get(id),
+                                    self.functions.borrow(*id).as_deref(),
                                     Some(Function::Vararg { .. } | Function::VarargHost { .. })
                                 ) =>
                             {
-                                self.call_vararg(id, &expression[1..], env, options).await?
+                                self.call_vararg(*id, &expression[1..], env, options)
+                                    .await?
                             }
                             _ => {
                                 let args =
                                     self.eval_arguments(&expression[1..], env, options).await?;
-                                let context = StreamContext::new(env, options)
-                                    .with_values(vec![operator.clone()]);
-                                self.unbox(
-                                    args,
-                                    context,
-                                    Rc::new(move |rt, args, env, options| {
-                                        let operator = operator.clone();
-                                        async move {
-                                            rt.call_with_options(operator, args, env, &options)
-                                                .await
-                                        }
-                                        .boxed_local()
-                                    }),
-                                )
-                                .await?
+                                if args
+                                    .iter()
+                                    .all(|v| !matches!(v, Value::Stream(_) | Value::Promise(_)))
+                                {
+                                    self.call_with_options(operator, args, env, options).await?
+                                } else {
+                                    let context = StreamContext::new(env, options)
+                                        .with_values(vec![operator.clone()]);
+                                    self.unbox(
+                                        args,
+                                        context,
+                                        Rc::new(move |rt, args, env, options| {
+                                            let operator = operator.clone();
+                                            async move {
+                                                rt.call_with_options(operator, args, env, &options)
+                                                    .await
+                                            }
+                                            .boxed_local()
+                                        }),
+                                    )
+                                    .await?
+                                }
                             }
                         };
                         if let Value::Function(id) = result {
                             if let Some(Function::Skip { callback, ast }) = self.functions.get(id) {
                                 callbacks.push(callback);
                                 if let Some(a) = ast {
-                                    expression = a.as_array().cloned().ok_or_else(|| {
-                                        Error::new("TypeError", "Skip AST must be an array")
-                                    })?;
+                                    expression = std::borrow::Cow::Owned(match a {
+                                        Json::Array(list) => list,
+                                        _ => {
+                                            return Err(Error::new(
+                                                "TypeError",
+                                                "Skip AST must be an array",
+                                            ))
+                                        }
+                                    });
                                     if expression.is_empty() {
                                         return Err(Error::new("TypeError", "Skip AST is empty"));
                                     }
@@ -1626,9 +1813,26 @@ impl Runtime {
         env: EnvId,
         options: &EvalOptions,
     ) -> Result<Vec<Value>> {
+        if args
+            .iter()
+            .all(|ast| matches!(ast, Json::Null | Json::Bool(_) | Json::Number(_)))
+        {
+            let mut values = Vec::with_capacity(args.len());
+            for ast in args {
+                self.tick()?;
+                if self.depth.get() >= options.max_depth {
+                    return Err(Error::new(
+                        "LimitError",
+                        "Evaluation nesting limit exceeded",
+                    ));
+                }
+                values.push(self.from_json(ast));
+            }
+            return Ok(values);
+        }
         // Completed siblings remain roots until all arguments are delivered.
-        let retained = self.task(&Ast::Null, env);
-        let roots = retained.task_roots.as_ref().unwrap().clone();
+        let retained = self.roots(&Ast::Null, env);
+        let roots = retained.0.clone();
         let mut futures = args
             .iter()
             .map(|ast| {
@@ -1715,22 +1919,29 @@ impl Runtime {
     ) -> LocalBoxFuture<'a, Result<Value>> {
         Box::pin(async move {
             self.tick()?;
-            let roots = self.task(&Ast::Null, env);
-            roots.retain_task_value(&function);
-            for value in &args {
-                roots.retain_task_value(value);
-            }
             if self.depth.get() >= options.max_depth {
                 return Err(Error::new("LimitError", "Call nesting limit exceeded"));
             }
             self.depth.set(self.depth.get() + 1);
             let _guard = DepthGuard(self.depth.clone());
+            let implementation = if let Value::Function(id) = &function {
+                Some(
+                    self.functions
+                        .get(*id)
+                        .ok_or_else(|| Error::new("InvalidHandle", "Expired function"))?,
+                )
+            } else {
+                None
+            };
+            // A validated immediate closure body cannot call host code or collect.
+            // Root its arguments only if evaluating that body needs the full path.
+            let mut _roots = if matches!(implementation, Some(Function::Closure { .. })) {
+                None
+            } else {
+                Some(self.call_roots(&function, &args, env))
+            };
             match function {
-                Value::Function(id) => match self
-                    .functions
-                    .get(id)
-                    .ok_or_else(|| Error::new("InvalidHandle", "Expired function"))?
-                {
+                Value::Function(id) => match implementation.expect("validated function") {
                     Function::Native(callback) => {
                         let future = callback(args);
                         if self.preserve_promises.get() {
@@ -1767,6 +1978,17 @@ impl Runtime {
                         env: captured,
                         options,
                     } => {
+                        let immediate_value = match self
+                            .eval_closure_immediate(&body, captured, &options, &params, &args, id)
+                        {
+                            Some(Ok(value)) if !value.is_callable() => return Ok(value),
+                            Some(Err(error)) if error.kind == "Return" => {
+                                return Ok(error.value.unwrap_or(Value::Undefined));
+                            }
+                            Some(Err(error)) => return Err(error),
+                            Some(Ok(value)) => Some(value),
+                            None => None,
+                        };
                         let mut bindings = IndexMap::new();
                         bindings.insert("$this$".into(), Value::Function(id));
                         for (index, name) in params.iter().enumerate() {
@@ -1775,8 +1997,19 @@ impl Runtime {
                                 args.get(index).cloned().unwrap_or(Value::Undefined),
                             );
                         }
-                        let local = self.new_env(bindings, vec![captured]);
-                        match self.eval_in(&body, local, &options).await {
+                        let local = self.new_child_env(bindings, captured);
+                        if let Some(value) = immediate_value {
+                            return self.call_with_options(value, args, local, &options).await;
+                        }
+                        let result = if let Some(result) =
+                            self.eval_scoped_immediate(&body, local, &options)
+                        {
+                            result
+                        } else {
+                            _roots = Some(self.call_roots(&Value::Function(id), &args, local));
+                            self.eval_in(&body, local, &options).await
+                        };
+                        match result {
                             Err(e) if e.kind == "Return" => Ok(e.value.unwrap_or(Value::Undefined)),
                             Ok(v) if v.is_callable() => {
                                 self.call_with_options(v, args, local, &options).await
@@ -1806,7 +2039,9 @@ impl Runtime {
                 },
                 Value::Special(name) => {
                     let ast: Vec<_> = args.into_iter().map(|v| self.ast_literal(v)).collect();
-                    crate::specials::call(self, &name, &ast, env, options).await
+                    crate::specials::call(self, &name, &ast, env, options)
+                        .boxed_local()
+                        .await
                 }
                 Value::Builtin(name) => {
                     let first = args.first().cloned().unwrap_or(Value::Undefined);
@@ -1865,10 +2100,16 @@ impl Runtime {
                         }
                         _ => {}
                     }
-                    if let Some(v) = crate::builtins::call(self, &name, &args).await? {
+                    if let Some(v) = crate::builtins::call(self, &name, &args)
+                        .boxed_local()
+                        .await?
+                    {
                         return Ok(v);
                     }
-                    if let Some(v) = crate::collections::call(self, &name, &args).await? {
+                    if let Some(v) = crate::collections::call(self, &name, &args)
+                        .boxed_local()
+                        .await?
+                    {
                         return Ok(v);
                     }
                     if let Some(v) = crate::datetime::call(self, &name, &args).await? {
@@ -2140,6 +2381,7 @@ impl Runtime {
         for task in self.tasks.borrow().iter().filter_map(Weak::upgrade) {
             let task = task.borrow();
             values.extend(task.values.clone());
+            environments.push(task.env);
             environments.extend(&task.envs);
             for id in &task.literals {
                 if literals.insert(*id) {
@@ -2150,8 +2392,13 @@ impl Runtime {
         while !values.is_empty() || !environments.is_empty() {
             while let Some(id) = environments.pop() {
                 if envs.insert(id) {
-                    if let Some(env) = self.envs.get(id) {
-                        values.extend(env.values.values().cloned());
+                    if let Some(env) = self.envs.borrow(id) {
+                        values.extend(
+                            env.values
+                                .values()
+                                .filter(|v| v.is_heap_reference())
+                                .cloned(),
+                        );
                         values.extend(env.backing.clone());
                         environments.extend(&env.parents);
                     }
@@ -2183,16 +2430,16 @@ impl Runtime {
                         }
                     }
                     Value::Array(id) if arrays.insert(id) => {
-                        if let Some(a) = self.arrays.get(id) {
-                            values.extend(a);
+                        if let Some(a) = self.arrays.borrow(id) {
+                            values.extend(a.iter().filter(|v| v.is_heap_reference()).cloned());
                         }
                         if let Some(p) = self.array_properties.borrow().get(&id) {
                             values.extend(p.values().cloned());
                         }
                     }
                     Value::Object(id) if objects.insert(id) => {
-                        if let Some(a) = self.objects.get(id) {
-                            values.extend(a.values().cloned());
+                        if let Some(a) = self.objects.borrow(id) {
+                            values.extend(a.values().filter(|v| v.is_heap_reference()).cloned());
                         }
                     }
                     Value::Promise(id) if promises.insert(id) => {
@@ -2246,7 +2493,10 @@ impl Runtime {
             .retain(|id, _| arrays.contains(id));
     }
     fn mark_ast_literals(&self, ast: &Ast, live: &mut HashSet<usize>, values: &mut Vec<Value>) {
-        let mut pending = vec![ast];
+        if !matches!(ast, Json::Array(_) | Json::Object(_)) {
+            return;
+        }
+        let mut pending: smallvec::SmallVec<[&Ast; 16]> = smallvec::smallvec![ast];
         while let Some(ast) = pending.pop() {
             match ast {
                 Json::Array(a) => pending.extend(a),

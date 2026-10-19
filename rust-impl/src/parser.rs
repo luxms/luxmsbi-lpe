@@ -59,6 +59,16 @@ struct Token {
 }
 
 impl Token {
+    fn take(&mut self) -> Self {
+        Self {
+            kind: self.kind,
+            text: std::mem::take(&mut self.text),
+            ast: std::mem::take(&mut self.ast),
+            offset: self.offset,
+            end: self.end,
+            logical: self.logical,
+        }
+    }
     fn diagnostic(&self, source: &str, arity: Option<&str>) -> Value {
         if self.kind == Kind::End {
             return json!({"value": "(end)"});
@@ -112,7 +122,11 @@ impl Token {
 
 fn letter(c: char) -> bool {
     // The reference scans UTF-16 code units, so astral letters are not identifiers.
-    c <= '\u{ffff}' && c.to_lowercase().ne(c.to_uppercase())
+    if c.is_ascii() {
+        c.is_ascii_alphabetic()
+    } else {
+        c <= '\u{ffff}' && c.to_lowercase().ne(c.to_uppercase())
+    }
 }
 
 struct Lexer {
@@ -338,7 +352,7 @@ fn tokenize(source: &str, square: bool) -> Result<Vec<Token>> {
         }
     }
     // Only a dot joins top-level lines; comments have already been removed.
-    let mut filtered: Vec<Token> = Vec::with_capacity(tokens.len());
+    let mut filtered: Vec<Token> = Vec::with_capacity(tokens.len() + 1);
     let mut i = 0;
     while i < tokens.len() {
         if tokens[i].kind == Kind::Lf {
@@ -351,9 +365,11 @@ fn tokenize(source: &str, square: bool) -> Result<Vec<Token>> {
             {
                 continue;
             }
-            filtered.extend(tokens[start..i].iter().cloned());
+            for token in &mut tokens[start..i] {
+                filtered.push(token.take());
+            }
         } else {
-            filtered.push(tokens[i].clone());
+            filtered.push(tokens[i].take());
             i += 1;
         }
     }
@@ -463,7 +479,8 @@ impl Node {
         } else {
             None
         };
-        let mut ast = vec![Value::String(op.into())];
+        let mut ast = Vec::with_capacity(args.len() + 1);
+        ast.push(Value::String(op.into()));
         ast.extend(args.into_iter().map(|n| n.ast));
         Ok(Self {
             ast: Value::Array(ast),
@@ -556,7 +573,7 @@ impl Parser<'_> {
     }
 
     fn advance(&mut self) -> Result<Token> {
-        let token = self.current().clone();
+        let token = self.tokens[self.pos].take();
         if self.pos + 1 < self.tokens.len() {
             self.pos += 1;
         }

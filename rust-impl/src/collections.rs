@@ -1,76 +1,75 @@
 //! Ordinary collection functions. Evaluation and special forms live in Runtime.
+use crate::builtins::registry::builtin_names;
 use crate::{Error, Result, Runtime, Value};
 use futures::future::LocalBoxFuture;
 use indexmap::{IndexMap, IndexSet};
 use rand::Rng;
 use std::collections::HashMap;
 
-pub fn names() -> &'static [&'static str] {
-    &[
-        "list",
-        "array",
-        "[",
-        "range",
-        "reshape",
-        "\u{2374}",
-        "zip",
-        "count",
-        "length",
-        "empty?",
-        "empty",
-        "reverse",
-        "slice",
-        "concat",
-        "first",
-        "last",
-        "rest",
-        "cons",
-        "pushStart",
-        "find",
-        "findIndex",
-        "map",
-        "mapArr",
-        "filter",
-        "filterArr",
-        "reduce",
-        "reduceArr",
-        "sort",
-        "sortBy",
-        "some",
-        "every",
-        "flat",
-        "frequencies",
-        "counter",
-        "partition",
-        "distinct",
-        "union",
-        "intersect",
-        "difference",
-        "uniques",
-        "shuffle",
-        "sample",
-        "pluck",
-        "join",
-        "joinObj",
-        "contains?",
-        "containsKey",
-        "get",
-        "nth",
-        "set",
-        "del",
-        "keys",
-        "vals",
-        "values",
-        "entries",
-        "fromEntries",
-        "select",
-        "omit",
-        "compact",
-        "update_in",
-        "merge",
-        "mergeDeep",
-        "makeStruct",
-    ]
+builtin_names! {
+    "list" => true,
+    "array" => true,
+    "[" => true,
+    "range" => true,
+    "reshape" => true,
+    "\u{2374}" => true,
+    "zip" => true,
+    "count" => true,
+    "length" => true,
+    "empty?" => true,
+    "empty" => true,
+    "reverse" => true,
+    "slice" => true,
+    "concat" => true,
+    "first" => true,
+    "last" => true,
+    "rest" => true,
+    "cons" => true,
+    "pushStart" => true,
+    "find" => false,
+    "findIndex" => false,
+    "map" => false,
+    "mapArr" => false,
+    "filter" => false,
+    "filterArr" => false,
+    "reduce" => false,
+    "reduceArr" => false,
+    "sort" => false,
+    "sortBy" => false,
+    "some" => false,
+    "every" => false,
+    "flat" => true,
+    "frequencies" => true,
+    "counter" => true,
+    "partition" => true,
+    "distinct" => false,
+    "union" => false,
+    "intersect" => false,
+    "difference" => false,
+    "uniques" => false,
+    "shuffle" => true,
+    "sample" => true,
+    "pluck" => true,
+    "join" => true,
+    "joinObj" => false,
+    "contains?" => true,
+    "containsKey" => true,
+    "get" => true,
+    "nth" => true,
+    "set" => true,
+    "del" => true,
+    "keys" => true,
+    "vals" => true,
+    "values" => true,
+    "entries" => true,
+    "fromEntries" => true,
+    "select" => true,
+    "omit" => true,
+    "compact" => true,
+    "update_in" => false,
+    "merge" => false,
+    "mergeDeep" => false,
+    "makeStruct" => true,
 }
 
 fn arg(args: &[Value], n: usize) -> Value {
@@ -181,6 +180,66 @@ fn append_joined(
     }
     output.extend_from_slice(part);
     Ok(())
+}
+
+// Scalar UTF-8 joins cannot create surrogate halves. Keep the code-unit
+// allocation limit while avoiding a UTF-16 vector for every element.
+fn join_utf8(rt: &Runtime, value: &Value, separator: &Value) -> Result<Option<Value>> {
+    let separator = match separator {
+        Value::Undefined => ",",
+        Value::String(s) => s.as_str(),
+        _ => return Ok(None),
+    };
+    let values = if is_array(value) {
+        Some(rt.borrow_array(value)?)
+    } else {
+        None
+    };
+    let values = values.as_deref().unwrap_or(&[]);
+    if !values.iter().all(|v| {
+        matches!(
+            v,
+            Value::String(_) | Value::Number(_) | Value::Bool(_) | Value::Null | Value::Undefined
+        )
+    }) {
+        return Ok(None);
+    }
+    let mut output = String::with_capacity(values.len().min(8192));
+    let unit_len = |s: &str| {
+        if s.is_ascii() {
+            s.len()
+        } else {
+            s.encode_utf16().count()
+        }
+    };
+    let separator_len = unit_len(separator);
+    let mut output_len = 0usize;
+    let mut buffer = ryu_js::Buffer::new();
+    for (i, value) in values.iter().enumerate() {
+        rt.tick()?;
+        let part = match value {
+            Value::String(s) => s.as_str(),
+            Value::Number(n) => buffer.format(*n),
+            Value::Bool(true) => "true",
+            Value::Bool(false) => "false",
+            Value::Null | Value::Undefined => "",
+            _ => unreachable!("validated scalar join"),
+        };
+        let extra = unit_len(part).checked_add(if i == 0 { 0 } else { separator_len });
+        let next_len = extra.and_then(|n| output_len.checked_add(n));
+        if next_len.is_none_or(|n| n > 8 * 1024 * 1024) {
+            return Err(Error::new(
+                "LimitError",
+                "Joined string allocation limit exceeded",
+            ));
+        }
+        output_len = next_len.expect("validated length");
+        if i != 0 {
+            output.push_str(separator);
+        }
+        output.push_str(part);
+    }
+    Ok(Some(Value::String(output)))
 }
 
 fn check_reshape_allocation(rt: &mut Runtime, values: &[Value], count: usize) -> Result<()> {
@@ -520,182 +579,13 @@ fn update_in<'a>(
 }
 
 pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option<Value>> {
+    if supports_sync(name) {
+        return call_sync(rt, name, args);
+    }
     let a = arg(args, 0);
     let b = arg(args, 1);
     let c = arg(args, 2);
     let value = match name {
-        "list" | "array" | "[" => {
-            let mut values = Vec::new();
-            for v in args {
-                rt.tick()?;
-                values.push(v.clone());
-            }
-            rt.array(values)
-        }
-        "range" => {
-            let (mut start, end) = if matches!(b, Value::Undefined) {
-                (0.0, rt.to_number(&a))
-            } else {
-                (rt.to_number(&a), rt.to_number(&b))
-            };
-            let mut step = rt.to_number(&c);
-            if matches!(c, Value::Undefined) || step == 0.0 {
-                step = 1.0;
-            }
-            let mut result = Vec::new();
-            while if step > 0.0 { start < end } else { start > end } {
-                rt.tick()?;
-                result.push(Value::Number(start));
-                start += step;
-            }
-            rt.array(result)
-        }
-        "reshape" | "\u{2374}" => {
-            let n = if let Value::Number(n) = a { n } else { 1.0 };
-            if !n.is_finite() || n < 0.0 || n.fract() != 0.0 || n > u32::MAX as f64 {
-                return Err(invalid(
-                    "reshape requires a finite nonnegative integer length",
-                ));
-            }
-            let mut result = Vec::new();
-            check_reshape_allocation(rt, args.get(1..).unwrap_or(&[]), n as usize)?;
-            for i in 0..n as usize {
-                rt.tick()?;
-                result.push(if args.len() <= 1 {
-                    Value::Undefined
-                } else {
-                    args[1 + i % (args.len() - 1)].clone()
-                });
-            }
-            rt.array(result)
-        }
-        "zip" => {
-            let arrays = array_or_empty(rt, &a)?;
-            let mut rows = Vec::new();
-            let mut len = if b.truthy() && !arrays.is_empty() {
-                usize::MAX
-            } else {
-                0
-            };
-            for array in &arrays {
-                rt.tick()?;
-                let n = length(rt, array);
-                len = if b.truthy() { len.min(n) } else { len.max(n) };
-            }
-            for i in 0..len {
-                rt.tick()?;
-                let mut row = Vec::new();
-                for array in &arrays {
-                    rt.tick()?;
-                    row.push(rt.get(array, &i.to_string()));
-                }
-                rows.push(rt.array(row));
-            }
-            rt.array(rows)
-        }
-        "count" | "length" => rt.get(&a, "length"),
-        "empty" | "empty?" => Value::Bool(is_array(&a) && length(rt, &a) == 0),
-        "reverse" => {
-            let result = rt.array(Vec::new());
-            for key in rt.keys(&a).into_iter().rev() {
-                rt.tick()?;
-                let value = rt.get(&a, &key);
-                let dest = if numeric_key(rt, &key) {
-                    length(rt, &result).to_string()
-                } else {
-                    key
-                };
-                rt.set(&result, &dest, value)?;
-            }
-            result
-        }
-        "slice" | "rest" => {
-            let start = if name == "rest" {
-                1.0
-            } else {
-                rt.to_number(&b)
-            };
-            if matches!(&a, Value::String(_) | Value::Utf16(_)) {
-                let units = rt.to_utf16(&a);
-                let lo = slice_index(start, units.len());
-                let hi = if name == "rest" || matches!(c, Value::Undefined) {
-                    units.len()
-                } else {
-                    slice_index(rt.to_number(&c), units.len())
-                };
-                rt.string_from_utf16(units[lo..hi.max(lo)].to_vec())
-            } else if is_array(&a) {
-                let len = length(rt, &a);
-                let lo = slice_index(start, len);
-                let hi = if name == "rest" || matches!(c, Value::Undefined) {
-                    len
-                } else {
-                    slice_index(rt.to_number(&c), len)
-                };
-                let result = rt.array(Vec::new());
-                for i in lo..hi {
-                    rt.tick()?;
-                    if has(rt, &a, &i.to_string()) {
-                        let value = rt.get(&a, &i.to_string());
-                        rt.set(&result, &(i - lo).to_string(), value)?;
-                    }
-                }
-                rt.set(&result, "length", number(hi.saturating_sub(lo)))?;
-                result
-            } else {
-                rt.array(Vec::new())
-            }
-        }
-        "concat" | "cons" | "pushStart" => {
-            let result = rt.array(Vec::new());
-            let mut offset = 0;
-            if name != "concat" {
-                rt.set(&result, "0", a.clone())?;
-                offset = 1;
-            }
-            let inputs = if name == "concat" {
-                args
-            } else {
-                std::slice::from_ref(&b)
-            };
-            for input in inputs {
-                rt.tick()?;
-                if is_array(input) {
-                    let len = length(rt, input);
-                    for i in 0..len {
-                        rt.tick()?;
-                        if has(rt, input, &i.to_string()) {
-                            let value = rt.get(input, &i.to_string());
-                            rt.set(&result, &(offset + i).to_string(), value)?;
-                        }
-                    }
-                    offset += len;
-                } else {
-                    rt.set(&result, &offset.to_string(), input.clone())?;
-                    offset += 1;
-                }
-            }
-            rt.set(&result, "length", number(offset))?;
-            result
-        }
-        "first" => {
-            if length(rt, &a) > 0 {
-                rt.get(&a, "0")
-            } else {
-                Value::Null
-            }
-        }
-        "last" => {
-            let len = length(rt, &a);
-            rt.get(
-                &a,
-                &if len == 0 {
-                    "-1".to_owned()
-                } else {
-                    (len - 1).to_string()
-                },
-            )
-        }
         "map" | "mapArr" | "filter" | "filterArr" | "reduce" | "reduceArr" | "find"
         | "findIndex" | "some" | "every" => {
             if is_array(&a)
@@ -846,79 +736,6 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
             }
             a
         }
-        "flat" => {
-            if !is_array(&a) {
-                return Ok(Some(a));
-            }
-            let depth = if b.is_nullish() {
-                1.0
-            } else {
-                rt.to_number(&b).trunc().max(0.0)
-            };
-            let mut stack = vec![(a, 0usize, depth)];
-            let mut result = Vec::new();
-            while let Some((array, index, depth)) = stack.pop() {
-                rt.tick()?;
-                if index >= length(rt, &array) {
-                    continue;
-                }
-                stack.push((array.clone(), index + 1, depth));
-                if !has(rt, &array, &index.to_string()) {
-                    continue;
-                }
-                let value = rt.get(&array, &index.to_string());
-                if depth > 0.0 && is_array(&value) {
-                    stack.push((value, 0, depth - 1.0));
-                } else {
-                    result.push(value);
-                }
-            }
-            rt.array(result)
-        }
-        "frequencies" | "counter" => {
-            let mut result = IndexMap::new();
-            for i in 0..if is_array(&a) { length(rt, &a) } else { 0 } {
-                rt.tick()?;
-                if !has(rt, &a, &i.to_string()) {
-                    continue;
-                }
-                let key = property_key(rt, &rt.get(&a, &i.to_string()))?;
-                let count = match result.get(&key) {
-                    Some(Value::Number(n)) => *n,
-                    _ => 0.0,
-                };
-                result.insert(key, Value::Number(count + 1.0));
-            }
-            rt.object(result)
-        }
-        "partition" => {
-            let values = array_or_empty(rt, &a)?;
-            let n = rt.to_number(&b);
-            let mut groups = Vec::new();
-            let mut group: Option<Vec<Value>> = None;
-            for (i, item) in values.into_iter().enumerate() {
-                rt.tick()?;
-                if !has(rt, &a, &i.to_string()) {
-                    continue;
-                }
-                if (i as f64) % n == 0.0 {
-                    if let Some(previous) = group.take() {
-                        groups.push(rt.array(previous));
-                    }
-                    group = Some(Vec::new());
-                }
-                group
-                    .as_mut()
-                    .ok_or_else(|| {
-                        invalid("partition has no initial group for this size and sparse input")
-                    })?
-                    .push(item);
-            }
-            if let Some(group) = group {
-                groups.push(rt.array(group));
-            }
-            rt.array(groups)
-        }
         "distinct" | "union" | "intersect" | "difference" | "uniques" => {
             if name == "distinct" && !is_array(&a) {
                 return Ok(Some(a));
@@ -1011,52 +828,7 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
             }
             rt.array(result)
         }
-        "shuffle" | "sample" => {
-            let len = if is_array(&a) { length(rt, &a) } else { 0 };
-            let mut values = Vec::new();
-            for i in 0..len {
-                rt.tick()?;
-                if has(rt, &a, &i.to_string()) {
-                    values.push(rt.get(&a, &i.to_string()));
-                }
-            }
-            let mut rng = rand::thread_rng();
-            for i in (1..values.len()).rev() {
-                rt.tick()?;
-                values.swap(i, rng.gen_range(0..=i));
-            }
-            if name == "shuffle" {
-                let result = rt.array(values);
-                rt.set(&result, "length", number(len))?;
-                result
-            } else {
-                let n = if let Value::Number(n) = b { n } else { 1.0 };
-                if n == 1.0 {
-                    values.into_iter().next().unwrap_or(Value::Undefined)
-                } else {
-                    let count = slice_index(n, len);
-                    values.truncate(count);
-                    let result = rt.array(values);
-                    rt.set(&result, "length", number(count))?;
-                    result
-                }
-            }
-        }
-        "pluck" => {
-            let key = property_key(rt, &b)?;
-            let result = rt.array(Vec::new());
-            let len = if is_array(&a) { length(rt, &a) } else { 0 };
-            for i in 0..len {
-                rt.tick()?;
-                if has(rt, &a, &i.to_string()) {
-                    let v = rt.get(&rt.get(&a, &i.to_string()), &key);
-                    rt.set(&result, &i.to_string(), v)?;
-                }
-            }
-            rt.set(&result, "length", number(len))?;
-            result
-        }
-        "join" | "joinObj" => {
+        "joinObj" => {
             let sep = if matches!(b, Value::Undefined) {
                 vec![b',' as u16]
             } else {
@@ -1064,18 +836,7 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
             };
             let mut output = Vec::new();
             let mut first = true;
-            if name == "join" {
-                for v in array_or_empty(rt, &a)? {
-                    rt.tick()?;
-                    let part = if v.is_nullish() {
-                        Vec::new()
-                    } else {
-                        rt.to_utf16(&v)
-                    };
-                    append_joined(&mut output, &part, &sep, first)?;
-                    first = false;
-                }
-            } else if is_collection(&a) {
+            if is_collection(&a) {
                 for key in rt.keys(&a) {
                     rt.tick()?;
                     let v = rt.get(&a, &key);
@@ -1094,60 +855,6 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
                 }
             }
             rt.string_from_utf16(output)
-        }
-        "contains?" | "containsKey" => Value::Bool(has(rt, &a, &property_key(rt, &b)?)),
-        "get" | "nth" => {
-            let key = property_key(rt, &b)?;
-            if has(rt, &a, &key) {
-                rt.get(&a, &key)
-            } else {
-                c
-            }
-        }
-        "set" => {
-            let key = property_key(rt, &b)?;
-            rt.set(&a, &key, c)?;
-            a
-        }
-        "del" => {
-            let key = property_key(rt, &b)?;
-            Value::Bool(rt.delete(&a, &key)?)
-        }
-        "keys" | "vals" | "values" | "entries" => {
-            let mut result = Vec::new();
-            for key in rt.keys(&a) {
-                rt.tick()?;
-                let value = rt.get(&a, &key);
-                result.push(match name {
-                    "keys" => Value::String(key),
-                    "entries" => rt.array(vec![Value::String(key), value]),
-                    _ => value,
-                });
-            }
-            rt.array(result)
-        }
-        "fromEntries" => {
-            let mut result = IndexMap::new();
-            for pair in array_or_empty(rt, &a)? {
-                rt.tick()?;
-                if !is_collection(&pair) {
-                    return Err(invalid("fromEntries expects object or array entries"));
-                }
-                let key = property_key(rt, &rt.get(&pair, "0"))?;
-                result.insert(key, rt.get(&pair, "1"));
-            }
-            rt.object(result)
-        }
-        "select" => selection(rt, &a, &b, false, 0)?,
-        "omit" => {
-            let copy = clone_graph(rt, &a)?;
-            selection(rt, &copy, &b, true, 0)?
-        }
-        "compact" => {
-            let copy = clone_graph(rt, &a)?;
-            let depth = if let Value::Number(n) = b { n } else { 1.0 };
-            compact(rt, &copy, depth, 0)?;
-            copy
         }
         "update_in" => {
             let path = array_or_empty(rt, &b)?;
@@ -1208,6 +915,392 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
                 return Err(invalid("mergeDeep expects two arrays or objects"));
             }
             merge_deep(rt, a, b, c, arg(args, 3).truthy(), Vec::new()).await?
+        }
+        _ => return Ok(None),
+    };
+    Ok(Some(value))
+}
+
+pub(crate) fn make_list(rt: &mut Runtime, values: Vec<Value>) -> Result<Value> {
+    for _ in &values {
+        rt.tick()?;
+    }
+    Ok(rt.array(values))
+}
+
+pub fn call_sync(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option<Value>> {
+    if matches!(name, "list" | "array" | "[") {
+        return make_list(rt, args.to_vec()).map(Some);
+    }
+    let a = arg(args, 0);
+    let b = arg(args, 1);
+    let c = arg(args, 2);
+    let value = match name {
+        "range" => {
+            let (mut start, end) = if matches!(b, Value::Undefined) {
+                (0.0, rt.to_number(&a))
+            } else {
+                (rt.to_number(&a), rt.to_number(&b))
+            };
+            let mut step = rt.to_number(&c);
+            if matches!(c, Value::Undefined) || step == 0.0 {
+                step = 1.0;
+            }
+            let mut result = Vec::new();
+            while if step > 0.0 { start < end } else { start > end } {
+                rt.tick()?;
+                result.push(Value::Number(start));
+                start += step;
+            }
+            rt.array(result)
+        }
+        "reshape" | "\u{2374}" => {
+            let n = if let Value::Number(n) = a { n } else { 1.0 };
+            if !n.is_finite() || n < 0.0 || n.fract() != 0.0 || n > u32::MAX as f64 {
+                return Err(invalid(
+                    "reshape requires a finite nonnegative integer length",
+                ));
+            }
+            let mut result = Vec::new();
+            check_reshape_allocation(rt, args.get(1..).unwrap_or(&[]), n as usize)?;
+            for i in 0..n as usize {
+                rt.tick()?;
+                result.push(if args.len() <= 1 {
+                    Value::Undefined
+                } else {
+                    args[1 + i % (args.len() - 1)].clone()
+                });
+            }
+            rt.array(result)
+        }
+        "zip" => {
+            let arrays = array_or_empty(rt, &a)?;
+            let mut rows = Vec::new();
+            let mut len = if b.truthy() && !arrays.is_empty() {
+                usize::MAX
+            } else {
+                0
+            };
+            for array in &arrays {
+                rt.tick()?;
+                let n = length(rt, array);
+                len = if b.truthy() { len.min(n) } else { len.max(n) };
+            }
+            for i in 0..len {
+                rt.tick()?;
+                let mut row = Vec::new();
+                for array in &arrays {
+                    rt.tick()?;
+                    row.push(rt.get(array, &i.to_string()));
+                }
+                rows.push(rt.array(row));
+            }
+            rt.array(rows)
+        }
+        "count" | "length" => rt.get(&a, "length"),
+        "empty" | "empty?" => Value::Bool(is_array(&a) && length(rt, &a) == 0),
+        "reverse" => {
+            if let Some(mut values) = rt.dense_array_values(&a) {
+                for _ in &values {
+                    rt.tick()?;
+                }
+                values.reverse();
+                return Ok(Some(rt.array(values)));
+            }
+            let result = rt.array(Vec::new());
+            for key in rt.keys(&a).into_iter().rev() {
+                rt.tick()?;
+                let value = rt.get(&a, &key);
+                let dest = if numeric_key(rt, &key) {
+                    length(rt, &result).to_string()
+                } else {
+                    key
+                };
+                rt.set(&result, &dest, value)?;
+            }
+            result
+        }
+        "slice" | "rest" => {
+            let start = if name == "rest" {
+                1.0
+            } else {
+                rt.to_number(&b)
+            };
+            if matches!(&a, Value::String(_) | Value::Utf16(_)) {
+                let units = rt.to_utf16(&a);
+                let lo = slice_index(start, units.len());
+                let hi = if name == "rest" || matches!(c, Value::Undefined) {
+                    units.len()
+                } else {
+                    slice_index(rt.to_number(&c), units.len())
+                };
+                rt.string_from_utf16(units[lo..hi.max(lo)].to_vec())
+            } else if is_array(&a) {
+                let len = length(rt, &a);
+                let lo = slice_index(start, len);
+                let hi = if name == "rest" || matches!(c, Value::Undefined) {
+                    len
+                } else {
+                    slice_index(rt.to_number(&c), len)
+                };
+                let result = rt.array(Vec::new());
+                for i in lo..hi {
+                    rt.tick()?;
+                    if has(rt, &a, &i.to_string()) {
+                        let value = rt.get(&a, &i.to_string());
+                        rt.set(&result, &(i - lo).to_string(), value)?;
+                    }
+                }
+                rt.set(&result, "length", number(hi.saturating_sub(lo)))?;
+                result
+            } else {
+                rt.array(Vec::new())
+            }
+        }
+        "concat" | "cons" | "pushStart" => {
+            let result = rt.array(Vec::new());
+            let mut offset = 0;
+            if name != "concat" {
+                rt.set(&result, "0", a.clone())?;
+                offset = 1;
+            }
+            let inputs = if name == "concat" {
+                args
+            } else {
+                std::slice::from_ref(&b)
+            };
+            for input in inputs {
+                rt.tick()?;
+                if is_array(input) {
+                    let len = length(rt, input);
+                    for i in 0..len {
+                        rt.tick()?;
+                        if has(rt, input, &i.to_string()) {
+                            let value = rt.get(input, &i.to_string());
+                            rt.set(&result, &(offset + i).to_string(), value)?;
+                        }
+                    }
+                    offset += len;
+                } else {
+                    rt.set(&result, &offset.to_string(), input.clone())?;
+                    offset += 1;
+                }
+            }
+            rt.set(&result, "length", number(offset))?;
+            result
+        }
+        "first" => {
+            if length(rt, &a) > 0 {
+                rt.get(&a, "0")
+            } else {
+                Value::Null
+            }
+        }
+        "last" => {
+            let len = length(rt, &a);
+            rt.get(
+                &a,
+                &if len == 0 {
+                    "-1".to_owned()
+                } else {
+                    (len - 1).to_string()
+                },
+            )
+        }
+        "flat" => {
+            if !is_array(&a) {
+                return Ok(Some(a));
+            }
+            let depth = if b.is_nullish() {
+                1.0
+            } else {
+                rt.to_number(&b).trunc().max(0.0)
+            };
+            let mut stack = vec![(a, 0usize, depth)];
+            let mut result = Vec::new();
+            while let Some((array, index, depth)) = stack.pop() {
+                rt.tick()?;
+                if index >= length(rt, &array) {
+                    continue;
+                }
+                stack.push((array.clone(), index + 1, depth));
+                if !has(rt, &array, &index.to_string()) {
+                    continue;
+                }
+                let value = rt.get(&array, &index.to_string());
+                if depth > 0.0 && is_array(&value) {
+                    stack.push((value, 0, depth - 1.0));
+                } else {
+                    result.push(value);
+                }
+            }
+            rt.array(result)
+        }
+        "frequencies" | "counter" => {
+            let mut result = IndexMap::new();
+            for i in 0..if is_array(&a) { length(rt, &a) } else { 0 } {
+                rt.tick()?;
+                if !has(rt, &a, &i.to_string()) {
+                    continue;
+                }
+                let key = property_key(rt, &rt.get(&a, &i.to_string()))?;
+                let count = match result.get(&key) {
+                    Some(Value::Number(n)) => *n,
+                    _ => 0.0,
+                };
+                result.insert(key, Value::Number(count + 1.0));
+            }
+            rt.object(result)
+        }
+        "partition" => {
+            let values = array_or_empty(rt, &a)?;
+            let n = rt.to_number(&b);
+            let mut groups = Vec::new();
+            let mut group: Option<Vec<Value>> = None;
+            for (i, item) in values.into_iter().enumerate() {
+                rt.tick()?;
+                if !has(rt, &a, &i.to_string()) {
+                    continue;
+                }
+                if (i as f64) % n == 0.0 {
+                    if let Some(previous) = group.take() {
+                        groups.push(rt.array(previous));
+                    }
+                    group = Some(Vec::new());
+                }
+                group
+                    .as_mut()
+                    .ok_or_else(|| {
+                        invalid("partition has no initial group for this size and sparse input")
+                    })?
+                    .push(item);
+            }
+            if let Some(group) = group {
+                groups.push(rt.array(group));
+            }
+            rt.array(groups)
+        }
+        "shuffle" | "sample" => {
+            let len = if is_array(&a) { length(rt, &a) } else { 0 };
+            let mut values = Vec::new();
+            for i in 0..len {
+                rt.tick()?;
+                if has(rt, &a, &i.to_string()) {
+                    values.push(rt.get(&a, &i.to_string()));
+                }
+            }
+            let mut rng = rand::thread_rng();
+            for i in (1..values.len()).rev() {
+                rt.tick()?;
+                values.swap(i, rng.gen_range(0..=i));
+            }
+            if name == "shuffle" {
+                let result = rt.array(values);
+                rt.set(&result, "length", number(len))?;
+                result
+            } else {
+                let n = if let Value::Number(n) = b { n } else { 1.0 };
+                if n == 1.0 {
+                    values.into_iter().next().unwrap_or(Value::Undefined)
+                } else {
+                    let count = slice_index(n, len);
+                    values.truncate(count);
+                    let result = rt.array(values);
+                    rt.set(&result, "length", number(count))?;
+                    result
+                }
+            }
+        }
+        "pluck" => {
+            let key = property_key(rt, &b)?;
+            let result = rt.array(Vec::new());
+            let len = if is_array(&a) { length(rt, &a) } else { 0 };
+            for i in 0..len {
+                rt.tick()?;
+                if has(rt, &a, &i.to_string()) {
+                    let v = rt.get(&rt.get(&a, &i.to_string()), &key);
+                    rt.set(&result, &i.to_string(), v)?;
+                }
+            }
+            rt.set(&result, "length", number(len))?;
+            result
+        }
+        "join" => {
+            if let Some(value) = join_utf8(rt, &a, &b)? {
+                return Ok(Some(value));
+            }
+            let sep = if matches!(b, Value::Undefined) {
+                vec![b',' as u16]
+            } else {
+                rt.to_utf16(&b)
+            };
+            let mut output = Vec::new();
+            let mut first = true;
+            for v in array_or_empty(rt, &a)? {
+                rt.tick()?;
+                let part = if v.is_nullish() {
+                    Vec::new()
+                } else {
+                    rt.to_utf16(&v)
+                };
+                append_joined(&mut output, &part, &sep, first)?;
+                first = false;
+            }
+            rt.string_from_utf16(output)
+        }
+        "contains?" | "containsKey" => Value::Bool(has(rt, &a, &property_key(rt, &b)?)),
+        "get" | "nth" => {
+            let key = property_key(rt, &b)?;
+            if has(rt, &a, &key) {
+                rt.get(&a, &key)
+            } else {
+                c
+            }
+        }
+        "set" => {
+            let key = property_key(rt, &b)?;
+            rt.set(&a, &key, c)?;
+            a
+        }
+        "del" => {
+            let key = property_key(rt, &b)?;
+            Value::Bool(rt.delete(&a, &key)?)
+        }
+        "keys" | "vals" | "values" | "entries" => {
+            let mut result = Vec::new();
+            for key in rt.keys(&a) {
+                rt.tick()?;
+                let value = rt.get(&a, &key);
+                result.push(match name {
+                    "keys" => Value::String(key),
+                    "entries" => rt.array(vec![Value::String(key), value]),
+                    _ => value,
+                });
+            }
+            rt.array(result)
+        }
+        "fromEntries" => {
+            let mut result = IndexMap::new();
+            for pair in array_or_empty(rt, &a)? {
+                rt.tick()?;
+                if !is_collection(&pair) {
+                    return Err(invalid("fromEntries expects object or array entries"));
+                }
+                let key = property_key(rt, &rt.get(&pair, "0"))?;
+                result.insert(key, rt.get(&pair, "1"));
+            }
+            rt.object(result)
+        }
+        "select" => selection(rt, &a, &b, false, 0)?,
+        "omit" => {
+            let copy = clone_graph(rt, &a)?;
+            selection(rt, &copy, &b, true, 0)?
+        }
+        "compact" => {
+            let copy = clone_graph(rt, &a)?;
+            let depth = if let Value::Number(n) = b { n } else { 1.0 };
+            compact(rt, &copy, depth, 0)?;
+            copy
         }
         "makeStruct" => {
             if !is_collection(&b) {

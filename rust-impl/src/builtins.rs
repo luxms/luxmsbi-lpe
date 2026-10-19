@@ -1,101 +1,102 @@
+#[path = "builtin_registry.rs"]
+pub(crate) mod registry;
 use crate::regexp::RegExp;
 use crate::{Error, Result, Runtime, Value};
 use chrono::{SecondsFormat, TimeZone, Utc};
 use futures::{future::LocalBoxFuture, FutureExt};
 use indexmap::IndexMap;
+use registry::builtin_names;
 use std::cmp::Ordering;
 
-pub fn names() -> &'static [&'static str] {
-    &[
-        "+",
-        "add",
-        "plus",
-        "-",
-        "minus",
-        "subtract",
-        "*",
-        "mul",
-        "multiply",
-        "/",
-        "div",
-        "divide",
-        "rand",
-        "max",
-        "min",
-        "=",
-        "eq",
-        "equal",
-        "==",
-        "===",
-        "strictEq",
-        "!=",
-        "neq",
-        "ne",
-        "!==",
-        "strictNe",
-        "not",
-        "!",
-        "->any",
-        "toAny",
-        "->bool",
-        "toBool",
-        "->int",
-        "toInt",
-        "toNumber",
-        "->str",
-        "toStr",
-        "read-string",
-        "jsonParse",
-        "json_parse",
-        "jsonStringify",
-        "isa",
-        "type",
-        "classOf",
-        "null?",
-        "isNull",
-        "undefined?",
-        "isUndef",
-        "isUndefined",
-        "true?",
-        "isTrue",
-        "false?",
-        "isFalse",
-        "bool?",
-        "isBool",
-        "number?",
-        "isNumber",
-        "numberlike?",
-        "isNumberLike",
-        "string?",
-        "isString",
-        "list?",
-        "isArray",
-        "hash?",
-        "isHash",
-        "obj?",
-        "isObj",
-        "func?",
-        "isFunction",
-        "pr_str",
-        "jsonJoin",
-        "str",
-        "lower",
-        "upper",
-        "split",
-        "words",
-        "indexOf",
-        "re_match",
-        "trim",
-        "trimStart",
-        "trimEnd",
-        "padStart",
-        "padEnd",
-        "replace",
-        "replaceAll",
-        "startsWith",
-        "endsWith",
-        "includes",
-    ]
+builtin_names! {
+    "+" => true,
+    "add" => true,
+    "plus" => true,
+    "-" => true,
+    "minus" => true,
+    "subtract" => true,
+    "*" => true,
+    "mul" => true,
+    "multiply" => true,
+    "/" => true,
+    "div" => true,
+    "divide" => true,
+    "rand" => true,
+    "max" => true,
+    "min" => true,
+    "=" => true,
+    "eq" => true,
+    "equal" => true,
+    "==" => true,
+    "===" => true,
+    "strictEq" => true,
+    "!=" => true,
+    "neq" => true,
+    "ne" => true,
+    "!==" => true,
+    "strictNe" => true,
+    "not" => true,
+    "!" => true,
+    "->any" => true,
+    "toAny" => true,
+    "->bool" => true,
+    "toBool" => true,
+    "->int" => true,
+    "toInt" => true,
+    "toNumber" => true,
+    "->str" => true,
+    "toStr" => true,
+    "read-string" => true,
+    "jsonParse" => true,
+    "json_parse" => true,
+    "jsonStringify" => false,
+    "isa" => true,
+    "type" => true,
+    "classOf" => true,
+    "null?" => true,
+    "isNull" => true,
+    "undefined?" => true,
+    "isUndef" => true,
+    "isUndefined" => true,
+    "true?" => true,
+    "isTrue" => true,
+    "false?" => true,
+    "isFalse" => true,
+    "bool?" => true,
+    "isBool" => true,
+    "number?" => true,
+    "isNumber" => true,
+    "numberlike?" => true,
+    "isNumberLike" => true,
+    "string?" => true,
+    "isString" => true,
+    "list?" => true,
+    "isArray" => true,
+    "hash?" => true,
+    "isHash" => true,
+    "obj?" => true,
+    "isObj" => true,
+    "func?" => true,
+    "isFunction" => true,
+    "pr_str" => false,
+    "jsonJoin" => false,
+    "str" => false,
+    "lower" => true,
+    "upper" => true,
+    "split" => true,
+    "words" => true,
+    "indexOf" => true,
+    "re_match" => true,
+    "trim" => true,
+    "trimStart" => true,
+    "trimEnd" => true,
+    "padStart" => true,
+    "padEnd" => true,
+    "replace" => false,
+    "replaceAll" => false,
+    "startsWith" => true,
+    "endsWith" => true,
+    "includes" => true,
 }
 
 fn arg(args: &[Value], index: usize) -> &Value {
@@ -129,7 +130,9 @@ fn primitive(rt: &Runtime, value: &Value, numeric_hint: bool) -> Value {
 fn compare(rt: &Runtime, a: &Value, b: &Value) -> Option<Ordering> {
     let a = primitive(rt, a, true);
     let b = primitive(rt, b, true);
-    if matches!(a, Value::String(_) | Value::Utf16(_))
+    if let (Value::String(a), Value::String(b)) = (&a, &b) {
+        Some(a.encode_utf16().cmp(b.encode_utf16()))
+    } else if matches!(a, Value::String(_) | Value::Utf16(_))
         && matches!(b, Value::String(_) | Value::Utf16(_))
     {
         Some(rt.to_utf16(&a).cmp(&rt.to_utf16(&b)))
@@ -149,7 +152,12 @@ fn add(rt: &Runtime, a: &Value, b: &Value) -> Value {
     } else {
         primitive(rt, b, false)
     };
-    if matches!(a, Value::String(_) | Value::Utf16(_))
+    if let (Value::String(a), Value::String(b)) = (&a, &b) {
+        let mut result = String::with_capacity(a.len() + b.len());
+        result.push_str(a);
+        result.push_str(b);
+        Value::String(result)
+    } else if matches!(a, Value::String(_) | Value::Utf16(_))
         || matches!(b, Value::String(_) | Value::Utf16(_))
     {
         rt.string_from_utf16([rt.to_utf16(&a), rt.to_utf16(&b)].concat())
@@ -814,8 +822,70 @@ fn regex_match(
     })
 }
 
+// These operations never invoke user code or suspend. Keep one implementation
+// shared by the immediate evaluator and the asynchronous dispatch path.
+
 pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option<Value>> {
+    if supports_sync(name) {
+        return call_sync(rt, name, args);
+    }
     if !names().contains(&name) {
+        return Ok(None);
+    }
+    rt.tick()?;
+    let a = arg(args, 0);
+    let b = arg(args, 1);
+    let c = arg(args, 2);
+    let value = match name {
+        "jsonStringify" => stringify(rt, a)
+            .await?
+            .map(Value::String)
+            .unwrap_or(Value::Undefined),
+        "str" | "pr_str" | "jsonJoin" => {
+            let mut output = Vec::new();
+            for (i, value) in args.iter().enumerate() {
+                rt.tick()?;
+                if i != 0 && name != "str" {
+                    output.push(32);
+                }
+                let part = if name == "str" {
+                    match value {
+                        Value::String(_) | Value::Utf16(_) => rt.to_utf16(value),
+                        value if value.is_callable() => {
+                            let name = rt.get(value, "lpeName");
+                            if name.is_nullish() {
+                                Vec::new()
+                            } else {
+                                rt.to_utf16(&name)
+                            }
+                        }
+                        _ => stringify(rt, value)
+                            .await?
+                            .unwrap_or_default()
+                            .encode_utf16()
+                            .collect(),
+                    }
+                } else {
+                    stringify(rt, value)
+                        .await?
+                        .unwrap_or_default()
+                        .encode_utf16()
+                        .collect()
+                };
+                output.extend(part);
+            }
+            rt.string_from_utf16(output)
+        }
+        "replace" | "replaceAll" => {
+            replace(rt, &string_receiver(a)?, b, c, name == "replaceAll").await?
+        }
+        _ => return Ok(None),
+    };
+    Ok(Some(value))
+}
+
+pub fn call_sync(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option<Value>> {
+    if !supports_sync(name) {
         return Ok(None);
     }
     rt.tick()?;
@@ -901,12 +971,11 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
         "->any" | "toAny" => a.clone(),
         "->bool" | "toBool" => Value::Bool(a.truthy()),
         "->int" | "toInt" | "toNumber" => Value::Number(rt.to_number(a)),
-        "->str" | "toStr" => rt.string_from_utf16(rt.to_utf16(a)),
+        "->str" | "toStr" => match a {
+            Value::String(_) => a.clone(),
+            _ => rt.string_from_utf16(rt.to_utf16(a)),
+        },
         "read-string" | "jsonParse" | "json_parse" => parse_json(rt, a)?,
-        "jsonStringify" => stringify(rt, a)
-            .await?
-            .map(Value::String)
-            .unwrap_or(Value::Undefined),
         "isa" => Value::Bool(instance_of(a, b)?),
         "type" => Value::String(a.type_name().into()),
         "classOf" => Value::String(format!("[object {}]", class_name(a))),
@@ -932,45 +1001,30 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
                 | Value::Stream(_)
         )),
         "func?" | "isFunction" => Value::Bool(a.is_callable()),
-        "str" | "pr_str" | "jsonJoin" => {
-            let mut output = Vec::new();
-            for (i, value) in args.iter().enumerate() {
-                rt.tick()?;
-                if i != 0 && name != "str" {
-                    output.push(32);
-                }
-                let part = if name == "str" {
-                    match value {
-                        Value::String(_) | Value::Utf16(_) => rt.to_utf16(value),
-                        value if value.is_callable() => {
-                            let name = rt.get(value, "lpeName");
-                            if name.is_nullish() {
-                                Vec::new()
-                            } else {
-                                rt.to_utf16(&name)
-                            }
-                        }
-                        _ => stringify(rt, value)
-                            .await?
-                            .unwrap_or_default()
-                            .encode_utf16()
-                            .collect(),
-                    }
-                } else {
-                    stringify(rt, value)
-                        .await?
-                        .unwrap_or_default()
-                        .encode_utf16()
-                        .collect()
-                };
-                output.extend(part);
-            }
-            rt.string_from_utf16(output)
-        }
         "lower" | "upper" => {
+            if let Value::String(s) = a {
+                return Ok(Some(Value::String(if name == "upper" {
+                    s.to_uppercase()
+                } else {
+                    s.to_lowercase()
+                })));
+            }
             rt.string_from_utf16(change_case(&string_receiver(a)?, name == "upper"))
         }
         "trim" | "trimStart" | "trimEnd" => {
+            if let Value::String(s) = a {
+                let s = if name != "trimEnd" {
+                    s.trim_start_matches(js_space)
+                } else {
+                    s
+                };
+                let s = if name != "trimStart" {
+                    s.trim_end_matches(js_space)
+                } else {
+                    s
+                };
+                return Ok(Some(Value::String(s.to_owned())));
+            }
             let text = string_receiver(a)?;
             let mut start = 0;
             let mut end = text.len();
@@ -988,6 +1042,19 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
             rt.string_from_utf16(text[start..end].to_vec())
         }
         "split" => {
+            if let (Value::String(text), Value::String(separator)) = (a, b) {
+                if !separator.is_empty() {
+                    let mut values = Vec::new();
+                    let mut parts = text.split(separator).peekable();
+                    while let Some(part) = parts.next() {
+                        if parts.peek().is_some() {
+                            rt.tick()?;
+                        }
+                        values.push(Value::String(part.to_owned()));
+                    }
+                    return Ok(Some(rt.array(values)));
+                }
+            }
             let text = string_receiver(a)?;
             let mut values = Vec::new();
             if matches!(b, Value::Undefined) {
@@ -1052,15 +1119,23 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
             }
             Value::Bool(found)
         }
-        "startsWith" => Value::Bool(string_receiver(a)?.starts_with(&rt.to_utf16(b))),
-        "endsWith" => Value::Bool(string_receiver(a)?.ends_with(&rt.to_utf16(b))),
-        "includes" => {
-            Value::Bool(index_of(rt, &string_receiver(a)?, b, &Value::Number(0.0)) >= 0.0)
+        "startsWith" | "endsWith" | "includes" => {
+            if let (Value::String(text), Value::String(search)) = (a, b) {
+                Value::Bool(match name {
+                    "startsWith" => text.starts_with(search),
+                    "endsWith" => text.ends_with(search),
+                    _ => text.contains(search),
+                })
+            } else {
+                let text = string_receiver(a)?;
+                Value::Bool(match name {
+                    "startsWith" => text.starts_with(&rt.to_utf16(b)),
+                    "endsWith" => text.ends_with(&rt.to_utf16(b)),
+                    _ => index_of(rt, &text, b, &Value::Number(0.0)) >= 0.0,
+                })
+            }
         }
         "padStart" | "padEnd" => pad(rt, &string_receiver(a)?, b, c, name == "padStart")?,
-        "replace" | "replaceAll" => {
-            replace(rt, &string_receiver(a)?, b, c, name == "replaceAll").await?
-        }
         "words" | "re_match" => regex_match(rt, &string_receiver(a)?, b, c, name == "words")?,
         _ => return Ok(None),
     };
