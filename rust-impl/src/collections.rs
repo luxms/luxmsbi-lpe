@@ -942,6 +942,15 @@ pub(crate) fn make_list(rt: &mut Runtime, values: Vec<Value>) -> Result<Value> {
 
 pub fn call_sync(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option<Value>> {
     if matches!(name, "list" | "array" | "[") {
+        if rt.controls_active() {
+            let mut values = Vec::new();
+            for value in args {
+                rt.tick()?;
+                rt.charge_value(value)?;
+                values.push(value.clone());
+            }
+            return Ok(Some(rt.array(values)));
+        }
         return make_list(rt, args.to_vec()).map(Some);
     }
     let a = arg(args, 0);

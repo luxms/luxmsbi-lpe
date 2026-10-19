@@ -1,6 +1,7 @@
 use futures::executor::block_on;
 use futures::FutureExt;
 use indexmap::IndexMap;
+pub use lpe::parser;
 use lpe::{parse, Ast, Error, Result, Value};
 use runtime::{EnvId, EvalOptions, Runtime, RuntimeControls, RuntimeLimits};
 use std::cell::RefCell;

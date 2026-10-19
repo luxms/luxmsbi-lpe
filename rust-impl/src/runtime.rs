@@ -286,6 +286,7 @@ enum Function {
         env: EnvId,
         options: EvalOptions,
         call_result: bool,
+        bind_supplied_only: bool,
     },
     Native(Native),
     Sync(Rc<dyn Fn(Vec<Value>) -> Result<Value>>),
@@ -779,7 +780,7 @@ impl Runtime {
         env: EnvId,
         options: EvalOptions,
     ) -> Value {
-        self.closure_with_params(params.into(), body, env, options, true)
+        self.closure_with_params(params.into(), body, env, options, true, false)
     }
     pub(crate) fn closure_with_params(
         &mut self,
@@ -788,6 +789,7 @@ impl Runtime {
         env: EnvId,
         options: EvalOptions,
         call_result: bool,
+        bind_supplied_only: bool,
     ) -> Value {
         let value = Value::Function(self.functions.insert(Function::Closure {
             params,
@@ -795,6 +797,7 @@ impl Runtime {
             env,
             options,
             call_result,
+            bind_supplied_only,
         }));
         self.retain_task_value(&value);
         value
@@ -1881,8 +1884,15 @@ impl Runtime {
         self.eval_with_options(source, &EvalOptions::default())
     }
     pub fn eval_with_options(&mut self, source: &str, options: &EvalOptions) -> Result<Value> {
-        let ast = crate::parse(source)?;
+        let ast = self.parse_source(source)?;
         self.eval_ast(&ast, options)
+    }
+    pub(crate) fn parse_source(&self, source: &str) -> Result<Ast> {
+        if self.legacy_context {
+            crate::parser::parse_with_options(source, &json!({"legacyLineBreaks":true}))
+        } else {
+            crate::parse(source)
+        }
     }
     pub fn eval_ast(&mut self, ast: &Ast, options: &EvalOptions) -> Result<Value> {
         if let Some(result) = self.eval_immediate(ast, options) {
@@ -2269,10 +2279,18 @@ impl Runtime {
                         env: captured,
                         options,
                         call_result,
+                        bind_supplied_only,
                     } => {
-                        let immediate_value = match self
-                            .eval_closure_immediate(&body, captured, &options, &params, &args, id)
-                        {
+                        // Immediate call bindings fill missing slots. A legacy fn
+                        // keeps its supplied-only policy even after profile changes.
+                        let immediate = if bind_supplied_only {
+                            None
+                        } else {
+                            self.eval_closure_immediate(
+                                &body, captured, &options, &params, &args, id,
+                            )
+                        };
+                        let immediate_value = match immediate {
                             Some(Ok(value)) if !call_result || !value.is_callable() => {
                                 return Ok(value)
                             }
@@ -2286,6 +2304,9 @@ impl Runtime {
                         let mut bindings = IndexMap::new();
                         bindings.insert("$this$".into(), Value::Function(id));
                         for (index, name) in params.iter().enumerate() {
+                            if bind_supplied_only && index >= args.len() {
+                                break;
+                            }
                             bindings.insert(
                                 name.clone(),
                                 args.get(index).cloned().unwrap_or(Value::Undefined),
