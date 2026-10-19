@@ -38,12 +38,18 @@ a small difference on a busy machine as a universal speed guarantee.
 
 ## Measured result (2026-10-19, lower-load rerun)
 
-The unchanged implementation passed the performance gate on an Intel Core
+The implementation at commit `612b38a` passed the performance gate on an Intel Core
 i9-8950HK (macOS), Rust 1.99.0 (Homebrew), and Node 26.12.0. Nine alternating
 samples used 100,000 iterations and 10,000 warm-ups per ordinary case; the
 production parser case used 200 iterations and 200 warm-ups. Builds finished
 before timing. Release builds include ThinLTO and one code-generation unit.
 Every measured phase had a lower Rust median.
+
+These measurements precede integration of the newer `rustaple` runtime controls
+and legacy context profile for release 1.8.0. Those opt-in modes use the full
+evaluator and retain their control accounting and lookup/callable-return rules;
+the default profile retains the immediate evaluator. The table is evidence for
+the measured revision, not a performance measurement of either opt-in mode.
 
 ```sh
 BENCH_ITERATIONS=100000 BENCH_REPEATS=9 node rust-impl/scripts/benchmark.mjs --require-parity

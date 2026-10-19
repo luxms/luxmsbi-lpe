@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.8.0](https://github.com/luxms/luxmsbi-lpe/compare/v1.7.3...v1.8.0) (2026-10-19)
+
+### Features
+
+* Add the native Rust LPE parser, interpreter, embedding API, and WASI 0.3 command with shared JavaScript compatibility fixtures.
+* Add opt-in cooperative evaluation and regex controls, including work, depth, intermediate-allocation budgets, and host interrupt hooks.
+* Add a bounded legacy 1.6.7 context profile with compatible lookup, assignment, and callable-return behavior.
+
+### Performance
+
+* Reduce environment, AST, closure, and temporary-buffer allocations; evaluate eligible synchronous expressions without per-node futures.
+* Use UTF-8 fast paths while preserving JavaScript UTF-16 code-unit semantics and surrogate handling.
+* Add repeatable Rust/JavaScript benchmarks with correctness checks and an explicit performance gate; document measurements and host limitations in [rust-impl/PERFORMANCE.md](rust-impl/PERFORMANCE.md).
+
+### Tests and documentation
+
+* Add production-layout regressions, controlled-evaluation boundary checks, and closure lifetime coverage.
+* Validate native Linux/macOS builds, Rust 1.92 compatibility, JavaScript parity, and WASI execution in GitHub Actions.
+* Refresh the English README and add a Russian translation.
+
 ### [1.7.3](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.7.2...v1.7.3) (2026-09-23)
 
 
