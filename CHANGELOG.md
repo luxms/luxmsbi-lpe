@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## Unreleased Rust
+
+* Preserve supplied-only parameter binding in legacy `fn`, including missing duplicate arguments and captured closures.
+* Add opt-in `legacyLineBreaks` parsing for JS 1.6.7 and apply it to legacy runtime source evaluation without changing default grammar.
+* Check controlled list allocation budgets and interrupts before copying argument payloads; retain the uncontrolled fast path.
+* Add parameter/profile, parser/diagnostic, allocation-order and recovery regressions. No release version or tag is assigned here.
+
 ## [1.8.0](https://github.com/luxms/luxmsbi-lpe/compare/v1.7.3...v1.8.0) (2026-10-19)
 
 ### Features

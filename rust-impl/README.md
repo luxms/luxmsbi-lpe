@@ -163,6 +163,26 @@ non-relaxable nested work/depth ceilings. See
 [RUNTIME-CONTROLS.md](RUNTIME-CONTROLS.md) for integration and coverage limits.
 No new controls are installed by the CLI or WASI entry point by default.
 
+## Legacy embedding profile
+
+Hosts targeting JS 1.6.7 can opt in with `Runtime::set_legacy_context(true)`.
+Legacy `fn` binds only arguments actually supplied: a missing duplicate parameter
+does not overwrite an earlier value, while an explicitly supplied `undefined`
+still participates in binding. This policy and deferred callable returns are
+captured when the closure is created. Modern `fn`, other closure constructors,
+and host-created closures retain their existing behavior.
+
+Standalone parsing can opt in with
+`parser::parse_with_options(source, &serde_json::json!({"legacyLineBreaks": true}))`.
+In this mode a top-level newline before a dot starts a new statement, matching
+JS 1.6.7; newlines after a dot and within grouped expressions retain their normal
+handling. `parse_with_diagnostics` accepts the same option. Runtime source
+evaluation and `eval_lpe` select it when the legacy context profile is enabled.
+Default parsing continues to join multiline dot chains.
+
+This is a bounded compatibility profile, not a complete JS 1.6.7 interpreter.
+Hosts remain responsible for their JSON conversion and callable API boundaries.
+
 ## Unicode boundary
 
 Input, output, source code, and JSON interchange use UTF-8. Valid Unicode text,

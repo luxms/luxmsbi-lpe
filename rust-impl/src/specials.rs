@@ -1056,7 +1056,7 @@ pub async fn call(
                         let input = values[0].clone();
                         let ast = match name.as_str() {
                             "eval_ast" => value_ast(rt, input)?,
-                            "eval_lpe" => crate::parse(&rt.to_string(&input))?,
+                            "eval_lpe" => rt.parse_source(&rt.to_string(&input))?,
                             _ => serde_json::from_str(&rt.to_string(&input))
                                 .map_err(|e| Error::new("SyntaxError", e.to_string()))?,
                         };
@@ -1368,9 +1368,10 @@ pub(crate) fn make_closure(
         })
         .collect();
     let body = body.clone();
-    // Legacy fn returns callable results directly; capture the creation profile.
-    let call_result = name != "fn" || !rt.legacy_context_enabled();
-    Ok(rt.closure_with_params(params, body, env, options.clone(), call_result))
+    // Legacy fn binds only supplied arguments and returns callable results directly.
+    // Other constructors keep filling missing slots, regardless of the profile.
+    let legacy_fn = name == "fn" && rt.legacy_context_enabled();
+    Ok(rt.closure_with_params(params, body, env, options.clone(), !legacy_fn, legacy_fn))
 }
 
 fn let_scope(rt: &mut Runtime, values: Vec<Value>, kv_array: bool, env: EnvId) -> Result<EnvId> {

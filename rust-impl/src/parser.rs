@@ -204,7 +204,7 @@ impl Lexer {
     }
 }
 
-fn tokenize(source: &str, square: bool) -> Result<Vec<Token>> {
+fn tokenize(source: &str, square: bool, legacy_line_breaks: bool) -> Result<Vec<Token>> {
     if source.len() > MAX_SOURCE {
         return Err(syntax("Source size limit exceeded."));
     }
@@ -351,7 +351,7 @@ fn tokenize(source: &str, square: bool) -> Result<Vec<Token>> {
             return Err(syntax("Token limit exceeded."));
         }
     }
-    // Only a dot joins top-level lines; comments have already been removed.
+    // Legacy JS joins after a dot, but a newline before it starts a statement.
     let mut filtered: Vec<Token> = Vec::with_capacity(tokens.len() + 1);
     let mut i = 0;
     while i < tokens.len() {
@@ -361,7 +361,7 @@ fn tokenize(source: &str, square: bool) -> Result<Vec<Token>> {
                 i += 1;
             }
             if filtered.last().is_some_and(|t| t.text == ".")
-                || tokens.get(i).is_some_and(|t| t.text == ".")
+                || (!legacy_line_breaks && tokens.get(i).is_some_and(|t| t.text == "."))
             {
                 continue;
             }
@@ -936,7 +936,9 @@ pub fn parse(source: &str) -> Result<Value> {
     parse_with_options(source, &Value::Null)
 }
 
-/// `squareBrackets` selects SQL column literals. Debug metadata is not a JSON AST property.
+/// `squareBrackets` selects SQL column literals. `legacyLineBreaks` preserves
+/// top-level newlines before dots as statement boundaries, matching JS 1.6.7.
+/// Both options default to false. Debug metadata is not a JSON AST property.
 pub fn parse_with_options(source: &str, options: &Value) -> Result<Value> {
     parse_internal(source, options, false).map_err(|failure| failure.error)
 }
@@ -963,6 +965,10 @@ fn parse_internal(
         source,
         options
             .get("squareBrackets")
+            .and_then(Value::as_bool)
+            .unwrap_or(false),
+        options
+            .get("legacyLineBreaks")
             .and_then(Value::as_bool)
             .unwrap_or(false),
     )
