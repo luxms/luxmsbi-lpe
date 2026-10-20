@@ -15,6 +15,10 @@ const fixture = cases.find(c => c.id === name);
 if (!fixture) throw new Error('unknown benchmark case');
 const source = fixture.sourceFile ? readFileSync(path.join(__dirname, '../fixtures', fixture.sourceFile), 'utf8') : fixture.source;
 const ast = parse(source);
+// Match Rust's untimed setup for reusable closures and lexical captures.
+for (const [name, source] of Object.entries(fixture.setup || {})) {
+  fixture.context[name] = eval_lisp(parse(source), fixture.context);
+}
 if (!fixture.parseOnly) assert.deepEqual(eval_lisp(ast, fixture.context), fixture.expected);
 for (let i = 0; i < warmup; i++) {
   parse(source);

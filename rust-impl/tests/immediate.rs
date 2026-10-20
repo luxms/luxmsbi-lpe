@@ -20,6 +20,8 @@ fn optimized_expressions_keep_controlled_evaluation_budgets() {
         "split('a-b-c','-')",
         "join(reverse([1,2,3]),'-')",
         "let([[f,fn(x,add(x,1))]],f(41))",
+        "let([[f,fn(x,add(x,1))]],f(add(price,tax)))",
+        "let([[f,fn([x,y],add(x,y))]],f(price,add(tax,1)))",
     ] {
         let ast = parse(source).unwrap();
         for work in [0, 1, 10, 64, 4096] {
@@ -64,6 +66,8 @@ fn immediate_and_async_evaluation_agree_at_every_budget_and_depth_boundary() {
         "q(42)",
         "add(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20)",
         "let([[f,fn(x,add(x,1))]],f(41))",
+        "let([[f,fn(x,add(x,1))]],f(add(price,tax)))",
+        "let([[f,fn([x,y],add(x,y))]],f(price,add(tax,1)))",
     ] {
         let ast = parse(source).unwrap();
         for steps in 0..40 {

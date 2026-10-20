@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file. See [standa
 
 ## Unreleased Rust
 
+* Reduce closure-call future size and share immutable closure bodies through a bounded weak cache, preserving edited ASTs, live captures, and collection behavior.
+* Avoid builtin-name copies and async task setup for validated synchronous call arguments while preserving dynamic lookup and fallback ordering.
+* Add separate benchmarks for closure construction, repeated calls, lexical captures, multiple parameters, and nested calls.
 * Preserve supplied-only parameter binding in legacy `fn`, including missing duplicate arguments and captured closures.
 * Add opt-in `legacyLineBreaks` parsing for JS 1.6.7 and apply it to legacy runtime source evaluation without changing default grammar.
 * Check controlled list allocation budgets and interrupts before copying argument payloads; retain the uncontrolled fast path.
