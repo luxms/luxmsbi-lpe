@@ -513,7 +513,7 @@ fn merge_deep<'a>(
             next.push(Value::String(key.clone()));
             let value = if is_collection(&av) && is_collection(&bv) {
                 merge_deep(rt, av, bv, f.clone(), manual, next).await?
-            } else if !manual && !(has(rt, &a, &key) && has(rt, &b, &key)) {
+            } else if !(manual || has(rt, &a, &key) && has(rt, &b, &key)) {
                 if av.is_nullish() {
                     bv
                 } else {
@@ -639,11 +639,9 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
                         rt.charge_value(&out)?;
                         result.push(out);
                     }
-                    "filter" | "filterArr" => {
-                        if out.truthy() {
-                            rt.charge_value(&item)?;
-                            result.push(item);
-                        }
+                    "filter" | "filterArr" if out.truthy() => {
+                        rt.charge_value(&item)?;
+                        result.push(item);
                     }
                     "reduce" | "reduceArr" => acc = out,
                     "find" if out.truthy() => return Ok(Some(item)),
