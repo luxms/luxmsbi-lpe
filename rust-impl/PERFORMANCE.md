@@ -41,6 +41,81 @@ Rust time. Ratios above one favor Rust. Do not run builds or other benchmarks
 alongside an acceptance measurement. Report variation rather than interpreting
 a small difference on a busy machine as a universal speed guarantee.
 
+When comparing revisions, use separate Cargo target directories and apply the
+same benchmark driver and fixtures to both source trees. A shared target
+directory can reuse the previous worktree's executable through Cargo's freshness
+checks. Record the source revisions and binary/input SHA-256 fingerprints;
+reject an optimization comparison if its baseline and candidate binaries are
+identical. Finish both builds before starting any timed process.
+
+## Closure performance (2026-10-20, isolated Linux runner)
+
+[The verified comparison](https://github.com/luxms/luxmsbi-lpe/actions/runs/39397731750)
+measures `r1.7.3` (`02bb74e`) against `ca91876` and the shared JavaScript reference.
+It uses Ubuntu 22.04, four logical CPUs on an AMD EPYC 7763, Rust 1.99.1, and Node
+26.12.0. Each ordinary case has nine samples of 100,000 iterations after 10,000
+warm-ups. Baseline Rust, candidate Rust, and JS rotate through all three positions
+equally. The production parser uses 200 iterations and 200 warm-ups.
+
+Both Rust revisions use the expanded benchmark driver and fixtures, separate
+target directories, and identical release settings. The binary hashes are
+distinct; all measured input and binary hashes remain unchanged throughout.
+The one-minute load average ranges from 1.09 to 1.81, with median 1.28.
+
+| Closure case | r1.7.3 eval, µs | Candidate eval, µs | JS eval, µs | Speedup vs r1.7.3 | Speedup vs JS |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Create and invoke (`closure`) | 2.922 | 2.337 | 3.572 | 1.25x | 1.53x |
+| Construction (`closure-create`) | 0.621 | 0.315 | 0.993 | 1.97x | 3.15x |
+| Repeated call (`closure-call`) | 0.812 | 0.689 | 0.833 | 1.18x | 1.21x |
+| Captured binding (`closure-capture`) | 0.819 | 0.708 | 1.147 | 1.16x | 1.62x |
+| Five arguments (`closure-multi-arg`) | 1.157 | 1.023 | 1.328 | 1.13x | 1.30x |
+| Nested calls (`closure-nested`) | 3.773 | 2.978 | 2.003 | 1.27x | 0.67x |
+
+Every closure evaluation improves relative to the release. The six other
+evaluation cases improve by 1.13–1.34x as well, because immediate operator lookup
+also avoids temporary name allocations. Parsing is unchanged in implementation;
+its medians vary by less than 3% against the release.
+
+All 13 parse cases and 11 of 12 evaluation cases beat JS. **Nested closure calls
+still take 1.49x the JS time.** Consequently, the expanded suite does not pass an
+all-cases JS performance gate. The hosted job validates completion and results;
+its successful status is not a claim of universal JS performance parity.
+
+The run's `closure-performance-comparison` artifact contains the full nine-sample
+report, host information, source revisions, and fingerprints. A local copy is in
+the ignored `rust-impl/reports/closure-ci-corrected-20261020/` directory.
+The earlier run `39395782386` reused the baseline executable for both labels;
+its comparison is invalid and none of its timing results are used here.
+
+The implementation also passed all six jobs in
+[Rust CI](https://github.com/luxms/luxmsbi-lpe/actions/runs/39395821800): formatting
+and Clippy, Linux stable, macOS stable, Rust 1.92, JS/native compatibility including
+4,607 parity fixtures, and WASI compatibility. These checks do not measure WASI
+performance.
+
+## Closure allocation comparison (2026-10-20)
+
+The closure implementation at `ca91876` reduces allocation compared with release
+`r1.7.3` (`02bb74e`). A local counting wrapper around Rust's `System` allocator
+measured the existing `closure` fixture after 1,024 warm-ups, over 1,024
+evaluations, including collection every 256 evaluations. Parsing, runtime setup,
+and the warm-up are outside the counted interval.
+
+| Metric | r1.7.3 | Closure changes |
+| --- | ---: | ---: |
+| Allocations/reallocations per evaluation | 28.180 | 18.199 |
+| Bytes requested per evaluation | 5,515.766 | 4,709.973 |
+| Heap-allocated closure call future, bytes | 912 | 424 |
+
+This is 35.4% fewer allocation requests and 14.6% fewer requested bytes for this
+fixture. Future size falls by 53.5%. These are native macOS x86-64 measurements
+with Rust 1.99.0, not elapsed-time results or promises about other targets.
+The runtime still uses the embedding application's allocator.
+
+The local timing attempts overlapped unrelated Rust builds and encountered CPU
+throttling. They were stopped; their partial samples are not used as clean
+performance evidence.
+
 ## Measured result (2026-10-19, lower-load rerun)
 
 The implementation at commit `612b38a` passed the performance gate on an Intel Core
