@@ -1,0 +1,2100 @@
+{
+  "jsVersion": "1.7.3",
+  "cases": [
+    {
+      "id": "dispatch:missing:default",
+      "legacy": true,
+      "ast": [
+        "missing",
+        [
+          "mark",
+          1
+        ],
+        [
+          "throw",
+          [
+            "q",
+            "argument-error"
+          ]
+        ]
+      ],
+      "context": {},
+      "expected": {
+        "error": "missing is not a function",
+        "events": []
+      }
+    },
+    {
+      "id": "dispatch:missing:unresolved",
+      "legacy": true,
+      "ast": [
+        "missing",
+        [
+          "mark",
+          1
+        ],
+        [
+          "throw",
+          [
+            "q",
+            "argument-error"
+          ]
+        ]
+      ],
+      "context": {},
+      "options": {
+        "resolveString": false
+      },
+      "expected": {
+        "error": "missing is not a function",
+        "events": []
+      }
+    },
+    {
+      "id": "dispatch:number:default",
+      "legacy": true,
+      "ast": [
+        7,
+        [
+          "mark",
+          1
+        ],
+        [
+          "throw",
+          [
+            "q",
+            "argument-error"
+          ]
+        ]
+      ],
+      "context": {},
+      "expected": {
+        "error": "7 is not a function",
+        "events": []
+      }
+    },
+    {
+      "id": "dispatch:number:unresolved",
+      "legacy": true,
+      "ast": [
+        7,
+        [
+          "mark",
+          1
+        ],
+        [
+          "throw",
+          [
+            "q",
+            "argument-error"
+          ]
+        ]
+      ],
+      "context": {},
+      "options": {
+        "resolveString": false
+      },
+      "expected": {
+        "error": "7 is not a function",
+        "events": []
+      }
+    },
+    {
+      "id": "dispatch:null:default",
+      "legacy": true,
+      "ast": [
+        null,
+        [
+          "mark",
+          1
+        ],
+        [
+          "throw",
+          [
+            "q",
+            "argument-error"
+          ]
+        ]
+      ],
+      "context": {},
+      "expected": {
+        "error": "null is not a function",
+        "events": []
+      }
+    },
+    {
+      "id": "dispatch:null:unresolved",
+      "legacy": true,
+      "ast": [
+        null,
+        [
+          "mark",
+          1
+        ],
+        [
+          "throw",
+          [
+            "q",
+            "argument-error"
+          ]
+        ]
+      ],
+      "context": {},
+      "options": {
+        "resolveString": false
+      },
+      "expected": {
+        "error": "null is not a function",
+        "events": []
+      }
+    },
+    {
+      "id": "dispatch:false:default",
+      "legacy": true,
+      "ast": [
+        false,
+        [
+          "mark",
+          1
+        ],
+        [
+          "throw",
+          [
+            "q",
+            "argument-error"
+          ]
+        ]
+      ],
+      "context": {},
+      "expected": {
+        "error": "false is not a function",
+        "events": []
+      }
+    },
+    {
+      "id": "dispatch:false:unresolved",
+      "legacy": true,
+      "ast": [
+        false,
+        [
+          "mark",
+          1
+        ],
+        [
+          "throw",
+          [
+            "q",
+            "argument-error"
+          ]
+        ]
+      ],
+      "context": {},
+      "options": {
+        "resolveString": false
+      },
+      "expected": {
+        "error": "false is not a function",
+        "events": []
+      }
+    },
+    {
+      "id": "dispatch:bound-number:default",
+      "legacy": true,
+      "ast": [
+        "blocked",
+        [
+          "mark",
+          1
+        ],
+        [
+          "throw",
+          [
+            "q",
+            "argument-error"
+          ]
+        ]
+      ],
+      "context": {
+        "blocked": 7
+      },
+      "expected": {
+        "error": "7 is not a function",
+        "events": []
+      }
+    },
+    {
+      "id": "dispatch:bound-number:unresolved",
+      "legacy": true,
+      "ast": [
+        "blocked",
+        [
+          "mark",
+          1
+        ],
+        [
+          "throw",
+          [
+            "q",
+            "argument-error"
+          ]
+        ]
+      ],
+      "context": {
+        "blocked": 7
+      },
+      "options": {
+        "resolveString": false
+      },
+      "expected": {
+        "error": "7 is not a function",
+        "events": []
+      }
+    },
+    {
+      "id": "dispatch:bound-null:default",
+      "legacy": true,
+      "ast": [
+        "blocked",
+        [
+          "mark",
+          1
+        ],
+        [
+          "throw",
+          [
+            "q",
+            "argument-error"
+          ]
+        ]
+      ],
+      "context": {
+        "blocked": null
+      },
+      "expected": {
+        "error": "blocked is not a function",
+        "events": []
+      }
+    },
+    {
+      "id": "dispatch:bound-null:unresolved",
+      "legacy": true,
+      "ast": [
+        "blocked",
+        [
+          "mark",
+          1
+        ],
+        [
+          "throw",
+          [
+            "q",
+            "argument-error"
+          ]
+        ]
+      ],
+      "context": {
+        "blocked": null
+      },
+      "options": {
+        "resolveString": false
+      },
+      "expected": {
+        "error": "blocked is not a function",
+        "events": []
+      }
+    },
+    {
+      "id": "dispatch:bound-object:default",
+      "legacy": true,
+      "ast": [
+        "blocked",
+        [
+          "mark",
+          1
+        ],
+        [
+          "throw",
+          [
+            "q",
+            "argument-error"
+          ]
+        ]
+      ],
+      "context": {
+        "blocked": {}
+      },
+      "expected": {
+        "error": "[object Object] is not a function",
+        "events": []
+      }
+    },
+    {
+      "id": "dispatch:bound-object:unresolved",
+      "legacy": true,
+      "ast": [
+        "blocked",
+        [
+          "mark",
+          1
+        ],
+        [
+          "throw",
+          [
+            "q",
+            "argument-error"
+          ]
+        ]
+      ],
+      "context": {
+        "blocked": {}
+      },
+      "options": {
+        "resolveString": false
+      },
+      "expected": {
+        "error": "[object Object] is not a function",
+        "events": []
+      }
+    },
+    {
+      "id": "dispatch:nested-missing",
+      "legacy": true,
+      "ast": [
+        "macroexpand",
+        [
+          "firstArg",
+          [
+            "mark",
+            1
+          ]
+        ]
+      ],
+      "expected": {
+        "error": "macroexpand is not a function",
+        "events": []
+      }
+    },
+    {
+      "id": "dispatch:caught-side-effect",
+      "legacy": true,
+      "ast": [
+        "try",
+        [
+          "missing",
+          [
+            "assign",
+            "n",
+            7
+          ]
+        ],
+        "err",
+        "n"
+      ],
+      "context": {
+        "n": 0
+      },
+      "expected": {
+        "value": 0,
+        "events": []
+      }
+    },
+    {
+      "id": "dispatch:earlier-sibling-once",
+      "legacy": true,
+      "ast": [
+        "begin",
+        [
+          "mark",
+          1
+        ],
+        [
+          "missing",
+          [
+            "mark",
+            2
+          ]
+        ]
+      ],
+      "expected": {
+        "error": "missing is not a function",
+        "events": [
+          [
+            "mark",
+            1
+          ]
+        ]
+      }
+    },
+    {
+      "id": "dispatch:computed-operator-once",
+      "legacy": true,
+      "ast": [
+        [
+          "mark",
+          7
+        ],
+        [
+          "mark",
+          2
+        ]
+      ],
+      "expected": {
+        "error": "7 is not a function",
+        "events": [
+          [
+            "mark",
+            7
+          ]
+        ]
+      }
+    },
+    {
+      "id": "dispatch:closure-parameter",
+      "ast": [
+        "let",
+        [
+          [
+            "f",
+            [
+              "fn",
+              [
+                "op"
+              ],
+              [
+                "op",
+                [
+                  "mark",
+                  1
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "f",
+          7
+        ]
+      ],
+      "expected": {
+        "error": "7 is not a function",
+        "events": []
+      }
+    },
+    {
+      "id": "dispatch:closure-fallback",
+      "ast": [
+        "let",
+        [
+          [
+            "f",
+            [
+              "fn",
+              [],
+              [
+                "begin",
+                [
+                  "+",
+                  2,
+                  3
+                ],
+                [
+                  "missing",
+                  [
+                    "mark",
+                    1
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ],
+        [
+          "f"
+        ]
+      ],
+      "expected": {
+        "error": "missing is not a function",
+        "events": []
+      }
+    },
+    {
+      "id": "dispatch:lazy-branch",
+      "legacy": true,
+      "ast": [
+        "if",
+        false,
+        [
+          "missing",
+          [
+            "mark",
+            1
+          ]
+        ],
+        42
+      ],
+      "expected": {
+        "value": 42,
+        "events": []
+      }
+    },
+    {
+      "id": "dispatch:callable-control",
+      "legacy": true,
+      "ast": [
+        "+",
+        [
+          "mark",
+          1
+        ],
+        [
+          "mark",
+          2
+        ]
+      ],
+      "expected": {
+        "value": 3,
+        "events": [
+          [
+            "mark",
+            1
+          ],
+          [
+            "mark",
+            2
+          ]
+        ]
+      }
+    },
+    {
+      "id": "assignment:language-function",
+      "ast": [
+        "let",
+        [
+          "fn",
+          [
+            "name",
+            "value"
+          ],
+          [
+            "if",
+            [
+              "=",
+              "name",
+              [
+                "q",
+                "x"
+              ]
+            ],
+            4,
+            [
+              "get",
+              {},
+              [
+                "q",
+                "missing"
+              ]
+            ]
+          ]
+        ],
+        [
+          "list",
+          [
+            "def",
+            "x",
+            8
+          ],
+          "x"
+        ]
+      ],
+      "expected": {
+        "value": [
+          4,
+          4
+        ],
+        "events": []
+      }
+    },
+    {
+      "id": "assignment:def:number",
+      "resolver": {
+        "result": 4
+      },
+      "context": {
+        "x": 2
+      },
+      "ast": [
+        "let",
+        [
+          "identity",
+          "resolver"
+        ],
+        [
+          "list",
+          [
+            "def",
+            "x",
+            [
+              "mark",
+              8
+            ]
+          ],
+          "x"
+        ]
+      ],
+      "expected": {
+        "value": [
+          4,
+          4
+        ],
+        "events": [
+          [
+            "mark",
+            8
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ]
+        ]
+      }
+    },
+    {
+      "id": "assignment:def:null",
+      "resolver": {
+        "result": null
+      },
+      "context": {
+        "x": 2
+      },
+      "ast": [
+        "let",
+        [
+          "identity",
+          "resolver"
+        ],
+        [
+          "list",
+          [
+            "def",
+            "x",
+            [
+              "mark",
+              8
+            ]
+          ],
+          "x"
+        ]
+      ],
+      "expected": {
+        "value": [
+          null,
+          null
+        ],
+        "events": [
+          [
+            "mark",
+            8
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ]
+        ]
+      }
+    },
+    {
+      "id": "assignment:def:false",
+      "resolver": {
+        "result": false
+      },
+      "context": {
+        "x": 2
+      },
+      "ast": [
+        "let",
+        [
+          "identity",
+          "resolver"
+        ],
+        [
+          "list",
+          [
+            "def",
+            "x",
+            [
+              "mark",
+              8
+            ]
+          ],
+          "x"
+        ]
+      ],
+      "expected": {
+        "value": [
+          false,
+          false
+        ],
+        "events": [
+          [
+            "mark",
+            8
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ]
+        ]
+      }
+    },
+    {
+      "id": "assignment:def:missing",
+      "resolver": {
+        "result": {
+          "$lpe": "undefined"
+        }
+      },
+      "context": {
+        "x": 2
+      },
+      "ast": [
+        "let",
+        [
+          "identity",
+          "resolver"
+        ],
+        [
+          "list",
+          [
+            "def",
+            "x",
+            [
+              "mark",
+              8
+            ]
+          ],
+          "x"
+        ]
+      ],
+      "expected": {
+        "value": [
+          8,
+          8
+        ],
+        "events": [
+          [
+            "mark",
+            8
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ]
+        ]
+      }
+    },
+    {
+      "id": "assignment:def:error",
+      "resolver": {
+        "error": true
+      },
+      "context": {
+        "x": 2
+      },
+      "ast": [
+        "let",
+        [
+          "identity",
+          "resolver"
+        ],
+        [
+          "list",
+          [
+            "def",
+            "x",
+            [
+              "mark",
+              8
+            ]
+          ],
+          "x"
+        ]
+      ],
+      "expected": {
+        "error": "resolver-error",
+        "events": [
+          [
+            "mark",
+            8
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ]
+        ]
+      }
+    },
+    {
+      "id": "assignment:def:undefined-rhs",
+      "resolver": {
+        "result": 4
+      },
+      "ast": [
+        "let",
+        [
+          "identity",
+          "resolver"
+        ],
+        [
+          "def",
+          "x",
+          [
+            "get",
+            {},
+            [
+              "q",
+              "missing"
+            ]
+          ]
+        ]
+      ],
+      "expected": {
+        "value": 4,
+        "events": [
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ]
+        ]
+      }
+    },
+    {
+      "id": "assignment:def:missing-binding",
+      "resolver": {
+        "result": {
+          "$lpe": "undefined"
+        }
+      },
+      "ast": [
+        "let",
+        [
+          "identity",
+          "resolver"
+        ],
+        [
+          "begin",
+          [
+            "def",
+            "x",
+            [
+              "mark",
+              8
+            ]
+          ],
+          "x"
+        ]
+      ],
+      "expected": {
+        "value": 8,
+        "events": [
+          [
+            "mark",
+            8
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ]
+        ]
+      }
+    },
+    {
+      "id": "assignment:def:rhs-error",
+      "resolver": {
+        "result": 4
+      },
+      "ast": [
+        "let",
+        [
+          "identity",
+          "resolver"
+        ],
+        [
+          "def",
+          "x",
+          [
+            "throw",
+            [
+              "q",
+              "rhs-error"
+            ]
+          ]
+        ]
+      ],
+      "expected": {
+        "error": "rhs-error",
+        "events": []
+      }
+    },
+    {
+      "id": "assignment:def:option-fallthrough",
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true
+      },
+      "resolver": {
+        "result": 4,
+        "options": true
+      },
+      "context": {
+        "x": 2
+      },
+      "ast": [
+        "let",
+        [
+          "identity",
+          "resolver"
+        ],
+        [
+          "list",
+          [
+            "def",
+            "x",
+            8
+          ],
+          "x"
+        ]
+      ],
+      "expected": {
+        "value": [
+          8,
+          8
+        ],
+        "events": [
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            false,
+            true
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            false,
+            true
+          ]
+        ]
+      }
+    },
+    {
+      "id": "assignment:def:option-match",
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true
+      },
+      "resolver": {
+        "result": 4,
+        "options": true
+      },
+      "ast": [
+        "let",
+        [
+          "identity",
+          "resolver"
+        ],
+        [
+          "list",
+          [
+            "def",
+            "x",
+            8
+          ],
+          "x"
+        ]
+      ],
+      "expected": {
+        "value": [
+          4,
+          4
+        ],
+        "events": [
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            true
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            true
+          ]
+        ]
+      }
+    },
+    {
+      "id": "assignment:assign:number",
+      "resolver": {
+        "result": 4
+      },
+      "context": {
+        "x": 2
+      },
+      "ast": [
+        "let",
+        [
+          "identity",
+          "resolver"
+        ],
+        [
+          "list",
+          [
+            "assign",
+            "x",
+            [
+              "mark",
+              8
+            ]
+          ],
+          "x"
+        ]
+      ],
+      "expected": {
+        "value": [
+          4,
+          4
+        ],
+        "events": [
+          [
+            "mark",
+            8
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ]
+        ]
+      }
+    },
+    {
+      "id": "assignment:assign:null",
+      "resolver": {
+        "result": null
+      },
+      "context": {
+        "x": 2
+      },
+      "ast": [
+        "let",
+        [
+          "identity",
+          "resolver"
+        ],
+        [
+          "list",
+          [
+            "assign",
+            "x",
+            [
+              "mark",
+              8
+            ]
+          ],
+          "x"
+        ]
+      ],
+      "expected": {
+        "value": [
+          null,
+          null
+        ],
+        "events": [
+          [
+            "mark",
+            8
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ]
+        ]
+      }
+    },
+    {
+      "id": "assignment:assign:false",
+      "resolver": {
+        "result": false
+      },
+      "context": {
+        "x": 2
+      },
+      "ast": [
+        "let",
+        [
+          "identity",
+          "resolver"
+        ],
+        [
+          "list",
+          [
+            "assign",
+            "x",
+            [
+              "mark",
+              8
+            ]
+          ],
+          "x"
+        ]
+      ],
+      "expected": {
+        "value": [
+          false,
+          false
+        ],
+        "events": [
+          [
+            "mark",
+            8
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ]
+        ]
+      }
+    },
+    {
+      "id": "assignment:assign:missing",
+      "resolver": {
+        "result": {
+          "$lpe": "undefined"
+        }
+      },
+      "context": {
+        "x": 2
+      },
+      "ast": [
+        "let",
+        [
+          "identity",
+          "resolver"
+        ],
+        [
+          "list",
+          [
+            "assign",
+            "x",
+            [
+              "mark",
+              8
+            ]
+          ],
+          "x"
+        ]
+      ],
+      "expected": {
+        "value": [
+          8,
+          8
+        ],
+        "events": [
+          [
+            "mark",
+            8
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ]
+        ]
+      }
+    },
+    {
+      "id": "assignment:assign:error",
+      "resolver": {
+        "error": true
+      },
+      "context": {
+        "x": 2
+      },
+      "ast": [
+        "let",
+        [
+          "identity",
+          "resolver"
+        ],
+        [
+          "list",
+          [
+            "assign",
+            "x",
+            [
+              "mark",
+              8
+            ]
+          ],
+          "x"
+        ]
+      ],
+      "expected": {
+        "error": "resolver-error",
+        "events": [
+          [
+            "mark",
+            8
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ]
+        ]
+      }
+    },
+    {
+      "id": "assignment:assign:undefined-rhs",
+      "resolver": {
+        "result": 4
+      },
+      "ast": [
+        "let",
+        [
+          "identity",
+          "resolver"
+        ],
+        [
+          "assign",
+          "x",
+          [
+            "get",
+            {},
+            [
+              "q",
+              "missing"
+            ]
+          ]
+        ]
+      ],
+      "expected": {
+        "value": 4,
+        "events": [
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ]
+        ]
+      }
+    },
+    {
+      "id": "assignment:assign:missing-binding",
+      "resolver": {
+        "result": {
+          "$lpe": "undefined"
+        }
+      },
+      "ast": [
+        "let",
+        [
+          "identity",
+          "resolver"
+        ],
+        [
+          "begin",
+          [
+            "assign",
+            "x",
+            [
+              "mark",
+              8
+            ]
+          ],
+          "x"
+        ]
+      ],
+      "expected": {
+        "value": 8,
+        "events": [
+          [
+            "mark",
+            8
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ]
+        ]
+      }
+    },
+    {
+      "id": "assignment:assign:rhs-error",
+      "resolver": {
+        "result": 4
+      },
+      "ast": [
+        "let",
+        [
+          "identity",
+          "resolver"
+        ],
+        [
+          "assign",
+          "x",
+          [
+            "throw",
+            [
+              "q",
+              "rhs-error"
+            ]
+          ]
+        ]
+      ],
+      "expected": {
+        "error": "rhs-error",
+        "events": []
+      }
+    },
+    {
+      "id": "assignment:assign:option-fallthrough",
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true
+      },
+      "resolver": {
+        "result": 4,
+        "options": true
+      },
+      "context": {
+        "x": 2
+      },
+      "ast": [
+        "let",
+        [
+          "identity",
+          "resolver"
+        ],
+        [
+          "list",
+          [
+            "assign",
+            "x",
+            8
+          ],
+          "x"
+        ]
+      ],
+      "expected": {
+        "value": [
+          8,
+          8
+        ],
+        "events": [
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            false,
+            true
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            false,
+            true
+          ]
+        ]
+      }
+    },
+    {
+      "id": "assignment:assign:option-match",
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true
+      },
+      "resolver": {
+        "result": 4,
+        "options": true
+      },
+      "ast": [
+        "let",
+        [
+          "identity",
+          "resolver"
+        ],
+        [
+          "list",
+          [
+            "assign",
+            "x",
+            8
+          ],
+          "x"
+        ]
+      ],
+      "expected": {
+        "value": [
+          4,
+          4
+        ],
+        "events": [
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            true
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            true
+          ]
+        ]
+      }
+    },
+    {
+      "id": "assignment::=:number",
+      "resolver": {
+        "result": 4
+      },
+      "context": {
+        "x": 2
+      },
+      "ast": [
+        "let",
+        [
+          "identity",
+          "resolver"
+        ],
+        [
+          "list",
+          [
+            ":=",
+            "x",
+            [
+              "mark",
+              8
+            ]
+          ],
+          "x"
+        ]
+      ],
+      "expected": {
+        "value": [
+          4,
+          4
+        ],
+        "events": [
+          [
+            "mark",
+            8
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ]
+        ]
+      }
+    },
+    {
+      "id": "assignment::=:null",
+      "resolver": {
+        "result": null
+      },
+      "context": {
+        "x": 2
+      },
+      "ast": [
+        "let",
+        [
+          "identity",
+          "resolver"
+        ],
+        [
+          "list",
+          [
+            ":=",
+            "x",
+            [
+              "mark",
+              8
+            ]
+          ],
+          "x"
+        ]
+      ],
+      "expected": {
+        "value": [
+          null,
+          null
+        ],
+        "events": [
+          [
+            "mark",
+            8
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ]
+        ]
+      }
+    },
+    {
+      "id": "assignment::=:false",
+      "resolver": {
+        "result": false
+      },
+      "context": {
+        "x": 2
+      },
+      "ast": [
+        "let",
+        [
+          "identity",
+          "resolver"
+        ],
+        [
+          "list",
+          [
+            ":=",
+            "x",
+            [
+              "mark",
+              8
+            ]
+          ],
+          "x"
+        ]
+      ],
+      "expected": {
+        "value": [
+          false,
+          false
+        ],
+        "events": [
+          [
+            "mark",
+            8
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ]
+        ]
+      }
+    },
+    {
+      "id": "assignment::=:missing",
+      "resolver": {
+        "result": {
+          "$lpe": "undefined"
+        }
+      },
+      "context": {
+        "x": 2
+      },
+      "ast": [
+        "let",
+        [
+          "identity",
+          "resolver"
+        ],
+        [
+          "list",
+          [
+            ":=",
+            "x",
+            [
+              "mark",
+              8
+            ]
+          ],
+          "x"
+        ]
+      ],
+      "expected": {
+        "value": [
+          8,
+          8
+        ],
+        "events": [
+          [
+            "mark",
+            8
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ]
+        ]
+      }
+    },
+    {
+      "id": "assignment::=:error",
+      "resolver": {
+        "error": true
+      },
+      "context": {
+        "x": 2
+      },
+      "ast": [
+        "let",
+        [
+          "identity",
+          "resolver"
+        ],
+        [
+          "list",
+          [
+            ":=",
+            "x",
+            [
+              "mark",
+              8
+            ]
+          ],
+          "x"
+        ]
+      ],
+      "expected": {
+        "error": "resolver-error",
+        "events": [
+          [
+            "mark",
+            8
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ]
+        ]
+      }
+    },
+    {
+      "id": "assignment::=:undefined-rhs",
+      "resolver": {
+        "result": 4
+      },
+      "ast": [
+        "let",
+        [
+          "identity",
+          "resolver"
+        ],
+        [
+          ":=",
+          "x",
+          [
+            "get",
+            {},
+            [
+              "q",
+              "missing"
+            ]
+          ]
+        ]
+      ],
+      "expected": {
+        "value": 4,
+        "events": [
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ]
+        ]
+      }
+    },
+    {
+      "id": "assignment::=:missing-binding",
+      "resolver": {
+        "result": {
+          "$lpe": "undefined"
+        }
+      },
+      "ast": [
+        "let",
+        [
+          "identity",
+          "resolver"
+        ],
+        [
+          "begin",
+          [
+            ":=",
+            "x",
+            [
+              "mark",
+              8
+            ]
+          ],
+          "x"
+        ]
+      ],
+      "expected": {
+        "value": 8,
+        "events": [
+          [
+            "mark",
+            8
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            false
+          ]
+        ]
+      }
+    },
+    {
+      "id": "assignment::=:rhs-error",
+      "resolver": {
+        "result": 4
+      },
+      "ast": [
+        "let",
+        [
+          "identity",
+          "resolver"
+        ],
+        [
+          ":=",
+          "x",
+          [
+            "throw",
+            [
+              "q",
+              "rhs-error"
+            ]
+          ]
+        ]
+      ],
+      "expected": {
+        "error": "rhs-error",
+        "events": []
+      }
+    },
+    {
+      "id": "assignment::=:option-fallthrough",
+      "options": {
+        "resolveString": false,
+        "disallowLibFunctionsGetting": true
+      },
+      "resolver": {
+        "result": 4,
+        "options": true
+      },
+      "context": {
+        "x": 2
+      },
+      "ast": [
+        "let",
+        [
+          "identity",
+          "resolver"
+        ],
+        [
+          "list",
+          [
+            ":=",
+            "x",
+            8
+          ],
+          "x"
+        ]
+      ],
+      "expected": {
+        "value": [
+          8,
+          8
+        ],
+        "events": [
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            false,
+            true
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            false,
+            true
+          ]
+        ]
+      }
+    },
+    {
+      "id": "assignment::=:option-match",
+      "options": {
+        "resolveString": true,
+        "disallowLibFunctionsGetting": true
+      },
+      "resolver": {
+        "result": 4,
+        "options": true
+      },
+      "ast": [
+        "let",
+        [
+          "identity",
+          "resolver"
+        ],
+        [
+          "list",
+          [
+            ":=",
+            "x",
+            8
+          ],
+          "x"
+        ]
+      ],
+      "expected": {
+        "value": [
+          4,
+          4
+        ],
+        "events": [
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            true
+          ],
+          [
+            "resolve",
+            {
+              "$lpe": "undefined"
+            },
+            true,
+            true
+          ]
+        ]
+      }
+    }
+  ]
+}

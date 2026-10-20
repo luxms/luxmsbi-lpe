@@ -178,10 +178,10 @@ fn validate_vararg_selector(selector: &Json) -> Result<()> {
         || selector.get(2).is_some_and(|v| !v.is_string())
         || !matches!(action, "value" | "isFunction" | "call" | "calls")
         || if action == "calls" {
-            !selector
+            selector
                 .get(3)
                 .and_then(Json::as_u64)
-                .is_some_and(|n| n <= 100)
+                .is_none_or(|n| n > 100)
         } else {
             selector.len() > 3
         }

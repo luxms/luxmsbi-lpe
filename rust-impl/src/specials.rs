@@ -734,15 +734,18 @@ pub async fn call(
                     rt.unbox(
                         vec![value],
                         StreamContext::new(env, options).with_asts(args),
-                        Rc::new(move |rt, values, env, _| {
+                        Rc::new(move |rt, values, env, options| {
                             let key = key.clone();
-                            Box::pin(async move { rt.assign(env, &key, values[0].clone()) })
+                            Box::pin(async move {
+                                rt.assign_async(env, &key, values[0].clone(), &options)
+                                    .await
+                            })
                         }),
                     )
                     .await
                 } else {
                     // Unlike def, JS assignment to a variable stores the stream itself.
-                    rt.assign(env, &key, value)
+                    rt.assign_async(env, &key, value, options).await
                 }
             }
         }

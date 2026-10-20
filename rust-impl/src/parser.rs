@@ -745,7 +745,7 @@ impl Parser<'_> {
                 if !self.is(close) {
                     loop {
                         args.push(self.expression(0)?);
-                        if !self.is(",") && !(text == "{" && self.is(";")) {
+                        if !(self.is(",") || text == "{" && self.is(";")) {
                             break;
                         }
                         self.advance()?;

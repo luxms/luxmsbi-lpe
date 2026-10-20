@@ -9,7 +9,7 @@ mkdirSync(new URL('../reports/', import.meta.url), {recursive: true});
 const commands = [
   [process.execPath, ['node_modules/webpack-cli/bin/cli.js'], true],
   [process.execPath, ['rust-impl/scripts/test-js.cjs']],
-  [process.execPath, ['--test', 'rust-impl/scripts/test-harness.mjs', 'rust-impl/scripts/test-coverage.mjs', 'rust-impl/scripts/test-production-layout.mjs', 'rust-impl/scripts/closure-return-js.test.cjs']],
+  [process.execPath, ["--test", "rust-impl/scripts/test-harness.mjs", "rust-impl/scripts/test-coverage.mjs", "rust-impl/scripts/test-production-layout.mjs", "rust-impl/scripts/closure-return-js.test.cjs", "rust-impl/scripts/runtime-dispatch-js.test.cjs"]],
   ['cargo', ['test', '--locked', '--no-fail-fast', '--manifest-path', 'rust-impl/Cargo.toml', '-p', 'regress']],
   ['cargo', ['test', '--locked', '--no-fail-fast', '--manifest-path', 'rust-impl/Cargo.toml']],
   ['cargo', ['test', '--locked', '--manifest-path', 'rust-impl/Cargo.toml', '--test', 'parser', '--', '--ignored']],

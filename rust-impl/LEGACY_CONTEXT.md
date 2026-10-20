@@ -30,7 +30,9 @@ pub fn assign_async<'a>(
 - Like `eval_in` and `call_with_options`, direct `assign_async` is a low-level
   operation; it does not start or reset a top-level budget. `eval_async` supplies
   the outer cancellation check while a host future is pending.
-- With the profile disabled, `assign_async` delegates to the existing `assign`.
+- With the profile disabled, `assign_async` follows current JS function-context
+  assignment; see [API.md](API.md#assignment-and-call-dispatch). The synchronous
+  `assign` remains an object-only embedding helper.
   The synchronous `assign` itself never opts into legacy behavior.
 
 ## Contract
