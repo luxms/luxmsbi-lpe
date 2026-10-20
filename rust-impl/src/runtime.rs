@@ -1039,8 +1039,8 @@ impl Runtime {
         Ok(value)
     }
     /// Assign an already evaluated RHS without resetting execution budgets.
-    /// With the default profile this delegates to the original synchronous
-    /// `assign`. In the legacy profile undefined is a read sentinel, missing
+    /// The default profile follows JS 1.7.3 function-context lookup on writes.
+    /// In the legacy profile undefined is a read sentinel, missing
     /// names are created in the head frame and return undefined, and existing
     /// function contexts receive a setter call whose result is returned.
     pub fn assign_async<'a>(
@@ -1051,11 +1051,11 @@ impl Runtime {
         options: &'a EvalOptions,
     ) -> LocalBoxFuture<'a, Result<Value>> {
         Box::pin(async move {
-            if !self.legacy_context {
-                return self.assign(env, name, value);
-            }
             let roots = self.task(&Ast::Null, env);
             roots.retain_task_value(&value);
+            if !self.legacy_context {
+                return self.current_assign_in(env, name, value, options).await;
+            }
             if matches!(value, Value::Undefined) {
                 return Ok(self
                     .legacy_assignment_lookup(env, name, options)
@@ -1064,6 +1064,70 @@ impl Runtime {
             }
             self.legacy_assign_in(env, name, value, options, 0).await
         })
+    }
+
+    async fn current_assign_in(
+        &mut self,
+        env: EnvId,
+        name: &str,
+        value: Value,
+        options: &EvalOptions,
+    ) -> Result<Value> {
+        let frames = self.env_frames(env);
+        let mut first = None;
+        for id in frames.iter().copied() {
+            self.tick()?;
+            let (backing, library) = {
+                let frame = self.envs.borrow(id).unwrap();
+                (frame.backing.clone(), frame.library)
+            };
+            if let Some(function) = backing.as_ref().filter(|value| value.is_callable()) {
+                // JS 1.7.3 varSetter passes undefined even for writes. Only an
+                // undefined result falls through; false and null claim the name.
+                let rs = self.from_json(&json!({
+                    "resolveString": options.resolve_string,
+                    "disallowLibFunctionsGetting": options.disallow_lib_functions_getting
+                }));
+                let found = self
+                    .call_with_options(
+                        function.clone(),
+                        vec![Value::String(name.into()), Value::Undefined, rs],
+                        env,
+                        options,
+                    )
+                    .await?;
+                if !matches!(found, Value::Undefined) {
+                    return Ok(found);
+                }
+                continue;
+            }
+            if library {
+                continue;
+            }
+            first.get_or_insert(id);
+            if let Some(object @ Value::Object(_)) = backing {
+                if self.has_own(&object, name) {
+                    return self.set(&object, name, value);
+                }
+            }
+            let mut frame = self.envs.get_mut(id).unwrap();
+            if frame.values.contains_key(name) {
+                frame.values.insert(name.into(), value.clone());
+                return Ok(value);
+            }
+        }
+        let id = first.ok_or_else(|| Error::new("ScopeError", "No writable context"))?;
+        if let Some(object @ Value::Object(_)) =
+            self.envs.borrow(id).and_then(|frame| frame.backing.clone())
+        {
+            return self.set(&object, name, value);
+        }
+        self.envs
+            .get_mut(id)
+            .unwrap()
+            .values
+            .insert(name.into(), value.clone());
+        Ok(value)
     }
 
     // Unlike ordinary expression lookup, 1.6.7 def/assign call $var$ without
@@ -2045,6 +2109,18 @@ impl Runtime {
                             {
                                 self.call_vararg(*id, &expression[1..], env, options)
                                     .await?
+                            }
+                            _ if !operator.is_callable() => {
+                                let label = if operator.is_nullish() {
+                                    let original = self.from_json(&expression[0]);
+                                    self.to_string(&original)
+                                } else {
+                                    self.to_string(&operator)
+                                };
+                                return Err(Error::new(
+                                    "TypeError",
+                                    format!("{label} is not a function"),
+                                ));
                             }
                             _ => {
                                 let args =

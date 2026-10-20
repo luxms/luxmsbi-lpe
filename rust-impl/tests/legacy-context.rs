@@ -484,10 +484,10 @@ fn assignment_uses_existing_step_budget_and_bounds_context_recursion() {
 }
 
 #[test]
-fn default_assignment_does_not_dispatch_function_setters() {
+fn synchronous_object_assignment_does_not_dispatch_function_contexts() {
     let mut rt = Runtime::new();
     rt.register("resolver", |_| {
-        panic!("native default must not call a getter/setter")
+        panic!("synchronous object-only assignment must not call a getter/setter")
     });
     let options = EvalOptions::default();
     let resolver = rt
@@ -495,7 +495,7 @@ fn default_assignment_does_not_dispatch_function_setters() {
         .unwrap();
     let env = rt.env_from_value(resolver, vec![rt.global_env()]).unwrap();
     assert_eq!(
-        block_on(rt.assign_async(env, "x", Value::Number(8.0), &options)).unwrap(),
+        rt.assign(env, "x", Value::Number(8.0)).unwrap(),
         Value::Number(8.0)
     );
     assert_eq!(

@@ -12,7 +12,7 @@ evidence and remaining coverage gaps are recorded in `coverage.json`.
 | `eval_lisp` | `Runtime::eval_ast`, `eval_async` |
 | `EVAL` | `Runtime::eval_in` with an explicit environment |
 | `STDLIB` | Standard-library environment installed by `Runtime::new` |
-| `$getvar$`, `$setvar$`, `$var$` | `lookup`, `lookup_async`, `assign`, opt-in `assign_async`, `undefine` |
+| `$getvar$`, `$setvar$`, `$var$` | `lookup`, `lookup_async`, object-only `assign`, `assign_async`, `undefine` |
 | `makeSF` | `register_special` with raw AST arguments |
 | `makeVararg` | `register_vararg`, `register_vararg_host` |
 | `makeSkipForm` | `skip_form` |
@@ -38,6 +38,33 @@ the complete JS error tree or all diagnostic wording. UTF-16 span indices match
 JS internally; source and JSON input/output remain UTF-8. Ordinary `parse` and
 `parse_with_options` retain their existing error interface.
 
+## Assignment And Call Dispatch
+
+The default `def`, `assign`, and `:=` forms use `assign_async`. It searches
+function-backed contexts as well as writable object frames. Like JS 1.7.3
+`varSetter`, it calls a function context with `(name, undefined, options)` even
+when assigning a defined RHS. A result other than undefined claims the name and
+becomes the assignment result; undefined continues to the next context. An
+unresolved name is created in the first non-library object frame, not on a
+function context. `assign` remains a synchronous, object-only embedding helper.
+
+Passing undefined to the function on writes is a source behavior, not a proposed
+setter API: `ContextResolverFunction` in `src/types.js` documents the second
+argument as the assigned value (undefined for a read), but `varSetter` in
+`src/lisp.var.js` passes undefined. A conventional setter that branches on its
+second argument therefore runs its getter branch. Rust preserves this behavior
+pending a separate JS fix.
+
+Non-callable expression operators fail before argument evaluation, including
+argument side effects and errors. Immediate planning declines unsupported calls
+without executing a partial plan, so ordinary, closure, and full async dispatch
+share this order. JS symbol-keyed callable objects remain outside the native
+object model; this change does not add symbol or prototype emulation.
+
+`fixtures/runtime-dispatch.json` retains 53 JS 1.7.3 observations. Its JS test can
+also probe an installed release via `LPE_JS_MODULE`; native tests replay the
+observations through optimized/full paths and applicable legacy dispatch paths.
+
 ## Legacy contexts
 
 `Runtime::set_legacy_context(true)` enables a bounded 1.6.7 context profile.
@@ -45,12 +72,14 @@ It defaults to false and must be selected before evaluation. It changes
 undefined-slot lookup, bare callable evaluation, and variable assignment through
 `def`, `assign`, and `:=`. `assign_async(env, name, evaluated_rhs, options)`
 provides the same assignment path to native adapters, including function-backed
-context setters. The original synchronous `assign` is unchanged.
+context setters with the historical 1.6.7 semantics. The original synchronous
+`assign` is unchanged.
 
 The profile does not enable mutation of marked library frames or claim complete
 1.6.7 compatibility. See [LEGACY_CONTEXT.md](LEGACY_CONTEXT.md) for the exact
 contract, original-JS evidence, stream distinction, remaining boundaries, and
-adapter integration recipe. Ordinary default-profile behavior is unchanged.
+adapter integration recipe. The current default profile uses the JS 1.7.3
+assignment behavior described above; it does not enable the legacy profile.
 
 ## Host functions
 
