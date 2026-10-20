@@ -16,6 +16,11 @@ against shared expected values, warms both implementations, runs five samples
 sequentially with alternating implementation order, and records medians and
 ranges. The suite covers arithmetic, bindings, strings, conditional evaluation,
 collections, Unicode strings, closure construction/invocation, and parsing a production layout.
+Closure cases also isolate construction, repeated calls, lexical captures,
+five-argument calls, and nested closure calls. A fixture's optional `setup` map
+evaluates named bindings once, before validation, warm-up, and timing in both
+implementations. Rust installs them as global roots so repeated calls retain
+their captured scopes through garbage collection.
 Rust's explicit garbage collection every 256 evaluations is included in elapsed
 time; JavaScript's automatic collection is also inside the timed region.
 
@@ -99,6 +104,18 @@ The earlier five-sample result is preserved as
 - Borrow ordinary expression ASTs; own replacements only when a skip form
   supplies a new AST. Share immutable closure bodies and parameter lists, and
   inspect function kinds without copying their payloads.
+- Dispatch closures into a dedicated, smaller future while preserving lazy
+  polling, call limits, captured binding policies, and the async fallback.
+  Repeated constructors share owned body data using at most eight weak entries.
+  Addresses are only lookup hints: each hit compares the entire AST, so edits
+  and reused storage remain visible. Every closure still gets its own handle,
+  parameters, environment, and options. Weak entries do not retain captures or
+  become garbage-collection roots; evaluation plans and results are not cached.
+- Resolve immediate builtin operators to static names from the shared registry
+  without cloning their strings. Lookup still observes current aliases, hooks,
+  and shadowing. Plan all eligible arguments before evaluating any, then run
+  synchronous arguments without creating async task facades. Unsupported,
+  promise/stream, legacy, and controlled arguments retain their existing path.
 - Register GC roots without constructing a complete runtime facade for every
   synchronous frame. Avoid duplicate roots and scalar values that own no arena
   references. Trace borrowed collections during GC instead of cloning payloads.

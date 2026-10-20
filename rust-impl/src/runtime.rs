@@ -346,12 +346,15 @@ impl Drop for DepthGuard {
     }
 }
 
+type ClosureBodies = smallvec::SmallVec<[(usize, Weak<Ast>); 8]>;
+
 /// Values belong to this runtime. Retain values across collect_garbage by passing
 /// them as roots; environment bindings and registered functions are rooted automatically.
 pub struct Runtime {
     arrays: Arena<Vec<Value>>,
     objects: Arena<IndexMap<String, Value>>,
     functions: Arena<Function>,
+    closure_bodies: Rc<RefCell<ClosureBodies>>,
     envs: Arena<Environment>,
     global: EnvId,
     library: EnvId,
@@ -412,6 +415,7 @@ impl Runtime {
             arrays: self.arrays.clone(),
             objects: self.objects.clone(),
             functions: self.functions.clone(),
+            closure_bodies: self.closure_bodies.clone(),
             envs: self.envs.clone(),
             global: self.global,
             library: self.library,
@@ -447,6 +451,7 @@ impl Runtime {
             arrays: Arena::default(),
             objects: Arena::default(),
             functions: Arena::default(),
+            closure_bodies: Rc::default(),
             envs: Arena::default(),
             global: 0,
             library: 0,
@@ -817,12 +822,33 @@ impl Runtime {
         env: EnvId,
         options: EvalOptions,
     ) -> Value {
-        self.closure_with_params(params.into(), body, env, options, true, false)
+        self.closure_with_params(params.into(), Rc::new(body), env, options, true, false)
+    }
+    pub(crate) fn share_closure_body(&self, body: &Ast) -> Rc<Ast> {
+        // An address is only a lookup hint: public ASTs can be edited in place,
+        // or their storage reused. Check the entire body before sharing it.
+        // Weak entries neither keep closures/captures alive nor become GC roots.
+        let key = std::ptr::from_ref(body) as usize;
+        let mut cache = self.closure_bodies.borrow_mut();
+        if let Some(entry) = cache.iter_mut().find(|entry| entry.0 == key) {
+            if let Some(shared) = entry.1.upgrade().filter(|shared| shared.as_ref() == body) {
+                return shared;
+            }
+            let shared = Rc::new(body.clone());
+            entry.1 = Rc::downgrade(&shared);
+            return shared;
+        }
+        let shared = Rc::new(body.clone());
+        if cache.len() == 8 {
+            cache.remove(0);
+        }
+        cache.push((key, Rc::downgrade(&shared)));
+        shared
     }
     pub(crate) fn closure_with_params(
         &mut self,
         params: Rc<[String]>,
-        body: Ast,
+        body: Rc<Ast>,
         env: EnvId,
         options: EvalOptions,
         call_result: bool,
@@ -830,7 +856,7 @@ impl Runtime {
     ) -> Value {
         let value = Value::Function(self.functions.insert(Function::Closure {
             params,
-            body: Rc::new(body),
+            body,
             env,
             options,
             call_result,
@@ -2289,6 +2315,9 @@ impl Runtime {
             }
             return Ok(values);
         }
+        if let Some(values) = self.eval_arguments_immediate(args, env, options) {
+            return values;
+        }
         // Completed siblings remain roots until all arguments are delivered.
         let retained = self.roots(&Ast::Null, env);
         let roots = retained.0.clone();
@@ -2407,6 +2436,94 @@ impl Runtime {
                 .await
         })
     }
+    pub(crate) fn is_special_function(&self, id: usize) -> bool {
+        matches!(self.functions.borrow(id).as_deref(), Some(Function::Special(_) | Function::Defined { .. } | Function::Vararg { .. } | Function::VarargHost { .. }))
+    }
+    fn enter_call(&self, options: &EvalOptions) -> Result<DepthGuard> {
+        self.tick()?;
+        self.control_depth(options)?;
+        if self.depth.get() >= options.max_depth {
+            return Err(Error::new("LimitError", "Call nesting limit exceeded"));
+        }
+        self.depth.set(self.depth.get() + 1);
+        Ok(DepthGuard(self.depth.clone()))
+    }
+
+    // Keep closure futures small: the general dispatcher also contains every
+    // builtin, host callback, and special-form continuation. Only inspect the
+    // immutable function kind before polling; limits and the live handle are
+    // checked when the returned future actually runs.
+    fn call_closure_with_options<'a>(
+        &'a mut self,
+        id: usize,
+        args: Vec<Value>,
+        caller_options: &'a EvalOptions,
+    ) -> LocalBoxFuture<'a, Result<Value>> {
+        Box::pin(async move {
+            let _guard = self.enter_call(caller_options)?;
+            let Some(Function::Closure {
+                params,
+                body,
+                env: captured,
+                options,
+                call_result,
+                bind_supplied_only,
+            }) = self.functions.get(id)
+            else {
+                return Err(Error::new("InvalidHandle", "Expired function"));
+            };
+            for (index, name) in params.iter().enumerate() {
+                if bind_supplied_only && index >= args.len() { break; }
+                crate::security::key(name)?;
+            }
+            let mut _roots = None;
+            // Immediate call bindings fill missing slots. A legacy fn
+            // keeps its supplied-only policy even after profile changes.
+            let immediate = if bind_supplied_only {
+                None
+            } else {
+                self.eval_closure_immediate(&body, captured, &options, &params, &args, id)
+            };
+            let immediate_value = match immediate {
+                Some(Ok(value)) if !call_result || !value.is_callable() => return Ok(value),
+                Some(Err(error)) if error.kind == "Return" => {
+                    return Ok(error.value.unwrap_or(Value::Undefined));
+                }
+                Some(Err(error)) => return Err(error),
+                Some(Ok(value)) => Some(value),
+                None => None,
+            };
+            let mut bindings = IndexMap::new();
+            bindings.insert("$this$".into(), Value::Function(id));
+            for (index, name) in params.iter().enumerate() {
+                if bind_supplied_only && index >= args.len() {
+                    break;
+                }
+                bindings.insert(
+                    name.clone(),
+                    args.get(index).cloned().unwrap_or(Value::Undefined),
+                );
+            }
+            let local = self.new_child_env(bindings, captured);
+            if let Some(value) = immediate_value {
+                return self.call_with_options(value, args, local, &options).await;
+            }
+            let result = if let Some(result) = self.eval_scoped_immediate(&body, local, &options) {
+                result
+            } else {
+                _roots = Some(self.call_roots(&Value::Function(id), &args, local));
+                self.eval_in(&body, local, &options).await
+            };
+            match result {
+                Err(e) if e.kind == "Return" => Ok(e.value.unwrap_or(Value::Undefined)),
+                Ok(v) if call_result && v.is_callable() => {
+                    self.call_with_options(v, args, local, &options).await
+                }
+                result => result,
+            }
+        })
+    }
+
     pub fn call_with_options<'a>(
         &'a mut self,
         function: Value,
@@ -2414,24 +2531,21 @@ impl Runtime {
         env: EnvId,
         options: &'a EvalOptions,
     ) -> LocalBoxFuture<'a, Result<Value>> {
+        if let Value::Function(id) = &function {
+            if self
+                .functions
+                .with(*id, |f| matches!(f, Function::Closure { .. }))
+                .unwrap_or(false)
+            {
+                return self.call_closure_with_options(*id, args, options);
+            }
+        }
         Box::pin(async move {
             if matches!(&function, Value::Special(_))
-                || matches!(&function,
-                Value::Function(id) if matches!(self.functions.borrow(*id).as_deref(),
-                    Some(Function::Special(_) | Function::Defined { .. } | Function::Vararg { .. } | Function::VarargHost { .. })))
-            {
-                return Err(crate::security::error(
-                    "Special forms can only be called by the evaluator",
-                ));
+                || matches!(&function, Value::Function(id) if self.is_special_function(*id)) {
+                return Err(crate::security::error("Special forms can only be called by the evaluator"));
             }
-
-            self.tick()?;
-            self.control_depth(options)?;
-            if self.depth.get() >= options.max_depth {
-                return Err(Error::new("LimitError", "Call nesting limit exceeded"));
-            }
-            self.depth.set(self.depth.get() + 1);
-            let _guard = DepthGuard(self.depth.clone());
+            let _guard = self.enter_call(options)?;
             let implementation = if let Value::Function(id) = &function {
                 Some(
                     self.functions
@@ -2441,13 +2555,7 @@ impl Runtime {
             } else {
                 None
             };
-            // A validated immediate closure body cannot call host code or collect.
-            // Root its arguments only if evaluating that body needs the full path.
-            let mut _roots = if matches!(implementation, Some(Function::Closure { .. })) {
-                None
-            } else {
-                Some(self.call_roots(&function, &args, env))
-            };
+            let _roots = self.call_roots(&function, &args, env);
             match function {
                 Value::Function(id) => match implementation.expect("validated function") {
                     Function::Native(callback) => {
@@ -2481,71 +2589,7 @@ impl Runtime {
                         })?;
                         self.resolve_value(value).await
                     }
-                    Function::Closure {
-                        params,
-                        body,
-                        env: captured,
-                        options,
-                        call_result,
-                        bind_supplied_only,
-                    } => {
-                        for (index, name) in params.iter().enumerate() {
-                            if bind_supplied_only && index >= args.len() {
-                                break;
-                            }
-                            crate::security::key(name)?;
-                        }
-                        // Immediate call bindings fill missing slots. A legacy fn
-                        // keeps its supplied-only policy even after profile changes.
-                        let immediate = if bind_supplied_only {
-                            None
-                        } else {
-                            self.eval_closure_immediate(
-                                &body, captured, &options, &params, &args, id,
-                            )
-                        };
-                        let immediate_value = match immediate {
-                            Some(Ok(value)) if !call_result || !value.is_callable() => {
-                                return Ok(value)
-                            }
-                            Some(Err(error)) if error.kind == "Return" => {
-                                return Ok(error.value.unwrap_or(Value::Undefined));
-                            }
-                            Some(Err(error)) => return Err(error),
-                            Some(Ok(value)) => Some(value),
-                            None => None,
-                        };
-                        let mut bindings = IndexMap::new();
-                        bindings.insert("$this$".into(), Value::Function(id));
-                        for (index, name) in params.iter().enumerate() {
-                            if bind_supplied_only && index >= args.len() {
-                                break;
-                            }
-                            bindings.insert(
-                                name.clone(),
-                                args.get(index).cloned().unwrap_or(Value::Undefined),
-                            );
-                        }
-                        let local = self.new_child_env(bindings, captured);
-                        if let Some(value) = immediate_value {
-                            return self.call_with_options(value, args, local, &options).await;
-                        }
-                        let result = if let Some(result) =
-                            self.eval_scoped_immediate(&body, local, &options)
-                        {
-                            result
-                        } else {
-                            _roots = Some(self.call_roots(&Value::Function(id), &args, local));
-                            self.eval_in(&body, local, &options).await
-                        };
-                        match result {
-                            Err(e) if e.kind == "Return" => Ok(e.value.unwrap_or(Value::Undefined)),
-                            Ok(v) if call_result && v.is_callable() => {
-                                self.call_with_options(v, args, local, &options).await
-                            }
-                            result => result,
-                        }
-                    }
+                    Function::Closure { .. } => unreachable!("closure dispatched separately"),
                     Function::Special(callback) => {
                         let ast = args.into_iter().map(|v| self.ast_literal(v)).collect();
                         callback(self, ast, env, options.clone()).await

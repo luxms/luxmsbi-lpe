@@ -50,6 +50,40 @@
     "expected": 42
   },
   {
+    "id": "closure-create",
+    "source": "isFunction(fn(x,add(x,1)))",
+    "context": {},
+    "expected": true
+  },
+  {
+    "id": "closure-call",
+    "source": "f(41)",
+    "context": {},
+    "setup": {"f": "fn(x,add(x,1))"},
+    "expected": 42
+  },
+  {
+    "id": "closure-capture",
+    "source": "f(41)",
+    "context": {},
+    "setup": {"f": "let([[increment,1]],fn(x,add(x,increment)))"},
+    "expected": 42
+  },
+  {
+    "id": "closure-multi-arg",
+    "source": "f(1,2,3,4,5)",
+    "context": {},
+    "setup": {"f": "fn([a,b,c,d,e],add(a,b,c,d,e))"},
+    "expected": 15
+  },
+  {
+    "id": "closure-nested",
+    "source": "twice(40)",
+    "context": {},
+    "setup": {"inc": "fn(x,add(x,1))", "twice": "fn(x,inc(inc(x)))"},
+    "expected": 42
+  },
+  {
     "id": "production-layout",
     "sourceFile": "production/layout.lpe",
     "parseOnly": true,

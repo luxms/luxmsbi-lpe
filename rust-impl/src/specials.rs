@@ -1440,7 +1440,7 @@ pub(crate) fn make_closure(
                 .unwrap_or_else(|| format!("##ignored-parameter-{i}"))
         })
         .collect();
-    let body = body.clone();
+    let body = rt.share_closure_body(body);
     // Legacy fn binds only supplied arguments and returns callable results directly.
     // Other constructors keep filling missing slots, regardless of the profile.
     let legacy_fn = name == "fn" && rt.legacy_context_enabled();
