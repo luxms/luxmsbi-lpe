@@ -916,8 +916,8 @@ describe('LPE Full Test Suite', function() {
       });
       it('regexp ключи', () => {
         const res = lpe.eval_lpe('update_in({Ivan = {id = 1}, Bob = {id = 2}}, {"/.+/", "name"}, fn({x, path}, nvl(x, path.(0))), true)');
-        strictEqual(res.Ivan.name, 'Ivan');
-        strictEqual(res.Bob.name, 'Bob');
+        _strictEqual(res.Ivan.name, 'Ivan');
+        _strictEqual(res.Bob.name, 'Bob');
       });
     });
 
