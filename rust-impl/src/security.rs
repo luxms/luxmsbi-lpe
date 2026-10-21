@@ -1,5 +1,7 @@
 //! Portable data/call rules of the JavaScript 1.8 safe evaluator.
 use crate::{Error, Result, Runtime, Value};
+use smallvec::SmallVec;
+use std::borrow::Cow;
 
 pub(crate) fn error(message: impl std::fmt::Display) -> Error {
     Error::new("LPESecurityError", format!("LPE security: {message}"))
@@ -41,19 +43,21 @@ impl Runtime {
         self.validate_value(&value)?;
         Ok(value)
     }
-    pub(crate) fn safe_key(&self, value: &Value) -> Result<String> {
+    pub(crate) fn safe_key<'a>(&self, value: &'a Value) -> Result<Cow<'a, str>> {
         if !matches!(value, Value::String(_) | Value::Utf16(_) | Value::Number(_)) {
             return Err(error("Property keys must be strings or numbers"));
         }
         let name = match value {
-            Value::String(s) => s.clone(),
-            Value::Utf16(s) => String::from_utf16(s).map_err(|_| {
-                Error::new(
-                    "UnsupportedFeature",
-                    "Object keys containing unpaired UTF-16 surrogates are not supported",
-                )
-            })?,
-            _ => self.to_string(value),
+            Value::String(s) => Cow::Borrowed(s.as_str()),
+            Value::Utf16(s) => String::from_utf16(s)
+                .map_err(|_| {
+                    Error::new(
+                        "UnsupportedFeature",
+                        "Object keys containing unpaired UTF-16 surrogates are not supported",
+                    )
+                })?
+                .into(),
+            _ => self.to_string(value).into(),
         };
         key(&name)?;
         Ok(name)
@@ -86,7 +90,7 @@ impl Runtime {
         let keys = path
             .iter()
             .map(|v| self.safe_key(v))
-            .collect::<Result<Vec<_>>>()?;
+            .collect::<Result<SmallVec<[_; 8]>>>()?;
         for name in keys {
             if value.is_nullish() {
                 return Ok(Value::Undefined);

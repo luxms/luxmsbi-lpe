@@ -27,18 +27,23 @@ const report = {date: new Date().toISOString(), revision: run('git', ['rev-parse
   dirty: Boolean(run('git', ['status', '--porcelain'])), platform: `${os.platform()} ${os.release()} ${os.arch()}`,
   cpu: os.cpus()[0]?.model, rust: run('rustc', ['--version']), node: process.version,
   profile: 'release', iterations, repeats, cases: []};
+const baselineBinary = process.env.BENCH_BASELINE_BINARY;
+if (baselineBinary) report.rustBaseline = {revision: process.env.BENCH_BASELINE_REVISION || 'unspecified', binary: baselineBinary};
 const median = values => [...values].sort((a,b) => a-b)[Math.floor(values.length/2)];
 for (const fixture of cases) {
   const count = Math.max(1, Math.floor(iterations * (fixture.scale || 1)));
   const warmup = Math.min(count, 10000);
   const samples = {rust: [], js: []};
+  if (baselineBinary) samples.baseline = [];
   for (let sample = 0; sample < repeats; sample++) {
-    // Sequential measurements; alternate order to reduce temperature/load bias.
-    for (const implementation of sample % 2 ? ['js','rust'] : ['rust','js']) {
+    // Sequential measurements; rotate all implementations to reduce order bias.
+    const order = baselineBinary ? ['rust','js','baseline'] : ['rust','js'];
+    const offset = sample % order.length;
+    for (const implementation of [...order.slice(offset), ...order.slice(0, offset)]) {
       const args = [String(count), fixture.id, String(warmup)];
-      const raw = implementation === 'rust'
-        ? run(process.env.BENCH_RUST_BINARY || 'rust-impl/target/release/examples/benchmark', args)
-        : run(process.execPath, ['rust-impl/scripts/benchmark-js.cjs', ...args]);
+      const raw = implementation === 'js'
+        ? run(process.execPath, ['rust-impl/scripts/benchmark-js.cjs', ...args])
+        : run(implementation === 'baseline' ? baselineBinary : process.env.BENCH_RUST_BINARY || 'rust-impl/target/release/examples/benchmark', args);
       samples[implementation].push(JSON.parse(raw));
     }
   }
@@ -48,9 +53,15 @@ for (const fixture of cases) {
     const js = samples.js.map(s => s[`${phase}Seconds`] / count * 1e6);
     result[phase] = {rustMedianUs: median(rust), jsMedianUs: median(js), speedup: median(js)/median(rust),
       rustRangeUs: [Math.min(...rust),Math.max(...rust)], jsRangeUs: [Math.min(...js),Math.max(...js)]};
+    if (baselineBinary) {
+      const baseline = samples.baseline.map(s => s[`${phase}Seconds`] / count * 1e6);
+      Object.assign(result[phase], {baselineMedianUs: median(baseline), baselineSpeedup: median(baseline)/median(rust),
+        baselineRangeUs: [Math.min(...baseline), Math.max(...baseline)]});
+    }
   }
   report.cases.push(result);
   console.log(`${fixture.id}: parse ${result.parse.speedup.toFixed(2)}x${result.eval ? `, eval ${result.eval.speedup.toFixed(2)}x` : ''} (JS time / Rust time)${result.performanceGate ? "" : " [informational]"}`);
+  if (baselineBinary) console.log(`  versus Rust baseline: parse ${result.parse.baselineSpeedup.toFixed(2)}x${result.eval ? `, eval ${result.eval.baselineSpeedup.toFixed(2)}x` : ''}`);
 }
 mkdirSync(new URL('../reports/', import.meta.url), {recursive: true});
 const destination = process.env.BENCH_REPORT || 'rust-impl/reports/benchmark.json';
