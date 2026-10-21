@@ -110,7 +110,7 @@ _context["f\""] = _context["f'"] = _context["formatString"] = makeSF((ast, ctx, 
   return unbox(
     ast.slice(1).map((/** @type {AST} */subast) => EVAL(subast, ctx, rs)),
     (args) => EVAL(["'", args.map(String).join(""), ...flags], ctx, rs),
-    rs?.streamAdapter,
+    rs?.streamAdapter, rs,
   );
 });
 

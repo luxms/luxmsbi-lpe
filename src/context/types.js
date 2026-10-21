@@ -310,6 +310,6 @@ _context["str>EVAL"] = _context["strToEVAL"] = makeSF((ast, ctx, rs) => {
   return unbox(
     [EVAL(ast[0], ctx, rs)],
     ([code]) => EVAL(parse(String(code)), ctx, rs),
-    rs?.streamAdapter,
+    rs?.streamAdapter, rs,
   );
 });

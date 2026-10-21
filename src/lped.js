@@ -93,8 +93,9 @@ export function deparse(lispExpr, opts) {
       const quote = op.slice(1);
       const prefix = args[0].join("Δ");
       return prefix + op +
-        args.slice(1).map((/** @type {AST} */subast) => {
-          if (isArray(subast) && subast[0] === quote && subast.length === 2) {
+        args.slice(1).map((/** @type {AST} */subast, index) => {
+          // Text fragments and interpolated expressions alternate, even when both are strings.
+          if (index % 2 === 0 && isArray(subast) && subast[0] === quote && subast.length === 2) {
             return (prefix.includes("r") ? subast[1] : fixString(subast[1])).replaceAll("{", "{{");
           }
           return `{${deparse(subast)}}`;
