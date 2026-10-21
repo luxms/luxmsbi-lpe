@@ -47,6 +47,10 @@ builtin_names! {
     "->str" => true,
     "toStr" => true,
     "read-string" => true,
+    "str>JSON" => true,
+    "strToJson" => true,
+    "str>AST" => true,
+    "strToAST" => true,
     "jsonParse" => true,
     "json_parse" => true,
     "jsonStringify" => false,
@@ -403,7 +407,7 @@ async fn stringify(rt: &mut Runtime, value: &Value) -> Result<Option<String>> {
     Ok(Some(text))
 }
 
-fn parse_json(rt: &mut Runtime, value: &Value) -> Result<Value> {
+pub(crate) fn parse_json_legacy(rt: &mut Runtime, value: &Value) -> Result<Value> {
     let units = rt.checked_to_utf16(value)?;
     // This is a conservative payload reservation, not serde's actual heap usage.
     rt.charge_size(units.len().checked_mul(32))?;
@@ -473,7 +477,7 @@ fn from_utf16(units: &[u16]) -> Result<String> {
     })
 }
 
-fn quote_units(units: &[u16]) -> String {
+pub(crate) fn quote_units(units: &[u16]) -> String {
     let mut output = String::from("\"");
     for decoded in char::decode_utf16(units.iter().copied()) {
         match decoded {
@@ -1039,7 +1043,13 @@ pub fn call_sync(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option<
             Value::String(_) if !rt.controls_active() => a.clone(),
             _ => rt.checked_string_from_utf16(rt.checked_to_utf16(a)?)?,
         },
-        "read-string" | "jsonParse" | "json_parse" => parse_json(rt, a)?,
+        "str>AST" | "strToAST" => {
+            let ast = rt.parse_source(&rt.to_string(arg(args, 0)))?;
+            rt.checked_from_json(&ast)?
+        }
+        "read-string" | "jsonParse" | "json_parse" | "str>JSON" | "strToJson" => {
+            crate::json::parse(rt, a)?
+        }
         "isa" => Value::Bool(instance_of(a, b)?),
         "type" => Value::String(a.type_name().into()),
         "classOf" => Value::String(format!("[object {}]", class_name(a))),

@@ -116,6 +116,7 @@ impl Runtime {
         bindings: Option<&CallBindings<'_>>,
         callable: bool,
     ) -> Option<Option<Value>> {
+        crate::security::key(name).ok()?;
         if let Some(bindings) = bindings {
             // Repeated parameter names overwrite earlier values, including $this$.
             if let Some(index) = bindings.params.iter().rposition(|param| param == name) {

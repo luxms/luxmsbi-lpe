@@ -14,9 +14,10 @@ mod builtins;
 #[allow(dead_code)]
 #[path = "../src/collections.rs"]
 mod collections;
-#[allow(dead_code)]
 #[path = "../src/datetime.rs"]
 mod datetime;
+#[path = "../src/json.rs"]
+mod json;
 #[allow(dead_code)]
 #[path = "../src/regexp.rs"]
 mod regexp;
@@ -24,8 +25,13 @@ mod regexp;
 #[path = "../src/runtime.rs"]
 mod runtime;
 #[allow(dead_code)]
+#[path = "../src/security.rs"]
+mod security;
 #[path = "../src/specials.rs"]
 mod specials;
+#[allow(dead_code)]
+#[path = "../src/time.rs"]
+mod time;
 
 fn s(value: &str) -> Value {
     Value::String(value.into())

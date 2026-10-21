@@ -4,7 +4,12 @@ const Mocha = require('mocha');
 
 const root = path.resolve(__dirname, '../..');
 const mocha = new Mocha({reporter: 'dot'});
-for (const file of fs.readdirSync(path.join(root, 'test')).sort()) {
-  if (/^test.*\.js$/.test(file)) mocha.addFile(path.join(root, 'test', file));
+function addTests(directory) {
+  for (const entry of fs.readdirSync(directory, {withFileTypes: true}).sort((a, b) => a.name.localeCompare(b.name))) {
+    const file = path.join(directory, entry.name);
+    if (entry.isDirectory()) addTests(file);
+    else if (entry.name.endsWith('.js')) mocha.addFile(file);
+  }
 }
+addTests(path.join(root, 'test'));
 mocha.run(failures => { process.exitCode = failures ? 1 : 0; });

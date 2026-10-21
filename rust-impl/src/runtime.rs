@@ -296,6 +296,7 @@ enum Function {
     },
     Native(Native),
     Sync(Rc<dyn Fn(Vec<Value>) -> Result<Value>>),
+    SyncHost(Rc<dyn Fn(&mut Runtime, Vec<Value>) -> Result<Value>>),
     Special(Special),
     Bound {
         receiver: Value,
@@ -329,9 +330,9 @@ struct TaskRoots {
 }
 
 // Active synchronous frames only need roots, not a complete runtime facade.
-struct RootGuard(Rc<RefCell<TaskRoots>>);
+pub(crate) struct RootGuard(Rc<RefCell<TaskRoots>>);
 impl RootGuard {
-    fn retain_task_value(&self, value: &Value) {
+    pub(crate) fn retain_task_value(&self, value: &Value) {
         if is_heap_reference(value) {
             self.0.borrow_mut().values.push(value.clone());
         }
@@ -354,6 +355,8 @@ pub struct Runtime {
     envs: Arena<Environment>,
     global: EnvId,
     library: EnvId,
+    json_object: usize,
+    clock_millis: Option<i64>,
     legacy_context: bool,
     literals: Arena<Value>,
     array_properties: Rc<RefCell<HashMap<usize, IndexMap<String, Value>>>>,
@@ -382,7 +385,7 @@ impl Default for Runtime {
 impl Runtime {
     // Each suspended branch owns a facade. Arena borrows end inside synchronous
     // methods, so futures never share a mutable Runtime reference or a RefMut.
-    fn roots(&self, ast: &Ast, env: EnvId) -> RootGuard {
+    pub(crate) fn roots(&self, ast: &Ast, env: EnvId) -> RootGuard {
         let mut values = vec![];
         let mut literals = HashSet::new();
         self.mark_ast_literals(ast, &mut literals, &mut values);
@@ -412,6 +415,8 @@ impl Runtime {
             envs: self.envs.clone(),
             global: self.global,
             library: self.library,
+            json_object: self.json_object,
+            clock_millis: self.clock_millis,
             legacy_context: self.legacy_context,
             literals: self.literals.clone(),
             array_properties: self.array_properties.clone(),
@@ -445,6 +450,8 @@ impl Runtime {
             envs: Arena::default(),
             global: 0,
             library: 0,
+            json_object: 0,
+            clock_millis: None,
             legacy_context: false,
             literals: Arena::default(),
             promises: PromiseArena::default(),
@@ -465,6 +472,8 @@ impl Runtime {
             output_log: Rc::default(),
         };
         let mut library = IndexMap::new();
+        rt.json_object = rt.objects.insert(IndexMap::new());
+        library.insert("JSON".into(), Value::Object(rt.json_object));
         for names in [
             crate::builtins::names(),
             crate::collections::names(),
@@ -520,6 +529,20 @@ impl Runtime {
         });
         rt.global = rt.new_env(IndexMap::new(), vec![rt.library]);
         rt
+    }
+    /// Fix the UTC clock for deterministic embedding or tests. None uses the system clock.
+    pub fn set_clock_millis(&mut self, millis: Option<i64>) -> Result<()> {
+        if millis.is_some_and(|value| chrono::DateTime::from_timestamp_millis(value).is_none()) {
+            return Err(Error::new("RangeError", "Invalid clock timestamp"));
+        }
+        self.clock_millis = millis;
+        Ok(())
+    }
+    /// Read the UTC clock selected for this runtime.
+    pub fn utc_now(&self) -> chrono::DateTime<chrono::Utc> {
+        self.clock_millis
+            .and_then(chrono::DateTime::from_timestamp_millis)
+            .unwrap_or_else(chrono::Utc::now)
     }
     pub fn global_env(&self) -> EnvId {
         self.global
@@ -668,6 +691,14 @@ impl Runtime {
         F: Fn(Vec<Value>) -> Result<Value> + 'static,
     {
         let id = self.functions.insert(Function::Sync(Rc::new(callback)));
+        self.set_global(name, Value::Function(id));
+    }
+    /// Register an ordinary synchronous callback with access to runtime values.
+    pub fn register_sync_host<F>(&mut self, name: &str, callback: F)
+    where
+        F: Fn(&mut Runtime, Vec<Value>) -> Result<Value> + 'static,
+    {
+        let id = self.functions.insert(Function::SyncHost(Rc::new(callback)));
         self.set_global(name, Value::Function(id));
     }
     pub fn register_async<F>(&mut self, name: &str, callback: F)
@@ -923,6 +954,7 @@ impl Runtime {
         options: &EvalOptions,
         want_callable: bool,
     ) -> Result<Value> {
+        crate::security::key(name)?;
         self.find(env, name, options, want_callable, 0).map(|v| v.0)
     }
     async fn find_async<'a>(
@@ -933,6 +965,7 @@ impl Runtime {
         callable: bool,
         start: usize,
     ) -> Result<(Value, usize)> {
+        crate::security::key(name)?;
         let frames = self.env_frames(env);
         for (position, id) in frames.iter().enumerate().skip(start) {
             let (backing, library, value, hook) = {
@@ -1010,6 +1043,7 @@ impl Runtime {
         })
     }
     pub fn assign(&mut self, env: EnvId, name: &str, value: Value) -> Result<Value> {
+        crate::security::key(name)?;
         let frames = self.env_frames(env);
         let mut first = None;
         for id in frames.iter().copied() {
@@ -1057,6 +1091,7 @@ impl Runtime {
         options: &'a EvalOptions,
     ) -> LocalBoxFuture<'a, Result<Value>> {
         Box::pin(async move {
+            crate::security::key(name)?;
             let roots = self.task(&Ast::Null, env);
             roots.retain_task_value(&value);
             if !self.legacy_context {
@@ -1380,7 +1415,26 @@ impl Runtime {
             _ => Err(Error::new("TypeError", "Expected object")),
         }
     }
+    pub(crate) fn is_json_object(&self, value: &Value) -> bool {
+        matches!(value, Value::Object(id) if *id == self.json_object)
+    }
     pub fn get(&self, value: &Value, key: &str) -> Value {
+        if self.is_json_object(value) {
+            return match key {
+                "parse" => Value::Builtin("JSON.parse".into()),
+                "stringify" => Value::Builtin("JSON.stringify".into()),
+                _ => Value::Undefined,
+            };
+        }
+        if let Value::Builtin(name) = value {
+            if let Some(method) = name.strip_prefix("JSON.") {
+                return match key {
+                    "name" => Value::String(method.into()),
+                    "length" => Value::Number(if method == "parse" { 2.0 } else { 3.0 }),
+                    _ => Value::Undefined,
+                };
+            }
+        }
         match value {
             Value::Object(id) => self
                 .objects
@@ -1426,6 +1480,9 @@ impl Runtime {
         }
     }
     pub fn has_own(&self, value: &Value, key: &str) -> bool {
+        if self.is_json_object(value) {
+            return matches!(key, "parse" | "stringify");
+        }
         match value {
             Value::Object(id) => self
                 .objects
@@ -1455,6 +1512,14 @@ impl Runtime {
         }
     }
     pub fn set(&mut self, value: &Value, key: &str, new: Value) -> Result<Value> {
+        crate::security::key(key)?;
+        if self.is_json_object(value)
+            || !matches!(value, Value::Object(_) | Value::Array(_) | Value::Date(_))
+        {
+            return Err(crate::security::error(
+                "Only application data objects and arrays are writable",
+            ));
+        }
         if self.controls_active() {
             self.charge_value(&new)?;
             self.charge_intermediate(key.len())?;
@@ -1551,6 +1616,14 @@ impl Runtime {
         }
     }
     pub fn delete(&mut self, value: &Value, key: &str) -> Result<bool> {
+        crate::security::key(key)?;
+        if self.is_json_object(value)
+            || !matches!(value, Value::Object(_) | Value::Array(_) | Value::Date(_))
+        {
+            return Err(crate::security::error(
+                "Only application data objects and arrays are writable",
+            ));
+        }
         match value {
             Value::Object(id) => {
                 self.objects
@@ -1780,6 +1853,10 @@ impl Runtime {
             "'" | "\"" => "q",
             "~>" => "_get_obj_meth_",
             "_call_obj_meth_" => "invoke",
+            "f'" | "f\"" => "formatString",
+            "str>AST" => "strToAST",
+            "str>EVAL" => "strToEVAL",
+            "str>JSON" => "strToJson",
             "." | "->" => "threadFirst",
             ".." | "->>" => "threadLast",
             "coalesce" => "nvl",
@@ -1830,7 +1907,7 @@ impl Runtime {
             "contains?" => "containsKey",
             "nth" => "get",
             "values" => "vals",
-            "today" => "now",
+
             name => name,
         }
     }
@@ -2281,6 +2358,44 @@ impl Runtime {
         })
         .await
     }
+    // JSON.parse constructs fresh own data fields, including names that LPE
+    // cannot access. Reviver replacement never performs prototype dispatch.
+    pub(crate) fn replace_json_field(
+        &mut self,
+        object: &Value,
+        key: &str,
+        value: Value,
+    ) -> Result<()> {
+        if let Value::Object(id) = object {
+            let mut fields = self
+                .objects
+                .get_mut(*id)
+                .ok_or_else(|| Error::new("InvalidHandle", "Expired JSON object"))?;
+            if matches!(value, Value::Undefined) {
+                fields.shift_remove(key);
+            } else {
+                fields.insert(key.into(), value);
+            }
+        } else if matches!(value, Value::Undefined) {
+            self.delete(object, key)?;
+        } else {
+            self.set(object, key, value)?;
+        }
+        Ok(())
+    }
+    pub(crate) fn call_json_callback<'a>(
+        &'a mut self,
+        function: Value,
+        args: Vec<Value>,
+        env: EnvId,
+        options: &'a EvalOptions,
+    ) -> LocalBoxFuture<'a, Result<Value>> {
+        Box::pin(async move {
+            let mut task = self.task(&Ast::Null, env);
+            task.preserve_promises = Rc::new(Cell::new(true));
+            task.call_with_options(function, args, env, options).await
+        })
+    }
     pub fn call_value<'a>(
         &'a mut self,
         function: Value,
@@ -2300,6 +2415,16 @@ impl Runtime {
         options: &'a EvalOptions,
     ) -> LocalBoxFuture<'a, Result<Value>> {
         Box::pin(async move {
+            if matches!(&function, Value::Special(_))
+                || matches!(&function,
+                Value::Function(id) if matches!(self.functions.borrow(*id).as_deref(),
+                    Some(Function::Special(_) | Function::Defined { .. } | Function::Vararg { .. } | Function::VarargHost { .. })))
+            {
+                return Err(crate::security::error(
+                    "Special forms can only be called by the evaluator",
+                ));
+            }
+
             self.tick()?;
             self.control_depth(options)?;
             if self.depth.get() >= options.max_depth {
@@ -2344,6 +2469,7 @@ impl Runtime {
                             self.resolve_value(value).await
                         }
                     }
+                    Function::SyncHost(callback) => callback(self, args),
                     Function::Host(callback) => {
                         let future = callback(self, args);
                         if self.preserve_promises.get() {
@@ -2363,6 +2489,12 @@ impl Runtime {
                         call_result,
                         bind_supplied_only,
                     } => {
+                        for (index, name) in params.iter().enumerate() {
+                            if bind_supplied_only && index >= args.len() {
+                                break;
+                            }
+                            crate::security::key(name)?;
+                        }
                         // Immediate call bindings fill missing slots. A legacy fn
                         // keeps its supplied-only policy even after profile changes.
                         let immediate = if bind_supplied_only {
@@ -2443,6 +2575,9 @@ impl Runtime {
                 Value::Builtin(name) => {
                     let first = args.first().cloned().unwrap_or(Value::Undefined);
                     match name.as_str() {
+                        "JSON.parse" | "JSON.stringify" => {
+                            return crate::json::call(self, &name, &args, env, options).await;
+                        }
                         "$$CONTEXT_NAME$$" => return Ok(Value::String("STDLIB".into())),
                         "()" | "identity" | "ensureThat" => return Ok(first),
                         "apply" => {
@@ -2470,11 +2605,11 @@ impl Runtime {
                             return Ok(Value::Undefined);
                         }
                         "_get_obj_meth_" | "~>" => {
-                            let name = self.to_string(args.get(1).unwrap_or(&Value::Undefined));
+                            let name = self.safe_key(args.get(1).unwrap_or(&Value::Undefined))?;
                             if first.is_nullish() {
                                 return Err(Error::new("TypeError", "Nullish member receiver"));
                             }
-                            let prop = self.get(&first, &name);
+                            let prop = self.safe_get(&first, &name)?;
                             if !matches!(prop, Value::Undefined) {
                                 return Ok(prop);
                             }
@@ -2484,7 +2619,7 @@ impl Runtime {
                             })));
                         }
                         "invoke" | "_call_obj_meth_" => {
-                            let method = self.to_string(args.get(1).unwrap_or(&Value::Undefined));
+                            let method = self.safe_key(args.get(1).unwrap_or(&Value::Undefined))?;
                             return self
                                 .call_method(
                                     first,
@@ -2714,7 +2849,7 @@ impl Runtime {
         options: &'a EvalOptions,
     ) -> LocalBoxFuture<'a, Result<Value>> {
         Box::pin(async move {
-            let custom = self.get(&receiver, name);
+            let custom = self.safe_get(&receiver, name)?;
             if custom.is_callable() {
                 return self.call_with_options(custom, args, env, options).await;
             }

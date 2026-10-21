@@ -427,7 +427,7 @@ fn get_in_and_cp_follow_reactive_roots_and_paths() {
 }
 
 #[test]
-fn assoc_in_reacts_to_assigned_values_without_popping_path_again() {
+fn assoc_in_reacts_to_assigned_values_without_changing_path() {
     let mut rt = Runtime::new();
     let input = source(&mut rt, "input", json!(4));
     let object = rt.from_json(&json!({}));
@@ -438,14 +438,14 @@ fn assoc_in_reacts_to_assigned_values_without_popping_path_again() {
     current(&mut rt, &output, json!({"a":{"b":4}}));
     assert_eq!(
         rt.array_values(&path).unwrap(),
-        vec![Value::String("a".into())]
+        vec![Value::String("a".into()), Value::String("b".into())]
     );
     next(&mut rt, &input, json!(8));
     assert_eq!(rt.stream_value(&output).unwrap(), object);
     current(&mut rt, &output, json!({"a":{"b":8}}));
     assert_eq!(
         rt.array_values(&path).unwrap(),
-        vec![Value::String("a".into())]
+        vec![Value::String("a".into()), Value::String("b".into())]
     );
 }
 

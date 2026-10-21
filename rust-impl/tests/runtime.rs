@@ -164,7 +164,7 @@ fn set_options_cannot_enable_unsafe_evaluation_or_run_its_body() {
                 &EvalOptions::default(),
             )
             .unwrap_err();
-        assert_eq!(error.kind, "OptionsError");
+        assert_eq!(error.kind, "LPESecurityError");
         assert_eq!(rt.eval("called").unwrap(), Value::Number(0.0));
         assert_eq!(rt.eval("20 + 22").unwrap(), Value::Number(42.0));
     }

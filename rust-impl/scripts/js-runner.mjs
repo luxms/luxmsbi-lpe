@@ -130,9 +130,17 @@ function hostFixture(name, request) {
 }
 
 for await (const line of jsonLines(process.stdin)) {
+  const ActualDate = globalThis.Date;
   try {
     const request = decode(JSON.parse(line));
     const options = request.options;
+    if (request.clockMillis !== undefined) {
+      if (!Number.isSafeInteger(request.clockMillis)) throw new Error('clockMillis must be an integer');
+      globalThis.Date = class extends ActualDate {
+        constructor(...args) { super(...(args.length ? args : [request.clockMillis])); }
+        static now() { return request.clockMillis; }
+      };
+    }
     if (request.hostFixtures !== undefined && (!Array.isArray(request.hostFixtures) || request.hostFixtures.some(name => typeof name !== 'string'))) throw new Error('hostFixtures must be an array of names');
     const hosts = (request.hostFixtures || []).map(name => hostFixture(name, request));
     const context = hosts.length ? [request.context || {}, ...hosts] : request.context;
@@ -177,5 +185,5 @@ for await (const line of jsonLines(process.stdin)) {
   } catch (error) {
     const kind = error instanceof lpe.LPESyntaxError || error instanceof SyntaxError ? 'SyntaxError' : error?.name || 'Error';
     process.stdout.write(`${JSON.stringify({ok: false, error: {kind, message: String(error?.message ?? error)}})}\n`);
-  }
+  } finally { globalThis.Date = ActualDate; }
 }

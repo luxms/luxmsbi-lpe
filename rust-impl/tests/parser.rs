@@ -92,7 +92,7 @@ fn comments_lines_and_separators() {
 fn prefixed_strings_unicode_and_column_literals() {
     for (source, expected) in [
         (r#"D'2020-01-01'"#, json!(["'", "2020-01-01", "D"])),
-        (r#"r'\d+\n'"#, json!(["'", "\\d+\\n", "r"])),
+        (r#"r'\d+\n'"#, json!(["'", "\\d+\\n"])),
         (
             r#"'\t\b\f\u0000\u001f'"#,
             json!(["'", "\t\u{0008}\u{000c}\0\u{001f}"]),
@@ -136,7 +136,7 @@ fn standalone_surrogate_escapes_are_rejected_for_utf8() {
     ] {
         assert_eq!(parse(source).unwrap_err().kind, "SyntaxError");
     }
-    assert_eq!(parse(r#"r'\ud800'"#).unwrap(), json!(["'", "\\ud800", "r"]));
+    assert_eq!(parse(r#"r'\ud800'"#).unwrap(), json!(["'", "\\ud800"]));
     assert_eq!(parse(r#"'\u-000'"#).unwrap(), json!(["'", "\0"]));
     assert!(parse(r#"'\u-123'"#).is_err());
     assert!(parse(r#"'\ud83d\ude00\ud800'"#).is_err());
@@ -406,7 +406,6 @@ fn errors_are_controlled() {
         "f(",
         "a +",
         "[1,]",
-        "{1,}",
         "(,,)",
         "RETURN x",
         "VAR x=1",

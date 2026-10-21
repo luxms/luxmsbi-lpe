@@ -1,0 +1,4939 @@
+[
+  {
+    "id": "release180:constructor/get(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get(obj,key)",
+      "context": {
+        "obj": {},
+        "key": "constructor"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:constructor/get_in(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get_in(obj,key)",
+      "context": {
+        "obj": {},
+        "key": "constructor"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:constructor/property(obj,identity(key))",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "property(obj,identity(key))",
+      "context": {
+        "obj": {},
+        "key": "constructor"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:constructor/obj.(key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "obj.(key)",
+      "context": {
+        "obj": {},
+        "key": "constructor"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:constructor/set(obj,key,1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "set(obj,key,1)",
+      "context": {
+        "obj": {},
+        "key": "constructor"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:constructor/del(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "del(obj,key)",
+      "context": {
+        "obj": {},
+        "key": "constructor"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:constructor/fromEntries([[key,1]])",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "fromEntries([[key,1]])",
+      "context": {
+        "obj": {},
+        "key": "constructor"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:constructor/assoc_in(obj,[\"new\",key],1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "assoc_in(obj,[\"new\",key],1)",
+      "context": {
+        "obj": {},
+        "key": "constructor"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:constructor/update_in(obj,[\"new\",key],x=>1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "update_in(obj,[\"new\",key],x=>1)",
+      "context": {
+        "obj": {},
+        "key": "constructor"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:constructor/let([[key,1]],42)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "let([[key,1]],42)",
+      "context": {
+        "obj": {},
+        "key": "constructor"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:constructor/makeHash(key=1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "makeHash(key=1)",
+      "context": {
+        "obj": {},
+        "key": "constructor"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:constructor/frequencies([key])",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "frequencies([key])",
+      "context": {
+        "obj": {},
+        "key": "constructor"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:read-own/constructor",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get(obj,key)",
+      "context": {
+        "obj": {
+          "constructor": 42
+        },
+        "key": "constructor"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:values/constructor",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "values(obj)",
+      "context": {
+        "obj": {
+          "constructor": 42
+        }
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:merge/constructor",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "merge([{},obj])",
+      "context": {
+        "obj": {
+          "constructor": 42
+        }
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:bind/constructor",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "constructor := 1",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:undef/constructor",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "undef(\"constructor\")",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:parameter/constructor",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(fn([constructor],42),1)",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:prototype/get(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get(obj,key)",
+      "context": {
+        "obj": {},
+        "key": "prototype"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:prototype/get_in(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get_in(obj,key)",
+      "context": {
+        "obj": {},
+        "key": "prototype"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:prototype/property(obj,identity(key))",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "property(obj,identity(key))",
+      "context": {
+        "obj": {},
+        "key": "prototype"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:prototype/obj.(key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "obj.(key)",
+      "context": {
+        "obj": {},
+        "key": "prototype"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:prototype/set(obj,key,1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "set(obj,key,1)",
+      "context": {
+        "obj": {},
+        "key": "prototype"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:prototype/del(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "del(obj,key)",
+      "context": {
+        "obj": {},
+        "key": "prototype"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:prototype/fromEntries([[key,1]])",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "fromEntries([[key,1]])",
+      "context": {
+        "obj": {},
+        "key": "prototype"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:prototype/assoc_in(obj,[\"new\",key],1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "assoc_in(obj,[\"new\",key],1)",
+      "context": {
+        "obj": {},
+        "key": "prototype"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:prototype/update_in(obj,[\"new\",key],x=>1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "update_in(obj,[\"new\",key],x=>1)",
+      "context": {
+        "obj": {},
+        "key": "prototype"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:prototype/let([[key,1]],42)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "let([[key,1]],42)",
+      "context": {
+        "obj": {},
+        "key": "prototype"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:prototype/makeHash(key=1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "makeHash(key=1)",
+      "context": {
+        "obj": {},
+        "key": "prototype"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:prototype/frequencies([key])",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "frequencies([key])",
+      "context": {
+        "obj": {},
+        "key": "prototype"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:read-own/prototype",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get(obj,key)",
+      "context": {
+        "obj": {
+          "prototype": 42
+        },
+        "key": "prototype"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:values/prototype",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "values(obj)",
+      "context": {
+        "obj": {
+          "prototype": 42
+        }
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:merge/prototype",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "merge([{},obj])",
+      "context": {
+        "obj": {
+          "prototype": 42
+        }
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:bind/prototype",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "prototype := 1",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:undef/prototype",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "undef(\"prototype\")",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:parameter/prototype",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(fn([prototype],42),1)",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__proto__/get(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get(obj,key)",
+      "context": {
+        "obj": {},
+        "key": "__proto__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__proto__/get_in(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get_in(obj,key)",
+      "context": {
+        "obj": {},
+        "key": "__proto__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__proto__/property(obj,identity(key))",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "property(obj,identity(key))",
+      "context": {
+        "obj": {},
+        "key": "__proto__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__proto__/obj.(key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "obj.(key)",
+      "context": {
+        "obj": {},
+        "key": "__proto__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__proto__/set(obj,key,1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "set(obj,key,1)",
+      "context": {
+        "obj": {},
+        "key": "__proto__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__proto__/del(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "del(obj,key)",
+      "context": {
+        "obj": {},
+        "key": "__proto__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__proto__/fromEntries([[key,1]])",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "fromEntries([[key,1]])",
+      "context": {
+        "obj": {},
+        "key": "__proto__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__proto__/assoc_in(obj,[\"new\",key],1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "assoc_in(obj,[\"new\",key],1)",
+      "context": {
+        "obj": {},
+        "key": "__proto__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__proto__/update_in(obj,[\"new\",key],x=>1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "update_in(obj,[\"new\",key],x=>1)",
+      "context": {
+        "obj": {},
+        "key": "__proto__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__proto__/let([[key,1]],42)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "let([[key,1]],42)",
+      "context": {
+        "obj": {},
+        "key": "__proto__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__proto__/makeHash(key=1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "makeHash(key=1)",
+      "context": {
+        "obj": {},
+        "key": "__proto__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__proto__/frequencies([key])",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "frequencies([key])",
+      "context": {
+        "obj": {},
+        "key": "__proto__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:read-own/__proto__",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get(obj,key)",
+      "context": {
+        "obj": {
+          "__proto__": 42
+        },
+        "key": "__proto__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:values/__proto__",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "values(obj)",
+      "context": {
+        "obj": {
+          "__proto__": 42
+        }
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:merge/__proto__",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "merge([{},obj])",
+      "context": {
+        "obj": {
+          "__proto__": 42
+        }
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:bind/__proto__",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "__proto__ := 1",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:undef/__proto__",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "undef(\"__proto__\")",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:parameter/__proto__",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(fn([__proto__],42),1)",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:caller/get(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get(obj,key)",
+      "context": {
+        "obj": {},
+        "key": "caller"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:caller/get_in(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get_in(obj,key)",
+      "context": {
+        "obj": {},
+        "key": "caller"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:caller/property(obj,identity(key))",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "property(obj,identity(key))",
+      "context": {
+        "obj": {},
+        "key": "caller"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:caller/obj.(key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "obj.(key)",
+      "context": {
+        "obj": {},
+        "key": "caller"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:caller/set(obj,key,1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "set(obj,key,1)",
+      "context": {
+        "obj": {},
+        "key": "caller"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:caller/del(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "del(obj,key)",
+      "context": {
+        "obj": {},
+        "key": "caller"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:caller/fromEntries([[key,1]])",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "fromEntries([[key,1]])",
+      "context": {
+        "obj": {},
+        "key": "caller"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:caller/assoc_in(obj,[\"new\",key],1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "assoc_in(obj,[\"new\",key],1)",
+      "context": {
+        "obj": {},
+        "key": "caller"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:caller/update_in(obj,[\"new\",key],x=>1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "update_in(obj,[\"new\",key],x=>1)",
+      "context": {
+        "obj": {},
+        "key": "caller"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:caller/let([[key,1]],42)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "let([[key,1]],42)",
+      "context": {
+        "obj": {},
+        "key": "caller"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:caller/makeHash(key=1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "makeHash(key=1)",
+      "context": {
+        "obj": {},
+        "key": "caller"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:caller/frequencies([key])",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "frequencies([key])",
+      "context": {
+        "obj": {},
+        "key": "caller"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:read-own/caller",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get(obj,key)",
+      "context": {
+        "obj": {
+          "caller": 42
+        },
+        "key": "caller"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:values/caller",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "values(obj)",
+      "context": {
+        "obj": {
+          "caller": 42
+        }
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:merge/caller",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "merge([{},obj])",
+      "context": {
+        "obj": {
+          "caller": 42
+        }
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:bind/caller",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "caller := 1",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:undef/caller",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "undef(\"caller\")",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:parameter/caller",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(fn([caller],42),1)",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:callee/get(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get(obj,key)",
+      "context": {
+        "obj": {},
+        "key": "callee"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:callee/get_in(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get_in(obj,key)",
+      "context": {
+        "obj": {},
+        "key": "callee"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:callee/property(obj,identity(key))",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "property(obj,identity(key))",
+      "context": {
+        "obj": {},
+        "key": "callee"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:callee/obj.(key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "obj.(key)",
+      "context": {
+        "obj": {},
+        "key": "callee"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:callee/set(obj,key,1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "set(obj,key,1)",
+      "context": {
+        "obj": {},
+        "key": "callee"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:callee/del(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "del(obj,key)",
+      "context": {
+        "obj": {},
+        "key": "callee"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:callee/fromEntries([[key,1]])",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "fromEntries([[key,1]])",
+      "context": {
+        "obj": {},
+        "key": "callee"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:callee/assoc_in(obj,[\"new\",key],1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "assoc_in(obj,[\"new\",key],1)",
+      "context": {
+        "obj": {},
+        "key": "callee"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:callee/update_in(obj,[\"new\",key],x=>1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "update_in(obj,[\"new\",key],x=>1)",
+      "context": {
+        "obj": {},
+        "key": "callee"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:callee/let([[key,1]],42)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "let([[key,1]],42)",
+      "context": {
+        "obj": {},
+        "key": "callee"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:callee/makeHash(key=1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "makeHash(key=1)",
+      "context": {
+        "obj": {},
+        "key": "callee"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:callee/frequencies([key])",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "frequencies([key])",
+      "context": {
+        "obj": {},
+        "key": "callee"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:read-own/callee",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get(obj,key)",
+      "context": {
+        "obj": {
+          "callee": 42
+        },
+        "key": "callee"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:values/callee",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "values(obj)",
+      "context": {
+        "obj": {
+          "callee": 42
+        }
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:merge/callee",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "merge([{},obj])",
+      "context": {
+        "obj": {
+          "callee": 42
+        }
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:bind/callee",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "callee := 1",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:undef/callee",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "undef(\"callee\")",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:parameter/callee",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(fn([callee],42),1)",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:arguments/get(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get(obj,key)",
+      "context": {
+        "obj": {},
+        "key": "arguments"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:arguments/get_in(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get_in(obj,key)",
+      "context": {
+        "obj": {},
+        "key": "arguments"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:arguments/property(obj,identity(key))",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "property(obj,identity(key))",
+      "context": {
+        "obj": {},
+        "key": "arguments"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:arguments/obj.(key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "obj.(key)",
+      "context": {
+        "obj": {},
+        "key": "arguments"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:arguments/set(obj,key,1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "set(obj,key,1)",
+      "context": {
+        "obj": {},
+        "key": "arguments"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:arguments/del(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "del(obj,key)",
+      "context": {
+        "obj": {},
+        "key": "arguments"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:arguments/fromEntries([[key,1]])",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "fromEntries([[key,1]])",
+      "context": {
+        "obj": {},
+        "key": "arguments"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:arguments/assoc_in(obj,[\"new\",key],1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "assoc_in(obj,[\"new\",key],1)",
+      "context": {
+        "obj": {},
+        "key": "arguments"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:arguments/update_in(obj,[\"new\",key],x=>1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "update_in(obj,[\"new\",key],x=>1)",
+      "context": {
+        "obj": {},
+        "key": "arguments"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:arguments/let([[key,1]],42)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "let([[key,1]],42)",
+      "context": {
+        "obj": {},
+        "key": "arguments"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:arguments/makeHash(key=1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "makeHash(key=1)",
+      "context": {
+        "obj": {},
+        "key": "arguments"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:arguments/frequencies([key])",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "frequencies([key])",
+      "context": {
+        "obj": {},
+        "key": "arguments"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:read-own/arguments",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get(obj,key)",
+      "context": {
+        "obj": {
+          "arguments": 42
+        },
+        "key": "arguments"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:values/arguments",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "values(obj)",
+      "context": {
+        "obj": {
+          "arguments": 42
+        }
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:merge/arguments",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "merge([{},obj])",
+      "context": {
+        "obj": {
+          "arguments": 42
+        }
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:bind/arguments",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "arguments := 1",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:undef/arguments",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "undef(\"arguments\")",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:parameter/arguments",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(fn([arguments],42),1)",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__defineGetter__/get(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get(obj,key)",
+      "context": {
+        "obj": {},
+        "key": "__defineGetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__defineGetter__/get_in(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get_in(obj,key)",
+      "context": {
+        "obj": {},
+        "key": "__defineGetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__defineGetter__/property(obj,identity(key))",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "property(obj,identity(key))",
+      "context": {
+        "obj": {},
+        "key": "__defineGetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__defineGetter__/obj.(key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "obj.(key)",
+      "context": {
+        "obj": {},
+        "key": "__defineGetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__defineGetter__/set(obj,key,1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "set(obj,key,1)",
+      "context": {
+        "obj": {},
+        "key": "__defineGetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__defineGetter__/del(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "del(obj,key)",
+      "context": {
+        "obj": {},
+        "key": "__defineGetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__defineGetter__/fromEntries([[key,1]])",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "fromEntries([[key,1]])",
+      "context": {
+        "obj": {},
+        "key": "__defineGetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__defineGetter__/assoc_in(obj,[\"new\",key],1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "assoc_in(obj,[\"new\",key],1)",
+      "context": {
+        "obj": {},
+        "key": "__defineGetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__defineGetter__/update_in(obj,[\"new\",key],x=>1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "update_in(obj,[\"new\",key],x=>1)",
+      "context": {
+        "obj": {},
+        "key": "__defineGetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__defineGetter__/let([[key,1]],42)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "let([[key,1]],42)",
+      "context": {
+        "obj": {},
+        "key": "__defineGetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__defineGetter__/makeHash(key=1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "makeHash(key=1)",
+      "context": {
+        "obj": {},
+        "key": "__defineGetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__defineGetter__/frequencies([key])",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "frequencies([key])",
+      "context": {
+        "obj": {},
+        "key": "__defineGetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:read-own/__defineGetter__",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get(obj,key)",
+      "context": {
+        "obj": {
+          "__defineGetter__": 42
+        },
+        "key": "__defineGetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:values/__defineGetter__",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "values(obj)",
+      "context": {
+        "obj": {
+          "__defineGetter__": 42
+        }
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:merge/__defineGetter__",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "merge([{},obj])",
+      "context": {
+        "obj": {
+          "__defineGetter__": 42
+        }
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:bind/__defineGetter__",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "__defineGetter__ := 1",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:undef/__defineGetter__",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "undef(\"__defineGetter__\")",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:parameter/__defineGetter__",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(fn([__defineGetter__],42),1)",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__defineSetter__/get(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get(obj,key)",
+      "context": {
+        "obj": {},
+        "key": "__defineSetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__defineSetter__/get_in(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get_in(obj,key)",
+      "context": {
+        "obj": {},
+        "key": "__defineSetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__defineSetter__/property(obj,identity(key))",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "property(obj,identity(key))",
+      "context": {
+        "obj": {},
+        "key": "__defineSetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__defineSetter__/obj.(key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "obj.(key)",
+      "context": {
+        "obj": {},
+        "key": "__defineSetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__defineSetter__/set(obj,key,1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "set(obj,key,1)",
+      "context": {
+        "obj": {},
+        "key": "__defineSetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__defineSetter__/del(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "del(obj,key)",
+      "context": {
+        "obj": {},
+        "key": "__defineSetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__defineSetter__/fromEntries([[key,1]])",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "fromEntries([[key,1]])",
+      "context": {
+        "obj": {},
+        "key": "__defineSetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__defineSetter__/assoc_in(obj,[\"new\",key],1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "assoc_in(obj,[\"new\",key],1)",
+      "context": {
+        "obj": {},
+        "key": "__defineSetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__defineSetter__/update_in(obj,[\"new\",key],x=>1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "update_in(obj,[\"new\",key],x=>1)",
+      "context": {
+        "obj": {},
+        "key": "__defineSetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__defineSetter__/let([[key,1]],42)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "let([[key,1]],42)",
+      "context": {
+        "obj": {},
+        "key": "__defineSetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__defineSetter__/makeHash(key=1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "makeHash(key=1)",
+      "context": {
+        "obj": {},
+        "key": "__defineSetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__defineSetter__/frequencies([key])",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "frequencies([key])",
+      "context": {
+        "obj": {},
+        "key": "__defineSetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:read-own/__defineSetter__",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get(obj,key)",
+      "context": {
+        "obj": {
+          "__defineSetter__": 42
+        },
+        "key": "__defineSetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:values/__defineSetter__",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "values(obj)",
+      "context": {
+        "obj": {
+          "__defineSetter__": 42
+        }
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:merge/__defineSetter__",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "merge([{},obj])",
+      "context": {
+        "obj": {
+          "__defineSetter__": 42
+        }
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:bind/__defineSetter__",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "__defineSetter__ := 1",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:undef/__defineSetter__",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "undef(\"__defineSetter__\")",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:parameter/__defineSetter__",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(fn([__defineSetter__],42),1)",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__lookupGetter__/get(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get(obj,key)",
+      "context": {
+        "obj": {},
+        "key": "__lookupGetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__lookupGetter__/get_in(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get_in(obj,key)",
+      "context": {
+        "obj": {},
+        "key": "__lookupGetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__lookupGetter__/property(obj,identity(key))",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "property(obj,identity(key))",
+      "context": {
+        "obj": {},
+        "key": "__lookupGetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__lookupGetter__/obj.(key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "obj.(key)",
+      "context": {
+        "obj": {},
+        "key": "__lookupGetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__lookupGetter__/set(obj,key,1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "set(obj,key,1)",
+      "context": {
+        "obj": {},
+        "key": "__lookupGetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__lookupGetter__/del(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "del(obj,key)",
+      "context": {
+        "obj": {},
+        "key": "__lookupGetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__lookupGetter__/fromEntries([[key,1]])",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "fromEntries([[key,1]])",
+      "context": {
+        "obj": {},
+        "key": "__lookupGetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__lookupGetter__/assoc_in(obj,[\"new\",key],1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "assoc_in(obj,[\"new\",key],1)",
+      "context": {
+        "obj": {},
+        "key": "__lookupGetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__lookupGetter__/update_in(obj,[\"new\",key],x=>1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "update_in(obj,[\"new\",key],x=>1)",
+      "context": {
+        "obj": {},
+        "key": "__lookupGetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__lookupGetter__/let([[key,1]],42)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "let([[key,1]],42)",
+      "context": {
+        "obj": {},
+        "key": "__lookupGetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__lookupGetter__/makeHash(key=1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "makeHash(key=1)",
+      "context": {
+        "obj": {},
+        "key": "__lookupGetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__lookupGetter__/frequencies([key])",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "frequencies([key])",
+      "context": {
+        "obj": {},
+        "key": "__lookupGetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:read-own/__lookupGetter__",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get(obj,key)",
+      "context": {
+        "obj": {
+          "__lookupGetter__": 42
+        },
+        "key": "__lookupGetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:values/__lookupGetter__",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "values(obj)",
+      "context": {
+        "obj": {
+          "__lookupGetter__": 42
+        }
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:merge/__lookupGetter__",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "merge([{},obj])",
+      "context": {
+        "obj": {
+          "__lookupGetter__": 42
+        }
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:bind/__lookupGetter__",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "__lookupGetter__ := 1",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:undef/__lookupGetter__",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "undef(\"__lookupGetter__\")",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:parameter/__lookupGetter__",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(fn([__lookupGetter__],42),1)",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__lookupSetter__/get(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get(obj,key)",
+      "context": {
+        "obj": {},
+        "key": "__lookupSetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__lookupSetter__/get_in(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get_in(obj,key)",
+      "context": {
+        "obj": {},
+        "key": "__lookupSetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__lookupSetter__/property(obj,identity(key))",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "property(obj,identity(key))",
+      "context": {
+        "obj": {},
+        "key": "__lookupSetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__lookupSetter__/obj.(key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "obj.(key)",
+      "context": {
+        "obj": {},
+        "key": "__lookupSetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__lookupSetter__/set(obj,key,1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "set(obj,key,1)",
+      "context": {
+        "obj": {},
+        "key": "__lookupSetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__lookupSetter__/del(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "del(obj,key)",
+      "context": {
+        "obj": {},
+        "key": "__lookupSetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__lookupSetter__/fromEntries([[key,1]])",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "fromEntries([[key,1]])",
+      "context": {
+        "obj": {},
+        "key": "__lookupSetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__lookupSetter__/assoc_in(obj,[\"new\",key],1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "assoc_in(obj,[\"new\",key],1)",
+      "context": {
+        "obj": {},
+        "key": "__lookupSetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__lookupSetter__/update_in(obj,[\"new\",key],x=>1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "update_in(obj,[\"new\",key],x=>1)",
+      "context": {
+        "obj": {},
+        "key": "__lookupSetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__lookupSetter__/let([[key,1]],42)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "let([[key,1]],42)",
+      "context": {
+        "obj": {},
+        "key": "__lookupSetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__lookupSetter__/makeHash(key=1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "makeHash(key=1)",
+      "context": {
+        "obj": {},
+        "key": "__lookupSetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:__lookupSetter__/frequencies([key])",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "frequencies([key])",
+      "context": {
+        "obj": {},
+        "key": "__lookupSetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:read-own/__lookupSetter__",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get(obj,key)",
+      "context": {
+        "obj": {
+          "__lookupSetter__": 42
+        },
+        "key": "__lookupSetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:values/__lookupSetter__",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "values(obj)",
+      "context": {
+        "obj": {
+          "__lookupSetter__": 42
+        }
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:merge/__lookupSetter__",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "merge([{},obj])",
+      "context": {
+        "obj": {
+          "__lookupSetter__": 42
+        }
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:bind/__lookupSetter__",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "__lookupSetter__ := 1",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:undef/__lookupSetter__",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "undef(\"__lookupSetter__\")",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:parameter/__lookupSetter__",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(fn([__lookupSetter__],42),1)",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:key-type/true/get(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get(obj,key)",
+      "context": {
+        "obj": {},
+        "key": true
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:key-type/true/get_in(obj,[key])",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get_in(obj,[key])",
+      "context": {
+        "obj": {},
+        "key": true
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:key-type/true/set(obj,key,1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "set(obj,key,1)",
+      "context": {
+        "obj": {},
+        "key": true
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:key-type/true/property(obj,identity(key))",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "property(obj,identity(key))",
+      "context": {
+        "obj": {},
+        "key": true
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:key-type/false/get(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get(obj,key)",
+      "context": {
+        "obj": {},
+        "key": false
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:key-type/false/get_in(obj,[key])",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get_in(obj,[key])",
+      "context": {
+        "obj": {},
+        "key": false
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:key-type/false/set(obj,key,1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "set(obj,key,1)",
+      "context": {
+        "obj": {},
+        "key": false
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:key-type/false/property(obj,identity(key))",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "property(obj,identity(key))",
+      "context": {
+        "obj": {},
+        "key": false
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:key-type/null/get(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get(obj,key)",
+      "context": {
+        "obj": {},
+        "key": null
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:key-type/null/get_in(obj,[key])",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get_in(obj,[key])",
+      "context": {
+        "obj": {},
+        "key": null
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:key-type/null/set(obj,key,1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "set(obj,key,1)",
+      "context": {
+        "obj": {},
+        "key": null
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:key-type/null/property(obj,identity(key))",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "property(obj,identity(key))",
+      "context": {
+        "obj": {},
+        "key": null
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:key-type/undefined/get(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get(obj,key)",
+      "context": {
+        "obj": {},
+        "key": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:key-type/undefined/get_in(obj,[key])",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get_in(obj,[key])",
+      "context": {
+        "obj": {},
+        "key": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:key-type/undefined/set(obj,key,1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "set(obj,key,1)",
+      "context": {
+        "obj": {},
+        "key": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:key-type/undefined/property(obj,identity(key))",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "property(obj,identity(key))",
+      "context": {
+        "obj": {},
+        "key": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:key-type/{}/get(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get(obj,key)",
+      "context": {
+        "obj": {},
+        "key": {}
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:key-type/{}/get_in(obj,[key])",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get_in(obj,[key])",
+      "context": {
+        "obj": {},
+        "key": {}
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:key-type/{}/set(obj,key,1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "set(obj,key,1)",
+      "context": {
+        "obj": {},
+        "key": {}
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:key-type/{}/property(obj,identity(key))",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "property(obj,identity(key))",
+      "context": {
+        "obj": {},
+        "key": {}
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:key-type/[1]/get(obj,key)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get(obj,key)",
+      "context": {
+        "obj": {},
+        "key": [
+          1
+        ]
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:key-type/[1]/get_in(obj,[key])",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get_in(obj,[key])",
+      "context": {
+        "obj": {},
+        "key": [
+          1
+        ]
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:key-type/[1]/set(obj,key,1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "set(obj,key,1)",
+      "context": {
+        "obj": {},
+        "key": [
+          1
+        ]
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:key-type/[1]/property(obj,identity(key))",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "property(obj,identity(key))",
+      "context": {
+        "obj": {},
+        "key": [
+          1
+        ]
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:call/apply(if,true,1,2)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(if,true,1,2)",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:call/apply(eval_lpe,\"1+1\")",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(eval_lpe,\"1+1\")",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:call/map([1],if)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "map([1],if)",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:call/get(fn,\"__ast\")",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "let([[\"fn\",x=>x]],get(fn,\"__ast\"))",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:call/values(fn)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "let([[\"fn\",x=>x]],values(fn))",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:call/set(fn,\"name\",1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "let([[\"fn\",x=>x]],set(fn,\"name\",1))",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:array-is-data",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get_in(items,1)",
+      "context": {
+        "items": [
+          "+",
+          42,
+          99
+        ]
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": 42
+    }
+  },
+  {
+    "id": "release180:string-is-data",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get_in(text,0)",
+      "context": {
+        "text": "other",
+        "other": [
+          "wrong"
+        ]
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "o"
+    }
+  },
+  {
+    "id": "release180:quoted-root",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get_in(\"obj\",[\"a\",1,\"b\"])",
+      "context": {
+        "obj": {
+          "a": [
+            null,
+            {
+              "b": 42
+            }
+          ]
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": 42
+    }
+  },
+  {
+    "id": "release180:own-undefined",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get(obj,\"a\",9)",
+      "context": {
+        "obj": {
+          "a": {
+            "$lpe": "undefined"
+          }
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "$lpe": "undefined"
+      }
+    }
+  },
+  {
+    "id": "release180:assoc-path-stable",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "begin(obj:={=},p:=[\"a\",0,\"b\"],assoc_in(obj,p,42),[obj,p])",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        {
+          "a": [
+            {
+              "b": 42
+            }
+          ]
+        },
+        [
+          "a",
+          0,
+          "b"
+        ]
+      ]
+    }
+  },
+  {
+    "id": "release180:copy-data",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "begin(cp([source,sourceKey],[target,targetKey]),target)",
+      "context": {
+        "source": [
+          "+",
+          42,
+          99
+        ],
+        "sourceKey": 1,
+        "target": {},
+        "targetKey": "answer",
+        "answer": "wrong"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "answer": 42
+      }
+    }
+  },
+  {
+    "id": "release180:frequencies-primitives",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "frequencies([true,false,true,null,undefined])",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "true": 2,
+        "false": 1,
+        "null": 1,
+        "undefined": 1
+      }
+    }
+  },
+  {
+    "id": "release180:closure-apply",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply((x,y)=>x+y,20,22)",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": 42
+    }
+  },
+  {
+    "id": "release180:closure-map",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "map([1,2,3],x=>x*2)",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        2,
+        4,
+        6
+      ]
+    }
+  },
+  {
+    "id": "release180:path/get_in(obj,[\"absent\",\"constructor\"])",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get_in(obj,[\"absent\",\"constructor\"])",
+      "context": {
+        "obj": {}
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:path/assoc_in(obj,[],1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "assoc_in(obj,[],1)",
+      "context": {
+        "obj": {}
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "TypeError"
+      }
+    }
+  },
+  {
+    "id": "release180:path/update_in(obj,[],x=>1)",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "update_in(obj,[],x=>1)",
+      "context": {
+        "obj": {}
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "TypeError"
+      }
+    }
+  },
+  {
+    "id": "release180:string/f'hello {1+1}'",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "f'hello {1+1}'",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": "hello 2"
+    }
+  },
+  {
+    "id": "release180:string/f'{{literal} {\"x\"}'",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "f'{{literal} {\"x\"}'",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": "{literal} x"
+    }
+  },
+  {
+    "id": "release180:string/f'outer {f\"inner {2*3}\"}'",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "f'outer {f\"inner {2*3}\"}'",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": "outer inner 6"
+    }
+  },
+  {
+    "id": "release180:string/f'{\"x\"}{\"y\"}'",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "f'{\"x\"}{\"y\"}'",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": "xy"
+    }
+  },
+  {
+    "id": "release180:string/begin(x3y:=12,_f'x{1+2}y')",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "begin(x3y:=12,_f'x{1+2}y')",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": 12
+    }
+  },
+  {
+    "id": "release180:string/fJSON'{{\"a\":{1+1}}'",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "fJSON'{{\"a\":{1+1}}'",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "a": 2
+      }
+    }
+  },
+  {
+    "id": "release180:string/JSON'{\"a\":1}'",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "JSON'{\"a\":1}'",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "a": 1
+      }
+    }
+  },
+  {
+    "id": "release180:string/AST'1+2'",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "AST'1+2'",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        "+",
+        1,
+        2
+      ]
+    }
+  },
+  {
+    "id": "release180:string/EVAL'20+22'",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "EVAL'20+22'",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": 42
+    }
+  },
+  {
+    "id": "release180:string/begin(x:=40,fEVAL'x+{2}')",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "begin(x:=40,fEVAL'x+{2}')",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": 42
+    }
+  },
+  {
+    "id": "release180:string/begin(def(\"str>ARR\",v=>[v]),ARR'text')",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "begin(def(\"str>ARR\",v=>[v]),ARR'text')",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        "text"
+      ]
+    }
+  },
+  {
+    "id": "release180:time/dateTimeShift('2024-01-31 12:34:56',1,'m')",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "dateTimeShift('2024-01-31 12:34:56',1,'m')",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": "2024-02-29 12:34:56"
+    }
+  },
+  {
+    "id": "release180:time/dateTimeShift('2100-01-31T23:59:59.000000001+03:30',1,'m')",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "dateTimeShift('2100-01-31T23:59:59.000000001+03:30',1,'m')",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": "2100-02-28 23:59:59.000000001+03:30"
+    }
+  },
+  {
+    "id": "release180:time/dateTimeShift('2024-01-01 00:00:00.1Z',-0.2,'s')",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "dateTimeShift('2024-01-01 00:00:00.1Z',-0.2,'s')",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": "2023-12-31 23:59:59.9Z"
+    }
+  },
+  {
+    "id": "release180:time/dateTimeShift('0000-01-01',1,'d')",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "dateTimeShift('0000-01-01',1,'d')",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": "0000-01-02 00:00:00"
+    }
+  },
+  {
+    "id": "release180:time/dateShift('2024-01-15 23:30:00',2,' HOUR ')",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "dateShift('2024-01-15 23:30:00',2,' HOUR ')",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": "2024-01-16 01:30:00"
+    }
+  },
+  {
+    "id": "release180:time/toStart('2024-01-15T12:34:56.123+03:00','mi')",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "toStart('2024-01-15T12:34:56.123+03:00','mi')",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": "2024-01-15 12:34:00+03:00"
+    }
+  },
+  {
+    "id": "release180:time/toEnd('2024-01-15','d')",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "toEnd('2024-01-15','d')",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": "2024-01-15 23:59:59"
+    }
+  },
+  {
+    "id": "release180:time/bound('2024-01-15','d')",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "bound('2024-01-15','d')",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        "2024-01-15",
+        "2024-01-15 23:59:59"
+      ]
+    }
+  },
+  {
+    "id": "release180:time/extract('2024-01-15 12:34:56.123-03:30','n')",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "extract('2024-01-15 12:34:56.123-03:30','n')",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": 34
+    }
+  },
+  {
+    "id": "release180:time/extend(['2024-01-15 12:00:00+03:00','2024-01-15 09:00:00Z'],-1,'s')",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "extend(['2024-01-15 12:00:00+03:00','2024-01-15 09:00:00Z'],-1,'s')",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        "2024-01-15 08:59:59Z",
+        "2024-01-15 12:00:00+03:00"
+      ]
+    }
+  },
+  {
+    "id": "release180:invalid-date/2023-02-29",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "dateTimeShift(\"2023-02-29\",0,'s')",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "RangeError"
+      }
+    }
+  },
+  {
+    "id": "release180:invalid-date/2024-13-01",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "dateTimeShift(\"2024-13-01\",0,'s')",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "RangeError"
+      }
+    }
+  },
+  {
+    "id": "release180:invalid-date/2024-01-01 24:00:00",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "dateTimeShift(\"2024-01-01 24:00:00\",0,'s')",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "RangeError"
+      }
+    }
+  },
+  {
+    "id": "release180:invalid-date/2024-01-01 12:60:00",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "dateTimeShift(\"2024-01-01 12:60:00\",0,'s')",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "RangeError"
+      }
+    }
+  },
+  {
+    "id": "release180:invalid-date/2024-01-01 00:00:60",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "dateTimeShift(\"2024-01-01 00:00:60\",0,'s')",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "RangeError"
+      }
+    }
+  },
+  {
+    "id": "release180:invalid-date/2024-01-01 00:00:00+24:00",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "dateTimeShift(\"2024-01-01 00:00:00+24:00\",0,'s')",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "RangeError"
+      }
+    }
+  },
+  {
+    "id": "release180:invalid-date/2024-01-01 00:00:00.1234567890",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "dateTimeShift(\"2024-01-01 00:00:00.1234567890\",0,'s')",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "RangeError"
+      }
+    }
+  },
+  {
+    "id": "release180:invalid-shift/dateTimeShift('9999-12-31',1,'d')",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "dateTimeShift('9999-12-31',1,'d')",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "RangeError"
+      }
+    }
+  },
+  {
+    "id": "release180:invalid-shift/dateTimeShift('0000-01-01',-1,'m')",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "dateTimeShift('0000-01-01',-1,'m')",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "RangeError"
+      }
+    }
+  },
+  {
+    "id": "release180:invalid-shift/dateTimeShift('2024-01-01',1.5,'m')",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "dateTimeShift('2024-01-01',1.5,'m')",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "RangeError"
+      }
+    }
+  },
+  {
+    "id": "release180:invalid-shift/dateTimeShift('2024-01-01','1','s')",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "dateTimeShift('2024-01-01','1','s')",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "RangeError"
+      }
+    }
+  },
+  {
+    "id": "release180:invalid-shift/dateShift('2024-01-01',NaN,'d')",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "dateShift('2024-01-01',NaN,'d')",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "RangeError"
+      }
+    }
+  }
+]
