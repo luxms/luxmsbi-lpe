@@ -1009,6 +1009,37 @@ pub fn call_sync(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option<
                 let n = length(rt, array);
                 len = if b.truthy() { len.min(n) } else { len.max(n) };
             }
+            if !rt.controls_active() {
+                // Native array reads cannot call user code. Borrow columns once
+                // while constructing ordinary Vecs; release every arena borrow
+                // before allocating result handles. Other receiver types and
+                // controlled charging keep the general path below.
+                let rows = {
+                    let columns = arrays
+                        .iter()
+                        .map(|a| rt.borrow_array(a))
+                        .collect::<Result<smallvec::SmallVec<[_; 4]>>>();
+                    if let Ok(columns) = columns {
+                        let mut rows = Vec::with_capacity(len.min(1024));
+                        for i in 0..len {
+                            rt.tick()?;
+                            let mut row = Vec::with_capacity(columns.len().min(1024));
+                            for column in &columns {
+                                rt.tick()?;
+                                row.push(column.get(i).cloned().unwrap_or(Value::Undefined));
+                            }
+                            rows.push(row);
+                        }
+                        Some(rows)
+                    } else {
+                        None
+                    }
+                };
+                if let Some(rows) = rows {
+                    let rows = rows.into_iter().map(|row| rt.array(row)).collect();
+                    return Ok(Some(rt.array(rows)));
+                }
+            }
             let capacity = if rt.controls_active() {
                 0
             } else {

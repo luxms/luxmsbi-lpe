@@ -160,6 +160,37 @@ fn direct_pluck_keeps_sparse_results_and_expired_handle_behavior() {
 }
 
 #[test]
+fn direct_zip_preserves_sparse_ragged_and_other_column_types() {
+    let cases = [
+        (
+            r#"begin(a:=[1,2],del(a,1),zip([a,[3]]))"#,
+            json!([[1,3],[{"$lpe":"undefined"},{"$lpe":"undefined"}]]),
+        ),
+        (r#"zip([[1,2],[3]],true)"#, json!([[1, 3]])),
+        (r#"zip(["ab",[1,2]])"#, json!([["a", 1], ["b", 2]])),
+    ];
+    for (source, expected) in cases {
+        let mut rt = Runtime::new();
+        let value = rt.eval(source).unwrap();
+        let expected = rt.from_json(&expected);
+        assert_eq!(
+            rt.to_json(&value).unwrap(),
+            rt.to_json(&expected).unwrap(),
+            "{source}"
+        );
+    }
+    let mut rt = Runtime::new();
+    let expired = rt.array(vec![Value::Number(1.0)]);
+    rt.collect_garbage(&[]);
+    let live = rt.array(vec![Value::Number(5.0)]);
+    let columns = rt.array(vec![expired, live]);
+    rt.set_global("columns", columns);
+    let result = rt.eval("zip(columns)").unwrap();
+    let expected = rt.from_json(&json!([[{"$lpe":"undefined"},5]]));
+    assert_eq!(rt.to_json(&result).unwrap(), rt.to_json(&expected).unwrap());
+}
+
+#[test]
 fn formatted_data_reads_keep_unicode_coercion_and_budget_boundaries() {
     fn outcome(rt: &Runtime, result: lpe::Result<Value>) -> String {
         match result {

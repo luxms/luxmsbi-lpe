@@ -82,7 +82,8 @@ The optimization uses existing properties of native safe execution:
   is checked before execution. Mixed expressions retain the original planning
   and async paths, so an earlier mutation cannot stale a later binding.
 - Uncontrolled `pluck` builds its result directly, preserving sparse slots;
-  `zip` bounds its initial buffer reservations. Formatted scalar strings borrow
+  `zip` borrows native input arrays once and releases those borrows before
+  allocating output handles. Both bound initial buffer reservations. Formatted scalar strings borrow
   UTF-8 parts and evaluate eligible parts without continuation tasks. Surrogate
   values, general coercion, flags, and controlled allocation retain their
   existing behavior.
