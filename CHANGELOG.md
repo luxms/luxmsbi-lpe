@@ -21,7 +21,7 @@ All notable changes to this project will be documented in this file. See [standa
 * prevent special forms from accepting forged evaluation options ([deea628](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/deea62883523cf403b6b054d073866b5c6a82f0f))
 * str>PREFIX functions not evals arg ([0f53517](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/0f535174857b17160ffd3d9370f43fb3b175457b))
 
-## Unreleased Rust (target r1.8.0)
+## Rust 1.8.0 (2026-10-21)
 
 * Align portable behavior with JS 1.8.0 safe evaluation; reject unsafe mode and validate data paths and callbacks consistently.
 * Add formatted strings, round-trip deparsing, and UTC/fixed-offset time operations with deterministic clock tests.
@@ -34,7 +34,7 @@ All notable changes to this project will be documented in this file. See [standa
 * Preserve supplied-only parameter binding in legacy `fn`, including missing duplicate arguments and captured closures.
 * Add opt-in `legacyLineBreaks` parsing for JS 1.6.7 and apply it to legacy runtime source evaluation without changing default grammar.
 * Check controlled list allocation budgets and interrupts before copying argument payloads; retain the uncontrolled fast path.
-* Add parameter/profile, parser/diagnostic, allocation-order and recovery regressions. No release version or tag is assigned here.
+* Add parameter/profile, parser/diagnostic, allocation-order and recovery regressions.
 
 ## Rust implementation (released as r1.7.0, 2026-10-19)
 
