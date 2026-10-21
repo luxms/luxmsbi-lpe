@@ -57,6 +57,12 @@ impl Default for EvalOptions {
 }
 impl EvalOptions {
     pub fn from_json(json: &Json) -> Result<Self> {
+        if json.get("unsafe") == Some(&Json::Bool(true)) {
+            return Err(Error::new(
+                "OptionsError",
+                "Unsafe evaluation is not supported; Rust LPE only supports safe evaluation",
+            ));
+        }
         if json
             .get("streamAdapter")
             .is_some_and(|v| !v.is_null() && v != &Json::Bool(false))

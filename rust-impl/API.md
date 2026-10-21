@@ -29,6 +29,17 @@ Rust `EvalOptions::default()` matches omitted JavaScript evaluation options;
 `EvalOptions::from_json` preserves the different JS behavior of explicitly
 passing an empty options object.
 
+The compatibility target for the next Rust release is JavaScript LPE 1.8.0's
+**safe evaluation semantics only**. Its unsafe mode is not supported.
+`EvalOptions::from_json` rejects `{"unsafe": true}` with `OptionsError`, including
+JSON protocol requests and expression-level `set_options` calls. Only the
+boolean `true` requests unsafe mode; omitting the option or supplying another
+value does not enable it. Native `EvalOptions` has no unsafe switch.
+This policy does not by itself establish complete 1.8.0 compatibility: portable
+property, binding, callback, and data-traversal behavior must also match the safe
+JavaScript evaluator. The absence of a JavaScript runtime does not remove those
+observable language requirements.
+
 `parser::parse_with_diagnostics(source, options)` preserves the ordinary parse
 result and error while returning `ParseError { error, diagnostic }` on failure.
 The optional JSON diagnostic includes token spans, carets (`crs`), and direct

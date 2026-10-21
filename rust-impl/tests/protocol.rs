@@ -90,6 +90,32 @@ fn requests_have_isolated_contexts_and_preserve_explicit_options() {
 }
 
 #[test]
+fn unsafe_options_fail_for_source_and_ast_without_poisoning_the_worker() {
+    let input = [
+        json!({"op":"eval", "source":"20 + 22", "options":{"unsafe":true}}),
+        json!({"op":"evalAst", "ast":["+",20,22], "options":{"unsafe":true}}),
+        json!({"op":"eval", "source":"20 + 22", "options":{"unsafe":false}}),
+        json!({"op":"eval", "source":"20 + 22"}),
+    ]
+    .map(|request| format!("{request}\n"))
+    .concat();
+    let results = requests(input.as_bytes());
+    assert_eq!(results.len(), 4);
+    for result in &results[..2] {
+        assert_eq!(result["ok"], false);
+        assert_eq!(result["error"]["kind"], "OptionsError");
+        assert!(result["error"]["message"]
+            .as_str()
+            .unwrap()
+            .contains("Unsafe evaluation is not supported"));
+    }
+    for result in &results[2..] {
+        assert_eq!(result["ok"], true);
+        assert_eq!(result["value"].as_f64(), Some(42.0));
+    }
+}
+
+#[test]
 fn oversized_input_is_bounded_before_json_parsing() {
     let input = vec![b' '; 4 * 1024 * 1024 + 1];
     let results = requests(&input);
