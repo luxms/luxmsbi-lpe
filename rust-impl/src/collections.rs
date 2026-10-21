@@ -999,7 +999,6 @@ pub fn call_sync(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option<
         }
         "zip" => {
             let arrays = array_or_empty(rt, &a)?;
-            let mut rows = Vec::new();
             let mut len = if b.truthy() && !arrays.is_empty() {
                 usize::MAX
             } else {
@@ -1010,10 +1009,21 @@ pub fn call_sync(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option<
                 let n = length(rt, array);
                 len = if b.truthy() { len.min(n) } else { len.max(n) };
             }
+            let capacity = if rt.controls_active() {
+                0
+            } else {
+                len.min(1024)
+            };
+            let mut rows = Vec::with_capacity(capacity);
             for i in 0..len {
                 rt.tick()?;
                 rt.charge_items::<Value>(1)?;
-                let mut row = Vec::new();
+                let capacity = if rt.controls_active() {
+                    0
+                } else {
+                    arrays.len().min(1024)
+                };
+                let mut row = Vec::with_capacity(capacity);
                 for array in &arrays {
                     rt.tick()?;
                     let value = rt.get_index(array, i);
@@ -1248,6 +1258,28 @@ pub fn call_sync(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option<
         }
         "pluck" => {
             let key = rt.safe_key(&b)?;
+            if !rt.controls_active() && rt.borrow_array(&a).is_ok() {
+                // No callbacks or host access: build the unpublished result
+                // directly, keeping holes without repeated indexed writes.
+                let input = rt.borrow_array(&a)?;
+                let mut values = Vec::with_capacity(input.len().min(1024));
+                let mut holes = Vec::new();
+                for (i, item) in input.iter().enumerate() {
+                    rt.tick()?;
+                    if rt.has_index(&a, i) {
+                        values.push(rt.safe_get(item, &key)?);
+                    } else {
+                        holes.push(i);
+                        values.push(Value::Undefined);
+                    }
+                }
+                drop(input);
+                let result = rt.array(values);
+                for i in holes {
+                    rt.delete(&result, itoa::Buffer::new().format(i))?;
+                }
+                return Ok(Some(result));
+            }
             let result = rt.array(Vec::new());
             let len = if is_array(&a) { length(rt, &a) } else { 0 };
             for i in 0..len {

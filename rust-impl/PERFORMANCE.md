@@ -77,12 +77,22 @@ The optimization uses existing properties of native safe execution:
   avoiding the general dispatcher's continuation state. Dispatch only classifies
   immutable AST/function kinds. Validation, limits, depth changes, and GC roots
   remain at poll time; no code is executed when a future is merely created.
+- Argument lists consisting entirely of direct reads and primitive quotes can
+  pass native data handles without per-argument evaluator tasks. Every argument
+  is checked before execution. Mixed expressions retain the original planning
+  and async paths, so an earlier mutation cannot stale a later binding.
+- Uncontrolled `pluck` builds its result directly, preserving sparse slots;
+  `zip` bounds its initial buffer reservations. Formatted scalar strings borrow
+  UTF-8 parts and evaluate eligible parts without continuation tasks. Surrogate
+  values, general coercion, flags, and controlled allocation retain their
+  existing behavior.
 
 This does not assume all LPE calls are synchronous: host callbacks, promises,
 streams, special forms, and asynchronous collection functions retain their
-existing execution rules. The immediate evaluator's eligibility rules are not
-relaxed. Boundary tests cover sparse/live arrays, canonical property names,
-complete path validation, lazy calls, rejected values and call limits; the full
+existing execution rules. General immediate plans still reject compound bindings;
+only complete lists of effect-free leaf arguments accept data handles. Boundary
+tests cover sparse/live arrays, canonical property names, complete path validation,
+lazy calls, rejected values, formatted Unicode and every tested step/depth boundary; the full
 native/WASI corpus and controlled/legacy/async tests remain required.
 
 The allocation approach follows the [Rust Performance Book](https://nnethercote.github.io/perf-book/heap-allocations.html)

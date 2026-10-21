@@ -5,6 +5,43 @@ use indexmap::IndexMap;
 use serde_json::json;
 use std::{cell::Cell, rc::Rc};
 
+fn format_parts(rt: &Runtime, values: &[Value]) -> Result<Value> {
+    if !rt.controls_active()
+        && values.iter().all(|v| {
+            matches!(
+                v,
+                Value::String(_)
+                    | Value::Number(_)
+                    | Value::Bool(_)
+                    | Value::Null
+                    | Value::Undefined
+            )
+        })
+    {
+        // Concatenating complete UTF-8 scalar values cannot split a surrogate
+        // pair. Keep controlled and non-scalar coercion on the original path.
+        let mut text = String::new();
+        let mut number = ryu_js::Buffer::new();
+        for value in values {
+            text.push_str(match value {
+                Value::String(s) => s,
+                Value::Number(n) => number.format(*n),
+                Value::Bool(true) => "true",
+                Value::Bool(false) => "false",
+                Value::Null => "null",
+                Value::Undefined => "undefined",
+                _ => unreachable!("validated scalar formatting"),
+            });
+        }
+        return Ok(Value::String(text));
+    }
+    let mut text = Vec::new();
+    for value in values {
+        text.extend(rt.checked_to_utf16(value)?);
+    }
+    rt.checked_string_from_utf16(text)
+}
+
 pub fn names() -> &'static [&'static str] {
     &[
         "`",
@@ -298,21 +335,23 @@ pub async fn call(
                 .as_array()
                 .cloned()
                 .ok_or_else(|| Error::new("TypeError", "Format string flags must be an array"))?;
-            let mut values = Vec::new();
-            for ast in args.iter().skip(1) {
-                values.push(rt.eval_in(ast, env, options).await?);
-            }
+            let values = if let Some(values) = rt.eval_arguments_immediate(&args[1..], env, options)
+            {
+                values?
+            } else {
+                let mut values = Vec::new();
+                for ast in args.iter().skip(1) {
+                    values.push(rt.eval_in(ast, env, options).await?);
+                }
+                values
+            };
             rt.unbox(
                 values,
                 StreamContext::new(env, options).with_asts(args),
                 Rc::new(move |rt, values, env, options| {
                     let flags = flags.clone();
                     Box::pin(async move {
-                        let mut text = Vec::new();
-                        for value in &values {
-                            text.extend(rt.checked_to_utf16(value)?);
-                        }
-                        let value = rt.checked_string_from_utf16(text)?;
+                        let value = format_parts(rt, &values)?;
                         let literal = rt.ast_literal(value);
                         let mut quoted = vec![json!("'"), literal];
                         quoted.extend(flags);

@@ -2683,14 +2683,6 @@ impl Runtime {
         env: EnvId,
         options: &'a EvalOptions,
     ) -> LocalBoxFuture<'a, Result<Value>> {
-        if let Value::Builtin(name) = &function {
-            if let Some(name) = crate::builtins::sync_name(name) {
-                return self.call_sync_builtin(function, name, false, args, env, options);
-            }
-            if let Some(name) = crate::collections::sync_name(name) {
-                return self.call_sync_builtin(function, name, true, args, env, options);
-            }
-        }
         if let Value::Function(id) = &function {
             if self
                 .functions
@@ -2698,6 +2690,14 @@ impl Runtime {
                 .unwrap_or(false)
             {
                 return self.call_closure_with_options(*id, args, options);
+            }
+        }
+        if let Value::Builtin(name) = &function {
+            if let Some(name) = crate::builtins::sync_name(name) {
+                return self.call_sync_builtin(function, name, false, args, env, options);
+            }
+            if let Some(name) = crate::collections::sync_name(name) {
+                return self.call_sync_builtin(function, name, true, args, env, options);
             }
         }
         Box::pin(async move {

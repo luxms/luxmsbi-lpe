@@ -126,3 +126,82 @@ fn synchronous_dispatch_remains_lazy_and_checks_call_limits_and_values() {
         "LimitError"
     );
 }
+
+#[test]
+fn direct_data_arguments_do_not_snapshot_across_effectful_siblings() {
+    let mut rt = Runtime::new();
+    assert_eq!(
+        rt.eval(r#"begin(obj:={x=1},get(obj,begin(set(obj,"x",2),"x")))"#)
+            .unwrap(),
+        Value::Number(2.0)
+    );
+    assert_eq!(
+        rt.eval(r#"begin(obj:={x=1},get(obj,"x")+begin(set(obj,"x",2),get(obj,"x")))"#)
+            .unwrap(),
+        Value::Number(3.0)
+    );
+    let promise = rt.promise(async { Ok(Value::Number(42.0)) });
+    let values = rt.array(vec![promise]);
+    rt.set_global("values", values);
+    assert_eq!(rt.eval("first(values)").unwrap(), Value::Number(42.0));
+}
+
+#[test]
+fn direct_pluck_keeps_sparse_results_and_expired_handle_behavior() {
+    let mut rt = Runtime::new();
+    let value = rt.eval(r#"begin(a:=[{x=1},{x=2},{x=3}],del(a,1),b:=pluck(a,"x"),[count(b),containsKey(b,1),get(b,2)])"#).unwrap();
+    let expected = rt.from_json(&json!([3, false, 3]));
+    assert_eq!(rt.to_json(&value).unwrap(), rt.to_json(&expected).unwrap());
+    let expired = rt.array(vec![Value::Number(1.0)]);
+    rt.collect_garbage(&[]);
+    rt.set_global("expired", expired);
+    let value = rt.eval("pluck(expired,'x')").unwrap();
+    assert_eq!(rt.to_json(&value).unwrap(), json!([]));
+}
+
+#[test]
+fn formatted_data_reads_keep_unicode_coercion_and_budget_boundaries() {
+    fn outcome(rt: &Runtime, result: lpe::Result<Value>) -> String {
+        match result {
+            Ok(value) => format!("ok:{}", rt.to_json(&value).unwrap()),
+            Err(error) => format!("{}:{}", error.kind, error.message),
+        }
+    }
+    for source in [
+        r#"f"{name}: {amount} / {count}""#,
+        r#"f"{null}/{undefined}/{true}/{-0}""#,
+        r#"f"😀 {name}""#,
+    ] {
+        let ast = parse(source).unwrap();
+        for steps in 0..55 {
+            for depth in 0..7 {
+                let options = EvalOptions {
+                    max_steps: steps,
+                    max_depth: depth,
+                    ..Default::default()
+                };
+                let mut fast = Runtime::new();
+                let mut full = Runtime::new();
+                for rt in [&mut fast, &mut full] {
+                    rt.set_context(&json!({"name":"мир","amount":123.5,"count":32}))
+                        .unwrap();
+                }
+                full.set_lookup_hook(full.global_env(), |_, _| Ok(None))
+                    .unwrap();
+                let a = fast.eval_ast(&ast, &options);
+                let b = full.eval_ast(&ast, &options);
+                assert_eq!(
+                    outcome(&fast, a),
+                    outcome(&full, b),
+                    "{source} steps={steps} depth={depth}"
+                );
+            }
+        }
+    }
+    let mut rt = Runtime::new();
+    assert_eq!(
+        rt.eval(r#"begin(a:=get("😀",0),b:=get("😀",1),f"{a}{b}")"#)
+            .unwrap(),
+        Value::String("😀".into())
+    );
+}

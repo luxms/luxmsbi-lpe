@@ -131,7 +131,7 @@ impl Runtime {
         Some(self.run_immediate(&mut plan, &mut 0, options, depth))
     }
 
-    pub(super) fn eval_arguments_immediate(
+    pub(crate) fn eval_arguments_immediate(
         &mut self,
         args: &[Ast],
         env: EnvId,
@@ -141,9 +141,54 @@ impl Runtime {
         let depth = self.depth.get();
         let mut remaining = options.max_steps;
         let mut plan = SmallVec::<[Instruction<'_>; 16]>::new();
+        // Handles may be read directly only when *every* argument is a leaf
+        // read or primitive quote. Otherwise an earlier expression could mutate
+        // a later binding, or require the ordinary async sibling ordering.
+        let data_reads = args.iter().all(|ast| match ast {
+            Json::Null | Json::Bool(_) | Json::Number(_) | Json::String(_) => true,
+            Json::Array(a) if a.is_empty() => true,
+            Json::Array(a) if a.len() == 2 && !matches!(a[1], Json::Array(_) | Json::Object(_)) => {
+                a[0].as_str().is_some_and(|name| {
+                    matches!(
+                        self.immediate_lookup(
+                            name,
+                            &frames,
+                            options,
+                            None,
+                            true,
+                            Operator::from_value
+                        ),
+                        Some(Some(Operator::Special("\"" | "'" | "q")))
+                    )
+                })
+            }
+            _ => false,
+        });
         // Validate every argument before running any. A rejected plan must not
         // repeat effects or change the existing async sibling polling order.
         for ast in args {
+            if data_reads {
+                if let Json::String(name) = ast {
+                    if depth >= options.max_depth.min(256) || remaining == 0 {
+                        return None;
+                    }
+                    let value =
+                        self.immediate_lookup(name, &frames, options, None, false, |v| {
+                            Some(v.into_owned())
+                        })?;
+                    let operation = match value {
+                        Some(Value::Promise(_) | Value::Stream(_)) => return None,
+                        Some(value) => Operation::Binding(value),
+                        None => Operation::Unbound(name),
+                    };
+                    remaining -= 1;
+                    plan.push(Instruction {
+                        operation: Some(operation),
+                        end: plan.len() + 1,
+                    });
+                    continue;
+                }
+            }
             self.plan_immediate(
                 ast,
                 &frames,
