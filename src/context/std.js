@@ -4,6 +4,7 @@ import { EVAL, eval_lisp } from "../lisp";
 import unbox from "../lisp.unbox.js";
 import { parse } from "../lpep.js";
 import { $getvar$ } from "../lisp.var.js";
+import { safeApply, safeBoundMethod, safeMethod } from '../lib/security';
 
 /** @type {ContextFunctionsObject} */
 const _context = {
@@ -71,7 +72,7 @@ _context["apply"] = (f, ...b) => {
    * @example apply(fn({a,b,c}, a + b * c), 1, 2, 3) => 7
    * @category 10
    */
-  return f.apply(f, b)
+  return safeApply(f, b, f);
 };
 
 
@@ -86,8 +87,7 @@ _context["_get_obj_meth_"] = _context["~>"] = (obj, propName) => {
   if (obj == null) {
     throw new Error(`~> receiver is ${obj}; cannot read '${propName}'`);
   }
-  const v = obj[propName];
-  return (typeof v === 'function') ? v.bind(obj) : v;
+  return safeBoundMethod(obj, propName);
 };
 
 
@@ -107,7 +107,7 @@ _context["invoke"] = _context["_call_obj_meth_"] = (obj, methodName, ...args) =>
    *          invoke({1, 2, 3}, "con" + "cat", {4, 5, 6}) => [1,2,3,4,5,6]
    * @category 12
    */
-  return obj[methodName].apply(obj, args);
+  return safeApply(safeMethod(obj, methodName), args, obj);
 };
 
 

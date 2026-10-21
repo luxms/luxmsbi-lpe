@@ -36,6 +36,7 @@ import { DATE_FUNCTIONS } from "./lib/date/date";
 import { TIME_FUNCTIONS } from "./lib/date/time";
 import { findDoc, makeDoc, selectPerfectFunctionName } from "./lib/doc";
 import { isArray, isArrayFunction, isFunction, isHash, isSF, isSkip, isString } from "./lib/utils";
+import { isNativeFunction, safeApply, safeFunction, safeValue } from './lib/security';
 
 
 
@@ -98,12 +99,7 @@ prepareContext(STDLIB);
 export function prepareContext(ctx) {
   const ctxName = isFunction(ctx["$$CONTEXT_NAME$$"]) ? ctx["$$CONTEXT_NAME$$"]() : undefined;
   // Native-функции могут быть общими с хостом: нельзя менять ни имя, ни метаданные.
-  const preparable = new WeakMap();
-  const canPrepare = fn => {
-    if (!isFunction(fn)) return false;
-    if (!preparable.has(fn)) preparable.set(fn, !/\{\s*\[native code\]\s*\}/.test(Function.prototype.toString.call(fn)));
-    return preparable.get(fn);
-  };
+  const canPrepare = fn => isFunction(fn) && !isNativeFunction(fn);
 
   // Находим лучшее имя для каждой функции
   for (const [key, val] of Object.entries(ctx)) {
@@ -194,7 +190,7 @@ export function EVAL(ast, ctx, rs) {
     result = EVAL_IMPLEMENTATION(ast, ctx, rs || {}, evalOptions);
   }
   for (let i = skippedForms.length - 1; i >= 0; --i) {
-    result = skippedForms[i](result);
+    result = safeApply(skippedForms[i], [result], undefined);
   }
   return result;
 }
@@ -215,11 +211,11 @@ function EVAL_IMPLEMENTATION(ast, ctx, rs, evalOptions) {
     if (isString(ast)) {
       const value = varGetter(ctx, ast, rs, evalOptions);
       if (value.found) {
-        return value.value;
+        return safeValue(value.value);
       }
       return rs && rs.resolveString ? ast : undefined;
     }
-    return ast;
+    return safeValue(ast);
   }
 
 
@@ -235,15 +231,18 @@ function EVAL_IMPLEMENTATION(ast, ctx, rs, evalOptions) {
   let op = EVAL_IMPLEMENTATION(opAst, ctx, isString(opAst) ? {...rs, wantCallable: true} : rs, evalOptions);       // evaluate operator
 
   if (isHash(op) && (__call__ in op)) {       // Если в качестве функции нам дают хэшмап и у него есть __call__
-    op = op[__call__].bind(op);               // то используем его как callable (и сохраняем this)
+    const receiver = op;
+    const callable = safeFunction(op[__call__]);
+    op = (...args) => safeApply(callable, args, receiver);
   }
 
   if (!isFunction(op)) {
     throw new Error('Error: ' + String(op ?? opAst) + ' is not a function');
   }
+  safeFunction(op);
 
   if (isSF(op)) {
-    const sfResult = op(argsAst, ctx, rs, ast);
+    const sfResult = safeApply(op, [argsAst, ctx, rs, ast], undefined);
     return sfResult;
   }
 
@@ -252,7 +251,7 @@ function EVAL_IMPLEMENTATION(ast, ctx, rs, evalOptions) {
   return unbox(
     args,
     (args) => {
-      const fnResult = op.apply(op, args);
+      const fnResult = safeApply(op, args, op);
       return fnResult;
     },
     rs?.streamAdapter,

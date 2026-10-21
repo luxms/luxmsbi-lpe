@@ -30,6 +30,21 @@ function createAdapter() {
 }
 
 describe('Streams through an external adapter', () => {
+  it('rejects native code generation capabilities in later stream updates', () => {
+    const adapter = createAdapter();
+    const value = adapter.createStream(42);
+    const result = lpe.eval_lpe('identity(value)', {value}, {streamAdapter: adapter});
+    try {
+      assert.strictEqual(result.value, 42);
+      assert.throws(() => adapter.next(value, Function), error => error.code === 'LPE_SECURITY');
+      assert.strictEqual(result.value, 42);
+    } finally {
+      adapter.release(result);
+    }
+    assert.strictEqual(value.refs, 1);
+    assert.strictEqual(value.listeners.size, 0);
+  });
+
   it('combines current values and later updates', () => {
     const adapter = createAdapter();
     const a = adapter.createStream(2);

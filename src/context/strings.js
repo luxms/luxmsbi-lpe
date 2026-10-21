@@ -1,5 +1,6 @@
 import { except } from "../lib/exception.js";
 import { isFunction, isString } from "../lib/utils.js";
+import { safeApply } from '../lib/security';
 
 
 /** @type {ContextFunctionsObject} */
@@ -260,7 +261,7 @@ _context["replace"] = (str, search, replacement) => {
    *          replace("helloween", RegExp(r"(e{2,})"), "[$1]") => "hellow[ee]n"
    * @category Работа со строками | 40
    */
-  return str.replace(search, replacement);
+  return safeApply(String.prototype.replace, [search, replacement], str);
 };
 
 
@@ -279,7 +280,7 @@ _context["replaceAll"] = (str, search, replacement) => {
    *          replaceAll("+1 234 567 89-98", RegExp(r"\d", "g"), "*") => "+* *** *** **-**"
    * @category Работа со строками | 41
    */
-  return str.replaceAll(search, replacement);
+  return safeApply(String.prototype.replaceAll, [search, replacement], str);
 };
 
 

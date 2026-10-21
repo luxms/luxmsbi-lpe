@@ -11,6 +11,7 @@
 
 import { EVAL } from "./lisp";
 import unbox from "./lisp.unbox";
+import { safeApply, safeKey } from './lib/security';
 
 function parseTemplate(template) {
   if (!Array.isArray(template)) {
@@ -96,7 +97,7 @@ export default function makeVararg(template, fn) {
      * Индексы аргументов, которые улетят в **kwargs
      * @type {{[varname: string]: number}}
      * */
-    const kwargIndices = {};
+    const kwargIndices = Object.create(null);
 
     /**
      * Количество реально пришедших аргументов
@@ -113,6 +114,7 @@ export default function makeVararg(template, fn) {
 
       if (Array.isArray(argAst) && argAst.length === 3 && argAst[0] === "=" && typeof argAst[1] === "string") {
         const [_,  varname, valueAst] = argAst;
+        safeKey(varname);
         kwargIndices[varname] = i;
         astArgs[i] = valueAst;                                // Мы меняем ast (можно!) потому что часть с именем нам уже не нужна "a=..." => "..."
         varNameForPosition[i] = varname;                  // И прихраниваем имя переменной
@@ -149,7 +151,7 @@ export default function makeVararg(template, fn) {
           const args = argsIndices.map(i => values[i]);
           const kwargs = Object.fromEntries(Object.entries(kwargIndices).map(([varname, i]) => [varname, values[i]]));
           // и запускаем
-          return fn.apply(self, [...positionalArgs, args, kwargs]);
+          return safeApply(fn, [...positionalArgs, args, kwargs], self);
         },
         opt?.streamAdapter);
   }
