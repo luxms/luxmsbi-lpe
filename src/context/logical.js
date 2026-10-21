@@ -133,13 +133,13 @@ _context["<"] = _context["lt"] = _context["less"] = makeSF((ast, ctx, rs) => {
         // ast[1][1] уже выполнен
         return EVAL([ast[1][0], ["$AST$", b], ...ast[1].slice(2)], ctx, rs);
       },
-      rs?.streamAdapter,
+      rs?.streamAdapter, rs,
     );
   }
   return unbox(
     ast.map((/** @type {AST} */ arg) => EVAL(arg, ctx, rs)),
     (args) => compareFn(op, args),
-    rs?.streamAdapter,
+    rs?.streamAdapter, rs,
   );
 });
 
@@ -171,13 +171,13 @@ _context["<="] = _context["le"] = _context["lte"] = makeSF((ast, ctx, rs) => {
         // ast[1][1] уже выполнен
         return EVAL([ast[1][0], ["$AST$", b], ...ast[1].slice(2)], ctx, rs);
       },
-      rs?.streamAdapter,
+      rs?.streamAdapter, rs,
     );
   }
   return unbox(
     ast.map((/** @type {AST} */ arg) => EVAL(arg, ctx, rs)),
     (args) => compareFn(op, args),
-    rs?.streamAdapter,
+    rs?.streamAdapter, rs,
   );
 });
 
@@ -209,13 +209,13 @@ _context[">"] = _context["gt"] = _context["greater"] = makeSF((ast, ctx, rs) => 
         // ast[1][1] уже выполнен
         return EVAL([ast[1][0], ["$AST$", b], ...ast[1].slice(2)], ctx, rs);
       },
-      rs?.streamAdapter,
+      rs?.streamAdapter, rs,
     );
   }
   return unbox(
     ast.map((/** @type {AST} */ arg) => EVAL(arg, ctx, rs)),
     (args) => compareFn(op, args),
-    rs?.streamAdapter,
+    rs?.streamAdapter, rs,
   );
 });
 
@@ -247,13 +247,13 @@ _context[">="] = _context["ge"] = _context["gte"] = makeSF((ast, ctx, rs) => {
         // ast[1][1] уже выполнен
         return EVAL([ast[1][0], ["$AST$", b], ...ast[1].slice(2)], ctx, rs);
       },
-      rs?.streamAdapter,
+      rs?.streamAdapter, rs,
     );
   }
   return unbox(
     ast.map((/** @type {AST} */ arg) => EVAL(arg, ctx, rs)),
     (args) => compareFn(op, args),
-    rs?.streamAdapter,
+    rs?.streamAdapter, rs,
   );
 });
 
@@ -300,7 +300,7 @@ const andSF = _context["&&"] = _context["and"] = makeSF((ast, ctx, rs) => {
   return unbox(
     [cond],
     ([evaledCond]) => evaledCond && andSF(ast.slice(1), ctx, rs),
-    rs?.streamAdapter
+    rs?.streamAdapter, rs
   );
 });
 
@@ -330,7 +330,7 @@ const orSF = _context["||"] = _context["or"] = makeSF((ast, ctx, rs) => {
   return unbox(
     [cond],
     ([evaledCond]) => evaledCond || orSF(ast.slice(1), ctx, rs),
-    rs?.streamAdapter
+    rs?.streamAdapter, rs
   );
 });
 
@@ -355,7 +355,7 @@ const landSF = _context["logicalAnd"] = _context["logical_and"] = makeSF((ast, c
   return unbox(
     [cond],
     ([evaledCond]) => evaledCond && landSF(ast.slice(1), ctx, rs),
-    rs?.streamAdapter
+    rs?.streamAdapter, rs
   );
 });
 
@@ -381,6 +381,6 @@ const lorSF = _context["logicalOr"] = _context["logical_or"] = makeSF((ast, ctx,
   return unbox(
     [cond],
     ([evaledCond]) => evaledCond || lorSF(ast.slice(1), ctx, rs),
-    rs?.streamAdapter
+    rs?.streamAdapter, rs
   );
 });

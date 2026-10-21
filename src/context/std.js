@@ -1,10 +1,15 @@
 import { except } from "../lib/exception.js";
-import { catchReturn, GLOBAL_CONTEXT, isArray, isString, makeSF, ReturnThrow } from "../lib/utils.js";
+import { catchReturn, GLOBAL_CONTEXT, isArray, isString, makeSF as makeSpecialForm, ReturnThrow } from "../lib/utils.js";
 import { EVAL, eval_lisp } from "../lisp";
 import unbox from "../lisp.unbox.js";
 import { parse } from "../lpep.js";
 import { $getvar$ } from "../lisp.var.js";
+import { evaluationPolicy } from '../lib/evaluation-policy';
+import { markUnsafe } from '../lib/security';
 
+export function createContext(unsafe = false) {
+const makeSF = fn => unsafe ? markUnsafe(makeSpecialForm(fn)) : makeSpecialForm(fn);
+const { safeApply, safeBoundMethod, safeMethod } = evaluationPolicy({unsafe});
 /** @type {ContextFunctionsObject} */
 const _context = {
 
@@ -16,7 +21,7 @@ const _context = {
   "$AST$": makeSF((ast) => ast[0]),
 };
 
-export default _context;
+
 
 
 
@@ -71,7 +76,7 @@ _context["apply"] = (f, ...b) => {
    * @example apply(fn({a,b,c}, a + b * c), 1, 2, 3) => 7
    * @category 10
    */
-  return f.apply(f, b)
+  return safeApply(f, b, f);
 };
 
 
@@ -86,8 +91,7 @@ _context["_get_obj_meth_"] = _context["~>"] = (obj, propName) => {
   if (obj == null) {
     throw new Error(`~> receiver is ${obj}; cannot read '${propName}'`);
   }
-  const v = obj[propName];
-  return (typeof v === 'function') ? v.bind(obj) : v;
+  return safeBoundMethod(obj, propName);
 };
 
 
@@ -107,7 +111,7 @@ _context["invoke"] = _context["_call_obj_meth_"] = (obj, methodName, ...args) =>
    *          invoke({1, 2, 3}, "con" + "cat", {4, 5, 6}) => [1,2,3,4,5,6]
    * @category 12
    */
-  return obj[methodName].apply(obj, args);
+  return safeApply(safeMethod(obj, methodName), args, obj);
 };
 
 
@@ -327,7 +331,7 @@ const beginSF = _context["begin"] = makeSF((ast, ctx, options) => {
       [firstOperator],
       // Если один аргумент - возвращаем значение
       ([firstResult]) => ast.length === 1 ? firstResult : beginSF(ast.slice(1), ctx, options),
-      options?.streamAdapter,
+      options?.streamAdapter, options,
     );
   });
 });
@@ -364,7 +368,7 @@ const ifSF = _context["if"] = makeSF((ast, ctx, rs) => {
         return ifSF(ast.slice(2), ctx, rs);
       }
     },
-    rs?.streamAdapter,
+    rs?.streamAdapter, rs,
   );
 });
 
@@ -402,15 +406,15 @@ _context["do"] = makeSF((ast, ctx, rs) => {
     }
     return unbox(
       [EVAL(ast[0], ctx, rs)],
-      ([cond]) => cond ? unbox([EVAL(ast[1], ctx, rs)], unboxing, rs?.streamAdapter) : expr,
-      rs?.streamAdapter,
+      ([cond]) => cond ? unbox([EVAL(ast[1], ctx, rs)], unboxing, rs?.streamAdapter, rs) : expr,
+      rs?.streamAdapter, rs,
     );
   };
 
   return unbox(
     [EVAL(ast[1], ctx, rs)],
     unboxing,
-    rs?.streamAdapter,
+    rs?.streamAdapter, rs,
   );
 });
 
@@ -466,7 +470,7 @@ _context["rep"] = makeSF((ast, ctx, rs) => {
   return unbox(
     [EVAL(ast[0], ctx, rs)],
     ([newAst]) => EVAL(["jsonStringify", JSON.parse(newAst)], ctx, rs),
-    rs?.streamAdapter,
+    rs?.streamAdapter, rs,
   );
 });
 
@@ -482,7 +486,7 @@ _context["eval"] = (a) => {
    * @example eval({"+", 1, 2}) => 3
    * @category Интерпретатор | 2
    */
-  return eval_lisp(a);
+  return eval_lisp(a, undefined, {unsafe});
 };
 
 
@@ -500,7 +504,7 @@ _context["eval_ast"] = makeSF((ast, ctx, rs) => {
   return unbox(
     [EVAL(ast[0], ctx, rs)],
     ([newAst]) => EVAL(newAst, ctx, rs),
-    rs?.streamAdapter,
+    rs?.streamAdapter, rs,
   );
 });
 
@@ -523,7 +527,7 @@ _context["eval_lpe"] = makeSF((ast, ctx, rs) => {
       const parsed = parse(lpeCode, rs);
       return EVAL(parsed, ctx, rs);
     },
-    rs?.streamAdapter,
+    rs?.streamAdapter, rs,
   );
 });
 
@@ -547,8 +551,18 @@ _context["set_options"] = makeSF((ast, ctx, rs) => {
         // [["key1", "val1"], ["key2", "val2"]] => {key1: "val1", key2: "val2"}
         options = Object.fromEntries(options);
       }
-      return EVAL(ast[1], ctx, { ...rs, ...options });
+      return EVAL(ast[1], ctx, { ...rs, ...options, unsafe: rs?.unsafe === true });
     },
-    rs?.streamAdapter,
+    rs?.streamAdapter, rs,
   );
 });
+
+if (unsafe) {
+  for (const value of Object.values(_context)) {
+    if (typeof value === 'function') markUnsafe(value);
+  }
+}
+return _context;
+}
+
+export default createContext();

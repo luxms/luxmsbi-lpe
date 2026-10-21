@@ -1,16 +1,21 @@
 import { parse } from '../lpep';
 // @ts-check
-import { isArray, isHash, isString, makeSF, isFunction, isArrayFunction, isObj } from "../lib/utils";
+import { isArray, isHash, isString, makeSF as makeSpecialForm, isFunction, isArrayFunction, isObj } from "../lib/utils";
 import { $getvar$, $setvar$ } from "../lisp.var";
 import { EVAL } from "../lisp";
 import { except } from "../lib/exception";
 import unbox from "../lisp.unbox";
+import { evaluationPolicy } from '../lib/evaluation-policy';
+import { markUnsafe } from '../lib/security';
 
 
 
+export function createContext(unsafe = false) {
+const makeSF = fn => unsafe ? markUnsafe(makeSpecialForm(fn)) : makeSpecialForm(fn);
+const { safeDelete, safeGet, safeKey, safeSet, securityError } = evaluationPolicy({unsafe});
 /** @type {ContextFunctionsObject} */
 const _context = {};
-export default _context;
+
 
 
 
@@ -60,28 +65,22 @@ _context[":="] = _context["assign"] = makeSF((ast, ctx, rs) => {
       [varObj, ...keys, EVAL(ast[1], ctx, rs)],
       (data) => {
         let varObj = data[0];
-        const keys = data.slice(1, -1);
+        const keys = data.slice(1, -1).map(safeKey);
         const value = data[data.length - 1];
 
+        if (isFunction(varObj)) throw securityError('Function objects are not writable');
         if (!isObj(varObj) && varObj !== undefined) {
           throw except("LPE_VAR_NOT_DOT_ACCESSIBLE", varObj);
         }
         for (let i = 0; i < keys.length - 1; ++i) {
           let key = keys[i];
-          varObj[key] = toAccessableVar(varObj[key]);
-          varObj = varObj[key];
+          varObj = safeSet(varObj, key, toAccessableVar(safeGet(varObj, key)));
         }
-        return (varObj[keys[keys.length - 1]] = value);
+        return safeSet(varObj, keys[keys.length - 1], value);
       },
-      rs?.streamAdapter,
+      rs?.streamAdapter, rs,
     )
 
-    for (let i = 0; i < keys.length - 1; ++i) {
-      let key = keys[i];
-      varObj[key] = varObj[key] || {};
-      varObj = varObj[key];
-    }
-    return (varObj[keys[keys.length - 1]] = EVAL(ast[1], ctx, rs));
   }
   return $setvar$(ctx, ast[0], EVAL(ast[1], ctx, rs), rs);
 });
@@ -154,7 +153,7 @@ _context["let"] = makeSF((ast, ctx, rs) => {
           if (!isArray(val) || val.length !== 2 || !isString(val[0])) {
             throw except("LPE_FUNC_WRONG_ARG_TYPE", "let", "bindings", "Array<[Key, Value]> | Hash | Function", "Array<Any>");
           }
-          newCtx[val[0]] = val[1];
+          safeSet(newCtx, val[0], val[1]);
         });
       } else if (isFunction(vars) || isHash(vars)) {
         newCtx = vars;
@@ -164,7 +163,7 @@ _context["let"] = makeSF((ast, ctx, rs) => {
       // На случай, если newCtx - функция, передаем {}, чтобы в него записывались локальные переменные
       return EVAL(['begin', ...ast.slice(1)], [newCtx, {}, ctx], rs);
     },
-    rs?.streamAdapter,
+    rs?.streamAdapter, rs,
   );
 });
 
@@ -212,9 +211,9 @@ const letStarSF = _context["let*"] = _context["letseq"] = _context["letstar"] = 
     [name, value],
     ([name, resolved]) => letStarSF(
       [bindings.slice(1), ...ast.slice(1)],
-      [{[String(name)]: resolved}, ctx],
+      [{[safeKey(name)]: resolved}, ctx],
       rs),
-    rs?.streamAdapter);
+    rs?.streamAdapter, rs);
 });
 
 
@@ -239,7 +238,7 @@ _context["def"] = makeSF((ast, ctx, rs) => {
       const result = $setvar$(ctx, ast[0], value, rs);
       return result;
     },
-    rs?.streamAdapter,
+    rs?.streamAdapter, rs,
   );
 });
 
@@ -299,8 +298,8 @@ _context["undef"] = makeSF((ast, ctx, rs) => {
       }
     } else if (isHash(ctx)) {
       if (Object.hasOwn(ctx, varName)) {
-        const res = { value: ctx[varName], found: true };
-        delete ctx[varName];
+        const res = { value: safeGet(ctx, varName), found: true };
+        safeDelete(ctx, varName);
         return res;
       }
     }
@@ -310,9 +309,9 @@ _context["undef"] = makeSF((ast, ctx, rs) => {
   return unbox(
     [varName],
     ([varName]) => {
-      return undefFunc(String(varName), ctx).value;
+      return undefFunc(safeKey(varName), ctx).value;
     },
-    rs?.streamAdapter,
+    rs?.streamAdapter, rs,
   );
 });
 
@@ -382,13 +381,15 @@ _context[".-"] = _context["property"] = makeSF((ast, ctx, options) => {
   return unbox(
     [obj, propertyName, value],
     ([obj, propertyName, value]) => {
+      safeKey(propertyName);
       try {
-        return (value !== undefined) ? (obj[propertyName] = value) : obj[propertyName];
+        return (value !== undefined) ? safeSet(obj, propertyName, value) : safeGet(obj, propertyName);
       } catch (err) {
+        if (err.code === 'LPE_SECURITY') throw err;
         return value;                                                             // undefined when 'get'
       }
     },
-    options?.streamAdapter);
+    options?.streamAdapter, options);
 });
 
 
@@ -441,7 +442,8 @@ _context["define"] = makeSF((ast, ctx, rs) => {
     }
     body = body[1];
     let fargs = [];
-    statics[last[1]] = {};
+    const functionName = safeKey(last[1]);
+    safeSet(statics, functionName, {});
     last.slice(2, last.length - 1).forEach((v) => {
       let name = v;
       let val = undefined;
@@ -453,18 +455,18 @@ _context["define"] = makeSF((ast, ctx, rs) => {
         val = EVAL(v[2], ctx, rs);
       }
       if (name.startsWith("$")) {
-        statics[last[1]][name.slice(1)] = val;
+        safeSet(safeGet(statics, functionName), name.slice(1), val);
       } else {
-        fargs.push([ name, val ]);
+        fargs.push([ safeKey(name), val ]);
       }
     });
 
-    context[last[1]] = makeSF((ast, ctx, rs) => {
+    safeSet(context, functionName, makeSF((ast, ctx, rs) => {
       if (!body) {
         return false;
       }
       let ths = $getvar$(ctx, '##static');
-      if (ths) ths = ths[last[1]];
+      if (ths) ths = safeGet(ths, functionName);
       return EVAL(
         ["let",
           [["this", ths || {}], ...fargs.map((x, i) => [x[0], ast[i] || x[1]])],
@@ -472,8 +474,18 @@ _context["define"] = makeSF((ast, ctx, rs) => {
         ctx,
         rs
       );
-    });
+    }));
     ind++;
   }
   return EVAL(['let', [["##static", statics]], ...ast.slice(ind)], [context, ctx], rs)
 });
+
+if (unsafe) {
+  for (const value of Object.values(_context)) {
+    if (typeof value === 'function') markUnsafe(value);
+  }
+}
+return _context;
+}
+
+export default createContext();
