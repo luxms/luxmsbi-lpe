@@ -6,6 +6,7 @@ use smallvec::SmallVec;
 use std::borrow::Cow;
 
 enum Operator {
+    JsonInvoke,
     Builtin(&'static str),
     Special(&'static str),
 }
@@ -13,6 +14,9 @@ enum Operator {
 impl Operator {
     fn from_value(value: Cow<'_, Value>) -> Option<Self> {
         match value.as_ref() {
+            Value::Builtin(name) if matches!(name.as_str(), "invoke" | "_call_obj_meth_") => {
+                Some(Self::JsonInvoke)
+            }
             Value::Builtin(name) => crate::builtins::sync_name(name)
                 .or_else(|| crate::collections::sync_name(name))
                 .map(Self::Builtin),
@@ -36,6 +40,7 @@ impl Operator {
 }
 
 enum Operation<'a> {
+    Json(&'static str, Value),
     Literal(&'a Ast),
     Binding(Value),
     Unbound(&'a str),
@@ -272,6 +277,69 @@ impl Runtime {
                     Operator::from_value,
                 )??;
                 match &operator {
+                    Operator::JsonInvoke => {
+                        // Only a resolved protected JSON receiver, a literal method,
+                        // and one already resolved input qualify. Dynamic calls retain
+                        // their ordinary argument order and asynchronous fallback.
+                        if list.len() != 4
+                            || options.max_steps != EvalOptions::default().max_steps
+                            || options.max_depth != EvalOptions::default().max_depth
+                            || depth + 8 >= options.max_depth
+                        {
+                            return None;
+                        }
+                        let resolve = |ast: &Ast| -> Option<Value> {
+                            if let Some(name) = ast.as_str() {
+                                return self.immediate_lookup(
+                                    name,
+                                    frames,
+                                    options,
+                                    bindings,
+                                    false,
+                                    |value| Some(value.into_owned()),
+                                )?;
+                            }
+                            let quote = ast.as_array()?;
+                            if quote.len() != 2 || !quote[1].is_string() {
+                                return None;
+                            }
+                            let op = self.immediate_lookup(
+                                quote[0].as_str()?,
+                                frames,
+                                options,
+                                bindings,
+                                true,
+                                Operator::from_value,
+                            )??;
+                            if !matches!(op, Operator::Special("\"" | "'" | "q")) {
+                                return None;
+                            }
+                            Some(Value::String(quote[1].as_str()?.into()))
+                        };
+                        if resolve(&list[1])? != Value::Object(self.json_object) {
+                            return None;
+                        }
+                        let Value::String(method) = resolve(&list[2])? else {
+                            return None;
+                        };
+                        let method = match method.as_str() {
+                            "parse" => "parse",
+                            "stringify" => "stringify",
+                            _ => return None,
+                        };
+                        let value = resolve(&list[3])?;
+                        if matches!(value, Value::Promise(_) | Value::Stream(_)) {
+                            return None;
+                        }
+                        if method == "parse" && !matches!(value, Value::String(_)) {
+                            return None;
+                        }
+                        if method == "stringify" && !crate::json::plain(self, &value) {
+                            return None;
+                        }
+                        Operation::Json(method, value)
+                    }
+
                     Operator::Special(name) if matches!(*name, "`" | "$AST$") => {
                         let ast = list.get(1)?;
                         if ast.get("$lpeInternalLiteral").is_some() {
@@ -378,6 +446,15 @@ impl Runtime {
             .expect("unexecuted instruction");
         *cursor += 1;
         match operation {
+            Operation::Json(method, value) => {
+                self.tick()?;
+                if method == "parse" {
+                    crate::json::parse(self, &value)
+                } else {
+                    crate::json::stringify_plain(self, &value)
+                }
+            }
+
             Operation::Literal(ast) if ast.is_array() => Ok(Value::Null),
             Operation::Literal(ast) => Ok(self.from_json(ast)),
             Operation::Binding(value) => Ok(value),
@@ -409,6 +486,7 @@ impl Runtime {
             Operation::Call(operator, count) => {
                 self.tick()?;
                 match operator {
+                    Operator::JsonInvoke => unreachable!("JSON invoke has a dedicated operation"),
                     Operator::Builtin(name) => {
                         let mut values = SmallVec::<[Value; 4]>::with_capacity(count);
                         while *cursor < end {

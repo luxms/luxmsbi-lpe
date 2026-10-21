@@ -24,7 +24,9 @@ their captured scopes through garbage collection.
 Rust's explicit garbage collection every 256 evaluations is included in elapsed
 time; JavaScript's automatic collection is also inside the timed region.
 
-`BENCH_ITERATIONS` defaults to 20,000, `BENCH_REPEATS` to 5. The production layout
+`BENCH_CASES` optionally selects comma-separated case IDs for diagnostics; the
+CI release gate runs every case. `BENCH_ITERATIONS` defaults to 20,000,
+`BENCH_REPEATS` to 5. The production layout
 uses 0.002 times the iteration count. `BENCH_REPORT` chooses the JSON report
 path (default `rust-impl/reports/benchmark.json`). `BENCH_SKIP_BUILD=1` is useful
 only with an already verified current build; `BENCH_RUST_BINARY` can select a
@@ -110,6 +112,13 @@ The earlier five-sample result is preserved as
 `rust-impl/reports/benchmark-previous-20261019T091315547Z.json`.
 
 ## Changes and constraints
+
+- Parse native JSON directly into runtime values through sonic-rs's Serde
+  visitor, avoiding a temporary JSON tree. Retain numeric/Unicode fallbacks.
+  Serialize ordinary JSON data synchronously through borrowed collections and
+  a single output buffer. Eligible resolved JSON calls skip async task setup;
+  calls with callbacks, dynamic arguments, custom limits, and lookup hooks keep
+  their guarded evaluator path. Eligibility checks have no user-visible effects.
 
 - Borrow environment and collection data for lookup instead of cloning whole
   maps/arrays. Cache immutable scope traversal order; read current bindings,

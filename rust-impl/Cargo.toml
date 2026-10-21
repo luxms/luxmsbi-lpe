@@ -16,6 +16,7 @@ chrono = "0.4"
 regress = { version = "=0.12.0", features = ["utf16"] }
 rand = "0.8"
 ryu-js = "1"
+itoa = "1"
 smallvec = "1"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]

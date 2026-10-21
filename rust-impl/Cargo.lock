@@ -294,6 +294,7 @@ dependencies = [
  "chrono",
  "futures",
  "indexmap",
+ "itoa",
  "rand",
  "regress",
  "ryu-js",

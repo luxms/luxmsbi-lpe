@@ -4,7 +4,12 @@ import {fileURLToPath} from 'node:url';
 import os from 'node:os';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
-const cases = JSON.parse(readFileSync(new URL('../fixtures/benchmark-inputs.json', import.meta.url)));
+let cases = JSON.parse(readFileSync(new URL('../fixtures/benchmark-inputs.json', import.meta.url)));
+if (process.env.BENCH_CASES) {
+  const names = new Set(process.env.BENCH_CASES.split(','));
+  for (const name of names) if (!cases.some(c => c.id === name)) throw new Error(`Unknown benchmark case: ${name}`);
+  cases = cases.filter(c => names.has(c.id));
+}
 const iterations = Number(process.env.BENCH_ITERATIONS || 20000);
 const repeats = Number(process.env.BENCH_REPEATS || 5);
 if (!Number.isSafeInteger(iterations) || iterations < 1 || iterations > 1_000_000 ||

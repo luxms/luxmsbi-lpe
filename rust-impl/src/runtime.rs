@@ -198,6 +198,24 @@ impl<T: Clone> Arena<T> {
         })
         .ok()
     }
+    #[cfg(not(target_arch = "wasm32"))]
+    fn discard(&mut self, id: usize) {
+        let mut storage = self.0.borrow_mut();
+        let index = id & INDEX_MASK;
+        let Some(slot) = storage.slots.get_mut(index) else {
+            return;
+        };
+        if slot.generation != id >> SHIFT || slot.value.is_none() {
+            return;
+        }
+        let retired = slot.value.take();
+        slot.generation += 1;
+        if slot.generation <= INDEX_MASK {
+            storage.free.push(index);
+        }
+        drop(storage);
+        drop(retired);
+    }
     fn sweep(&mut self, live: &HashSet<usize>) {
         let mut storage = self.0.borrow_mut();
         let mut retired = vec![];
@@ -1425,6 +1443,26 @@ impl Runtime {
             return None;
         }
         self.arrays.get(*id)
+    }
+    // Only newly constructed, unpublished JSON values may be discarded here.
+    #[cfg(not(target_arch = "wasm32"))]
+    pub(crate) fn discard_json_values(&mut self, values: &[Value]) {
+        for value in values {
+            match value {
+                Value::Array(id) => self.arrays.discard(*id),
+                Value::Object(id) => self.objects.discard(*id),
+                _ => unreachable!("JSON allocation record"),
+            }
+        }
+    }
+    pub(crate) fn borrow_object(&self, value: &Value) -> Result<Ref<'_, IndexMap<String, Value>>> {
+        match value {
+            Value::Object(id) => self
+                .objects
+                .borrow(*id)
+                .ok_or_else(|| Error::new("InvalidHandle", "Expired object")),
+            _ => Err(Error::new("TypeError", "Expected object")),
+        }
     }
     pub fn object_values(&self, value: &Value) -> Result<IndexMap<String, Value>> {
         match value {

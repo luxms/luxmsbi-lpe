@@ -4,6 +4,110 @@ use futures::{future::LocalBoxFuture, FutureExt};
 use indexmap::IndexMap;
 use serde_json::Value as Json;
 
+#[cfg(not(target_arch = "wasm32"))]
+mod native {
+    use super::*;
+    use serde::de::{DeserializeSeed, MapAccess, SeqAccess, Visitor};
+
+    struct Seed<'a> {
+        rt: &'a mut Runtime,
+        nodes: &'a mut usize,
+        created: &'a mut smallvec::SmallVec<[Value; 8]>,
+    }
+    impl<'de> DeserializeSeed<'de> for Seed<'_> {
+        type Value = Value;
+        fn deserialize<D: serde::Deserializer<'de>>(
+            self,
+            deserializer: D,
+        ) -> std::result::Result<Value, D::Error> {
+            *self.nodes += 1;
+            deserializer.deserialize_any(self)
+        }
+    }
+    impl<'de> Visitor<'de> for Seed<'_> {
+        type Value = Value;
+        fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+            formatter.write_str("JSON data")
+        }
+        fn visit_unit<E: serde::de::Error>(self) -> std::result::Result<Value, E> {
+            Ok(Value::Null)
+        }
+        fn visit_bool<E: serde::de::Error>(self, value: bool) -> std::result::Result<Value, E> {
+            Ok(Value::Bool(value))
+        }
+        fn visit_i64<E: serde::de::Error>(self, value: i64) -> std::result::Result<Value, E> {
+            Ok(Value::Number(value as f64))
+        }
+        fn visit_u64<E: serde::de::Error>(self, value: u64) -> std::result::Result<Value, E> {
+            Ok(Value::Number(value as f64))
+        }
+        fn visit_f64<E: serde::de::Error>(self, value: f64) -> std::result::Result<Value, E> {
+            Ok(Value::Number(value))
+        }
+        fn visit_str<E: serde::de::Error>(self, value: &str) -> std::result::Result<Value, E> {
+            Ok(Value::String(value.into()))
+        }
+        fn visit_string<E: serde::de::Error>(self, value: String) -> std::result::Result<Value, E> {
+            Ok(Value::String(value))
+        }
+        fn visit_seq<A: SeqAccess<'de>>(
+            self,
+            mut sequence: A,
+        ) -> std::result::Result<Value, A::Error> {
+            let mut values = Vec::with_capacity(sequence.size_hint().unwrap_or(8));
+            while let Some(value) = sequence.next_element_seed(Seed {
+                rt: self.rt,
+                nodes: self.nodes,
+                created: self.created,
+            })? {
+                values.push(value);
+            }
+            let value = self.rt.array(values);
+            self.created.push(value.clone());
+            Ok(value)
+        }
+        fn visit_map<A: MapAccess<'de>>(self, mut map: A) -> std::result::Result<Value, A::Error> {
+            let mut values = IndexMap::with_capacity(map.size_hint().unwrap_or(4));
+            while let Some(key) = map.next_key::<String>()? {
+                let value = map.next_value_seed(Seed {
+                    rt: self.rt,
+                    nodes: self.nodes,
+                    created: self.created,
+                })?;
+                values.insert(key, value);
+            }
+            let value = self.rt.object(values);
+            self.created.push(value.clone());
+            Ok(value)
+        }
+    }
+    pub(super) fn parse(
+        rt: &mut Runtime,
+        text: &str,
+    ) -> std::result::Result<(Value, usize), sonic_rs::Error> {
+        let mut deserializer = sonic_rs::Deserializer::from_str(text);
+        let mut nodes = 0;
+        let mut created = smallvec::SmallVec::new();
+        let result = Seed {
+            rt,
+            nodes: &mut nodes,
+            created: &mut created,
+        }
+        .deserialize(&mut deserializer)
+        .and_then(|value| {
+            deserializer.end()?;
+            Ok(value)
+        });
+        match result {
+            Ok(value) => Ok((value, nodes)),
+            Err(error) => {
+                rt.discard_json_values(&created);
+                Err(error)
+            }
+        }
+    }
+}
+
 pub(crate) fn parse(rt: &mut Runtime, input: &Value) -> Result<Value> {
     if matches!(input, Value::Utf16(_)) {
         return crate::builtins::parse_json_legacy(rt, input);
@@ -17,18 +121,19 @@ pub(crate) fn parse(rt: &mut Runtime, input: &Value) -> Result<Value> {
         &owned
     };
     rt.charge_size(text.len().checked_mul(32))?;
-    // Native SIMD parsing keeps input immutable. The portable parser also
-    // handles numbers beyond the native parser's range (JS converts to f64).
+    // Deserialize directly into runtime values, avoiding a temporary JSON DOM.
+    // Charge work only after validation so a parser fallback cannot double-count.
     #[cfg(not(target_arch = "wasm32"))]
-    let parsed = if text.contains("-0") {
-        // sonic-rs normalizes integer -0 to 0; JS preserves its sign.
-        serde_json::from_str::<Json>(text).map_err(|error| error.to_string())
-    } else {
-        sonic_rs::from_str::<Json>(text)
-            .map_err(|error| error.to_string())
-            .or_else(|_| serde_json::from_str(text).map_err(|error| error.to_string()))
-    };
-    #[cfg(target_arch = "wasm32")]
+    if !rt.controls_active() && !text.contains("-0") {
+        if let Ok((value, nodes)) = native::parse(rt, text) {
+            for _ in 0..nodes {
+                rt.tick()?;
+            }
+            return Ok(value);
+        }
+    }
+    // sonic-rs normalizes integer -0 and rejects overflow; preserve JS f64
+    // behavior with the portable parser for these exceptional inputs.
     let parsed = serde_json::from_str::<Json>(text).map_err(|error| error.to_string());
     let parsed = match parsed {
         Ok(value) => value,
@@ -88,6 +193,158 @@ fn quote(text: &str) -> Result<String> {
     #[cfg(target_arch = "wasm32")]
     let result = serde_json::to_string(text);
     result.map_err(|error| Error::new("TypeError", error.to_string()))
+}
+
+// Eligibility is read-only: no callbacks, mutations, or budget changes before
+// the immediate evaluator has validated every part of its enclosing plan.
+pub(crate) fn plain(rt: &Runtime, value: &Value) -> bool {
+    fn visit(rt: &Runtime, value: &Value, parents: &mut Vec<(bool, usize)>) -> bool {
+        let identity = match value {
+            Value::Array(id) => (true, *id),
+            Value::Object(id) => (false, *id),
+            _ => return true,
+        };
+        if parents.len() >= 128 || parents.contains(&identity) {
+            return false;
+        }
+        if rt.get(value, "toJSON").is_callable() {
+            return false;
+        }
+        parents.push(identity);
+        let result = if identity.0 {
+            rt.borrow_array(value)
+                .is_ok_and(|values| values.iter().all(|value| visit(rt, value, parents)))
+        } else {
+            rt.borrow_object(value)
+                .is_ok_and(|values| values.values().all(|value| visit(rt, value, parents)))
+        };
+        parents.pop();
+        result
+    }
+    visit(rt, value, &mut Vec::new())
+}
+
+pub(crate) fn stringify_plain(rt: &Runtime, value: &Value) -> Result<Value> {
+    struct Writer {
+        output: Vec<u8>,
+    }
+    impl Writer {
+        fn append(&mut self, rt: &Runtime, text: &str) -> Result<()> {
+            rt.charge_intermediate(text.len())?;
+            self.output.extend_from_slice(text.as_bytes());
+            Ok(())
+        }
+        fn string(&mut self, rt: &Runtime, text: &str) -> Result<()> {
+            rt.charge_size(
+                text.len()
+                    .checked_mul(6)
+                    .and_then(|size| size.checked_add(2)),
+            )?;
+            let before = self.output.len();
+            #[cfg(not(target_arch = "wasm32"))]
+            let result = sonic_rs::to_writer(&mut self.output, text);
+            #[cfg(target_arch = "wasm32")]
+            let result = serde_json::to_writer(&mut self.output, text);
+            result.map_err(|error| Error::new("TypeError", error.to_string()))?;
+            rt.charge_intermediate(self.output.len() - before)
+        }
+        fn entry(
+            &mut self,
+            rt: &Runtime,
+            key: &str,
+            value: &Value,
+            count: &mut usize,
+        ) -> Result<()> {
+            if matches!(
+                value,
+                Value::Undefined | Value::Function(_) | Value::Builtin(_) | Value::Special(_)
+            ) {
+                rt.tick()?;
+                return Ok(());
+            }
+            if *count != 0 {
+                self.append(rt, ",")?;
+            }
+            self.string(rt, key)?;
+            self.append(rt, ":")?;
+            self.value(rt, value)?;
+            *count += 1;
+            Ok(())
+        }
+        fn value(&mut self, rt: &Runtime, value: &Value) -> Result<bool> {
+            rt.tick()?;
+            match value {
+                Value::Undefined | Value::Function(_) | Value::Builtin(_) | Value::Special(_) => {
+                    return Ok(false)
+                }
+                Value::Null => self.append(rt, "null")?,
+                Value::Bool(value) => self.append(rt, if *value { "true" } else { "false" })?,
+                Value::Number(value) => {
+                    if value.abs() <= 9_007_199_254_740_991.0 && value.fract() == 0.0 {
+                        self.append(rt, itoa::Buffer::new().format(*value as i64))?;
+                    } else if value.is_finite() {
+                        self.append(rt, ryu_js::Buffer::new().format(*value))?;
+                    } else {
+                        self.append(rt, "null")?;
+                    }
+                }
+                Value::String(value) => self.string(rt, value)?,
+                Value::Utf16(value) => self.append(rt, &crate::builtins::quote_units(value))?,
+                Value::Promise(_) => self.append(rt, "{}")?,
+                Value::Stream(_) => {
+                    return Err(Error::new("TypeError", "Streams cannot be serialized"))
+                }
+                Value::Date(_) => self.string(rt, &rt.to_string(value))?,
+                Value::Array(_) => {
+                    self.append(rt, "[")?;
+                    for (index, value) in rt.borrow_array(value)?.iter().enumerate() {
+                        if index != 0 {
+                            self.append(rt, ",")?;
+                        }
+                        if !self.value(rt, value)? {
+                            self.append(rt, "null")?;
+                        }
+                    }
+                    self.append(rt, "]")?;
+                }
+                Value::Object(_) => {
+                    self.append(rt, "{")?;
+                    let values = rt.borrow_object(value)?;
+                    let mut count = 0;
+                    if values
+                        .keys()
+                        .all(|key| !key.as_bytes().first().is_some_and(u8::is_ascii_digit))
+                    {
+                        for (key, value) in values.iter() {
+                            self.entry(rt, key, value, &mut count)?;
+                        }
+                    } else {
+                        let mut entries: smallvec::SmallVec<[(&String, &Value); 8]> =
+                            values.iter().collect();
+                        entries.sort_by_key(|(key, _)| {
+                            key.parse::<u32>()
+                                .ok()
+                                .filter(|index| *index != u32::MAX && index.to_string() == **key)
+                                .map_or((1, 0), |index| (0, index))
+                        });
+                        for (key, value) in entries {
+                            self.entry(rt, key, value, &mut count)?;
+                        }
+                    }
+                    self.append(rt, "}")?;
+                }
+            }
+            Ok(true)
+        }
+    }
+    let mut writer = Writer { output: Vec::new() };
+    if writer.value(rt, value)? {
+        Ok(Value::String(
+            String::from_utf8(writer.output).expect("JSON serializer produces UTF-8"),
+        ))
+    } else {
+        Ok(Value::Undefined)
+    }
 }
 
 struct Serializer {
@@ -402,6 +659,9 @@ pub(crate) async fn call(
             return result;
         }
         return Ok(value);
+    }
+    if args.len() == 1 && !rt.controls_active() && plain(rt, &input) {
+        return stringify_plain(rt, &input);
     }
     let replacer = args.get(1).cloned().unwrap_or(Value::Undefined);
     let properties = if matches!(replacer, Value::Array(_)) {
