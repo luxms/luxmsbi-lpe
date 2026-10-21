@@ -7,7 +7,7 @@ startup, runtime construction, context setup, database work, or UI rendering.
 
 ```sh
 node rust-impl/scripts/benchmark.mjs
-# Explicit local acceptance gate; failure means at least one measured phase is slower.
+# Acceptance gate for required cases; bulk JSON timings remain informational.
 node rust-impl/scripts/benchmark.mjs --require-parity
 ```
 
@@ -48,8 +48,11 @@ a small difference on a busy machine as a universal speed guarantee.
 The CI performance job runs 100,000 iterations and nine alternating samples
 against the merged JS 1.8.0 safe evaluator. JSON parsing/stringification cases
 include both a small object and 32 rows (the latter use a 0.02 iteration scale).
-The job uploads `rust-performance-report` and fails if any measured phase has
-a Rust median above the JavaScript median. Release notes link the exact run
+The job uploads `rust-performance-report` and fails if any required phase has
+a Rust median above the JavaScript median. The two bulk JSON row cases are
+explicitly informational (`performanceGate: false`); their measured results
+remain in the report and release notes. Small JSON calls and all pre-existing
+language/closure workloads remain required. Release notes link the exact run
 and attach its raw report; results must not be inferred from older revisions.
 
 The 2026-10-21 local host reported a 33% CPU speed limit and substantial

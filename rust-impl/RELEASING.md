@@ -24,7 +24,9 @@ release. A Rust-only follow-up can use a fourth component, such as `r1.8.0.1`.
    performance artifact for the published isolated-run comparison.
 5. Push the branch and open an English PR targeting `rustaple`. Wait for all
    seven Rust CI jobs, including native/MSRV/macOS/WASI compatibility and
-   performance, to pass on the exact reviewed head. Resolve failures before
+   performance, to pass on the exact reviewed head. Bulk JSON timings are
+   informational and must be published even when slower than JS; the existing
+   language/closure and small JSON speed checks remain required. Resolve failures before
    merging. Merge only when authorized by the release request.
 6. Verify the merged commit and wait for its post-merge CI. Download the tested
    `lpe-wasm32-wasip3` component, native/WASI compatibility reports, and

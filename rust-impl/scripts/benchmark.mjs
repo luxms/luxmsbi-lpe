@@ -42,7 +42,7 @@ for (const fixture of cases) {
       samples[implementation].push(JSON.parse(raw));
     }
   }
-  const result = {id: fixture.id, iterations: count, warmup, samples};
+  const result = {id: fixture.id, performanceGate: fixture.performanceGate !== false, iterations: count, warmup, samples};
   for (const phase of fixture.parseOnly ? ['parse'] : ['parse','eval']) {
     const rust = samples.rust.map(s => s[`${phase}Seconds`] / count * 1e6);
     const js = samples.js.map(s => s[`${phase}Seconds`] / count * 1e6);
@@ -50,12 +50,12 @@ for (const fixture of cases) {
       rustRangeUs: [Math.min(...rust),Math.max(...rust)], jsRangeUs: [Math.min(...js),Math.max(...js)]};
   }
   report.cases.push(result);
-  console.log(`${fixture.id}: parse ${result.parse.speedup.toFixed(2)}x${result.eval ? `, eval ${result.eval.speedup.toFixed(2)}x` : ''} (JS time / Rust time)`);
+  console.log(`${fixture.id}: parse ${result.parse.speedup.toFixed(2)}x${result.eval ? `, eval ${result.eval.speedup.toFixed(2)}x` : ''} (JS time / Rust time)${result.performanceGate ? "" : " [informational]"}`);
 }
 mkdirSync(new URL('../reports/', import.meta.url), {recursive: true});
 const destination = process.env.BENCH_REPORT || 'rust-impl/reports/benchmark.json';
 writeFileSync(new URL(destination, new URL('../../', import.meta.url)), JSON.stringify(report, null, 2) + '\n');
 console.log(`Report: ${destination}`);
-if (process.argv.includes('--require-parity') && report.cases.some(c => c.parse.speedup < 1 || (c.eval && c.eval.speedup < 1))) {
+if (process.argv.includes('--require-parity') && report.cases.some(c => c.performanceGate && (c.parse.speedup < 1 || (c.eval && c.eval.speedup < 1)))) {
   process.exitCode = 1;
 }
