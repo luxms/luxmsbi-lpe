@@ -28,6 +28,8 @@ export interface StreamAdapter {
 }
 
 export interface EvalOptions {
+  /** Trusted host code only: allow unrestricted JavaScript access. Default false. */
+  unsafe?: boolean;
   /**
    * Proceed variables to their names <br>`lpe 'x' -> string 'x' (if x is not defined)`
    */
@@ -50,7 +52,7 @@ export function eval_lisp(prog: any, ctx?: any, options?: EvalOptions): any;
 
 export function eval_lpe(prog: string, ctx?: any, options?: EvalOptions): any;
 
-export function unbox(args: any[], unboxFn: (values: any[]) => any, streamAdapter?: StreamAdapter): any;
+export function unbox(args: any[], unboxFn: (values: any[]) => any, streamAdapter?: StreamAdapter, options?: EvalOptions): any;
 
 export const LPESyntaxError: any;
 

@@ -30,6 +30,68 @@ function createAdapter() {
 }
 
 describe('Streams through an external adapter', () => {
+  it('preserves safe and unsafe modes in later f-string evaluations', () => {
+    const adapter = createAdapter();
+    const restrictedCode = adapter.createStream('42');
+    const trustedCode = adapter.createStream('42');
+    const restricted = lpe.eval_lpe('fEVAL"{code}"', {code: restrictedCode, window: globalThis}, {streamAdapter: adapter});
+    const trusted = lpe.eval_lpe('fEVAL"{code}"', {code: trustedCode, window: globalThis}, {streamAdapter: adapter, unsafe: true});
+    try {
+      assert.strictEqual(restricted.value, 42);
+      assert.strictEqual(trusted.value, 42);
+      adapter.next(trustedCode, 'window');
+      assert.strictEqual(trusted.value, globalThis);
+      assert.throws(() => adapter.next(restrictedCode, 'window'), error => error.code === 'LPE_SECURITY');
+      assert.strictEqual(restricted.value, 42);
+    } finally {
+      adapter.release(restricted);
+      adapter.release(trusted);
+    }
+    assert.strictEqual(restrictedCode.refs, 1);
+    assert.strictEqual(trustedCode.refs, 1);
+    assert.strictEqual(restrictedCode.listeners.size, 0);
+    assert.strictEqual(trustedCode.listeners.size, 0);
+  });
+
+  it('keeps safe and unsafe modes isolated across later stream emissions', () => {
+    const adapter = createAdapter();
+    const safeInput = adapter.createStream(1), unsafeInput = adapter.createStream(1);
+    const safeOptions = {streamAdapter: adapter, unsafe: false};
+    const unsafeOptions = {streamAdapter: adapter, unsafe: true};
+    const restricted = lpe.eval_lpe('identity(value)', {value: safeInput}, safeOptions);
+    const trusted = lpe.eval_lpe('identity(value)', {value: unsafeInput}, unsafeOptions);
+    safeOptions.unsafe = true;
+    unsafeOptions.unsafe = false;
+    try {
+      adapter.next(unsafeInput, Function);
+      assert.strictEqual(trusted.value, Function);
+      assert.throws(() => adapter.next(safeInput, Function), error => error.code === 'LPE_SECURITY');
+      assert.strictEqual(restricted.value, 1);
+      adapter.next(unsafeInput, globalThis);
+      assert.strictEqual(trusted.value, globalThis);
+    } finally {
+      adapter.release(restricted);
+      adapter.release(trusted);
+    }
+    assert.strictEqual(safeInput.refs, 1);
+    assert.strictEqual(unsafeInput.refs, 1);
+  });
+
+  it('rejects native code generation capabilities in later stream updates', () => {
+    const adapter = createAdapter();
+    const value = adapter.createStream(42);
+    const result = lpe.eval_lpe('identity(value)', {value}, {streamAdapter: adapter});
+    try {
+      assert.strictEqual(result.value, 42);
+      assert.throws(() => adapter.next(value, Function), error => error.code === 'LPE_SECURITY');
+      assert.strictEqual(result.value, 42);
+    } finally {
+      adapter.release(result);
+    }
+    assert.strictEqual(value.refs, 1);
+    assert.strictEqual(value.listeners.size, 0);
+  });
+
   it('combines current values and later updates', () => {
     const adapter = createAdapter();
     const a = adapter.createStream(2);

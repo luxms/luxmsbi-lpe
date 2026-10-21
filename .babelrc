@@ -8,6 +8,7 @@
         ]
       },
       "useBuiltIns": "usage",
+      "exclude": ["web.dom.iterable"],
       "debug": true
     }]
   ],

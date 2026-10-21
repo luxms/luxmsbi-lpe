@@ -16,7 +16,7 @@
   "author": "Dmitry Dorofeev",
   "license": "MIT",
   "scripts": {
-    "test": "mocha --reporter spec",
+    "test": "mocha --recursive --reporter spec",
     "test:rust": "cargo test --locked --manifest-path rust-impl/Cargo.toml",
     "test:parity": "npm run build && cargo build --locked --manifest-path rust-impl/Cargo.toml --bin lpe && node rust-impl/scripts/parity.mjs",
     "test:all": "node rust-impl/scripts/test-all.mjs",
@@ -24,7 +24,8 @@
     "test:wasm": "node rust-impl/scripts/test-wasm.mjs",
     "localize": "node scripts/update-loc.js",
     "t": "mocha --reporter spec test/test.js",
-    "test-lpe-functions": "mocha --reporter spec test/test-full.js",
+    "test-lpe-functions": "mocha --reporter spec test/test-lpe-functions.js",
+    "test-deparse-lpe-functions": "mocha --reporter spec test/test-deparse-lpe-functions.js",
     "test-lisp": "mocha --reporter spec test/test-lisp.js",
     "cli": "node -e \"console.log(JSON.stringify(require('./dist/lpe').parse(require('fs').readFileSync('/dev/stdin').toString())))\"",
     "eval": "node -e \"var lpe=require('./dist/lpe');console.log(JSON.stringify(lpe.eval_lisp(lpe.parse(require('fs').readFileSync('/dev/stdin').toString()))))\"",

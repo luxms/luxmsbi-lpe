@@ -4,6 +4,10 @@
 
 LPE turns formulas into Lisp-style abstract syntax trees (ASTs), evaluates them with your data and functions, and converts ASTs back into expression text.
 
+Property access and callable dispatch follow the
+[evaluator integration contract](SECURITY.md). Review it when supplying
+application data and callbacks.
+
 [![JavaScript](https://img.shields.io/badge/JavaScript-UMD-F7DF1E?style=flat-square&logo=javascript&logoColor=F7DF1E&labelColor=202938)](https://github.com/luxms/luxmsbi-lpe/blob/master/src/index.js)
 [![Type declarations](https://img.shields.io/badge/TypeScript-declarations-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://github.com/luxms/luxmsbi-lpe/blob/master/src/index.d.ts)
 [![License: MIT](https://img.shields.io/badge/License-MIT-86D5BD?style=flat-square)](https://github.com/luxms/luxmsbi-lpe/blob/master/LICENSE)

@@ -1,6 +1,7 @@
 
 /**
  * @typedef {Object} EvalOptions
+ * @property {boolean=}       unsafe Разрешить неограниченный JavaScript только для доверенных выражений; по умолчанию false.
  * @property {boolean=}       resolveString Возвращать имя переменной в слечае, если переменная не определена.
  *
  *                                          `lpe 'x' -> string 'x' (если x не определена)`

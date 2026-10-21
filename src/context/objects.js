@@ -1,12 +1,18 @@
 import { except } from "../lib/exception.js";
-import { catchReturn, isArray, isArrayFunction, isFunction, isHash, isNumber, isNumberLike, isObj, isString, makeSF } from "../lib/utils.js";
+import { catchReturn, isArray, isArrayFunction, isFunction, isHash, isNumber, isNumberLike, isObj, isString, makeSF as makeSpecialForm } from "../lib/utils.js";
 import { EVAL } from "../lisp";
 import unbox from "../lisp.unbox.js";
 import makeVararg from "../lisp.vararg.js";
+import { $getvar$ } from '../lisp.var';
+import { evaluationPolicy } from '../lib/evaluation-policy';
+import { markUnsafe } from '../lib/security';
 
+export function createContext(unsafe = false) {
+const makeSF = fn => unsafe ? markUnsafe(makeSpecialForm(fn)) : makeSpecialForm(fn);
+const { safeApply, safeConstruct, safeDelete, safeEntries, safeFromEntries, safeFunction, safeGet, safeGetIn, safeKey, safeSet } = evaluationPolicy({unsafe});
 /** @type {ContextFunctionsObject} */
 const _context = {};
-export default _context;
+
 
 
 
@@ -21,7 +27,7 @@ _context["new"] = (...args) => {
    * @example new(Date, 2023, 0, 1) => Date object (2023-01-01)
    * @category Создание объектов | 1
    */
-  return new (args[0].bind.apply(args[0], args));
+  return safeConstruct(args[0], args.slice(1));
 };
 
 
@@ -129,7 +135,7 @@ _context["makeHash"] = makeSF((ast, ctx, rs) => {
       .flat(),
 
     // В evaled сглаженный массив вычисленных ключей, значений по порядку
-    (evaled) => Object.fromEntries(
+    (evaled) => safeFromEntries(
       evaled.reduce((acc, val, idx) => {
         if (idx % 2 === 0) {
           acc.push([val]);
@@ -140,7 +146,7 @@ _context["makeHash"] = makeSF((ast, ctx, rs) => {
       }, [])
     ),
 
-    rs?.streamAdapter,
+    rs?.streamAdapter, rs,
   );
 });
 
@@ -214,10 +220,10 @@ _context["repeat"] = makeSF((ast, ctx, rs) => {
       return unbox(
         [...Array(n)].map(() => EVAL(ast[1], ctx, rs)),
         (result) => result,
-        rs?.streamAdapter,
+        rs?.streamAdapter, rs,
       );
     },
-    rs?.streamAdapter,
+    rs?.streamAdapter, rs,
   )
 });
 
@@ -329,18 +335,18 @@ _context["->fn"] = _context["toFn"] = _context["defFn"] = makeSF((ast, ctx, rs) 
     ast.slice(1).forEach((/** @type {AST} */ argAst, /** @type {number} */ i) => {
       // Считаем, что ast начиная с первого - это названия переменных и что они ничем не обернуты
       if (isString(argAst)) {
-        argsCtx[argAst] = args[i];
+        safeSet(argsCtx, argAst, args[i]);
       }
     })
     // Нужно ли UNBOX?
     let result = EVAL(ast[0], [argsCtx, ctx], rs);
     if (isFunction(result)) {                                                         // Непонятно как быть,
-      result = result(...args);                                                       //            по-разному можно коллбэк
+      result = safeApply(result, args, undefined);                                    //            по-разному можно коллбэк
     }                                                                                 //                                  объявить
     return result;
   });
 
-  return func;
+  return rs?.unsafe === true ? markUnsafe(func) : func;
 });
 
 
@@ -423,11 +429,11 @@ _context["reverse"] = (arr) => {
   */
   /** @type {ObjectLike} */
   const res = [];
-  Object.entries(arr).reverse().forEach(([key, value]) => {
+  safeEntries(arr).reverse().forEach(([key, value]) => {
     if (isNumberLike(key)) {
       res.push(value);
     } else {
-      res[key] = value;
+      safeSet(res, key, value);
     }
   });
   return res;
@@ -567,7 +573,7 @@ _context["find"] = (arr, fn) => {
    *          find({1, 2, 3}, 6) => undefined
    * @category Работа с массивами | 30
   */
-  return isArray(arr) ? arr.find(isFunction(fn) ? fn : ((v) => v == fn)) : undefined;
+  return isArray(arr) ? arr.find(isFunction(fn) ? (...args) => safeApply(fn, args) : ((v) => v == fn)) : undefined;
 };
 
 
@@ -598,7 +604,7 @@ _context["findIndex"] = (arr, fn) => {
    *          findIndex({1, 2, 3}, 6) => -1
    * @category Работа с массивами | 31
    */
-  return isArray(arr) ? arr.findIndex(isFunction(fn) ? fn : ((v) => v == fn)) : -1;
+  return isArray(arr) ? arr.findIndex(isFunction(fn) ? (...args) => safeApply(fn, args) : ((v) => v == fn)) : -1;
 };
 
 
@@ -619,7 +625,7 @@ _context["map"] = (arr, fn) => {
    *          {1, 2, 3}.map(minus) => [-1, -2, -3]
    * @category Работа с массивами | 35
    */
-  return isArray(arr) ? arr.map(it => fn(it)) : [];
+  return isArray(arr) ? arr.map(it => safeApply(fn, [it])) : [];
 };
 
 
@@ -646,10 +652,10 @@ _context["mapit"] = makeSF((ast, ctx, rs) => {
       return unbox(
         Array.prototype.map.call(array, (it, idx) => EVAL(conditionAST, [{ it, idx }, ctx], rs)),
         (result) => result,
-        rs?.streamAdapter,
+        rs?.streamAdapter, rs,
       );
     },
-    rs?.streamAdapter,
+    rs?.streamAdapter, rs,
   );
 });
 
@@ -674,7 +680,7 @@ _context["mapArr"] = (arr, fn) => {
    *          {1, 2, 3}.mapArr({1, 2, 3}, (val, idx) => val * idx) => [0, 2, 6]
    * @category Работа с массивами | 37
    */
-  return isArray(arr) ? arr.map(fn) : [];
+  return isArray(arr) ? arr.map((...args) => safeApply(fn, args)) : [];
 };
 
 
@@ -695,7 +701,7 @@ _context["filter"] = (arr, fn) => {
    * @example filter({1, 2, 3, 4}, fn({a}, a > 2)) => [3, 4]
    * @category Работа с массивами | 40
    */
-  return isArray(arr) ? arr.filter(it => fn(it)) : [];
+  return isArray(arr) ? arr.filter(it => safeApply(fn, [it])) : [];
 };
 
 
@@ -722,10 +728,10 @@ _context["filterit"] = makeSF((ast, ctx, rs) => {
       return unbox(
         Array.prototype.filter.call(array, (it, idx) => !!EVAL(conditionAST, [{ it, idx }, ctx], rs)),
         (result) => result,
-        rs?.streamAdapter,
+        rs?.streamAdapter, rs,
       );
     },
-    rs?.streamAdapter,
+    rs?.streamAdapter, rs,
   );
 });
 
@@ -749,7 +755,7 @@ _context["filterArr"] = (arr, fn) => {
    * @example filterArr({1, 2, 3, 4}, fn({val, idx}, idx < 3)) => [1, 2, 3]
    * @category Работа с массивами | 42
    */
-  return isArray(arr) ? arr.filter(fn) : [];
+  return isArray(arr) ? arr.filter((...args) => safeApply(fn, args)) : [];
 };
 
 
@@ -778,7 +784,7 @@ _context["reduce"] = (arr, fn, init) => {
    *          |) => 6
    * @category Работа с массивами | 45
    */
-  return isArray(arr) ? arr.reduce((acc, val) => fn(acc, val), init) : init;
+  return isArray(arr) ? arr.reduce((acc, val) => safeApply(fn, [acc, val]), init) : init;
 };
 
 
@@ -810,7 +816,7 @@ _context["reduceArr"] = (arr, fn, init) => {
    *          {1, 2, 3}.reduce((acc, val, idx) => acc + val * idx, 0) => 8
    * @category Работа с массивами | 46
    */
-  return isArray(arr) ? arr.reduce(fn, init) : init;
+  return isArray(arr) ? arr.reduce((...args) => safeApply(fn, args), init) : init;
 };
 
 
@@ -855,7 +861,7 @@ _context["sort"] = (a, fn) => {
    *          |) => [ { name: 'Alice' }, { name: 'Ben' }, { name: 'Duncan' } ]
    * @category Работа с массивами | 50
    */
-  return isArray(a) ? a.sort(fn) : [];
+  return isArray(a) ? a.sort(fn === undefined ? undefined : (...args) => safeApply(fn, args)) : [];
 };
 
 
@@ -876,7 +882,7 @@ _context["sortBy"] = (a, fn) => {
    *
    * @category Работа с массивами | 51
    */
-  return isArray(a) ? a.sort((a, b) => fn(a) > fn(b) ? 1 : -1) : [];
+  return isArray(a) ? a.sort((a, b) => safeApply(fn, [a]) > safeApply(fn, [b]) ? 1 : -1) : [];
 };
 
 
@@ -905,7 +911,7 @@ _context["some"] = (arr, fn) => {
    *          some({1, 2, 3}, 6) => false
    * @category Работа с массивами | 60
    */
-  return isArray(arr) ? arr.some(isFunction(fn) ? fn : ((v) => v == fn)) : false;
+  return isArray(arr) ? arr.some(isFunction(fn) ? (...args) => safeApply(fn, args) : ((v) => v == fn)) : false;
 };
 
 
@@ -934,7 +940,7 @@ _context["every"] = (arr, fn) => {
    *          every({1, 2, 3}, x => x > 0) => true
    * @category Работа с массивами | 61
    */
-  return isArray(arr) ? arr.every(isFunction(fn) ? fn : ((v) => v == fn)) : false;
+  return isArray(arr) ? arr.every(isFunction(fn) ? (...args) => safeApply(fn, args) : ((v) => v == fn)) : false;
 };
 
 
@@ -972,7 +978,9 @@ _context["frequencies"] = _context["counter"] = (arr) => {
    * @category Работа с массивами | 70
    */
   return isArray(arr) ? arr.reduce((acc, val) => {
-    acc[val] = (acc[val] || 0) + 1;
+    // Preserve primitive frequency labels without invoking object coercion.
+    const key = val == null || typeof val === 'boolean' || typeof val === 'bigint' ? String(val) : val;
+    safeSet(acc, key, (safeGet(acc, key) || 0) + 1);
     return acc;
   }, {}) : {};
 };
@@ -1017,7 +1025,7 @@ _context["distinct"] = (arr, fn) => {
    * @category Работа с массивами | 80
   */
   const comparer = fn ?? ((/** @type {*} */ a, /** @type {*} */ b) => a == b);
-  return isArray(arr) ? arr.filter((item, index) => arr.findIndex((v) => comparer(v, item)) === index) : arr;
+  return isArray(arr) ? arr.filter((item, index) => arr.findIndex((v) => safeApply(comparer, [v, item])) === index) : arr;
 };
 
 
@@ -1043,7 +1051,7 @@ _context["union"] = (arrays, fn) => {
   return arrays
     .filter(el => isArray(el))
     .flat(1)
-    .filter((item, idx, arr) => arr.findIndex(v => comparer(item, v)) === idx);
+    .filter((item, idx, arr) => arr.findIndex(v => safeApply(comparer, [item, v])) === idx);
 };
 
 
@@ -1069,8 +1077,8 @@ _context["intersect"] = (/** @type {Array<Array<*>>} */ arrays, fn) => {
     return [];
   }
   return arrays[0].filter((item, idx, firstArr) =>
-    firstArr.findIndex(v => comparer(item, v)) === idx &&
-    arrays.slice(1).every(arr => arr.some(val => comparer(item, val)))
+    firstArr.findIndex(v => safeApply(comparer, [item, v])) === idx &&
+    arrays.slice(1).every(arr => arr.some(val => safeApply(comparer, [item, val])))
   );
 };
 
@@ -1099,7 +1107,7 @@ _context["difference"] = (/** @type {Array<Array<*>>} */ arrays, fn) => {
     return [];
   }
   return arrays[0].filter(item =>
-    !arrays.slice(1).some(arr => arr.some(val => compare(item, val)))
+    !arrays.slice(1).some(arr => arr.some(val => safeApply(compare, [item, val])))
   );
 };
 
@@ -1125,10 +1133,10 @@ _context["uniques"] = (/** @type {Array<Array<*>>} */ arrays, fn) => {
     return [];
   }
   return arrays
-    .map(arr => arr.filter((item, idx) => arr.findIndex(val => compare(item, val)) === idx))
+    .map(arr => arr.filter((item, idx) => arr.findIndex(val => safeApply(compare, [item, val])) === idx))
     .flat()
     .filter((item, idx, arr) =>
-      arr.filter((val, id) => id === idx || compare(item, val)).length === 1
+      arr.filter((val, id) => id === idx || safeApply(compare, [item, val])).length === 1
     );
 };
 
@@ -1192,7 +1200,8 @@ _context["pluck"] = (c, k) => {
    * @category Работа с массивами | 95
    */
   // for each array element, get property value, present result as array.
-  return isArray(c) ? c.map(el => el[k]) : [];
+  safeKey(k);
+  return isArray(c) ? c.map(el => safeGet(el, k)) : [];
 };
 
 
@@ -1238,7 +1247,7 @@ _context["joinObj"] = (/** @type {ObjectLike} */ a, sep, fn) => {
    * @category Работа с массивами | 101
    */
   const stringer = isFunction(fn) ? fn : (/** @type {string} */ _, /** @type {*} */ v) => String(v);
-  return isObj(a) ? Object.entries(a).map(([k, v]) => stringer(k, v)).join(sep) : '';
+  return isObj(a) ? safeEntries(a).map(([k, v]) => safeApply(stringer, [k, v])).join(sep) : '';
 };
 
 
@@ -1254,7 +1263,8 @@ _context["contains?"] = _context["containsKey"] = (a, b) => {
    * @example contains({a = 1}, "a") => true
    * @category Работа с хэш-таблицами | 1
    */
-  return a.hasOwnProperty(b);
+  safeKey(b);
+  return Object.hasOwn(a, b);
 };
 
 
@@ -1277,7 +1287,7 @@ _context["get"] = _context["nth"] = (a, b, c) => {
    *          get({a: 1}, "b", "not found") => "not found"
    * @category Работа с хэш-таблицами | 10
    */
-  return a.hasOwnProperty(b) ? a[b] : c;
+  return safeGet(a, b, c);
 };
 
 
@@ -1294,7 +1304,8 @@ _context["set"] = (a, b, c) => {
    *          set({}, 0, 1) => [1]
    * @category Работа с хэш-таблицами | 11
    */
-  return (a[b] = c, a);
+  safeSet(a, b, c);
+  return a;
 };
 
 
@@ -1310,7 +1321,7 @@ _context["del"] = (a, b) => {
    * @example del({"a"=1, "b"=2}, "a") => true
    * @category Работа с хэш-таблицами | 12
    */
-  return delete a[b];
+  return safeDelete(a, b);
 };
 
 
@@ -1326,7 +1337,7 @@ _context["keys"] = (a) => {
    *          keys((1, 2, a = 1, b = 2)) => [0, 1, "a", "b"]
    * @category Работа с хэш-таблицами | 15
    */
-  return Object.keys(a);
+  return safeEntries(a).map(([key]) => key);
 };
 
 
@@ -1340,7 +1351,7 @@ _context["vals"] = _context["values"] = (a) => {
    * @example vals({1, 2, a = 3, b = 4}) => [1, 2, 3, 4]
    * @category Работа с хэш-таблицами | 16
    */
-  return Object.values(a);
+  return safeEntries(a).map(([, value]) => value);
 };
 
 
@@ -1355,7 +1366,7 @@ _context["entries"] = (obj) => {
    * @example entries({a = 1, b = 2}) => [['a', 1], ['b', 2]]
    * @category Работа с хэш-таблицами | 20
    */
-  return Object.entries(obj);
+  return safeEntries(obj);
 };
 
 
@@ -1370,7 +1381,7 @@ _context["fromEntries"] = (obj) => {
    * @example fromEntries({{'a', 1}, {'b', 2}}) => {a: 1, b: 2}
    * @category Работа с хэш-таблицами | 21
    */
-  return Object.fromEntries(obj);
+  return safeFromEntries(obj);
 };
 
 
@@ -1394,25 +1405,26 @@ _context["select"] = (obj, keys) => {
    */
 
   const selection = (/** @type {ObjectLike} */ obj, /** @type {Array<string> | Record<string, boolean | any>} */ selections) => {
-    const selectMap = Object.fromEntries(Object.entries(selections).map(([k, v]) => {
+    const selectMap = safeFromEntries(safeEntries(selections).map(([k, v]) => {
       if (isArray(selections) && isNumberLike(k)) {
         return [v, true];
       }
       return [k, v];
     }));
 
-    return Object.entries(selectMap).reduce((/** @type {ObjectLike} */ acc, [key, need]) => {
+    return safeEntries(selectMap).reduce((/** @type {ObjectLike} */ acc, [key, need]) => {
       if (!Object.hasOwn(obj, key)) {
         return acc;
       }
-      if (isObj(need) && !isObj(obj[key])) {
+      const current = safeGet(obj, key);
+      if (isObj(need) && !isObj(current)) {
         return acc;
       }
-      const value = isObj(need) ? selection(obj[key], need) : obj[key];
+      const value = isObj(need) ? selection(current, need) : current;
       if (isArray(acc) && isNumberLike(key)) {
         acc.push(value);
       } else {
-        acc[key] = value;
+        safeSet(acc, key, value);
       }
       return acc;
     }, isHash(obj) ? {} : []);
@@ -1441,7 +1453,7 @@ _context["omit"] = (obj, keys) => {
    */
 
   const selection = (/** @type {ObjectLike} */ obj, /** @type {Array<string> | Record<string, boolean | any>} */ selections) => {
-    const selectMap = Object.fromEntries(Object.entries(selections).map(([k, v]) => {
+    const selectMap = safeFromEntries(safeEntries(selections).map(([k, v]) => {
       if (isArray(selections) && isNumberLike(k)) {
         return [v, true];
       }
@@ -1449,19 +1461,20 @@ _context["omit"] = (obj, keys) => {
     }));
 
     // reverse для обратного порядка
-    return Object.entries(selectMap).reverse().reduce((acc, [key, need]) => {
+    return safeEntries(selectMap).reverse().reduce((acc, [key, need]) => {
       if (!Object.hasOwn(obj, key)) {
         return acc;
       }
-      if (isObj(need) && !isObj(obj[key])) {
+      const current = safeGet(obj, key);
+      if (isObj(need) && !isObj(current)) {
         return acc;
       }
       if (isObj(need)) {
-        acc[key] = selection(obj[key], need);
+        safeSet(acc, key, selection(current, need));
       } else if (isArray(acc) && isNumberLike(key)) {
         acc.splice(+key, 1);
       } else {
-        delete acc[key];
+        safeDelete(acc, key);
       }
       return acc;
     }, obj);
@@ -1492,14 +1505,15 @@ _context["compact"] = (obj, depth) => {
     if (depth <= 0) return obj;
     const keys = Object.keys(obj);
     for (const key of keys.reverse()) {
-      if (obj[key] === null || obj[key] === undefined) {
+      const value = safeGet(obj, key);
+      if (value === null || value === undefined) {
         if (isArray(obj) && isNumberLike(key)) {
           obj.splice(+key, 1);
         } else {
-          delete obj[key];
+          safeDelete(obj, key);
         }
-      } else if (isObj(obj[key])) {
-        compactObj(obj[key], depth - 1);
+      } else if (isObj(value)) {
+        compactObj(value, depth - 1);
       }
     }
   };
@@ -1528,25 +1542,19 @@ _context["get_in"] = makeSF((ast, ctx, rs) => {
    * @example get_in({a = {b = {10, 11, 12}}}, a, b, 2) => 12
    * @category Работа с хэш-таблицами | 40
    */
-  let argsAST = [];
-
-  if (isArray(ast[1]) && isArrayFunction(ast[1][0])) {
-    // массив аргументов, ка в классическом get_in в Clojure
-    argsAST = ast[1];
-  } else {
-    // просто список ключей в виде аргументов
-    argsAST = ["[", ...ast.slice(1)];
-  }
-
   return unbox(
-    [
-      isArray(ast[0]) ? EVAL(ast[0], ctx, rs) : ast[0],
-      EVAL(argsAST, ctx, rs),
-    ],
-    ([obj, args]) => {
-      return EVAL([".", obj, ...args], ctx, rs);
+    [EVAL(ast[0], ctx, rs), ...ast.slice(1).map(key => EVAL(key, ctx, rs))],
+    ([obj, ...args]) => {
+      // Preserve the documented quoted context-name shorthand, with one
+      // lookup. Retrieved arrays/strings/keys are data, never another AST.
+      if (isArray(ast[0]) && ['q', "'", '"'].includes(ast[0][0]) && isString(obj)) {
+        const binding = $getvar$(ctx, obj, rs);
+        if (binding !== undefined) obj = binding;
+      }
+      const path = args.length === 1 && isArray(args[0]) ? args[0] : args;
+      return safeGetIn(obj, path);
     },
-    rs?.streamAdapter,
+    rs?.streamAdapter, rs,
   );
 
 });
@@ -1573,25 +1581,26 @@ _context["assoc_in"] = makeSF((ast, ctx, rs) => {
   return unbox(
     [EVAL(ast[0], ctx, rs), EVAL(ast[1], ctx, rs)],
     ([origin, path]) => {
-
+      if (!isArray(path) || path.length === 0) throw new TypeError('assoc_in path must be a nonempty array');
+      path.forEach(safeKey);
       let focus = origin;
       for (let i = 0; i < path.length - 1; i++) {
-        if (focus[path[i]] === undefined) {
+        if (safeGet(focus, path[i]) === undefined) {
           // нужно создать
           if (isString(path[i + 1])) {
-            focus = focus[path[i]] = {};
+            focus = safeSet(focus, path[i], {});
           } else {
-            focus = focus[path[i]] = [];
+            focus = safeSet(focus, path[i], []);
           }
         } else {
-          focus = focus[path[i]];
+          focus = safeGet(focus, path[i]);
         }
       }
-      const expr = ["set", focus, path.pop(), ast[2]];
+      const expr = ["set", ["$AST$", focus], ["$AST$", path[path.length - 1]], ast[2]];
       // Чтобы стрим гарантированно выполнился, сперва выполняем его, а потом просто берем изначальный объект
       return EVAL(["begin", expr, ["$AST$", origin]], ctx, rs);
     },
-    rs?.streamAdapter
+    rs?.streamAdapter, rs
   );
 });
 
@@ -1631,24 +1640,26 @@ _context["update_in"] = (obj, path, fn, regexpEnable) => {
    * @param {Array<string>} path Оставшийся путь до целевого ключа
    * @param {Array<string>} was Путь до текущего ключа
    */
+  if (!isArray(path) || path.length === 0) throw new TypeError('update_in path must be a nonempty array');
+  path.forEach(safeKey);
+  safeFunction(fn);
   const updater = (obj, path, was) => {
-    const key = String(path[0]);
+    const key = safeKey(path[0]);
     let entries;
     if (regexpEnable && key.startsWith("/") && key.endsWith("/")) {
       const regexp = new RegExp(key.slice(1, -1));
-      entries = Object.entries(obj).filter(([k, _]) => regexp.test(k));
+      entries = safeEntries(obj).filter(([k, _]) => regexp.test(k));
     } else if (Object.hasOwn(obj, key)) {
-      entries = [[key, obj[key]]];
+      entries = [[key, safeGet(obj, key)]];
     } else if (path.length > 1) {
-      obj[key] = {};
-      entries = [[key, obj[key]]];
+      entries = [[key, safeSet(obj, key, {})]];
     } else {
       entries = [[key, undefined]];
     }
 
     entries.forEach(([key, value]) => {
       if (path.length === 1) {
-        obj[key] = fn(value, [...was, path[0]]);
+        safeSet(obj, key, safeApply(fn, [value, [...was, path[0]]]));
         return;
       }
 
@@ -1685,10 +1696,14 @@ _context["cp"] = makeSF((ast, ctx, rs) => {
   return unbox(
     [EVAL(ast[0], ctx, rs), EVAL(ast[1], ctx, rs)],
     ([from, to]) => {
-      const lpe = ["assoc_in", to[0], ["[", ...to.slice(1)], ["get_in", from[0], ["[", ...from.slice(1)]]];
+      // Strings may name a context root, but arrays and path elements are data.
+      // Never re-evaluate a retrieved array as an AST while copying it.
+      const root = value => isString(value) ? EVAL(value, ctx, rs) : value;
+      const lpe = ["assoc_in", ["$AST$", root(safeGet(to, 0))], ["$AST$", to.slice(1)],
+        ["get_in", ["$AST$", root(safeGet(from, 0))], ["$AST$", from.slice(1)]]];
       return EVAL(lpe, ctx, rs);
     },
-    rs?.streamAdapter,
+    rs?.streamAdapter, rs,
   );
 });
 
@@ -1741,15 +1756,15 @@ _context["merge"] = (/** @type {Array<ObjectLike>} */ hashes, fn, mergeType) => 
     /** @type {string[]} */
     const keys = hashes.flatMap(h => Object.keys(h)).filter((key, idx, arr) => arr.indexOf(key) === idx);
     keys.forEach(key => {
-      res[key] = merger(key, hashes.map(h => h[key]), hashes.map(h => Object.hasOwn(h, key)));
+      safeSet(res, key, safeApply(merger, [key, hashes.map(h => safeGet(h, key)), hashes.map(h => Object.hasOwn(h, key))]));
     });
   } else {
     hashes.forEach(h => {
-      Object.entries(h).forEach(([key, val]) => {
+      safeEntries(h).forEach(([key, val]) => {
         if (mergeType === "sequenceWithFirst") {
-          res[key] = merger(key, res[key], val, !Object.hasOwn(res, key));
+          safeSet(res, key, safeApply(merger, [key, safeGet(res, key), val, !Object.hasOwn(res, key)]));
         } else {
-          res[key] = Object.hasOwn(res, key) ? merger(key, res[key], val) : val;
+          safeSet(res, key, Object.hasOwn(res, key) ? safeApply(merger, [key, safeGet(res, key), val]) : val);
         }
       });
     });
@@ -1801,12 +1816,13 @@ _context["mergeDeep"] = (obj1, obj2, fn, manualMerge) => {
     ].filter((key, idx, arr) => arr.indexOf(key) === idx);
 
     keys.forEach(key => {
-      if (isObj(obj1[key]) && isObj(obj2[key])) {
-        res[key] = mrg(obj1[key], obj2[key], [...path, key]);
+      const a = safeGet(obj1, key), b = safeGet(obj2, key);
+      if (isObj(a) && isObj(b)) {
+        safeSet(res, key, mrg(a, b, [...path, key]));
       } else if (!manualMerge && !(Object.hasOwn(obj1, key) && Object.hasOwn(obj2, key))) {
-        res[key] = obj1[key] ?? obj2[key];
+        safeSet(res, key, a ?? b);
       } else {
-        res[key] = merger([...path, key], obj1[key], obj2[key]);
+        safeSet(res, key, safeApply(merger, [[...path, key], a, b]));
       }
     });
     return res;
@@ -1854,12 +1870,13 @@ _context["makeStruct"] = (from, struct) => {
       ...Object.keys(from),
     ].filter((k, idx, arr) => arr.indexOf(k) === idx);
     for (const k of keys) {
-      if (isHash(struct[k]) || isArray(struct[k])) {
-        res[k] = restruct(struct[k], from[k]);
+      const template = safeGet(struct, k), value = safeGet(from, k);
+      if (isHash(template) || isArray(template)) {
+        safeSet(res, k, restruct(template, value));
       } else if (Object.hasOwn(from, k)) {
-        res[k] = from[k];
+        safeSet(res, k, value);
       } else {
-        res[k] = struct[k];
+        safeSet(res, k, template);
       }
     }
     return res;
@@ -1871,3 +1888,13 @@ _context["makeStruct"] = (from, struct) => {
 
   return restruct(struct, from);
 };
+
+if (unsafe) {
+  for (const value of Object.values(_context)) {
+    if (typeof value === 'function') markUnsafe(value);
+  }
+}
+return _context;
+}
+
+export default createContext();

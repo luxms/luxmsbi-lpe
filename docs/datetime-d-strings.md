@@ -63,7 +63,7 @@ before the strip-non-digits accident could rescue it.
 
 ## The fix
 
-Single helper at the top of `src/lib/datetime.js`:
+Shared helper in `src/lib/date/utils.js`:
 
 ```js
 function unwrapQuotedString(v) {
@@ -97,9 +97,9 @@ unit args:
 
 ## Tests
 
-`test/test-datetime.js` — `describe('Datetime functions accept D-tagged strings', …)`:
-- 4 via-parse tests (sanity).
-- 6 via-context tests (the actual bug).
+`test/date/utils.js` — `describe('Обработка строк с меткой D', …)`:
+- 4 direct JavaScript calls with D-tagged string nodes.
+- 8 direct calls with string nodes passed through variables.
 - 2 regression guards that legitimate `[start, end]` pairs are still treated
   as ranges, not unwrapped.
 
