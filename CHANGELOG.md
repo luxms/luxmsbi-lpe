@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.8.0](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.7.3...v1.8.0) (2026-10-21)
+
+
+### Features
+
+* add host-controlled unsafe evaluation mode ([6adf50c](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/6adf50cf82e30f7ab06d623ac36706da8b817b91))
+* add time operations and split date utilities ([252c349](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/252c349baab600d1800c212f723afb597d38a900))
+
+
+### Bug Fixes
+
+* check then callbacks before promise assimilation ([b659334](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/b6593343d4387b61d1504012c6c0df2e11f90262))
+* enforce evaluator data and call boundaries ([ca8ecff](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/ca8ecff626c9ed38a619fc83fa3cb82b638c9a53))
+* fixed fstrings lpe mixing expressions; add deparse fstrings and hashmaps support ([4a480d1](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/4a480d1cffea2d6a989c0db4a4b1164ff4f7a491))
+* parse a long expression in linear time ([5a877d4](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/5a877d4bb2e1716543ce719bb707740d08bdb623))
+* preserve f-string round trips and evaluation mode ([70d7e25](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/70d7e25b0af6166bdb77f1f26401e520f11190e0))
+* prevent special forms from accepting forged evaluation options ([deea628](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/deea62883523cf403b6b054d073866b5c6a82f0f))
+* str>PREFIX functions not evals arg ([0f53517](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/0f535174857b17160ffd3d9370f43fb3b175457b))
+
 ### [1.7.3](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.7.2...v1.7.3) (2026-09-23)
 
 
