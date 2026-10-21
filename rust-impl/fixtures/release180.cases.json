@@ -4311,6 +4311,72 @@
     }
   },
   {
+    "id": "release180:then-callback/{then=if}",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "{then=if}",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:then-callback/identity({then=vector})",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "identity({then=vector})",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:then-callback/get({a={then=q}},\"a\")",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get({a={then=q}},\"a\")",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "release180:uncalled-parameter",
+    "group": "JS 1.8 safe compatibility",
+    "origin": "rust-impl/scripts/release180-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "isFunction(fn([constructor],42))",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": true
+    }
+  },
+  {
     "id": "release180:closure-apply",
     "group": "JS 1.8 safe compatibility",
     "origin": "rust-impl/scripts/release180-fixtures.mjs",

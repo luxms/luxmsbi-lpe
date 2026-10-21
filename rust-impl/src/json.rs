@@ -255,40 +255,121 @@ impl Serializer {
     }
 }
 
-fn revive<'a>(
-    rt: &'a mut Runtime,
-    holder: Value,
-    key: String,
+// Source records are needed only when a reviver is supplied. Ordinary parsing
+// retains the SIMD path without allocating a second tree of source tokens.
+struct ParseRecord {
+    original: Value,
+    source: Option<String>,
+    children: IndexMap<String, ParseRecord>,
+}
+
+fn parse_record(rt: &Runtime, text: &str, value: Value) -> Result<ParseRecord> {
+    rt.tick()?;
+    let error = |error: serde_json::Error| Error::new("SyntaxError", error.to_string());
+    let mut children = IndexMap::new();
+    let text = text.trim();
+    let source = match &value {
+        Value::Array(_) => {
+            let items: Vec<&serde_json::value::RawValue> =
+                serde_json::from_str(text).map_err(error)?;
+            for (index, item) in items.into_iter().enumerate() {
+                let key = index.to_string();
+                children.insert(
+                    key.clone(),
+                    parse_record(rt, item.get(), rt.get(&value, &key))?,
+                );
+            }
+            None
+        }
+        Value::Object(_) => {
+            let items: std::collections::HashMap<String, &serde_json::value::RawValue> =
+                serde_json::from_str(text).map_err(error)?;
+            for (key, item) in items {
+                children.insert(
+                    key.clone(),
+                    parse_record(rt, item.get(), rt.get(&value, &key))?,
+                );
+            }
+            None
+        }
+        _ => Some(text.to_owned()),
+    };
+    Ok(ParseRecord {
+        original: value,
+        source,
+        children,
+    })
+}
+
+fn same_value(left: &Value, right: &Value) -> bool {
+    match (left, right) {
+        (Value::Number(left), Value::Number(right)) => left.to_bits() == right.to_bits(),
+        _ => left == right,
+    }
+}
+
+struct Reviver<'o> {
     callback: Value,
     env: EnvId,
-    options: &'a EvalOptions,
-    depth: usize,
-) -> LocalBoxFuture<'a, Result<Value>> {
-    async move {
-        rt.tick()?;
-        if depth >= 256 {
-            return Err(Error::new("RangeError", "JSON nesting limit exceeded"));
-        }
-        let value = rt.get(&holder, &key);
-        if matches!(value, Value::Object(_) | Value::Array(_)) {
-            for child_key in ordered_keys(rt, &value) {
-                let child = revive(
-                    rt,
-                    value.clone(),
-                    child_key.clone(),
-                    callback.clone(),
-                    env,
-                    options,
-                    depth + 1,
-                )
-                .await?;
-                rt.replace_json_field(&value, &child_key, child)?;
+    options: &'o EvalOptions,
+}
+
+impl Reviver<'_> {
+    fn value<'a>(
+        &'a self,
+        rt: &'a mut Runtime,
+        holder: Value,
+        key: String,
+        depth: usize,
+        record: Option<&'a ParseRecord>,
+    ) -> LocalBoxFuture<'a, Result<Value>> {
+        async move {
+            rt.tick()?;
+            if depth >= 256 {
+                return Err(Error::new("RangeError", "JSON nesting limit exceeded"));
             }
-        }
-        rt.call_json_callback(callback, vec![Value::String(key), value], env, options)
+            let value = rt.get(&holder, &key);
+            if matches!(value, Value::Object(_) | Value::Array(_)) {
+                let keys = if matches!(value, Value::Array(_)) {
+                    (0..rt.array_values(&value)?.len())
+                        .map(|index| index.to_string())
+                        .collect()
+                } else {
+                    ordered_keys(rt, &value)
+                };
+                for child_key in keys {
+                    let child = self
+                        .value(
+                            rt,
+                            value.clone(),
+                            child_key.clone(),
+                            depth + 1,
+                            record
+                                .filter(|record| same_value(&record.original, &value))
+                                .and_then(|record| record.children.get(&child_key)),
+                        )
+                        .await?;
+                    rt.replace_json_field(&value, &child_key, child)?;
+                }
+            }
+            let mut context = IndexMap::new();
+            if let Some(source) = record
+                .filter(|record| same_value(&record.original, &value))
+                .and_then(|record| record.source.as_ref())
+            {
+                context.insert("source".into(), Value::String(source.clone()));
+            }
+            let context = rt.object(context);
+            rt.call_json_callback(
+                self.callback.clone(),
+                vec![Value::String(key), value, context],
+                self.env,
+                self.options,
+            )
             .await
+        }
+        .boxed_local()
     }
-    .boxed_local()
 }
 
 pub(crate) async fn call(
@@ -302,11 +383,21 @@ pub(crate) async fn call(
     if name == "JSON.parse" {
         let value = parse(rt, &input)?;
         if let Some(callback) = args.get(1).filter(|value| value.is_callable()) {
+            let text = rt.to_string(&input);
+            rt.charge_size(text.len().checked_mul(32))?;
+            let record = parse_record(rt, &text, value.clone())?;
             let holder = rt.object(IndexMap::from([(String::new(), value)]));
             // Root the partially revived tree through callbacks that may collect.
             let roots = rt.roots(&Json::Null, env);
             roots.retain_task_value(&holder);
-            let result = revive(rt, holder, String::new(), callback.clone(), env, options, 0).await;
+            let reviver = Reviver {
+                callback: callback.clone(),
+                env,
+                options,
+            };
+            let result = reviver
+                .value(rt, holder, String::new(), 0, Some(&record))
+                .await;
             drop(roots);
             return result;
         }

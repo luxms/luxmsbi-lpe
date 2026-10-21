@@ -23720,7 +23720,8 @@
     },
     "covers": {
       "groups": [
-        "test/test-lpe-functions.js:349"
+        "test/test-lpe-functions.js:349",
+        "test/test-deparse-lpe-functions.js:346"
       ]
     }
   },
@@ -23848,7 +23849,8 @@
     },
     "covers": {
       "groups": [
-        "test/test-lpe-functions.js:686"
+        "test/test-lpe-functions.js:686",
+        "test/test-deparse-lpe-functions.js:683"
       ]
     }
   },
@@ -23884,7 +23886,8 @@
     },
     "covers": {
       "groups": [
-        "test/test-lpe-functions.js:695"
+        "test/test-lpe-functions.js:695",
+        "test/test-deparse-lpe-functions.js:692"
       ]
     }
   },
@@ -23921,7 +23924,8 @@
     },
     "covers": {
       "groups": [
-        "test/test-lpe-functions.js:769"
+        "test/test-lpe-functions.js:769",
+        "test/test-deparse-lpe-functions.js:766"
       ]
     }
   },
@@ -23940,7 +23944,8 @@
     },
     "covers": {
       "groups": [
-        "test/test-lpe-functions.js:778"
+        "test/test-lpe-functions.js:778",
+        "test/test-deparse-lpe-functions.js:775"
       ]
     }
   },
@@ -23959,7 +23964,8 @@
     },
     "covers": {
       "groups": [
-        "test/test-lpe-functions.js:778"
+        "test/test-lpe-functions.js:778",
+        "test/test-deparse-lpe-functions.js:775"
       ]
     }
   },
@@ -23978,7 +23984,8 @@
     },
     "covers": {
       "groups": [
-        "test/test-lpe-functions.js:782"
+        "test/test-lpe-functions.js:782",
+        "test/test-deparse-lpe-functions.js:779"
       ]
     }
   },
@@ -23997,7 +24004,8 @@
     },
     "covers": {
       "groups": [
-        "test/test-lpe-functions.js:786"
+        "test/test-lpe-functions.js:786",
+        "test/test-deparse-lpe-functions.js:783"
       ]
     }
   },
@@ -24041,7 +24049,8 @@
     },
     "covers": {
       "groups": [
-        "test/test-lpe-functions.js:938"
+        "test/test-lpe-functions.js:938",
+        "test/test-deparse-lpe-functions.js:935"
       ]
     }
   },
@@ -24064,7 +24073,8 @@
     },
     "covers": {
       "groups": [
-        "test/test-lpe-functions.js:993"
+        "test/test-lpe-functions.js:993",
+        "test/test-deparse-lpe-functions.js:990"
       ]
     }
   },
@@ -24087,7 +24097,8 @@
     },
     "covers": {
       "groups": [
-        "test/test-lpe-functions.js:999"
+        "test/test-lpe-functions.js:999",
+        "test/test-deparse-lpe-functions.js:996"
       ]
     }
   },
@@ -24209,7 +24220,8 @@
     },
     "covers": {
       "groups": [
-        "test/test-lpe-functions.js:1209"
+        "test/test-lpe-functions.js:1209",
+        "test/test-deparse-lpe-functions.js:1205"
       ]
     }
   },
@@ -24254,7 +24266,8 @@
     },
     "covers": {
       "groups": [
-        "test/test-lpe-functions.js:1251"
+        "test/test-lpe-functions.js:1251",
+        "test/test-deparse-lpe-functions.js:1247"
       ]
     }
   },
@@ -24296,7 +24309,8 @@
     },
     "covers": {
       "groups": [
-        "test/test-lpe-functions.js:1251"
+        "test/test-lpe-functions.js:1251",
+        "test/test-deparse-lpe-functions.js:1247"
       ]
     }
   },
@@ -24318,7 +24332,8 @@
     },
     "covers": {
       "groups": [
-        "test/test-lpe-functions.js:1297"
+        "test/test-lpe-functions.js:1297",
+        "test/test-deparse-lpe-functions.js:1293"
       ]
     }
   },
@@ -24342,7 +24357,8 @@
     },
     "covers": {
       "groups": [
-        "test/test-lpe-functions.js:1377"
+        "test/test-lpe-functions.js:1377",
+        "test/test-deparse-lpe-functions.js:1373"
       ]
     }
   },
@@ -24368,7 +24384,8 @@
     },
     "covers": {
       "groups": [
-        "test/test-lpe-functions.js:1377"
+        "test/test-lpe-functions.js:1377",
+        "test/test-deparse-lpe-functions.js:1373"
       ]
     }
   },
@@ -24390,7 +24407,8 @@
     },
     "covers": {
       "groups": [
-        "test/test-lpe-functions.js:1383"
+        "test/test-lpe-functions.js:1383",
+        "test/test-deparse-lpe-functions.js:1379"
       ]
     }
   },
@@ -24409,7 +24427,8 @@
     },
     "covers": {
       "groups": [
-        "test/test-lpe-functions.js:1397"
+        "test/test-lpe-functions.js:1397",
+        "test/test-deparse-lpe-functions.js:1393"
       ]
     }
   },
@@ -24428,7 +24447,8 @@
     },
     "covers": {
       "groups": [
-        "test/test-lpe-functions.js:1402"
+        "test/test-lpe-functions.js:1402",
+        "test/test-deparse-lpe-functions.js:1398"
       ]
     }
   },
@@ -24450,7 +24470,8 @@
     },
     "covers": {
       "groups": [
-        "test/test-lpe-functions.js:1407"
+        "test/test-lpe-functions.js:1407",
+        "test/test-deparse-lpe-functions.js:1403"
       ]
     }
   },
@@ -24473,7 +24494,8 @@
     },
     "covers": {
       "groups": [
-        "test/test-lpe-functions.js:1477"
+        "test/test-lpe-functions.js:1477",
+        "test/test-deparse-lpe-functions.js:1473"
       ]
     }
   },
@@ -24496,7 +24518,8 @@
     },
     "covers": {
       "groups": [
-        "test/test-lpe-functions.js:1520"
+        "test/test-lpe-functions.js:1520",
+        "test/test-deparse-lpe-functions.js:1516"
       ]
     }
   },
@@ -24515,7 +24538,8 @@
     },
     "covers": {
       "groups": [
-        "test/test-lpe-functions.js:1549"
+        "test/test-lpe-functions.js:1549",
+        "test/test-deparse-lpe-functions.js:1545"
       ]
     }
   },

@@ -62,7 +62,7 @@ fn current_js_dispatch_and_assignment_oracle_with_fast_and_full_paths() {
                 rt.register_sync_host("resolver", move |rt, args| {
                     let config = config.clone();
                     let log = log.clone();
-                    (|| {
+                    {
                         if args[0] != Value::String("x".into()) {
                             Ok(Value::Undefined)
                         } else {
@@ -83,7 +83,7 @@ fn current_js_dispatch_and_assignment_oracle_with_fast_and_full_paths() {
                                 Ok(rt.from_json(&config["result"]))
                             }
                         }
-                    })()
+                    }
                 });
                 let options = if case.get("options").is_some() {
                     EvalOptions::from_json(&case["options"]).unwrap()

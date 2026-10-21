@@ -41,7 +41,20 @@ Rust time. Ratios above one favor Rust. Do not run builds or other benchmarks
 alongside an acceptance measurement. Report variation rather than interpreting
 a small difference on a busy machine as a universal speed guarantee.
 
-## Measured result (2026-10-19, lower-load rerun)
+## Release 1.8.0 measurements
+
+The CI performance job runs 100,000 iterations and nine alternating samples
+against the merged JS 1.8.0 safe evaluator. JSON parsing/stringification cases
+include both a small object and 32 rows (the latter use a 0.02 iteration scale).
+The job uploads `rust-performance-report` and fails if any measured phase has
+a Rust median above the JavaScript median. Release notes link the exact run
+and attach its raw report; results must not be inferred from older revisions.
+
+The 2026-10-21 local host reported a 33% CPU speed limit and substantial
+background load. Its incomplete diagnostic run is not an acceptance result.
+Use the isolated CI run for this release's table and retain the sample ranges.
+
+## Historical result (2026-10-19, lower-load rerun)
 
 The implementation at commit `612b38a` passed the performance gate on an Intel Core
 i9-8950HK (macOS), Rust 1.99.0 (Homebrew), and Node 26.12.0. Nine alternating
@@ -163,28 +176,18 @@ full compatibility suite, not language-level assumptions.
 
 ## Compatibility verification
 
-The `npm run test:all` checks pass the original 681 JavaScript tests, native Rust tests,
-vendored regex tests, the opt-in parser/regex/stream comparisons, the embedding
-example, and all 4,607 parity fixtures. The coverage check reports no uncovered
-names, APIs, or source tests within its declared scope (36 source tests are
-explicitly excluded). `cargo clippy --locked --manifest-path
-rust-impl/Cargo.toml --all-targets -- -D warnings` also passes.
+`npm run test:all` runs the recursive JS corpus, native and vendored regex
+tests, parser/regex/stream reference comparisons, embedding, shared fixtures,
+and strict source coverage. JSON and safe callback cases run alongside closure
+regressions. See [STATUS.md](STATUS.md) and the release's native/WASI reports
+for the current corpus and verification results.
 
-The focused immediate-evaluator tests compare results and errors across work
-and depth limits, exercise plans larger than the inline buffers, changing and
-shadowed bindings, Promise-containing inputs, cancellation, omitted closure
-bodies, duplicate parameters, escaping captures, and collection during a
-closure's host-callback fallback. An inert lookup hook forces the comparison
-runtime through the full evaluator, including closure bodies. Unicode parity
-coverage retains JavaScript code-unit behavior. These are local native results;
-WebAssembly execution was not measured in this comparison.
-
-On an aggregate validation run, the first parity worker exceeded the harness's
-3-second startup timeout on the busy host. A direct CLI smoke succeeded; rerunning
-the unchanged parity command passed all 4,607 fixtures, followed by a successful
-strict coverage check. No timeout or compatibility requirement was relaxed.
-The final native, Clippy, parity, and strict-coverage checks all passed on the
-completed implementation.
+The focused closure and immediate-evaluator tests cover lazy planning,
+side-effect order, changing bindings, shadowing, captured scopes, callbacks
+that trigger collection, omitted and duplicate parameters, cancellation, and
+work/depth limits. A lookup hook forces equivalent tests through the full
+evaluator. Performance changes must keep these paths equivalent; a faster
+benchmark alone is insufficient.
 
 ## References consulted
 

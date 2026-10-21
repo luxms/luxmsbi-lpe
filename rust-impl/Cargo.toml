@@ -9,7 +9,7 @@ description = "Native Rust Lux Path Expressions parser and interpreter"
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
-serde_json = { version = "1", features = ["preserve_order", "float_roundtrip", "arbitrary_precision"] }
+serde_json = { version = "1", features = ["preserve_order", "float_roundtrip", "arbitrary_precision", "raw_value"] }
 indexmap = "2"
 futures = "0.3"
 chrono = "0.4"

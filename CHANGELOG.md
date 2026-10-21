@@ -21,7 +21,12 @@ All notable changes to this project will be documented in this file. See [standa
 * prevent special forms from accepting forged evaluation options ([deea628](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/deea62883523cf403b6b054d073866b5c6a82f0f))
 * str>PREFIX functions not evals arg ([0f53517](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/0f535174857b17160ffd3d9370f43fb3b175457b))
 
-## Unreleased Rust
+## Unreleased Rust (target r1.8.0)
+
+* Align portable behavior with JS 1.8.0 safe evaluation; reject unsafe mode and validate data paths and callbacks consistently.
+* Add formatted strings, round-trip deparsing, and UTC/fixed-offset time operations with deterministic clock tests.
+* Add protected JSON parse/stringify methods, revivers, replacers, and native SIMD parsing with a portable WASI fallback.
+* Expand recursive JS source coverage, calendar and JSON comparisons, and release performance checks; document the Rust release process.
 
 * Reduce closure-call future size and share immutable closure bodies through a bounded weak cache, preserving edited ASTs, live captures, and collection behavior.
 * Avoid builtin-name copies and async task setup for validated synchronous call arguments while preserving dynamic lookup and fallback ordering.

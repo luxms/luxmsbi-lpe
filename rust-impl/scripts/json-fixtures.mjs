@@ -37,6 +37,10 @@ value('parse-coercion','[invoke(JSON,"parse",42),invoke(JSON,"parse",true),invok
 value('reviver','invoke(JSON,"parse",text,(key,value)=>if(isNumber(value),value*2,value))',{a:2,b:[4,6]}, {text:'{"a":1,"b":[2,3]}'});
 value('reviver-deletion','invoke(JSON,"parse",text,(key,value)=>if(key="a",undefined,value))',{b:2},{text:'{"a":1,"b":2}'});
 value('reviver-root-deletion','invoke(JSON,"parse",text,(key,value)=>undefined)',undefined,{text:'42'});
+for (const text of ['1e400', '-0', '9007199254740993', 'true', 'null', '"\\u0061"'])
+  value(`reviver-source/${text}`, 'invoke(JSON,"parse",text,(key,value,context)=>context.source)', text, {text});
+value('reviver-source-nested','invoke(JSON,"parse",text,(key,value,context)=>if(isNumber(value),context.source,value))', {a:'1e2',b:['-0','1.00']}, {text:'{"a":1e2,"b":[-0,1.00]}'});
+value('reviver-source-container','invoke(JSON,"parse",text,(key,value,context)=>if(key="",keys(context),value))', [], {text:'{"a":1}'});
 value('replacer','invoke(JSON,"stringify",value,(key,item)=>if(key="a",undefined,item))','{"b":2}',{value:{a:1,b:2}});
 value('property-list','invoke(JSON,"stringify",value,["b","a","b",true,null])','{"b":2,"a":1}',{value:{a:1,b:2,c:3}});
 value('pretty','invoke(JSON,"stringify",value,null,2)','{\n  "a": [\n    1,\n    2\n  ]\n}',{value:{a:[1,2]}});

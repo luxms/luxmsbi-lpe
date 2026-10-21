@@ -1,107 +1,67 @@
 # Implementation status
 
-**Not release-ready.** Local verification snapshot: 2026-10-12.
+Compatibility target: **JavaScript LPE 1.8.0, safe evaluation only**.
+Release verification is tracked by the Rust CI checks and attached release
+reports; local results alone do not mark a release complete.
 
 The parser, deparser, interpreter, environments, special forms, closures,
-standard library, ordinary futures, reactive streams, host callbacks, and explicit tracing
-collection are implemented without a JS runtime. In-scope source-test coverage
-passes; this is not proof of complete compatibility with every JS behavior.
+standard library, JSON methods, ordinary futures, reactive streams, host
+callbacks, and tracing collection run without a JavaScript engine. New 1.8
+behavior includes formatted strings and UTC/fixed-offset time operations.
+`unsafe: true` is rejected; the native API exposes no unsafe switch.
 
-## Verification
+## Verification and scope
 
-| Check | Result |
-| --- | --- |
-| Original JavaScript suite | 681 passing |
-| Shared fixture transport/coverage harness | 27 passing |
-| Rust native tests | 263 passing; 5 opt-in JS reference tests separate |
-| Opt-in parser, regex, and stream-reference tests | 5 passing |
-| Patched `regress` suite | 558 passing; 1 upstream nightly-only doctest ignored |
-| Shared JS/Rust cases | 4,477 of 4,477 passing |
-| Shared regex cases | 169 of 169 passing |
-| Shared stream cases | 39 of 39 passing |
-| Mixed Stream/Promise operand audit | 26 JS/Rust cases, 142 matching snapshots |
-| Strict coverage gate | Passing: 467 in-scope source tests verified; 36 JS-only tests excluded |
+The recursive JavaScript suite contains 1,548 tests. Shared fixtures exercise
+native Rust and WASI against that reference, including the newly nested date
+tests, fixed-clock calendar cases, invalid-input boundaries, safe data access,
+and JSON. The fixture inventory tracks 1,044 source-test declarations and 370
+suites, with 82 individually documented exclusions in `fixtures/scope.json`.
+The strict gate rejects missing observations, stale exclusions, and unlinked
+source tests. Fixture totals and observations are recorded in `coverage.json`
+and the generated parity reports, rather than inferred from a passing suite.
 
-The shared corpus consists of 1,603 independent value/error expectations,
-340 registry-metadata cases, and 2,534 metamorphic round-trip cases. These are
-different kinds of evidence, not 4,477 independently specified features.
-The 264 in-scope standard-library names have passing fixture references; 11
-native-JS names are excluded. This does not prove all branches, overloads, or
-aliases behave correctly.
+The suite includes independent value/error expectations, registry metadata,
+source-derived assertions, and metamorphic round trips. These are different
+kinds of evidence; fixture counts are not counts of independent features and
+do not prove every branch or possible input. JavaScript object descriptors,
+prototypes, arbitrary native constructors, unsafe-mode propagation, private JS
+date helper representations, and documentation-generation APIs are explicitly
+outside the portable Rust object model. Portable JSON is in scope.
 
-Native interpreter tests have been checked with Rust 1.92 and 1.99 on Intel macOS.
-The patched engine suite was run with Rust 1.99 and the `utf16` feature.
-The aggregate JS checks use Node 26.11.1. No Linux/Windows CI result or live
-PostgreSQL integration is claimed.
+CI checks formatting/Clippy, Linux stable, Rust 1.92 MSRV, macOS stable, native
+JS parity, WASI parity, and warmed repeated performance comparisons. The WASI
+job pins Rust `beta-2026-10-05` and Wasmtime 49.0.2. Node is used only by the
+reference tooling, not by the native or WASI interpreter.
 
-## Source-test accounting
+## Runtime boundaries
 
-The old "100 unverified groups" counted 81 individual source-test declarations
-plus 19 parent suites. Eighteen of those tests exercise previously agreed
-JS-only host behavior; the other 63 now have shared behavioral comparisons.
-There are 503 source-test declarations overall: 467 in scope, 18 documentation
-tests excluded, and 18 individually reviewed native-JS runtime tests excluded.
-The 188 suites are separate rollups, not additional features: 182 verified and
-6 excluded. Excluded cases are never counted as Rust passes.
+Cooperative controls preserve their documented accounting and interrupt
+behavior. They are not hard process-heap or wall-clock isolation; see
+[RUNTIME-CONTROLS.md](RUNTIME-CONTROLS.md). The regex engine is `regress` 0.12.0
+with compatibility changes documented in `vendor/regress/LPE-PATCHES.md`.
+Passing the corpus is not a claim of complete ECMAScript or V8 conformance.
 
-The new 127 comparisons cover vararg order/laziness/templates, random invariants,
-collection identity and mutation, custom contexts, parser syntax and caret
-locations, direct-AST normalization, current UTC dates, and calendar boundaries.
-They also exposed and fixed vararg template validation/type parsing and added
-opt-in parser caret diagnostics. The original JS source, tests, and bundle are
-unchanged. See `API.md` for diagnostic limitations and `fixtures/scope.json` for
-the exact exclusions and reasons.
-
-Coverage counts source declarations, including dynamic declarations only once.
-It is traceability to passing comparisons, not line/branch coverage or proof
-that every original assertion or possible input has been checked. The strict
-gate rejects stale exclusions, unlinked descendants, missing observations, and
-failing fixtures rather than inferring coverage from a passing sibling suite.
-
-## Required follow-up
-
-1. Opt-in runtime controls now poll inside regex searches and compiler input;
-   compiler internals and heap accounting still have gaps documented in
-   `RUNTIME-CONTROLS.md`. Enforce external limits when a hard quota is needed. Broader
-   ECMAScript/Unicode edge-case auditing remains necessary; the passing corpus
-   is not a claim of complete V8 conformance.
-2. Add target-platform CI and broader sustained-workload memory/performance
-   measurements before treating this as a release-ready replacement. Current
-   ownership tests check reachability and arena reclamation, not a complete
-   process-heap profile.
-
-String patterns use `regress` 0.12.0 with documented local compatibility patches
-in `vendor/regress/LPE-PATCHES.md`. The eight former failures now pass as ordinary
-regressions, together with additional flag, capture/metadata, lookbehind,
-case-folding, escape, and emoji tests. Named `d` indices retain their numeric
-capture array identity. `update_in` and vararg type patterns use the same engine.
-The JavaScript implementation and its original tests are unchanged.
-
-Streams are now in scope, including mixed Promise/Stream payloads. JS does not
-await Promise operands when a Stream is present; Rust preserves this
-behavior, including object coercion in `stream() + promise()` and no emission on
-Promise settlement alone. Promise-only expressions still await their arguments.
-The baseline retains creator references on nested computed streams; such graphs can remain
-subscribed after an outer release. Dropping the runtime disposes the graph.
-Native JS objects, JS execution and
-reflection, and isolated-surrogate input/output remain explicit scope exclusions.
-Input/output uses UTF-8; there is no UTF-16 wire protocol.
-
-Documentation generation, context preparation, static docs, lookup, documentation
-warnings/helpers, and localization tooling remain JS/V8-only by agreement.
-Rust has no documentation module or embedded documentation data. These APIs and
-their dedicated source tests are excluded from Rust parity, not outstanding
-implementation tasks. The original JS documentation tests still run unchanged.
+Streams retain shallow Promise/Stream semantics: a Stream operand leaves
+Promise operands unawaited, and Promise settlement alone does not emit an
+update. Reference tests compare values, events, subscriptions, and ownership.
+Nested computed streams retain creator references as in the JS baseline;
+dropping the runtime disposes the graph. Direct stream JSON serialization is
+unsupported. Source and transport use UTF-8, while observable JavaScript string
+code-unit behavior is preserved internally where needed.
 
 ## Reproduce
 
 ```sh
+npm ci
 npm run test:all
 cargo fmt --manifest-path rust-impl/Cargo.toml --check
 cargo clippy --locked --manifest-path rust-impl/Cargo.toml --all-targets -- -D warnings
+npm run test:wasm
+BENCH_ITERATIONS=100000 BENCH_REPEATS=9 node rust-impl/scripts/benchmark.mjs --require-parity
 ```
 
-`test:all` passes, including its strict coverage gate.
-Its report is `rust-impl/reports/parity.json`; runtime reports are
-ignored by Git. Fixture generation checks are nonmutating. The source-derived
-inventory and explicit scope decisions are checked in alongside the fixtures.
+Reports under `rust-impl/reports/` are ignored by Git. Generated fixture checks
+are read-only; intentional corpus changes require regeneration and review.
+See [PERFORMANCE.md](PERFORMANCE.md) for measurement rules and
+[RELEASING.md](RELEASING.md) for release provenance.

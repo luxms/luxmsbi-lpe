@@ -284,6 +284,8 @@ struct Environment {
     hook: Option<Lookup>,
     backing: Option<Value>,
 }
+type SyncHostCallback = dyn Fn(&mut Runtime, Vec<Value>) -> Result<Value>;
+
 #[derive(Clone)]
 enum Function {
     Closure {
@@ -296,7 +298,7 @@ enum Function {
     },
     Native(Native),
     Sync(Rc<dyn Fn(Vec<Value>) -> Result<Value>>),
-    SyncHost(Rc<dyn Fn(&mut Runtime, Vec<Value>) -> Result<Value>>),
+    SyncHost(Rc<SyncHostCallback>),
     Special(Special),
     Bound {
         receiver: Value,
@@ -734,7 +736,7 @@ impl Runtime {
                     e
                 })?;
             }
-            Ok(value)
+            self.safe_value(value)
         })
     }
     pub fn register_special<F>(&mut self, name: &str, callback: F)
@@ -1539,6 +1541,7 @@ impl Runtime {
     }
     pub fn set(&mut self, value: &Value, key: &str, new: Value) -> Result<Value> {
         crate::security::key(key)?;
+        self.validate_value(&new)?;
         if self.is_json_object(value)
             || !matches!(value, Value::Object(_) | Value::Array(_) | Value::Date(_))
         {
@@ -2069,7 +2072,7 @@ impl Runtime {
     }
     pub fn eval_ast(&mut self, ast: &Ast, options: &EvalOptions) -> Result<Value> {
         if let Some(result) = self.eval_immediate(ast, options) {
-            return result;
+            return result.and_then(|value| self.safe_value(value));
         }
         futures::executor::block_on(self.eval_async(ast, options))
     }
@@ -2146,10 +2149,11 @@ impl Runtime {
             // Host special forms may collect while this lexical scope is active.
             let roots = self.roots(ast, env);
             if let Some(id) = ast.get("$lpeInternalLiteral").and_then(Json::as_u64) {
-                return self
+                let value = self
                     .literals
                     .get(id as usize)
-                    .ok_or_else(|| Error::new("InvalidHandle", "Invalid literal"));
+                    .ok_or_else(|| Error::new("InvalidHandle", "Invalid literal"))?;
+                return self.safe_value(value);
             }
             match ast {
                 Json::String(name) => {
@@ -2160,7 +2164,7 @@ impl Runtime {
                     {
                         Ok(Value::String(name.clone()))
                     } else if self.preserve_promises.get() {
-                        Ok(value)
+                        self.safe_value(value)
                     } else {
                         self.resolve_value(value).await
                     }
@@ -2278,16 +2282,19 @@ impl Runtime {
                                 continue;
                             }
                         }
+                        self.validate_value(&result)?;
                         let mut result = result;
                         for callback in callbacks.into_iter().rev() {
                             result = self
                                 .call_with_options(callback, vec![result], env, options)
                                 .await?;
                         }
-                        return Ok(result);
+                        return self.safe_value(result);
                     }
                 }
-                _ => self.checked_from_json(ast),
+                _ => self
+                    .checked_from_json(ast)
+                    .and_then(|value| self.safe_value(value)),
             }
         })
     }
@@ -2437,7 +2444,15 @@ impl Runtime {
         })
     }
     pub(crate) fn is_special_function(&self, id: usize) -> bool {
-        matches!(self.functions.borrow(id).as_deref(), Some(Function::Special(_) | Function::Defined { .. } | Function::Vararg { .. } | Function::VarargHost { .. }))
+        matches!(
+            self.functions.borrow(id).as_deref(),
+            Some(
+                Function::Special(_)
+                    | Function::Defined { .. }
+                    | Function::Vararg { .. }
+                    | Function::VarargHost { .. }
+            )
+        )
     }
     fn enter_call(&self, options: &EvalOptions) -> Result<DepthGuard> {
         self.tick()?;
@@ -2460,6 +2475,9 @@ impl Runtime {
         caller_options: &'a EvalOptions,
     ) -> LocalBoxFuture<'a, Result<Value>> {
         Box::pin(async move {
+            for value in &args {
+                self.validate_value(value)?;
+            }
             let _guard = self.enter_call(caller_options)?;
             let Some(Function::Closure {
                 params,
@@ -2473,7 +2491,9 @@ impl Runtime {
                 return Err(Error::new("InvalidHandle", "Expired function"));
             };
             for (index, name) in params.iter().enumerate() {
-                if bind_supplied_only && index >= args.len() { break; }
+                if bind_supplied_only && index >= args.len() {
+                    break;
+                }
                 crate::security::key(name)?;
             }
             let mut _roots = None;
@@ -2542,8 +2562,14 @@ impl Runtime {
         }
         Box::pin(async move {
             if matches!(&function, Value::Special(_))
-                || matches!(&function, Value::Function(id) if self.is_special_function(*id)) {
-                return Err(crate::security::error("Special forms can only be called by the evaluator"));
+                || matches!(&function, Value::Function(id) if self.is_special_function(*id))
+            {
+                return Err(crate::security::error(
+                    "Special forms can only be called by the evaluator",
+                ));
+            }
+            for value in &args {
+                self.validate_value(value)?;
             }
             let _guard = self.enter_call(options)?;
             let implementation = if let Value::Function(id) = &function {
@@ -2572,12 +2598,19 @@ impl Runtime {
                     Function::Sync(callback) => {
                         let value = callback(args)?;
                         if self.preserve_promises.get() {
-                            Ok(value)
+                            self.safe_value(value)
                         } else {
                             self.resolve_value(value).await
                         }
                     }
-                    Function::SyncHost(callback) => callback(self, args),
+                    Function::SyncHost(callback) => {
+                        let value = callback(self, args)?;
+                        if self.preserve_promises.get() {
+                            self.safe_value(value)
+                        } else {
+                            self.resolve_value(value).await
+                        }
+                    }
                     Function::Host(callback) => {
                         let future = callback(self, args);
                         if self.preserve_promises.get() {

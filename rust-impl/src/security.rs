@@ -25,6 +25,22 @@ pub(crate) fn key(key: &str) -> Result<()> {
 }
 
 impl Runtime {
+    pub(crate) fn validate_value(&self, value: &Value) -> Result<()> {
+        if matches!(value, Value::Object(_) | Value::Array(_)) {
+            let then = self.get(value, "then");
+            if matches!(then, Value::Special(_))
+                || matches!(then, Value::Function(id) if self.is_special_function(id))
+            {
+                return Err(error("Special forms cannot be used as then callbacks"));
+            }
+        }
+        Ok(())
+    }
+
+    pub(crate) fn safe_value(&self, value: Value) -> Result<Value> {
+        self.validate_value(&value)?;
+        Ok(value)
+    }
     pub(crate) fn safe_key(&self, value: &Value) -> Result<String> {
         if !matches!(value, Value::String(_) | Value::Utf16(_) | Value::Number(_)) {
             return Err(error("Property keys must be strings or numbers"));
@@ -51,7 +67,7 @@ impl Runtime {
         if self.is_json_object(value) && !matches!(name, "parse" | "stringify") {
             return Err(error("Host object internals are not accessible"));
         }
-        Ok(self.get(value, name))
+        self.safe_value(self.get(value, name))
     }
 
     pub(crate) fn safe_keys(&self, value: &Value) -> Result<Vec<String>> {

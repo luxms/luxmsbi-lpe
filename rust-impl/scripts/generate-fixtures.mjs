@@ -250,4 +250,5 @@ await import('./roundtrip-fixtures.mjs');
 await import('./production-layout-fixtures.mjs');
 await import('./release180-fixtures.mjs');
 await import('./json-fixtures.mjs');
+await import('./release180-source-fixtures.mjs');
 console.log(cli.check ? 'Generated artifacts are current (read-only check).' : 'Generated artifacts updated.');

@@ -1,6 +1,30 @@
 import {callName, literal, parseFile, walk} from './source-analysis.mjs';
 
 const sourceFile = 'test/test-lpe-functions.js';
+const duplicateFile = 'test/test-deparse-lpe-functions.js';
+
+// Some tests in the deparser corpus directly call eval_lpe and are unchanged
+// copies of the evaluator tests. Link their behavioral probes only after an
+// exact AST comparison; wrapper-based round trips have separate fixtures.
+export function duplicateFunctionGroups() {
+  const bodies = file => {
+    const result = new Map();
+    walk(parseFile(file), node => {
+      if (node.type !== 'CallExpression' || callName(node.callee) !== 'it') return;
+      let wrapper = false;
+      walk(node.arguments[1], child => {
+        if (child.type === 'CallExpression' && /^(deepEqual|strictEqual|ok)(Parsed)?$/.test(callName(child.callee))) wrapper = true;
+      });
+      if (wrapper) return;
+      const body = JSON.stringify(node.arguments, (key,value) =>
+        ['loc','start','end','extra','comments','leadingComments','trailingComments','innerComments'].includes(key) ? undefined : value);
+      result.set(body, node.loc.start.line);
+    });
+    return result;
+  };
+  const original = bodies(sourceFile), duplicate = bodies(duplicateFile);
+  return new Map([...original].filter(([body]) => duplicate.has(body)).map(([body,line]) => [line,duplicate.get(body)]));
+}
 
 // Read names, not expectations, from the source so origin/group identify the exact leaf.
 function sourceLeaves() {
@@ -19,12 +43,13 @@ function sourceLeaves() {
 
 export function addFunctionsCoverage(add) {
   const leaves = sourceLeaves();
+  const duplicates = duplicateFunctionGroups();
   const leaf = (id, line, request, value, extra = {}) => {
     const group = leaves.get(line);
     if (!group) throw new Error(`Expected an it leaf at ${sourceFile}:${line}`);
     add(`functions-coverage/${id}`, request, value, {
       ...extra, origin: `${sourceFile}:${line}`, group,
-      covers: {groups: [`${sourceFile}:${line}`]},
+      covers: {groups: [`${sourceFile}:${line}`, ...(duplicates.has(line) ? [`${duplicateFile}:${duplicates.get(line)}`] : [])]},
     });
   };
   const evaluate = (id, line, source, value, request = {}) => leaf(id, line, {op: 'eval', source, ...request}, value);

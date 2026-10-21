@@ -1,11 +1,12 @@
 # Rust LPE implementation
 
-Status: implementation and compatibility testing in progress. The native crate
-and shared JS/Rust test harness are implemented. Do not interpret passing fixture
-counts as complete compatibility; `coverage.json` records the remaining gaps.
-See [STATUS.md](STATUS.md) for verified results and the outstanding work.
+Rust LPE targets JavaScript LPE **1.8.0 safe semantics** without a JavaScript
+engine. It includes portable `JSON` methods, formatted strings, time operations,
+and optimized closure calls. Unsafe evaluation is rejected.
 
-Tracking issue: [#72](https://github.com/luxms/luxmsbi-lpe/issues/72).
+See [STATUS.md](STATUS.md) for verification and scope,
+[API.md](API.md) for embedding and JSON examples, and
+[RELEASING.md](RELEASING.md) for the `r`-prefixed Rust release process.
 
 ## Build and test
 

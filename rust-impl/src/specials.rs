@@ -1293,14 +1293,14 @@ async fn associate(
     for index in 0..keys.len().saturating_sub(1) {
         rt.tick()?;
         let key = &checked[index];
-        let mut value = rt.get(&focus, &key);
+        let mut value = rt.get(&focus, key);
         if value == Value::Undefined {
             value = if matches!(keys[index + 1], Value::String(_)) {
                 rt.object(IndexMap::new())
             } else {
                 rt.array(vec![])
             };
-            rt.set(&focus, &key, value.clone())?;
+            rt.set(&focus, key, value.clone())?;
         }
         focus = value;
     }

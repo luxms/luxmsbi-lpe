@@ -45,6 +45,9 @@ value('copy-data','begin(cp([source,sourceKey],[target,targetKey]),target)',{ans
   {source:['+',42,99],sourceKey:1,target:{},targetKey:'answer',answer:'wrong'});
 value('frequencies-primitives','frequencies([true,false,true,null,undefined])',
   {true:2,false:1,null:1,undefined:1});
+for (const source of ['{then=if}', 'identity({then=vector})', 'get({a={then=q}},"a")'])
+  error(`then-callback/${source}`, source);
+value('uncalled-parameter', 'isFunction(fn([constructor],42))', true);
 value('closure-apply','apply((x,y)=>x+y,20,22)',42);
 value('closure-map','map([1,2,3],x=>x*2)',[2,4,6]);
 for (const source of ['get_in(obj,["absent","constructor"])','assoc_in(obj,[],1)','update_in(obj,[],x=>1)'])

@@ -458,11 +458,7 @@ fn reference_js_corpus() {
     let script = r#"
 const fs = require('fs');
 const vm = require('vm');
-const strip = path => fs.readFileSync(path, 'utf8').replace(/^import .*;\s*$/gm, '').replace(/^export default .*;\s*$/gm, '').replace(/^export \{.*\};\s*$/gm, '').replace(/export function /g, 'function ');
-const lex = new Function(strip('src/lpel.js') + ';return {tokenize,makeError,LPESyntaxError}')();
-const parse = new Function('tokenize','makeError','LPESyntaxError','isArray','isHash','console', strip('src/lpep.js') + ';return parse')(
-  lex.tokenize, lex.makeError, lex.LPESyntaxError, Array.isArray, x => x !== null && typeof x === 'object' && !Array.isArray(x), {error(){}});
-const deparse = new Function(strip('src/lped.js') + ';return deparse')();
+const {parse, deparse} = require('./dist/lpe.js');
 const rows = new Map();
 const tagged = x => JSON.parse(JSON.stringify(x, (k,v) => v === undefined ? {$lpe:'undefined'} : v));
 const record = (source, options = {}) => {

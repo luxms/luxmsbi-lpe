@@ -1478,14 +1478,10 @@ fn regex_audit_against_current_javascript() {
             .map(|(pattern, flags)| ("a", *pattern, *flags)),
     );
     let script = r#"
-const fs = require('node:fs');
-const source = fs.readFileSync(process.argv[1], 'utf8')
-  .replace(/^import .*$/gm, '').replace('export default _context;', '');
-const context = new Function('isString', 'isFunction', source + '\nreturn _context;')(
-  value => typeof value === 'string', value => typeof value === 'function');
+const lpe = require(process.argv[1]);
 const results = JSON.parse(process.argv[2]).map(([text, pattern, flags]) => {
   try {
-    const value = context.re_match(text, pattern, flags);
+    const value = lpe.eval_lpe('re_match(text, pattern, flags)', {text, pattern, flags});
     return value === null ? null : [Array.from(value), value.index, value.input, value.groups,
       value.indices && Array.from(value.indices), value.indices?.groups];
   } catch (error) {
@@ -1494,7 +1490,7 @@ const results = JSON.parse(process.argv[2]).map(([text, pattern, flags]) => {
 });
 process.stdout.write(JSON.stringify(results, (_, value) => value === undefined ? {$lpe: 'undefined'} : value));
 "#;
-    let source = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../src/context/strings.js");
+    let source = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../dist/lpe.js");
     let result = std::process::Command::new("node")
         .arg("-e")
         .arg(script)

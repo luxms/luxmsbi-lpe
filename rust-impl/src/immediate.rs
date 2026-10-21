@@ -188,6 +188,10 @@ impl Runtime {
         convert: impl Fn(Cow<'_, Value>) -> Option<T>,
     ) -> Option<Option<T>> {
         crate::security::key(name).ok()?;
+        let convert = |value: Cow<'_, Value>| {
+            self.validate_value(&value).ok()?;
+            convert(value)
+        };
         if let Some(bindings) = bindings {
             // Repeated parameter names overwrite earlier values, including $this$.
             if let Some(index) = bindings.params.iter().rposition(|param| param == name) {

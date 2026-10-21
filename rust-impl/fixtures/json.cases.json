@@ -2081,6 +2081,148 @@
     }
   },
   {
+    "id": "json:reviver-source/1e400",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text,(key,value,context)=>context.source)",
+      "context": {
+        "text": "1e400"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "1e400"
+    }
+  },
+  {
+    "id": "json:reviver-source/-0",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text,(key,value,context)=>context.source)",
+      "context": {
+        "text": "-0"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "-0"
+    }
+  },
+  {
+    "id": "json:reviver-source/9007199254740993",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text,(key,value,context)=>context.source)",
+      "context": {
+        "text": "9007199254740993"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "9007199254740993"
+    }
+  },
+  {
+    "id": "json:reviver-source/true",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text,(key,value,context)=>context.source)",
+      "context": {
+        "text": "true"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "true"
+    }
+  },
+  {
+    "id": "json:reviver-source/null",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text,(key,value,context)=>context.source)",
+      "context": {
+        "text": "null"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "null"
+    }
+  },
+  {
+    "id": "json:reviver-source/\"\\u0061\"",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text,(key,value,context)=>context.source)",
+      "context": {
+        "text": "\"\\u0061\""
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "\"\\u0061\""
+    }
+  },
+  {
+    "id": "json:reviver-source-nested",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text,(key,value,context)=>if(isNumber(value),context.source,value))",
+      "context": {
+        "text": "{\"a\":1e2,\"b\":[-0,1.00]}"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "a": "1e2",
+        "b": [
+          "-0",
+          "1.00"
+        ]
+      }
+    }
+  },
+  {
+    "id": "json:reviver-source-container",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text,(key,value,context)=>if(key=\"\",keys(context),value))",
+      "context": {
+        "text": "{\"a\":1}"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": []
+    }
+  },
+  {
     "id": "json:replacer",
     "group": "Portable JSON object",
     "origin": "rust-impl/scripts/json-fixtures.mjs",
