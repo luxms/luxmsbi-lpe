@@ -1,5 +1,22 @@
 [
   {
+    "id": "upstream-assertion:test/test-fstring-boundaries.js:54:3",
+    "group": "F-string round trips and evaluation modes / <dynamic>",
+    "origin": "test/test-fstring-boundaries.js:54",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "f\"{'' ~> constructor}\""
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
     "id": "upstream-assertion:test/test-lisp.js:209:1",
     "group": "LISP tests / and or not",
     "origin": "test/test-lisp.js:209",
@@ -305,6 +322,489 @@
         5,
         6
       ]
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-security.js:78:4",
+    "group": "LPE execution boundary / <dynamic>",
+    "origin": "test/test-security.js:78",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "obj ~> (key)",
+      "context": {
+        "obj": {},
+        "key": "constructor"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-security.js:78:8",
+    "group": "LPE execution boundary / <dynamic>",
+    "origin": "test/test-security.js:78",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "obj ~> (key)",
+      "context": {
+        "obj": {},
+        "key": "prototype"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-security.js:78:12",
+    "group": "LPE execution boundary / <dynamic>",
+    "origin": "test/test-security.js:78",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "obj ~> (key)",
+      "context": {
+        "obj": {},
+        "key": "__proto__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-security.js:78:16",
+    "group": "LPE execution boundary / <dynamic>",
+    "origin": "test/test-security.js:78",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "obj ~> (key)",
+      "context": {
+        "obj": {},
+        "key": "caller"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-security.js:78:20",
+    "group": "LPE execution boundary / <dynamic>",
+    "origin": "test/test-security.js:78",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "obj ~> (key)",
+      "context": {
+        "obj": {},
+        "key": "callee"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-security.js:78:24",
+    "group": "LPE execution boundary / <dynamic>",
+    "origin": "test/test-security.js:78",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "obj ~> (key)",
+      "context": {
+        "obj": {},
+        "key": "arguments"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-security.js:78:28",
+    "group": "LPE execution boundary / <dynamic>",
+    "origin": "test/test-security.js:78",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "obj ~> (key)",
+      "context": {
+        "obj": {},
+        "key": "__defineGetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-security.js:78:32",
+    "group": "LPE execution boundary / <dynamic>",
+    "origin": "test/test-security.js:78",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "obj ~> (key)",
+      "context": {
+        "obj": {},
+        "key": "__defineSetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-security.js:78:36",
+    "group": "LPE execution boundary / <dynamic>",
+    "origin": "test/test-security.js:78",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "obj ~> (key)",
+      "context": {
+        "obj": {},
+        "key": "__lookupGetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-security.js:78:40",
+    "group": "LPE execution boundary / <dynamic>",
+    "origin": "test/test-security.js:78",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "obj ~> (key)",
+      "context": {
+        "obj": {},
+        "key": "__lookupSetter__"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-security.js:158:9",
+    "group": "LPE execution boundary / <dynamic>",
+    "origin": "test/test-security.js:158",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "Object ~> fromEntries([[\"__proto__\", value]])",
+      "context": {
+        "obj": {},
+        "value": {
+          "__proto__": {
+            "__lpePolluted": 1
+          }
+        }
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-security.js:158:10",
+    "group": "LPE execution boundary / <dynamic>",
+    "origin": "test/test-security.js:158",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "Object ~> assign(obj, value)",
+      "context": {
+        "obj": {},
+        "value": {
+          "__proto__": {
+            "__lpePolluted": 1
+          }
+        }
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-security.js:231:1",
+    "group": "LPE execution boundary / preserves LPE closures, higher-order operations, and trusted host callbacks",
+    "origin": "test/test-security.js:231",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "[1, 2] ~> map(x => x * 2)"
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        2,
+        4
+      ]
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-security.js:232:1",
+    "group": "LPE execution boundary / preserves LPE closures, higher-order operations, and trusted host callbacks",
+    "origin": "test/test-security.js:232",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "' abc ' ~> trim() ~> toUpperCase()"
+    },
+    "expected": {
+      "ok": true,
+      "value": "ABC"
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-security.js:234:1",
+    "group": "LPE execution boundary / preserves LPE closures, higher-order operations, and trusted host callbacks",
+    "origin": "test/test-security.js:234",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "Object ~> entries({a = 1})"
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        [
+          "a",
+          1
+        ]
+      ]
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-security.js:235:1",
+    "group": "LPE execution boundary / preserves LPE closures, higher-order operations, and trusted host callbacks",
+    "origin": "test/test-security.js:235",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "new(Array, 1, 2)"
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        1,
+        2
+      ]
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-unsafe.js:15:3",
+    "group": "Host-controlled unsafe evaluation / <dynamic>",
+    "origin": "test/test-unsafe.js:15",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "'' ~> constructor ~> constructor"
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-unsafe.js:16:3",
+    "group": "Host-controlled unsafe evaluation / <dynamic>",
+    "origin": "test/test-unsafe.js:16",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "'' ~> constructor ~> constructor",
+      "context": {},
+      "options": {
+        "unsafe": false
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-unsafe.js:17:3",
+    "group": "Host-controlled unsafe evaluation / <dynamic>",
+    "origin": "test/test-unsafe.js:17",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "'' ~> constructor ~> constructor",
+      "context": {},
+      "options": {
+        "unsafe": "true"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-unsafe.js:15:4",
+    "group": "Host-controlled unsafe evaluation / <dynamic>",
+    "origin": "test/test-unsafe.js:15",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "'' ~> ('con' + 'structor') ~> constructor"
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-unsafe.js:16:4",
+    "group": "Host-controlled unsafe evaluation / <dynamic>",
+    "origin": "test/test-unsafe.js:16",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "'' ~> ('con' + 'structor') ~> constructor",
+      "context": {},
+      "options": {
+        "unsafe": false
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-unsafe.js:17:4",
+    "group": "Host-controlled unsafe evaluation / <dynamic>",
+    "origin": "test/test-unsafe.js:17",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "'' ~> ('con' + 'structor') ~> constructor",
+      "context": {},
+      "options": {
+        "unsafe": "true"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-unsafe.js:78:2",
+    "group": "Host-controlled unsafe evaluation / does not let ordinary calls supply special-form evaluation options",
+    "origin": "test/test-unsafe.js:78",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "['probe'] ~> map(q)"
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    },
+    "reason": "Excluded native RegExp or JavaScript object/method interop."
+  },
+  {
+    "id": "upstream-assertion:test/test-unsafe.js:78:5",
+    "group": "Host-controlled unsafe evaluation / does not let ordinary calls supply special-form evaluation options",
+    "origin": "test/test-unsafe.js:78",
+    "evidence": "upstream-assertion",
+    "request": {
+      "op": "eval",
+      "source": "new(vector, [], {}, {unsafe = true})"
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
     },
     "reason": "Excluded native RegExp or JavaScript object/method interop."
   },
@@ -1168,9 +1668,9 @@
     "reason": "Illustrative random output is not an expectation. Authored fixtures test range, permutation and sample-size invariants instead."
   },
   {
-    "id": "doc-example:src/context/objects.js:280:1",
+    "id": "doc-example:src/context/objects.js:286:1",
     "group": "docs / src/context/objects.js",
-    "origin": "src/context/objects.js:280",
+    "origin": "src/context/objects.js:286",
     "evidence": "doc-example",
     "request": {
       "op": "eval",
@@ -1183,9 +1683,9 @@
     "reason": "Example requires surrounding setup, uses unsupported example syntax, or disagrees with the current JS result. Preserved for upstream review; no claimed parity evidence."
   },
   {
-    "id": "doc-example:src/context/objects.js:323:1",
+    "id": "doc-example:src/context/objects.js:329:1",
     "group": "docs / src/context/objects.js",
-    "origin": "src/context/objects.js:323",
+    "origin": "src/context/objects.js:329",
     "evidence": "doc-example",
     "request": {
       "op": "eval",
@@ -1198,9 +1698,9 @@
     "reason": "Example requires surrounding setup, uses unsupported example syntax, or disagrees with the current JS result. Preserved for upstream review; no claimed parity evidence."
   },
   {
-    "id": "doc-example:src/context/objects.js:674:1",
+    "id": "doc-example:src/context/objects.js:680:1",
     "group": "docs / src/context/objects.js",
-    "origin": "src/context/objects.js:674",
+    "origin": "src/context/objects.js:680",
     "evidence": "doc-example",
     "request": {
       "op": "eval",
@@ -1217,9 +1717,9 @@
     "reason": "Example requires surrounding setup, uses unsupported example syntax, or disagrees with the current JS result. Preserved for upstream review; no claimed parity evidence."
   },
   {
-    "id": "doc-example:src/context/objects.js:810:1",
+    "id": "doc-example:src/context/objects.js:816:1",
     "group": "docs / src/context/objects.js",
-    "origin": "src/context/objects.js:810",
+    "origin": "src/context/objects.js:816",
     "evidence": "doc-example",
     "request": {
       "op": "eval",
@@ -1232,9 +1732,9 @@
     "reason": "Example requires surrounding setup, uses unsupported example syntax, or disagrees with the current JS result. Preserved for upstream review; no claimed parity evidence."
   },
   {
-    "id": "doc-example:src/context/objects.js:1167:1",
+    "id": "doc-example:src/context/objects.js:1175:1",
     "group": "docs / src/context/objects.js",
-    "origin": "src/context/objects.js:1167",
+    "origin": "src/context/objects.js:1175",
     "evidence": "doc-example",
     "request": {
       "op": "eval",
@@ -1251,9 +1751,9 @@
     "reason": "Illustrative random output is not an expectation. Authored fixtures test range, permutation and sample-size invariants instead."
   },
   {
-    "id": "doc-example:src/context/objects.js:1168:1",
+    "id": "doc-example:src/context/objects.js:1176:1",
     "group": "docs / src/context/objects.js",
-    "origin": "src/context/objects.js:1168",
+    "origin": "src/context/objects.js:1176",
     "evidence": "doc-example",
     "request": {
       "op": "eval",
@@ -1266,9 +1766,9 @@
     "reason": "Illustrative random output is not an expectation. Authored fixtures test range, permutation and sample-size invariants instead."
   },
   {
-    "id": "doc-example:src/context/objects.js:1237:1",
+    "id": "doc-example:src/context/objects.js:1246:1",
     "group": "docs / src/context/objects.js",
-    "origin": "src/context/objects.js:1237",
+    "origin": "src/context/objects.js:1246",
     "evidence": "doc-example",
     "request": {
       "op": "eval",
@@ -1281,9 +1781,9 @@
     "reason": "Example requires surrounding setup, uses unsupported example syntax, or disagrees with the current JS result. Preserved for upstream review; no claimed parity evidence."
   },
   {
-    "id": "doc-example:src/context/objects.js:1254:1",
+    "id": "doc-example:src/context/objects.js:1263:1",
     "group": "docs / src/context/objects.js",
-    "origin": "src/context/objects.js:1254",
+    "origin": "src/context/objects.js:1263",
     "evidence": "doc-example",
     "request": {
       "op": "eval",
@@ -1296,9 +1796,9 @@
     "reason": "Example requires surrounding setup, uses unsupported example syntax, or disagrees with the current JS result. Preserved for upstream review; no claimed parity evidence."
   },
   {
-    "id": "doc-example:src/context/objects.js:1275:1",
+    "id": "doc-example:src/context/objects.js:1285:1",
     "group": "docs / src/context/objects.js",
-    "origin": "src/context/objects.js:1275",
+    "origin": "src/context/objects.js:1285",
     "evidence": "doc-example",
     "request": {
       "op": "eval",
@@ -1311,9 +1811,9 @@
     "reason": "Example requires surrounding setup, uses unsupported example syntax, or disagrees with the current JS result. Preserved for upstream review; no claimed parity evidence."
   },
   {
-    "id": "doc-example:src/context/objects.js:1276:1",
+    "id": "doc-example:src/context/objects.js:1286:1",
     "group": "docs / src/context/objects.js",
-    "origin": "src/context/objects.js:1276",
+    "origin": "src/context/objects.js:1286",
     "evidence": "doc-example",
     "request": {
       "op": "eval",
@@ -1328,9 +1828,9 @@
     "reason": "Example requires surrounding setup, uses unsupported example syntax, or disagrees with the current JS result. Preserved for upstream review; no claimed parity evidence."
   },
   {
-    "id": "doc-example:src/context/objects.js:1277:1",
+    "id": "doc-example:src/context/objects.js:1287:1",
     "group": "docs / src/context/objects.js",
-    "origin": "src/context/objects.js:1277",
+    "origin": "src/context/objects.js:1287",
     "evidence": "doc-example",
     "request": {
       "op": "eval",
@@ -1343,9 +1843,9 @@
     "reason": "Example requires surrounding setup, uses unsupported example syntax, or disagrees with the current JS result. Preserved for upstream review; no claimed parity evidence."
   },
   {
-    "id": "doc-example:src/context/objects.js:1326:1",
+    "id": "doc-example:src/context/objects.js:1337:1",
     "group": "docs / src/context/objects.js",
-    "origin": "src/context/objects.js:1326",
+    "origin": "src/context/objects.js:1337",
     "evidence": "doc-example",
     "request": {
       "op": "eval",
@@ -1363,9 +1863,9 @@
     "reason": "Example requires surrounding setup, uses unsupported example syntax, or disagrees with the current JS result. Preserved for upstream review; no claimed parity evidence."
   },
   {
-    "id": "doc-example:src/context/std.js:54:1",
+    "id": "doc-example:src/context/std.js:64:1",
     "group": "docs / src/context/std.js",
-    "origin": "src/context/std.js:54",
+    "origin": "src/context/std.js:64",
     "evidence": "doc-example",
     "request": {
       "op": "eval",
@@ -1378,9 +1878,9 @@
     "reason": "Example requires surrounding setup, uses unsupported example syntax, or disagrees with the current JS result. Preserved for upstream review; no claimed parity evidence."
   },
   {
-    "id": "doc-example:src/context/std.js:104:1",
+    "id": "doc-example:src/context/std.js:159:1",
     "group": "docs / src/context/std.js",
-    "origin": "src/context/std.js:104",
+    "origin": "src/context/std.js:159",
     "evidence": "doc-example",
     "request": {
       "op": "eval",
@@ -1393,9 +1893,9 @@
     "reason": "Excluded native RegExp or JavaScript object/method interop."
   },
   {
-    "id": "doc-example:src/context/std.js:105:1",
+    "id": "doc-example:src/context/std.js:160:1",
     "group": "docs / src/context/std.js",
-    "origin": "src/context/std.js:105",
+    "origin": "src/context/std.js:160",
     "evidence": "doc-example",
     "request": {
       "op": "eval",
@@ -1413,9 +1913,9 @@
     "reason": "Excluded native RegExp or JavaScript object/method interop."
   },
   {
-    "id": "doc-example:src/context/std.js:106:1",
+    "id": "doc-example:src/context/std.js:161:1",
     "group": "docs / src/context/std.js",
-    "origin": "src/context/std.js:106",
+    "origin": "src/context/std.js:161",
     "evidence": "doc-example",
     "request": {
       "op": "eval",
@@ -1435,9 +1935,9 @@
     "reason": "Excluded native RegExp or JavaScript object/method interop."
   },
   {
-    "id": "doc-example:src/context/std.js:107:1",
+    "id": "doc-example:src/context/std.js:162:1",
     "group": "docs / src/context/std.js",
-    "origin": "src/context/std.js:107",
+    "origin": "src/context/std.js:162",
     "evidence": "doc-example",
     "request": {
       "op": "eval",
@@ -1457,9 +1957,9 @@
     "reason": "Excluded native RegExp or JavaScript object/method interop."
   },
   {
-    "id": "doc-example:src/context/std.js:231:1",
+    "id": "doc-example:src/context/std.js:286:1",
     "group": "docs / src/context/std.js",
-    "origin": "src/context/std.js:231",
+    "origin": "src/context/std.js:286",
     "evidence": "doc-example",
     "request": {
       "op": "eval",
@@ -1483,9 +1983,9 @@
     "reason": "Documentation describes console output, not the function return value. Console-output assertions require a separate capture protocol."
   },
   {
-    "id": "doc-example:src/context/std.js:247:1",
+    "id": "doc-example:src/context/std.js:302:1",
     "group": "docs / src/context/std.js",
-    "origin": "src/context/std.js:247",
+    "origin": "src/context/std.js:302",
     "evidence": "doc-example",
     "request": {
       "op": "eval",
@@ -1509,9 +2009,9 @@
     "reason": "Documentation describes console output, not the function return value. Console-output assertions require a separate capture protocol."
   },
   {
-    "id": "doc-example:src/context/strings.js:260:1",
+    "id": "doc-example:src/context/strings.js:264:1",
     "group": "docs / src/context/strings.js",
-    "origin": "src/context/strings.js:260",
+    "origin": "src/context/strings.js:264",
     "evidence": "doc-example",
     "request": {
       "op": "eval",
@@ -1524,9 +2024,9 @@
     "reason": "Excluded native RegExp or JavaScript object/method interop."
   },
   {
-    "id": "doc-example:src/context/strings.js:278:1",
+    "id": "doc-example:src/context/strings.js:282:1",
     "group": "docs / src/context/strings.js",
-    "origin": "src/context/strings.js:278",
+    "origin": "src/context/strings.js:282",
     "evidence": "doc-example",
     "request": {
       "op": "eval",
@@ -1539,9 +2039,9 @@
     "reason": "Excluded native RegExp or JavaScript object/method interop."
   },
   {
-    "id": "doc-example:src/context/variables.js:28:1",
+    "id": "doc-example:src/context/variables.js:33:1",
     "group": "docs / src/context/variables.js",
-    "origin": "src/context/variables.js:28",
+    "origin": "src/context/variables.js:33",
     "evidence": "doc-example",
     "request": {
       "op": "eval",
@@ -1554,9 +2054,9 @@
     "reason": "Example requires surrounding setup, uses unsupported example syntax, or disagrees with the current JS result. Preserved for upstream review; no claimed parity evidence."
   },
   {
-    "id": "doc-example:src/context/variables.js:29:1",
+    "id": "doc-example:src/context/variables.js:34:1",
     "group": "docs / src/context/variables.js",
-    "origin": "src/context/variables.js:29",
+    "origin": "src/context/variables.js:34",
     "evidence": "doc-example",
     "request": {
       "op": "eval",
@@ -1565,21 +2065,6 @@
     "expected": {
       "ok": true,
       "value": 10
-    },
-    "reason": "Example requires surrounding setup, uses unsupported example syntax, or disagrees with the current JS result. Preserved for upstream review; no claimed parity evidence."
-  },
-  {
-    "id": "doc-example:src/lib/datetime.js:482:1",
-    "group": "docs / src/lib/datetime.js",
-    "origin": "src/lib/datetime.js:482",
-    "evidence": "doc-example",
-    "request": {
-      "op": "eval",
-      "source": "isod(\"2024-01-15\")"
-    },
-    "expected": {
-      "ok": true,
-      "value": "2024-015"
     },
     "reason": "Example requires surrounding setup, uses unsupported example syntax, or disagrees with the current JS result. Preserved for upstream review; no claimed parity evidence."
   }

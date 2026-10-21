@@ -13,18 +13,44 @@
     "Supplying lone surrogate halves for later concatenation"
   ],
   "countSemantics": "Reviewed scenario categories, not counts of supported features or passing assertions.",
-  "inScope": ["Valid Unicode input and output, including emoji", "JavaScript code-unit lengths and offsets", "String-pattern regex operations", "Ordinary promises and asynchronous callbacks", "Reactive streams, subscriptions, retain/release and mixed Stream/Promise values"],
-  "otherExclusions": ["Native RegExp values", "Arbitrary JavaScript host-object interoperability", "Documentation APIs, data, context preparation and localization tooling (JS/V8-only)"],
+  "inScope": [
+    "Valid Unicode input and output, including emoji",
+    "JavaScript code-unit lengths and offsets",
+    "String-pattern regex operations",
+    "Ordinary promises and asynchronous callbacks",
+    "Reactive streams, subscriptions, retain/release and mixed Stream/Promise values",
+    "JSON.parse and JSON.stringify through invoke, bound methods and function values"
+  ],
+  "otherExclusions": [
+    "Native RegExp values",
+    "Arbitrary JavaScript host-object interoperability",
+    "Documentation APIs, data, context preparation and localization tooling (JS/V8-only)"
+  ],
   "v8OnlyReason": "Documentation APIs, data, context preparation and localization tooling remain exclusively in the JS/V8 implementation by agreement; they are not Rust implementation gaps.",
-  "v8OnlyApis": ["makeDoc", "makeDocForContextes", "prepareContext", "DOC", "LOCALE_DOC", "DOC_WARNINGS", "findDoc", "generateSimpleHash", "selectPerfectFunctionName", "localizationUpdate", "LOCALIZATION_OPTIONS"],
-  "v8OnlyTestFiles": ["test/test-doc.js", "test/test-prebuilt-doc.js", "test/test-prepare-context.js"],
+  "v8OnlyApis": [
+    "makeDoc",
+    "makeDocForContextes",
+    "prepareContext",
+    "DOC",
+    "LOCALE_DOC",
+    "DOC_WARNINGS",
+    "findDoc",
+    "generateSimpleHash",
+    "selectPerfectFunctionName",
+    "localizationUpdate",
+    "LOCALIZATION_OPTIONS"
+  ],
+  "v8OnlyTestFiles": [
+    "test/test-doc.js",
+    "test/test-prebuilt-doc.js",
+    "test/test-prepare-context.js"
+  ],
   "jsOnlyBuiltins": [
     "RegExp",
     "Array",
     "Object",
     "Date",
     "console",
-    "JSON",
     "new",
     "invoke",
     "_call_obj_meth_",
@@ -113,19 +139,19 @@
     {
       "file": "test/test-lpe-functions.js",
       "line": 384,
-      "name": "LPE Full Test Suite / Object Creation / new / \u0441\u043e\u0437\u0434\u0430\u0451\u0442 \u044d\u043a\u0437\u0435\u043c\u043f\u043b\u044f\u0440 \u0441 \u0430\u0440\u0433\u0443\u043c\u0435\u043d\u0442\u0430\u043c\u0438",
+      "name": "LPE Full Test Suite / Object Creation / new / создаёт экземпляр с аргументами",
       "reason": "JavaScript constructor invocation and native object instances remain JS/V8-only."
     },
     {
       "file": "test/test-lpe-functions.js",
       "line": 1008,
-      "name": "LPE Full Test Suite / String Operations / RegExp / \u0441\u043e\u0437\u0434\u0430\u0451\u0442 RegExp",
+      "name": "LPE Full Test Suite / String Operations / RegExp / создаёт RegExp",
       "reason": "Native JavaScript RegExp objects and their methods remain JS/V8-only; portable string-pattern matching remains in scope."
     },
     {
       "file": "test/test-lpe-functions.js",
       "line": 1420,
-      "name": "LPE Full Test Suite / Application & Threading / invoke / \u0432\u044b\u0437\u043e\u0432 \u043c\u0435\u0442\u043e\u0434\u0430 \u043f\u043e \u0438\u043c\u0435\u043d\u0438",
+      "name": "LPE Full Test Suite / Application & Threading / invoke / вызов метода по имени",
       "reason": "Native JavaScript receiver/prototype method dispatch and this binding remain JS/V8-only; parsing and deparsing this syntax remain in scope."
     },
     {
@@ -139,8 +165,287 @@
       "line": 164,
       "name": "LPE tests / should eval Javascript RegExp with context (LPE)",
       "reason": "Native JavaScript RegExp objects and their methods remain JS/V8-only; portable string-pattern matching remains in scope."
+    },
+    {
+      "file": "test/date/date.js",
+      "line": 632,
+      "name": "Совместимость календарных функций / Экспортирует все календарные функции через DATE_FUNCTIONS",
+      "reason": "Checks private JavaScript module export tables and helper identity; public calendar functions are exercised through LPE fixtures."
+    },
+    {
+      "file": "test/date/time.js",
+      "line": 9,
+      "name": "Внутренние функции работы со временем / Экспортирует функции времени и общие вспомогательные функции",
+      "reason": "Checks private JavaScript module export tables and helper identity; public time functions are exercised through LPE fixtures."
+    },
+    {
+      "file": "test/date/utils.js",
+      "line": 10,
+      "name": "Строки AST и единицы измерения / Извлекает строки с обоими видами кавычек и необязательной меткой",
+      "reason": "Direct tests of private JavaScript date helper representations, mutation and return identities, not public LPE APIs. Public date and time behavior is tested independently through the interpreter."
+    },
+    {
+      "file": "test/date/utils.js",
+      "line": 16,
+      "name": "Строки AST и единицы измерения / Сохраняет значения и массивы, которые не являются строковыми узлами AST",
+      "reason": "Direct tests of private JavaScript date helper representations, mutation and return identities, not public LPE APIs. Public date and time behavior is tested independently through the interpreter."
+    },
+    {
+      "file": "test/date/utils.js",
+      "line": 28,
+      "name": "Строки AST и единицы измерения / <dynamic>",
+      "reason": "Direct tests of private JavaScript date helper representations, mutation and return identities, not public LPE APIs. Public date and time behavior is tested independently through the interpreter."
+    },
+    {
+      "file": "test/date/utils.js",
+      "line": 38,
+      "name": "Строки AST и единицы измерения / Сохраняет неизвестные единицы после удаления пробелов и смены регистра",
+      "reason": "Direct tests of private JavaScript date helper representations, mutation and return identities, not public LPE APIs. Public date and time behavior is tested independently through the interpreter."
+    },
+    {
+      "file": "test/date/utils.js",
+      "line": 49,
+      "name": "Вспомогательные календарные функции / Отклоняет неконечные смещения до входа во внутренние календарные циклы",
+      "reason": "Direct tests of private JavaScript date helper representations, mutation and return identities, not public LPE APIs. Public date and time behavior is tested independently through the interpreter."
+    },
+    {
+      "file": "test/date/utils.js",
+      "line": 103,
+      "name": "Вспомогательные календарные функции / <dynamic>",
+      "reason": "Direct tests of private JavaScript date helper representations, mutation and return identities, not public LPE APIs. Public date and time behavior is tested independently through the interpreter."
+    },
+    {
+      "file": "test/date/utils.js",
+      "line": 106,
+      "name": "Вспомогательные календарные функции / Определяет длительность всех месяцев обычного и високосного года",
+      "reason": "Direct tests of private JavaScript date helper representations, mutation and return identities, not public LPE APIs. Public date and time behavior is tested independently through the interpreter."
+    },
+    {
+      "file": "test/date/utils.js",
+      "line": 114,
+      "name": "Вспомогательные календарные функции / Определяет квартал и его месяцы для каждого месяца года",
+      "reason": "Direct tests of private JavaScript date helper representations, mutation and return identities, not public LPE APIs. Public date and time behavior is tested independently through the interpreter."
+    },
+    {
+      "file": "test/date/utils.js",
+      "line": 126,
+      "name": "Вспомогательные календарные функции / <dynamic>",
+      "reason": "Direct tests of private JavaScript date helper representations, mutation and return identities, not public LPE APIs. Public date and time behavior is tested independently through the interpreter."
+    },
+    {
+      "file": "test/date/utils.js",
+      "line": 150,
+      "name": "Вспомогательные календарные функции / <dynamic>",
+      "reason": "Direct tests of private JavaScript date helper representations, mutation and return identities, not public LPE APIs. Public date and time behavior is tested independently through the interpreter."
+    },
+    {
+      "file": "test/date/utils.js",
+      "line": 171,
+      "name": "Разбор и форматирование даты со временем / <dynamic>",
+      "reason": "Direct tests of private JavaScript date helper representations, mutation and return identities, not public LPE APIs. Public date and time behavior is tested independently through the interpreter."
+    },
+    {
+      "file": "test/date/utils.js",
+      "line": 186,
+      "name": "Разбор и форматирование даты со временем / <dynamic>",
+      "reason": "Direct tests of private JavaScript date helper representations, mutation and return identities, not public LPE APIs. Public date and time behavior is tested independently through the interpreter."
+    },
+    {
+      "file": "test/date/utils.js",
+      "line": 193,
+      "name": "Разбор и форматирование даты со временем / Отклоняет результат за нижней и верхней границей четырёхзначного года",
+      "reason": "Direct tests of private JavaScript date helper representations, mutation and return identities, not public LPE APIs. Public date and time behavior is tested independently through the interpreter."
+    },
+    {
+      "file": "test/date/utils.js",
+      "line": 206,
+      "name": "Операции с компонентами времени / <dynamic>",
+      "reason": "Direct tests of private JavaScript date helper representations, mutation and return identities, not public LPE APIs. Public date and time behavior is tested independently through the interpreter."
+    },
+    {
+      "file": "test/date/utils.js",
+      "line": 213,
+      "name": "Операции с компонентами времени / Округляет доли секунды до наносекунды",
+      "reason": "Direct tests of private JavaScript date helper representations, mutation and return identities, not public LPE APIs. Public date and time behavior is tested independently through the interpreter."
+    },
+    {
+      "file": "test/date/utils.js",
+      "line": 219,
+      "name": "Операции с компонентами времени / Отклоняет неконечное число секунд и значения другого типа",
+      "reason": "Direct tests of private JavaScript date helper representations, mutation and return identities, not public LPE APIs. Public date and time behavior is tested independently through the interpreter."
+    },
+    {
+      "file": "test/date/utils.js",
+      "line": 228,
+      "name": "Операции с компонентами времени / <dynamic>",
+      "reason": "Direct tests of private JavaScript date helper representations, mutation and return identities, not public LPE APIs. Public date and time behavior is tested independently through the interpreter."
+    },
+    {
+      "file": "test/date/utils.js",
+      "line": 242,
+      "name": "Операции с компонентами времени / <dynamic>",
+      "reason": "Direct tests of private JavaScript date helper representations, mutation and return identities, not public LPE APIs. Public date and time behavior is tested independently through the interpreter."
+    },
+    {
+      "file": "test/date/utils.js",
+      "line": 255,
+      "name": "Операции с компонентами времени / <dynamic>",
+      "reason": "Direct tests of private JavaScript date helper representations, mutation and return identities, not public LPE APIs. Public date and time behavior is tested independently through the interpreter."
+    },
+    {
+      "file": "test/date/utils.js",
+      "line": 262,
+      "name": "Операции с компонентами времени / Проверяет обе границы года до начала календарного сдвига",
+      "reason": "Direct tests of private JavaScript date helper representations, mutation and return identities, not public LPE APIs. Public date and time behavior is tested independently through the interpreter."
+    },
+    {
+      "file": "test/test-fstring-boundaries.js",
+      "line": 27,
+      "name": "F-string round trips and evaluation modes / <dynamic>",
+      "reason": "Requires host-controlled unsafe mode and native JavaScript globals. Rust supports safe evaluation only and rejects unsafe:true."
+    },
+    {
+      "file": "test/test-fstring-boundaries.js",
+      "line": 35,
+      "name": "F-string round trips and evaluation modes / preserves the mode across asynchronous interpolation",
+      "reason": "Requires host-controlled unsafe mode and native JavaScript globals. Rust supports safe evaluation only and rejects unsafe:true."
+    },
+    {
+      "file": "test/test-security.js",
+      "line": 10,
+      "name": "LPE execution boundary / loads and evaluates LPE when native string compilation is disabled",
+      "reason": "Exercises native JavaScript compilation, realms, function properties, prototype/accessor/coercion hooks or host-object thenables that Rust cannot represent. Portable key, callback and traversal rules have separate parity fixtures."
+    },
+    {
+      "file": "test/test-security.js",
+      "line": 67,
+      "name": "LPE execution boundary / <dynamic>",
+      "reason": "Exercises native JavaScript compilation, realms, function properties, prototype/accessor/coercion hooks or host-object thenables that Rust cannot represent. Portable key, callback and traversal rules have separate parity fixtures."
+    },
+    {
+      "file": "test/test-security.js",
+      "line": 83,
+      "name": "LPE execution boundary / does not use a target-controlled apply method or accept a duck-typed callable",
+      "reason": "Exercises native JavaScript compilation, realms, function properties, prototype/accessor/coercion hooks or host-object thenables that Rust cannot represent. Portable key, callback and traversal rules have separate parity fixtures."
+    },
+    {
+      "file": "test/test-security.js",
+      "line": 93,
+      "name": "LPE execution boundary / rejects coercible property keys without calling their conversion hook",
+      "reason": "Exercises native JavaScript compilation, realms, function properties, prototype/accessor/coercion hooks or host-object thenables that Rust cannot represent. Portable key, callback and traversal rules have separate parity fixtures."
+    },
+    {
+      "file": "test/test-security.js",
+      "line": 102,
+      "name": "LPE execution boundary / never invokes an own getter while traversing data",
+      "reason": "Exercises native JavaScript compilation, realms, function properties, prototype/accessor/coercion hooks or host-object thenables that Rust cannot represent. Portable key, callback and traversal rules have separate parity fixtures."
+    },
+    {
+      "file": "test/test-security.js",
+      "line": 112,
+      "name": "LPE execution boundary / does not consult inherited data, getters, or shadowed hasOwnProperty",
+      "reason": "Exercises native JavaScript compilation, realms, function properties, prototype/accessor/coercion hooks or host-object thenables that Rust cannot represent. Portable key, callback and traversal rules have separate parity fixtures."
+    },
+    {
+      "file": "test/test-security.js",
+      "line": 173,
+      "name": "LPE execution boundary / checks callback values in exported higher-order functions",
+      "reason": "Exercises native JavaScript compilation, realms, function properties, prototype/accessor/coercion hooks or host-object thenables that Rust cannot represent. Portable key, callback and traversal rules have separate parity fixtures."
+    },
+    {
+      "file": "test/test-security.js",
+      "line": 179,
+      "name": "LPE execution boundary / rejects code-generating functions returned by host callbacks, including promises",
+      "reason": "Exercises native JavaScript compilation, realms, function properties, prototype/accessor/coercion hooks or host-object thenables that Rust cannot represent. Portable key, callback and traversal rules have separate parity fixtures."
+    },
+    {
+      "file": "test/test-security.js",
+      "line": 190,
+      "name": "LPE execution boundary / checks implicit whenReady callbacks and their resolved values",
+      "reason": "Exercises native JavaScript compilation, realms, function properties, prototype/accessor/coercion hooks or host-object thenables that Rust cannot represent. Portable key, callback and traversal rules have separate parity fixtures."
+    },
+    {
+      "file": "test/test-security.js",
+      "line": 204,
+      "name": "LPE execution boundary / does not trust a callable's own toString override",
+      "reason": "Exercises native JavaScript compilation, realms, function properties, prototype/accessor/coercion hooks or host-object thenables that Rust cannot represent. Portable key, callback and traversal rules have separate parity fixtures."
+    },
+    {
+      "file": "test/test-security.js",
+      "line": 213,
+      "name": "LPE execution boundary / rejects host globals and intrinsic prototypes supplied under an alias",
+      "reason": "Exercises native JavaScript compilation, realms, function properties, prototype/accessor/coercion hooks or host-object thenables that Rust cannot represent. Portable key, callback and traversal rules have separate parity fixtures."
+    },
+    {
+      "file": "test/test-streams.js",
+      "line": 33,
+      "name": "Streams through an external adapter / preserves safe and unsafe modes in later f-string evaluations",
+      "reason": "Requires JavaScript unsafe-mode propagation or native code-generation capability objects. Rust streams use safe evaluation only; ordinary streams remain covered."
+    },
+    {
+      "file": "test/test-streams.js",
+      "line": 56,
+      "name": "Streams through an external adapter / keeps safe and unsafe modes isolated across later stream emissions",
+      "reason": "Requires JavaScript unsafe-mode propagation or native code-generation capability objects. Rust streams use safe evaluation only; ordinary streams remain covered."
+    },
+    {
+      "file": "test/test-streams.js",
+      "line": 80,
+      "name": "Streams through an external adapter / rejects native code generation capabilities in later stream updates",
+      "reason": "Requires JavaScript unsafe-mode propagation or native code-generation capability objects. Rust streams use safe evaluation only; ordinary streams remain covered."
+    },
+    {
+      "file": "test/test-unsafe.js",
+      "line": 21,
+      "name": "Host-controlled unsafe evaluation / supports globals, accessors, inherited methods and bound callbacks",
+      "reason": "Requires native JavaScript host objects, thenable assimilation or unsafe closures. Rust supports explicit promises and safe closures only, with unsafe:true rejected at its API boundary."
+    },
+    {
+      "file": "test/test-unsafe.js",
+      "line": 90,
+      "name": "Host-controlled unsafe evaluation / retains closure mode and refuses unsafe closures or library functions in safe calls",
+      "reason": "Requires native JavaScript host objects, thenable assimilation or unsafe closures. Rust supports explicit promises and safe closures only, with unsafe:true rejected at its API boundary."
+    },
+    {
+      "file": "test/test-unsafe.js",
+      "line": 101,
+      "name": "Host-controlled unsafe evaluation / rejects unsafe then callbacks before native promise assimilation",
+      "reason": "Requires native JavaScript host objects, thenable assimilation or unsafe closures. Rust supports explicit promises and safe closures only, with unsafe:true rejected at its API boundary."
+    },
+    {
+      "file": "test/test-unsafe.js",
+      "line": 123,
+      "name": "Host-controlled unsafe evaluation / preserves ordinary trusted own then callbacks",
+      "reason": "Requires native JavaScript host objects, thenable assimilation or unsafe closures. Rust supports explicit promises and safe closures only, with unsafe:true rejected at its API boundary."
+    },
+    {
+      "file": "test/test-unsafe.js",
+      "line": 145,
+      "name": "Host-controlled unsafe evaluation / retains unsafe mode in nested LPE evaluation after a promise",
+      "reason": "Requires native JavaScript host objects, thenable assimilation or unsafe closures. Rust supports explicit promises and safe closures only, with unsafe:true rejected at its API boundary."
+    },
+    {
+      "file": "test/test-unsafe.js",
+      "line": 153,
+      "name": "Host-controlled unsafe evaluation / does not leak mode into reentrant safe evaluation from a host callback",
+      "reason": "Requires native JavaScript host objects, thenable assimilation or unsafe closures. Rust supports explicit promises and safe closures only, with unsafe:true rejected at its API boundary."
+    },
+    {
+      "file": "test/test-deparse-lpe-functions.js",
+      "line": 381,
+      "name": "LPE Full Test Suite / Object Creation / new / создаёт экземпляр с аргументами",
+      "reason": "Direct evaluation of native JavaScript constructors or RegExp instances, outside the portable host-object scope. Syntax and string-pattern regular expressions remain covered."
+    },
+    {
+      "file": "test/test-deparse-lpe-functions.js",
+      "line": 1005,
+      "name": "LPE Full Test Suite / String Operations / RegExp / создаёт RegExp",
+      "reason": "Direct evaluation of native JavaScript constructors or RegExp instances, outside the portable host-object scope. Syntax and string-pattern regular expressions remain covered."
     }
   ],
   "deferred": [],
-  "portableGapsAreNotExclusions": ["Unverified source test groups", "Regex execution limits and broader ECMAScript edge-case auditing"]
+  "portableGapsAreNotExclusions": [
+    "Unverified source test groups",
+    "Regex execution limits and broader ECMAScript edge-case auditing"
+  ]
 }

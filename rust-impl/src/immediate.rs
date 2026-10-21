@@ -1,17 +1,53 @@
 //! Plan trees that cannot call host code or suspend before executing anything.
 //! A failed plan must never replay a partial evaluation's effects. Plans borrow
-//! ASTs and resolve current bindings on every invocation; there is no AST cache.
+//! ASTs and resolve current bindings on every invocation; plans are not cached.
 use super::*;
 use smallvec::SmallVec;
+use std::borrow::Cow;
+
+enum Operator {
+    JsonInvoke,
+    Builtin(&'static str),
+    Special(&'static str),
+}
+
+impl Operator {
+    fn from_value(value: Cow<'_, Value>) -> Option<Self> {
+        match value.as_ref() {
+            Value::Builtin(name) if matches!(name.as_str(), "invoke" | "_call_obj_meth_") => {
+                Some(Self::JsonInvoke)
+            }
+            Value::Builtin(name) => crate::builtins::sync_name(name)
+                .or_else(|| crate::collections::sync_name(name))
+                .map(Self::Builtin),
+            Value::Special(name) => {
+                macro_rules! specials {
+                    ($($name:literal),*) => {
+                        match name.as_str() {
+                            $($name => Some(Self::Special($name)),)*
+                            _ => None,
+                        }
+                    };
+                }
+                specials!(
+                    "`", "$AST$", "fn", "->fn", "toFn", "defFn", "=>", "lambda", "\"", "'", "q",
+                    "begin", "if"
+                )
+            }
+            _ => None,
+        }
+    }
+}
 
 enum Operation<'a> {
+    Json(&'static str, Value),
     Literal(&'a Ast),
     Binding(Value),
     Unbound(&'a str),
     Quote(&'a Ast),
     RawQuote(&'a Ast),
-    Closure(Value, &'a [Ast], EnvId),
-    Call(Value, usize),
+    Closure(&'static str, &'a [Ast], EnvId),
+    Call(Operator, usize),
 }
 struct Instruction<'a> {
     operation: Option<Operation<'a>>,
@@ -79,18 +115,7 @@ impl Runtime {
         options: &EvalOptions,
         bindings: Option<CallBindings<'_>>,
     ) -> Option<Result<Value>> {
-        // Controlled evaluation can invoke interrupt hooks and uses cumulative
-        // budgets; legacy lookup and callable returns have distinct semantics.
-        if self.controls.is_some() || self.controls_active() || self.legacy_context {
-            return None;
-        }
-        let frames = self.env_frames(env);
-        for id in frames.iter() {
-            let frame = self.envs.borrow(*id)?;
-            if frame.hook.is_some() || frame.backing.as_ref().is_some_and(Value::is_callable) {
-                return None;
-            }
-        }
+        let frames = self.immediate_frames(env)?;
         let depth = self.depth.get();
         let mut remaining = options.max_steps;
         let mut plan = SmallVec::<[Instruction<'_>; 16]>::new();
@@ -106,36 +131,89 @@ impl Runtime {
         Some(self.run_immediate(&mut plan, &mut 0, options, depth))
     }
 
+    pub(super) fn eval_arguments_immediate(
+        &mut self,
+        args: &[Ast],
+        env: EnvId,
+        options: &EvalOptions,
+    ) -> Option<Result<Vec<Value>>> {
+        let frames = self.immediate_frames(env)?;
+        let depth = self.depth.get();
+        let mut remaining = options.max_steps;
+        let mut plan = SmallVec::<[Instruction<'_>; 16]>::new();
+        // Validate every argument before running any. A rejected plan must not
+        // repeat effects or change the existing async sibling polling order.
+        for ast in args {
+            self.plan_immediate(
+                ast,
+                &frames,
+                options,
+                None,
+                depth,
+                &mut remaining,
+                &mut plan,
+            )?;
+        }
+        let mut cursor = 0;
+        let mut values = Vec::with_capacity(args.len());
+        while cursor < plan.len() {
+            match self.run_immediate(&mut plan, &mut cursor, options, depth) {
+                Ok(value) => values.push(value),
+                Err(error) => return Some(Err(error)),
+            }
+        }
+        Some(Ok(values))
+    }
+
+    fn immediate_frames(&self, env: EnvId) -> Option<Rc<[EnvId]>> {
+        // Controlled evaluation can invoke interrupt hooks and uses cumulative
+        // budgets; legacy lookup and callable returns have distinct semantics.
+        if self.controls.is_some() || self.controls_active() || self.legacy_context {
+            return None;
+        }
+        let frames = self.env_frames(env);
+        for id in frames.iter() {
+            let frame = self.envs.borrow(*id)?;
+            if frame.hook.is_some() || frame.backing.as_ref().is_some_and(Value::is_callable) {
+                return None;
+            }
+        }
+        Some(frames)
+    }
+
     // Outer None means the binding requires the full evaluator; inner None is
     // an unbound name, whose resolveString behavior depends on its use in an if.
-    fn immediate_lookup(
+    fn immediate_lookup<T>(
         &self,
         name: &str,
         frames: &[EnvId],
         options: &EvalOptions,
         bindings: Option<&CallBindings<'_>>,
         callable: bool,
-    ) -> Option<Option<Value>> {
+        convert: impl Fn(Cow<'_, Value>) -> Option<T>,
+    ) -> Option<Option<T>> {
+        crate::security::key(name).ok()?;
+        let convert = |value: Cow<'_, Value>| {
+            self.validate_value(&value).ok()?;
+            convert(value)
+        };
         if let Some(bindings) = bindings {
             // Repeated parameter names overwrite earlier values, including $this$.
             if let Some(index) = bindings.params.iter().rposition(|param| param == name) {
-                return Some(Some(
-                    bindings
-                        .args
-                        .get(index)
-                        .cloned()
-                        .unwrap_or(Value::Undefined),
-                ));
+                return convert(Cow::Borrowed(
+                    bindings.args.get(index).unwrap_or(&Value::Undefined),
+                ))
+                .map(Some);
             }
             if name == "$this$" {
-                return Some(Some(Value::Function(bindings.function)));
+                return convert(Cow::Owned(Value::Function(bindings.function))).map(Some);
             }
         }
         for id in frames {
             let frame = self.envs.borrow(*id)?;
             if let Some(backing) = &frame.backing {
                 if self.has_own(backing, name) {
-                    return Some(Some(self.get(backing, name)));
+                    return convert(Cow::Owned(self.get(backing, name))).map(Some);
                 }
             }
             if let Some(value) = frame.values.get(name) {
@@ -146,7 +224,7 @@ impl Runtime {
                 {
                     continue;
                 }
-                return Some(Some(value.clone()));
+                return convert(Cow::Borrowed(value)).map(Some);
             }
             if frame.library && name == "Hashmap" {
                 return None;
@@ -173,7 +251,9 @@ impl Runtime {
         let start = plan.len();
         let operation = match ast {
             Json::String(name) => {
-                match self.immediate_lookup(name, frames, options, bindings, false)? {
+                match self.immediate_lookup(name, frames, options, bindings, false, |v| {
+                    Some(v.into_owned())
+                })? {
                     Some(
                         value @ (Value::Undefined
                         | Value::Null
@@ -188,28 +268,94 @@ impl Runtime {
                 }
             }
             Json::Array(list) if !list.is_empty() => {
-                let operator =
-                    self.immediate_lookup(list[0].as_str()?, frames, options, bindings, true)??;
+                let operator = self.immediate_lookup(
+                    list[0].as_str()?,
+                    frames,
+                    options,
+                    bindings,
+                    true,
+                    Operator::from_value,
+                )??;
                 match &operator {
-                    Value::Special(name) if matches!(name.as_str(), "`" | "$AST$") => {
+                    Operator::JsonInvoke => {
+                        // Only a resolved protected JSON receiver, a literal method,
+                        // and one already resolved input qualify. Dynamic calls retain
+                        // their ordinary argument order and asynchronous fallback.
+                        if list.len() != 4
+                            || options.max_steps != EvalOptions::default().max_steps
+                            || options.max_depth != EvalOptions::default().max_depth
+                            || depth + 8 >= options.max_depth
+                        {
+                            return None;
+                        }
+                        let resolve = |ast: &Ast| -> Option<Value> {
+                            if let Some(name) = ast.as_str() {
+                                return self.immediate_lookup(
+                                    name,
+                                    frames,
+                                    options,
+                                    bindings,
+                                    false,
+                                    |value| Some(value.into_owned()),
+                                )?;
+                            }
+                            let quote = ast.as_array()?;
+                            if quote.len() != 2 || !quote[1].is_string() {
+                                return None;
+                            }
+                            let op = self.immediate_lookup(
+                                quote[0].as_str()?,
+                                frames,
+                                options,
+                                bindings,
+                                true,
+                                Operator::from_value,
+                            )??;
+                            if !matches!(op, Operator::Special("\"" | "'" | "q")) {
+                                return None;
+                            }
+                            Some(Value::String(quote[1].as_str()?.into()))
+                        };
+                        if resolve(&list[1])? != Value::Object(self.json_object) {
+                            return None;
+                        }
+                        let Value::String(method) = resolve(&list[2])? else {
+                            return None;
+                        };
+                        let method = match method.as_str() {
+                            "parse" => "parse",
+                            "stringify" => "stringify",
+                            _ => return None,
+                        };
+                        let value = resolve(&list[3])?;
+                        if matches!(value, Value::Promise(_) | Value::Stream(_)) {
+                            return None;
+                        }
+                        if method == "parse" && !matches!(value, Value::String(_)) {
+                            return None;
+                        }
+                        if method == "stringify" && !crate::json::plain(self, &value) {
+                            return None;
+                        }
+                        Operation::Json(method, value)
+                    }
+
+                    Operator::Special(name) if matches!(*name, "`" | "$AST$") => {
                         let ast = list.get(1)?;
                         if ast.get("$lpeInternalLiteral").is_some() {
                             return None;
                         }
                         Operation::RawQuote(ast)
                     }
-                    Value::Special(name)
-                        if matches!(
-                            name.as_str(),
-                            "fn" | "->fn" | "toFn" | "defFn" | "=>" | "lambda"
-                        ) =>
+                    Operator::Special(name)
+                        if matches!(*name, "fn" | "->fn" | "toFn" | "defFn" | "=>" | "lambda") =>
                     {
                         if bindings.is_some() {
                             return None;
                         }
-                        Operation::Closure(operator, &list[1..], *frames.first()?)
+                        Operation::Closure(name, &list[1..], *frames.first()?)
                     }
-                    Value::Special(name) if matches!(name.as_str(), "\"" | "'" | "q") => {
+                    Operator::Special(name) if matches!(*name, "\"" | "'" | "q") => {
                         if list.len() != 2
                             || !matches!(
                                 list[1],
@@ -220,10 +366,7 @@ impl Runtime {
                         }
                         Operation::Quote(&list[1])
                     }
-                    Value::Builtin(name)
-                        if crate::builtins::supports_sync(name)
-                            || crate::collections::supports_sync(name) =>
-                    {
+                    Operator::Builtin(_) => {
                         plan.push(Instruction {
                             operation: None,
                             end: start + 1,
@@ -241,7 +384,7 @@ impl Runtime {
                         }
                         Operation::Call(operator, list.len() - 1)
                     }
-                    Value::Special(name) if name == "begin" || name == "if" => {
+                    Operator::Special(name) if *name == "begin" || *name == "if" => {
                         plan.push(Instruction {
                             operation: None,
                             end: start + 1,
@@ -303,6 +446,15 @@ impl Runtime {
             .expect("unexecuted instruction");
         *cursor += 1;
         match operation {
+            Operation::Json(method, value) => {
+                self.tick()?;
+                if method == "parse" {
+                    crate::json::parse(self, &value)
+                } else {
+                    crate::json::stringify_plain(self, &value)
+                }
+            }
+
             Operation::Literal(ast) if ast.is_array() => Ok(Value::Null),
             Operation::Literal(ast) => Ok(self.from_json(ast)),
             Operation::Binding(value) => Ok(value),
@@ -316,12 +468,11 @@ impl Runtime {
                 self.tick()?;
                 Ok(self.from_json(ast))
             }
-            Operation::Closure(Value::Special(name), args, env) => {
+            Operation::Closure(name, args, env) => {
                 self.tick()?;
                 self.tick()?;
-                crate::specials::make_closure(self, &name, args, env, options)
+                crate::specials::make_closure(self, name, args, env, options)
             }
-            Operation::Closure(_, _, _) => unreachable!("validated closure constructor"),
             Operation::Quote(ast) => {
                 self.tick()?; // operator dispatch
                 self.tick()?; // special form
@@ -335,7 +486,8 @@ impl Runtime {
             Operation::Call(operator, count) => {
                 self.tick()?;
                 match operator {
-                    Value::Builtin(name) => {
+                    Operator::JsonInvoke => unreachable!("JSON invoke has a dedicated operation"),
+                    Operator::Builtin(name) => {
                         let mut values = SmallVec::<[Value; 4]>::with_capacity(count);
                         while *cursor < end {
                             values.push(self.run_immediate(plan, cursor, options, depth + 1)?);
@@ -344,18 +496,17 @@ impl Runtime {
                         if depth + 1 >= options.max_depth {
                             return Err(Error::new("LimitError", "Call nesting limit exceeded"));
                         }
-                        if matches!(name.as_str(), "list" | "array" | "[") {
+                        if matches!(name, "list" | "array" | "[") {
                             crate::collections::make_list(self, values.into_vec())
-                        } else if let Some(value) =
-                            crate::builtins::call_sync(self, &name, &values)?
+                        } else if let Some(value) = crate::builtins::call_sync(self, name, &values)?
                         {
                             Ok(value)
                         } else {
-                            Ok(crate::collections::call_sync(self, &name, &values)?
+                            Ok(crate::collections::call_sync(self, name, &values)?
                                 .expect("validated immediate builtin"))
                         }
                     }
-                    Value::Special(name) => {
+                    Operator::Special(name) => {
                         self.tick()?;
                         if name == "begin" {
                             let mut value = Value::Null;
@@ -392,7 +543,6 @@ impl Runtime {
                             Ok(Value::Undefined)
                         }
                     }
-                    _ => unreachable!("validated immediate operator"),
                 }
             }
         }

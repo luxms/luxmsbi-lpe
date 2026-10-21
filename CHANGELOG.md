@@ -2,14 +2,41 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-## Unreleased Rust
+## [1.8.0](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.7.3...v1.8.0) (2026-10-21)
 
+
+### Features
+
+* add host-controlled unsafe evaluation mode ([6adf50c](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/6adf50cf82e30f7ab06d623ac36706da8b817b91))
+* add time operations and split date utilities ([252c349](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/252c349baab600d1800c212f723afb597d38a900))
+
+
+### Bug Fixes
+
+* check then callbacks before promise assimilation ([b659334](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/b6593343d4387b61d1504012c6c0df2e11f90262))
+* enforce evaluator data and call boundaries ([ca8ecff](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/ca8ecff626c9ed38a619fc83fa3cb82b638c9a53))
+* fixed fstrings lpe mixing expressions; add deparse fstrings and hashmaps support ([4a480d1](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/4a480d1cffea2d6a989c0db4a4b1164ff4f7a491))
+* parse a long expression in linear time ([5a877d4](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/5a877d4bb2e1716543ce719bb707740d08bdb623))
+* preserve f-string round trips and evaluation mode ([70d7e25](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/70d7e25b0af6166bdb77f1f26401e520f11190e0))
+* prevent special forms from accepting forged evaluation options ([deea628](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/deea62883523cf403b6b054d073866b5c6a82f0f))
+* str>PREFIX functions not evals arg ([0f53517](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/0f535174857b17160ffd3d9370f43fb3b175457b))
+
+## Rust 1.8.0 (2026-10-21)
+
+* Align portable behavior with JS 1.8.0 safe evaluation; reject unsafe mode and validate data paths and callbacks consistently.
+* Add formatted strings, round-trip deparsing, and UTC/fixed-offset time operations with deterministic clock tests.
+* Add protected JSON parse/stringify methods, revivers, replacers, and native SIMD parsing with a portable WASI fallback.
+* Expand recursive JS source coverage, calendar and JSON comparisons, and release performance checks; document the Rust release process.
+
+* Reduce closure-call future size and share immutable closure bodies through a bounded weak cache, preserving edited ASTs, live captures, and collection behavior.
+* Avoid builtin-name copies and async task setup for validated synchronous call arguments while preserving dynamic lookup and fallback ordering.
+* Add separate benchmarks for closure construction, repeated calls, lexical captures, multiple parameters, and nested calls.
 * Preserve supplied-only parameter binding in legacy `fn`, including missing duplicate arguments and captured closures.
 * Add opt-in `legacyLineBreaks` parsing for JS 1.6.7 and apply it to legacy runtime source evaluation without changing default grammar.
 * Check controlled list allocation budgets and interrupts before copying argument payloads; retain the uncontrolled fast path.
-* Add parameter/profile, parser/diagnostic, allocation-order and recovery regressions. No release version or tag is assigned here.
+* Add parameter/profile, parser/diagnostic, allocation-order and recovery regressions.
 
-## [1.8.0](https://github.com/luxms/luxmsbi-lpe/compare/v1.7.3...v1.8.0) (2026-10-19)
+## Rust implementation (released as r1.7.0, 2026-10-19)
 
 ### Features
 

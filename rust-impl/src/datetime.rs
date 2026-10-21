@@ -1,6 +1,6 @@
-//! Native implementation of `src/lib/datetime.js`'s DATE_TIME context.
+//! Native implementation of the JS 1.8 calendar context.
 //!
-//! `today` (and its alias `now`) uses UTC. Week numbers use Gregorian UTC
+//! `today` and the date/time `now` function use UTC. Week numbers use Gregorian UTC
 //! dates, while weekday boundaries and `doty` use the host's local timezone.
 //! In particular, `doty` floors elapsed milliseconds since local December 31:
 //! it is intentionally NOT the calendar ordinal during daylight saving time.
@@ -14,13 +14,15 @@
 //! Infinite shifts return RangeError instead of trapping the evaluator in an
 //! unbounded loop; finite shifts honor the Runtime's step/cancellation budget.
 
-use chrono::{Datelike, Duration, Local, LocalResult, NaiveDate, NaiveDateTime, TimeZone, Utc};
+use chrono::{Datelike, Duration, Local, LocalResult, NaiveDate, NaiveDateTime, TimeZone};
 
 use crate::{Error, Result, Runtime, Value};
 
 pub fn names() -> &'static [&'static str] {
     &[
         "dateShift",
+        "dateTimeShift",
+        "extract",
         "today",
         "now",
         "bound",
@@ -46,19 +48,46 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
     if !names().contains(&name) {
         return Ok(None);
     }
-    if matches!(name, "today" | "now") {
-        return Ok(Some(today()));
+    if name == "today" {
+        return Ok(Some(today(rt)));
+    }
+    if name == "now" {
+        return Ok(Some(now(rt)));
     }
     let one = unwrap(rt, args.first().unwrap_or(&Value::Undefined))?;
     let two = unwrap(rt, args.get(1).unwrap_or(&Value::Undefined))?;
     let three = unwrap(rt, args.get(2).unwrap_or(&Value::Undefined))?;
     let result = match name {
-        "dateShift" | "extend" => {
-            let (start, delta, unit) = if three == Value::Undefined {
-                (today(), one, two)
+        "dateShift" | "dateTimeShift" | "extend" => {
+            let unit = crate::time::unit(
+                rt,
+                if three == Value::Undefined {
+                    &two
+                } else {
+                    &three
+                },
+            );
+            let timed = crate::time::is_time(&unit) || name == "dateTimeShift";
+            let (start, delta) = if three == Value::Undefined {
+                (if timed { now(rt) } else { today(rt) }, one)
             } else {
-                (one, two, three)
+                (one, two)
             };
+            if timed {
+                let value = if name == "extend" {
+                    if matches!(start, Value::Array(_)) {
+                        let pair = rt.array_values(&start)?;
+                        crate::time::extend(rt, &pair, &delta, &unit)?
+                    } else {
+                        let end = crate::time::shift(rt, start.clone(), &delta, &unit, 0)?;
+                        rt.array(vec![start, end])
+                    }
+                } else {
+                    crate::time::shift(rt, start, &delta, &unit, 0)?
+                };
+                return Ok(Some(value));
+            }
+            let unit = Value::String(unit);
             if name == "dateShift" {
                 shift(rt, start, &delta, &unit, 0)?
             } else if matches!(start, Value::Array(_)) {
@@ -83,17 +112,43 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
             }
         }
         "toStart" | "toEnd" | "bound" => {
-            let (start, unit) = if two == Value::Undefined {
-                (today(), one)
+            let unit = crate::time::unit(rt, if two == Value::Undefined { &one } else { &two });
+            let start = if two == Value::Undefined {
+                if crate::time::is_time(&unit) {
+                    now(rt)
+                } else {
+                    today(rt)
+                }
             } else {
-                (one, two)
+                one
             };
+            let unit = Value::String(unit);
             if name == "bound" {
                 let first = boundary(rt, &start, &unit, false)?;
                 let last = boundary(rt, &start, &unit, true)?;
                 rt.array(vec![first, last])
             } else {
                 boundary(rt, &start, &unit, name == "toEnd")?
+            }
+        }
+        "extract" => {
+            let unit = crate::time::unit(rt, &two);
+            let p = raw(rt, &one);
+            let (year, month, day) = split(&p);
+            match unit.as_str() {
+                "y" => Value::Number(year as f64),
+                "q" if p.is_empty() => Value::Null,
+                "q" => Value::Number((month as f64 / 3.0).ceil()),
+                "m" => Value::Number(month as f64),
+                "w" => Value::Number(week_number(&p)),
+                "d" => Value::Number(day as f64),
+                "h" | "n" | "s" => crate::time::extract(rt, &one, &unit)?,
+                _ => {
+                    return Err(Error::new(
+                        "RangeError",
+                        format!("Unknown date unit: {unit}"),
+                    ))
+                }
             }
         }
         _ => {
@@ -123,8 +178,12 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
     Ok(Some(result))
 }
 
-fn today() -> Value {
-    Value::String(Utc::now().format("%Y-%m-%d").to_string())
+fn now(rt: &Runtime) -> Value {
+    Value::String(rt.utc_now().format("%Y-%m-%d %H:%M:%S").to_string())
+}
+
+fn today(rt: &Runtime) -> Value {
+    Value::String(rt.utc_now().format("%Y-%m-%d").to_string())
 }
 
 fn unwrap(rt: &Runtime, value: &Value) -> Result<Value> {
@@ -301,12 +360,16 @@ fn shift(
         },
         _ => return Ok(start),
     };
-    let delta = rt.to_number(delta) * multiplier;
+    let delta = if multiplier == 1.0 {
+        match delta {
+            Value::Number(n) => *n,
+            _ => f64::NAN,
+        }
+    } else {
+        rt.to_number(delta) * multiplier
+    };
     let mut period = raw(rt, &start);
     // JS's comparisons with NaN both fail, so it behaves like a zero shift.
-    if delta.is_nan() {
-        return Ok(formatted(&period));
-    }
     if !delta.is_finite() {
         return Err(Error::new("RangeError", "Date shift must be finite"));
     }
@@ -328,7 +391,11 @@ fn boundary(rt: &Runtime, start: &Value, unit: &Value, end: bool) -> Result<Valu
         Value::String(s) => s.as_str(),
         _ => return Ok(start.clone()),
     };
+    if crate::time::is_time(unit) || (end && unit == "d") {
+        return crate::time::boundary(rt, start, unit, end);
+    }
     let result = match unit {
+        "d" => return Ok(formatted(&p)),
         "w" | "week" => {
             if p.is_empty() {
                 return Ok(formatted(""));

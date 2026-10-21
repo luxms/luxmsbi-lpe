@@ -40,7 +40,13 @@ fn thread_first_last_and_property_access() {
     check(json!([".", {"a":[7,8]}, "a", ["()", 1]]), json!(8));
     check(json!([".", "single"]), json!(["resolve", "single"]));
     check(json!(["property", null, "x"]), json!({"$lpe":"undefined"}));
-    check(json!(["property", null, "x", 7]), json!(7));
+    assert_eq!(
+        Runtime::new()
+            .eval_ast(&json!(["property", null, "x", 7]), &EvalOptions::default())
+            .unwrap_err()
+            .kind,
+        "LPESecurityError"
+    );
 }
 
 #[test]
@@ -365,7 +371,7 @@ fn do_runs_body_first_and_enforces_iteration_limit() {
 }
 
 #[test]
-fn assoc_in_mutates_origin_and_pops_supplied_path() {
+fn assoc_in_mutates_origin_and_preserves_supplied_path() {
     check(
         json!([
             "let",
@@ -373,7 +379,7 @@ fn assoc_in_mutates_origin_and_pops_supplied_path() {
             ["assoc_in", "obj", "path", 7],
             ["list", "obj", "path"]
         ]),
-        json!([{"a":{"b":7}},["a"]]),
+        json!([{"a":{"b":7}},["a","b"]]),
     );
     check(
         json!([

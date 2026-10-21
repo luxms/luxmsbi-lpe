@@ -2,7 +2,7 @@ const isArray = (arg) => Object.prototype.toString.call(arg) === '[object Array]
 const isString = (arg) => (typeof arg === 'string');
 const isNumber = (arg) => (typeof arg === 'number');
 const isBoolean = (arg) => arg === true || arg === false;
-
+import { isHash } from "./lib/utils";
 
 // Те же binding powers, что у Pratt-парсера в lpep.js.
 const PRIORITY = Object.create(null);
@@ -77,8 +77,8 @@ export function deparse(lispExpr, opts) {
     const op = sexpr[0];
     const args = sexpr.slice(1);
     if (op === '"' || op === "'") {
-      const prefix = args[1] ?? '';
-      return prefix + op + (prefix === 'r' ? args[0] : fixString(args[0])) + op;
+      const prefix = args.slice(1).join("Δ");
+      return prefix + op + (prefix.includes("r") ? args[0] : fixString(args[0])) + op;
     }
     if (op === '[]') return (args[1] ?? '') + '[' + args[0] + ']';
     if (op === '[') return '[' + args.map(arg => deparse(arg)).join(', ') + ']';
@@ -88,6 +88,18 @@ export function deparse(lispExpr, opts) {
         args[0].length > 1 && args[0].slice(1).every(binding => isArray(binding) && binding[0] === '[' && binding.length === 3)) {
       return args[0].slice(1).map(binding => 'VAR ' + binding[1] + ' = ' + deparse(binding[2])).join(lint ? '\n' : ' ') +
         (lint ? '\n' : ' ') + 'RETURN ' + deparse(args[1]);
+    }
+    if (op === "f'" || op === "f\"") {
+      const quote = op.slice(1);
+      const prefix = args[0].join("Δ");
+      return prefix + op +
+        args.slice(1).map((/** @type {AST} */subast, index) => {
+          // Text fragments and interpolated expressions alternate, even when both are strings.
+          if (index % 2 === 0 && isArray(subast) && subast[0] === quote && subast.length === 2) {
+            return (prefix.includes("r") ? subast[1] : fixString(subast[1])).replaceAll("{", "{{");
+          }
+          return `{${deparse(subast)}}`;
+        }).join("") + quote;
     }
     if (isUnary(sexpr)) {
       const text = operand(args[0], 70, 'right', 'unary');
@@ -124,6 +136,15 @@ export function deparse(lispExpr, opts) {
 
     } else if (isArray(value)) {
       return deparseSexpr(value, wordNames);
+
+    } else if (isHash(value)) {
+      return `makeHash(` + Object.entries(value)
+        .map(([name, val]) => {
+          /** @type {string} */ // @ts-ignore
+          const dep = deparse(val);
+          return `"${name.replaceAll('"', '\\"')}" = ${dep}`;
+        })
+        .join(", ") + ")";
 
     } else {
       return String(value);

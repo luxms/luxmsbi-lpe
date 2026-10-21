@@ -1,0 +1,2458 @@
+[
+  {
+    "id": "json:parse/invoke(JSON,\"parse\",text)/{\"a\":\"b\"}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text)",
+      "context": {
+        "text": "{\"a\":\"b\"}"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "a": "b"
+      }
+    }
+  },
+  {
+    "id": "json:parse/invoke(JSON,\"parse\",text)/[true,null,42,\"😀\"]",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text)",
+      "context": {
+        "text": "[true,null,42,\"😀\"]"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        true,
+        null,
+        42,
+        "😀"
+      ]
+    }
+  },
+  {
+    "id": "json:parse/invoke(JSON,\"parse\",text)/-0",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text)",
+      "context": {
+        "text": "-0"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "$lpe": "number",
+        "value": "-0"
+      }
+    }
+  },
+  {
+    "id": "json:parse/invoke(JSON,\"parse\",text)/1e400",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text)",
+      "context": {
+        "text": "1e400"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "$lpe": "number",
+        "value": "Infinity"
+      }
+    }
+  },
+  {
+    "id": "json:parse/invoke(JSON,\"parse\",text)/-1e400",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text)",
+      "context": {
+        "text": "-1e400"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "$lpe": "number",
+        "value": "-Infinity"
+      }
+    }
+  },
+  {
+    "id": "json:parse/invoke(JSON,\"parse\",text)/9007199254740993",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text)",
+      "context": {
+        "text": "9007199254740993"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": 9007199254740992
+    }
+  },
+  {
+    "id": "json:parse/invoke(JSON,\"parse\",text)/{\"b\":1,\"a\":2,\"b\":3}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text)",
+      "context": {
+        "text": "{\"b\":1,\"a\":2,\"b\":3}"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "b": 3,
+        "a": 2
+      }
+    }
+  },
+  {
+    "id": "json:parse/invoke(JSON,\"parse\",text)/{\"$lpe\":\"undefined\"}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text)",
+      "context": {
+        "text": "{\"$lpe\":\"undefined\"}"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "$lpe": "undefined"
+      }
+    }
+  },
+  {
+    "id": "json:parse/invoke(JSON,\"parse\",text)/\"\\ud83d\\ude00\"",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text)",
+      "context": {
+        "text": "\"\\ud83d\\ude00\""
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "😀"
+    }
+  },
+  {
+    "id": "json:parse/invoke(JSON,\"parse\",text)/\"󰀀\"",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text)",
+      "context": {
+        "text": "\"󰀀\""
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "󰀀"
+    }
+  },
+  {
+    "id": "json:parse/JSON ~> parse(text)/{\"a\":\"b\"}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "JSON ~> parse(text)",
+      "context": {
+        "text": "{\"a\":\"b\"}"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "a": "b"
+      }
+    }
+  },
+  {
+    "id": "json:parse/JSON ~> parse(text)/[true,null,42,\"😀\"]",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "JSON ~> parse(text)",
+      "context": {
+        "text": "[true,null,42,\"😀\"]"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        true,
+        null,
+        42,
+        "😀"
+      ]
+    }
+  },
+  {
+    "id": "json:parse/JSON ~> parse(text)/-0",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "JSON ~> parse(text)",
+      "context": {
+        "text": "-0"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "$lpe": "number",
+        "value": "-0"
+      }
+    }
+  },
+  {
+    "id": "json:parse/JSON ~> parse(text)/1e400",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "JSON ~> parse(text)",
+      "context": {
+        "text": "1e400"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "$lpe": "number",
+        "value": "Infinity"
+      }
+    }
+  },
+  {
+    "id": "json:parse/JSON ~> parse(text)/-1e400",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "JSON ~> parse(text)",
+      "context": {
+        "text": "-1e400"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "$lpe": "number",
+        "value": "-Infinity"
+      }
+    }
+  },
+  {
+    "id": "json:parse/JSON ~> parse(text)/9007199254740993",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "JSON ~> parse(text)",
+      "context": {
+        "text": "9007199254740993"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": 9007199254740992
+    }
+  },
+  {
+    "id": "json:parse/JSON ~> parse(text)/{\"b\":1,\"a\":2,\"b\":3}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "JSON ~> parse(text)",
+      "context": {
+        "text": "{\"b\":1,\"a\":2,\"b\":3}"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "b": 3,
+        "a": 2
+      }
+    }
+  },
+  {
+    "id": "json:parse/JSON ~> parse(text)/{\"$lpe\":\"undefined\"}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "JSON ~> parse(text)",
+      "context": {
+        "text": "{\"$lpe\":\"undefined\"}"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "$lpe": "undefined"
+      }
+    }
+  },
+  {
+    "id": "json:parse/JSON ~> parse(text)/\"\\ud83d\\ude00\"",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "JSON ~> parse(text)",
+      "context": {
+        "text": "\"\\ud83d\\ude00\""
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "😀"
+    }
+  },
+  {
+    "id": "json:parse/JSON ~> parse(text)/\"󰀀\"",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "JSON ~> parse(text)",
+      "context": {
+        "text": "\"󰀀\""
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "󰀀"
+    }
+  },
+  {
+    "id": "json:parse/apply(JSON ~> parse,text)/{\"a\":\"b\"}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(JSON ~> parse,text)",
+      "context": {
+        "text": "{\"a\":\"b\"}"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "a": "b"
+      }
+    }
+  },
+  {
+    "id": "json:parse/apply(JSON ~> parse,text)/[true,null,42,\"😀\"]",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(JSON ~> parse,text)",
+      "context": {
+        "text": "[true,null,42,\"😀\"]"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        true,
+        null,
+        42,
+        "😀"
+      ]
+    }
+  },
+  {
+    "id": "json:parse/apply(JSON ~> parse,text)/-0",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(JSON ~> parse,text)",
+      "context": {
+        "text": "-0"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "$lpe": "number",
+        "value": "-0"
+      }
+    }
+  },
+  {
+    "id": "json:parse/apply(JSON ~> parse,text)/1e400",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(JSON ~> parse,text)",
+      "context": {
+        "text": "1e400"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "$lpe": "number",
+        "value": "Infinity"
+      }
+    }
+  },
+  {
+    "id": "json:parse/apply(JSON ~> parse,text)/-1e400",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(JSON ~> parse,text)",
+      "context": {
+        "text": "-1e400"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "$lpe": "number",
+        "value": "-Infinity"
+      }
+    }
+  },
+  {
+    "id": "json:parse/apply(JSON ~> parse,text)/9007199254740993",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(JSON ~> parse,text)",
+      "context": {
+        "text": "9007199254740993"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": 9007199254740992
+    }
+  },
+  {
+    "id": "json:parse/apply(JSON ~> parse,text)/{\"b\":1,\"a\":2,\"b\":3}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(JSON ~> parse,text)",
+      "context": {
+        "text": "{\"b\":1,\"a\":2,\"b\":3}"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "b": 3,
+        "a": 2
+      }
+    }
+  },
+  {
+    "id": "json:parse/apply(JSON ~> parse,text)/{\"$lpe\":\"undefined\"}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(JSON ~> parse,text)",
+      "context": {
+        "text": "{\"$lpe\":\"undefined\"}"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "$lpe": "undefined"
+      }
+    }
+  },
+  {
+    "id": "json:parse/apply(JSON ~> parse,text)/\"\\ud83d\\ude00\"",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(JSON ~> parse,text)",
+      "context": {
+        "text": "\"\\ud83d\\ude00\""
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "😀"
+    }
+  },
+  {
+    "id": "json:parse/apply(JSON ~> parse,text)/\"󰀀\"",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(JSON ~> parse,text)",
+      "context": {
+        "text": "\"󰀀\""
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "󰀀"
+    }
+  },
+  {
+    "id": "json:parse/apply(get(JSON,\"parse\"),text)/{\"a\":\"b\"}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(get(JSON,\"parse\"),text)",
+      "context": {
+        "text": "{\"a\":\"b\"}"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "a": "b"
+      }
+    }
+  },
+  {
+    "id": "json:parse/apply(get(JSON,\"parse\"),text)/[true,null,42,\"😀\"]",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(get(JSON,\"parse\"),text)",
+      "context": {
+        "text": "[true,null,42,\"😀\"]"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        true,
+        null,
+        42,
+        "😀"
+      ]
+    }
+  },
+  {
+    "id": "json:parse/apply(get(JSON,\"parse\"),text)/-0",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(get(JSON,\"parse\"),text)",
+      "context": {
+        "text": "-0"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "$lpe": "number",
+        "value": "-0"
+      }
+    }
+  },
+  {
+    "id": "json:parse/apply(get(JSON,\"parse\"),text)/1e400",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(get(JSON,\"parse\"),text)",
+      "context": {
+        "text": "1e400"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "$lpe": "number",
+        "value": "Infinity"
+      }
+    }
+  },
+  {
+    "id": "json:parse/apply(get(JSON,\"parse\"),text)/-1e400",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(get(JSON,\"parse\"),text)",
+      "context": {
+        "text": "-1e400"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "$lpe": "number",
+        "value": "-Infinity"
+      }
+    }
+  },
+  {
+    "id": "json:parse/apply(get(JSON,\"parse\"),text)/9007199254740993",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(get(JSON,\"parse\"),text)",
+      "context": {
+        "text": "9007199254740993"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": 9007199254740992
+    }
+  },
+  {
+    "id": "json:parse/apply(get(JSON,\"parse\"),text)/{\"b\":1,\"a\":2,\"b\":3}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(get(JSON,\"parse\"),text)",
+      "context": {
+        "text": "{\"b\":1,\"a\":2,\"b\":3}"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "b": 3,
+        "a": 2
+      }
+    }
+  },
+  {
+    "id": "json:parse/apply(get(JSON,\"parse\"),text)/{\"$lpe\":\"undefined\"}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(get(JSON,\"parse\"),text)",
+      "context": {
+        "text": "{\"$lpe\":\"undefined\"}"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "$lpe": "undefined"
+      }
+    }
+  },
+  {
+    "id": "json:parse/apply(get(JSON,\"parse\"),text)/\"\\ud83d\\ude00\"",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(get(JSON,\"parse\"),text)",
+      "context": {
+        "text": "\"\\ud83d\\ude00\""
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "😀"
+    }
+  },
+  {
+    "id": "json:parse/apply(get(JSON,\"parse\"),text)/\"󰀀\"",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(get(JSON,\"parse\"),text)",
+      "context": {
+        "text": "\"󰀀\""
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "󰀀"
+    }
+  },
+  {
+    "id": "json:parse-error/",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text)",
+      "context": {
+        "text": ""
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "SyntaxError"
+      }
+    }
+  },
+  {
+    "id": "json:parse-error/{",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text)",
+      "context": {
+        "text": "{"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "SyntaxError"
+      }
+    }
+  },
+  {
+    "id": "json:parse-error/[1,]",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text)",
+      "context": {
+        "text": "[1,]"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "SyntaxError"
+      }
+    }
+  },
+  {
+    "id": "json:parse-error/{\"a\":1,}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text)",
+      "context": {
+        "text": "{\"a\":1,}"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "SyntaxError"
+      }
+    }
+  },
+  {
+    "id": "json:parse-error/01",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text)",
+      "context": {
+        "text": "01"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "SyntaxError"
+      }
+    }
+  },
+  {
+    "id": "json:parse-error/NaN",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text)",
+      "context": {
+        "text": "NaN"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "SyntaxError"
+      }
+    }
+  },
+  {
+    "id": "json:parse-error/undefined",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text)",
+      "context": {
+        "text": "undefined"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "SyntaxError"
+      }
+    }
+  },
+  {
+    "id": "json:parse-error/null true",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text)",
+      "context": {
+        "text": "null true"
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "SyntaxError"
+      }
+    }
+  },
+  {
+    "id": "json:parse-error/\"\n\"",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text)",
+      "context": {
+        "text": "\"\n\""
+      }
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "SyntaxError"
+      }
+    }
+  },
+  {
+    "id": "json:stringify/invoke(JSON,\"stringify\",value)/{\"a\":\"b\"}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"stringify\",value)",
+      "context": {
+        "value": {
+          "a": "b"
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "{\"a\":\"b\"}"
+    }
+  },
+  {
+    "id": "json:stringify/invoke(JSON,\"stringify\",value)/[true,null,42,\"😀\"]",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"stringify\",value)",
+      "context": {
+        "value": [
+          true,
+          null,
+          42,
+          "😀"
+        ]
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "[true,null,42,\"😀\"]"
+    }
+  },
+  {
+    "id": "json:stringify/invoke(JSON,\"stringify\",value)/{\"$lpe\":\"undefined\"}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"stringify\",value)",
+      "context": {
+        "value": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "$lpe": "undefined"
+      }
+    }
+  },
+  {
+    "id": "json:stringify/invoke(JSON,\"stringify\",value)/{\"$lpe\":\"number\",\"value\":\"NaN\"}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"stringify\",value)",
+      "context": {
+        "value": {
+          "$lpe": "number",
+          "value": "NaN"
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "null"
+    }
+  },
+  {
+    "id": "json:stringify/invoke(JSON,\"stringify\",value)/{\"$lpe\":\"number\",\"value\":\"-0\"}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"stringify\",value)",
+      "context": {
+        "value": {
+          "$lpe": "number",
+          "value": "-0"
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "0"
+    }
+  },
+  {
+    "id": "json:stringify/invoke(JSON,\"stringify\",value)/{\"$lpe\":\"number\",\"value\":\"Infinity\"}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"stringify\",value)",
+      "context": {
+        "value": {
+          "$lpe": "number",
+          "value": "Infinity"
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "null"
+    }
+  },
+  {
+    "id": "json:stringify/invoke(JSON,\"stringify\",value)/1e+21",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"stringify\",value)",
+      "context": {
+        "value": 1e+21
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "1e+21"
+    }
+  },
+  {
+    "id": "json:stringify/invoke(JSON,\"stringify\",value)/1e-7",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"stringify\",value)",
+      "context": {
+        "value": 1e-7
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "1e-7"
+    }
+  },
+  {
+    "id": "json:stringify/invoke(JSON,\"stringify\",value)/{\"a\":{\"$lpe\":\"undefined\"},\"b\":1}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"stringify\",value)",
+      "context": {
+        "value": {
+          "a": {
+            "$lpe": "undefined"
+          },
+          "b": 1
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "{\"b\":1}"
+    }
+  },
+  {
+    "id": "json:stringify/invoke(JSON,\"stringify\",value)/[{\"$lpe\":\"undefined\"},{\"$lpe\":\"number\",\"value\":\"NaN\"},{\"$lpe\":\"number\",\"value\":\"Infinity\"}]",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"stringify\",value)",
+      "context": {
+        "value": [
+          {
+            "$lpe": "undefined"
+          },
+          {
+            "$lpe": "number",
+            "value": "NaN"
+          },
+          {
+            "$lpe": "number",
+            "value": "Infinity"
+          }
+        ]
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "[null,null,null]"
+    }
+  },
+  {
+    "id": "json:stringify/invoke(JSON,\"stringify\",value)/{\"2\":3,\"10\":2,\"b\":1,\"a\":4}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"stringify\",value)",
+      "context": {
+        "value": {
+          "2": 3,
+          "10": 2,
+          "b": 1,
+          "a": 4
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "{\"2\":3,\"10\":2,\"b\":1,\"a\":4}"
+    }
+  },
+  {
+    "id": "json:stringify/invoke(JSON,\"stringify\",value)/\"\\\"\\n\\t\\\\\\b\\f\\r\\u0000\"",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"stringify\",value)",
+      "context": {
+        "value": "\"\n\t\\\b\f\r\u0000"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "\"\\\"\\n\\t\\\\\\b\\f\\r\\u0000\""
+    }
+  },
+  {
+    "id": "json:stringify/JSON ~> stringify(value)/{\"a\":\"b\"}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "JSON ~> stringify(value)",
+      "context": {
+        "value": {
+          "a": "b"
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "{\"a\":\"b\"}"
+    }
+  },
+  {
+    "id": "json:stringify/JSON ~> stringify(value)/[true,null,42,\"😀\"]",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "JSON ~> stringify(value)",
+      "context": {
+        "value": [
+          true,
+          null,
+          42,
+          "😀"
+        ]
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "[true,null,42,\"😀\"]"
+    }
+  },
+  {
+    "id": "json:stringify/JSON ~> stringify(value)/{\"$lpe\":\"undefined\"}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "JSON ~> stringify(value)",
+      "context": {
+        "value": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "$lpe": "undefined"
+      }
+    }
+  },
+  {
+    "id": "json:stringify/JSON ~> stringify(value)/{\"$lpe\":\"number\",\"value\":\"NaN\"}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "JSON ~> stringify(value)",
+      "context": {
+        "value": {
+          "$lpe": "number",
+          "value": "NaN"
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "null"
+    }
+  },
+  {
+    "id": "json:stringify/JSON ~> stringify(value)/{\"$lpe\":\"number\",\"value\":\"-0\"}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "JSON ~> stringify(value)",
+      "context": {
+        "value": {
+          "$lpe": "number",
+          "value": "-0"
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "0"
+    }
+  },
+  {
+    "id": "json:stringify/JSON ~> stringify(value)/{\"$lpe\":\"number\",\"value\":\"Infinity\"}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "JSON ~> stringify(value)",
+      "context": {
+        "value": {
+          "$lpe": "number",
+          "value": "Infinity"
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "null"
+    }
+  },
+  {
+    "id": "json:stringify/JSON ~> stringify(value)/1e+21",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "JSON ~> stringify(value)",
+      "context": {
+        "value": 1e+21
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "1e+21"
+    }
+  },
+  {
+    "id": "json:stringify/JSON ~> stringify(value)/1e-7",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "JSON ~> stringify(value)",
+      "context": {
+        "value": 1e-7
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "1e-7"
+    }
+  },
+  {
+    "id": "json:stringify/JSON ~> stringify(value)/{\"a\":{\"$lpe\":\"undefined\"},\"b\":1}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "JSON ~> stringify(value)",
+      "context": {
+        "value": {
+          "a": {
+            "$lpe": "undefined"
+          },
+          "b": 1
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "{\"b\":1}"
+    }
+  },
+  {
+    "id": "json:stringify/JSON ~> stringify(value)/[{\"$lpe\":\"undefined\"},{\"$lpe\":\"number\",\"value\":\"NaN\"},{\"$lpe\":\"number\",\"value\":\"Infinity\"}]",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "JSON ~> stringify(value)",
+      "context": {
+        "value": [
+          {
+            "$lpe": "undefined"
+          },
+          {
+            "$lpe": "number",
+            "value": "NaN"
+          },
+          {
+            "$lpe": "number",
+            "value": "Infinity"
+          }
+        ]
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "[null,null,null]"
+    }
+  },
+  {
+    "id": "json:stringify/JSON ~> stringify(value)/{\"2\":3,\"10\":2,\"b\":1,\"a\":4}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "JSON ~> stringify(value)",
+      "context": {
+        "value": {
+          "2": 3,
+          "10": 2,
+          "b": 1,
+          "a": 4
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "{\"2\":3,\"10\":2,\"b\":1,\"a\":4}"
+    }
+  },
+  {
+    "id": "json:stringify/JSON ~> stringify(value)/\"\\\"\\n\\t\\\\\\b\\f\\r\\u0000\"",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "JSON ~> stringify(value)",
+      "context": {
+        "value": "\"\n\t\\\b\f\r\u0000"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "\"\\\"\\n\\t\\\\\\b\\f\\r\\u0000\""
+    }
+  },
+  {
+    "id": "json:stringify/apply(JSON ~> stringify,value)/{\"a\":\"b\"}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(JSON ~> stringify,value)",
+      "context": {
+        "value": {
+          "a": "b"
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "{\"a\":\"b\"}"
+    }
+  },
+  {
+    "id": "json:stringify/apply(JSON ~> stringify,value)/[true,null,42,\"😀\"]",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(JSON ~> stringify,value)",
+      "context": {
+        "value": [
+          true,
+          null,
+          42,
+          "😀"
+        ]
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "[true,null,42,\"😀\"]"
+    }
+  },
+  {
+    "id": "json:stringify/apply(JSON ~> stringify,value)/{\"$lpe\":\"undefined\"}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(JSON ~> stringify,value)",
+      "context": {
+        "value": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "$lpe": "undefined"
+      }
+    }
+  },
+  {
+    "id": "json:stringify/apply(JSON ~> stringify,value)/{\"$lpe\":\"number\",\"value\":\"NaN\"}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(JSON ~> stringify,value)",
+      "context": {
+        "value": {
+          "$lpe": "number",
+          "value": "NaN"
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "null"
+    }
+  },
+  {
+    "id": "json:stringify/apply(JSON ~> stringify,value)/{\"$lpe\":\"number\",\"value\":\"-0\"}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(JSON ~> stringify,value)",
+      "context": {
+        "value": {
+          "$lpe": "number",
+          "value": "-0"
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "0"
+    }
+  },
+  {
+    "id": "json:stringify/apply(JSON ~> stringify,value)/{\"$lpe\":\"number\",\"value\":\"Infinity\"}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(JSON ~> stringify,value)",
+      "context": {
+        "value": {
+          "$lpe": "number",
+          "value": "Infinity"
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "null"
+    }
+  },
+  {
+    "id": "json:stringify/apply(JSON ~> stringify,value)/1e+21",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(JSON ~> stringify,value)",
+      "context": {
+        "value": 1e+21
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "1e+21"
+    }
+  },
+  {
+    "id": "json:stringify/apply(JSON ~> stringify,value)/1e-7",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(JSON ~> stringify,value)",
+      "context": {
+        "value": 1e-7
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "1e-7"
+    }
+  },
+  {
+    "id": "json:stringify/apply(JSON ~> stringify,value)/{\"a\":{\"$lpe\":\"undefined\"},\"b\":1}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(JSON ~> stringify,value)",
+      "context": {
+        "value": {
+          "a": {
+            "$lpe": "undefined"
+          },
+          "b": 1
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "{\"b\":1}"
+    }
+  },
+  {
+    "id": "json:stringify/apply(JSON ~> stringify,value)/[{\"$lpe\":\"undefined\"},{\"$lpe\":\"number\",\"value\":\"NaN\"},{\"$lpe\":\"number\",\"value\":\"Infinity\"}]",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(JSON ~> stringify,value)",
+      "context": {
+        "value": [
+          {
+            "$lpe": "undefined"
+          },
+          {
+            "$lpe": "number",
+            "value": "NaN"
+          },
+          {
+            "$lpe": "number",
+            "value": "Infinity"
+          }
+        ]
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "[null,null,null]"
+    }
+  },
+  {
+    "id": "json:stringify/apply(JSON ~> stringify,value)/{\"2\":3,\"10\":2,\"b\":1,\"a\":4}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(JSON ~> stringify,value)",
+      "context": {
+        "value": {
+          "2": 3,
+          "10": 2,
+          "b": 1,
+          "a": 4
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "{\"2\":3,\"10\":2,\"b\":1,\"a\":4}"
+    }
+  },
+  {
+    "id": "json:stringify/apply(JSON ~> stringify,value)/\"\\\"\\n\\t\\\\\\b\\f\\r\\u0000\"",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(JSON ~> stringify,value)",
+      "context": {
+        "value": "\"\n\t\\\b\f\r\u0000"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "\"\\\"\\n\\t\\\\\\b\\f\\r\\u0000\""
+    }
+  },
+  {
+    "id": "json:stringify/apply(get(JSON,\"stringify\"),value)/{\"a\":\"b\"}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(get(JSON,\"stringify\"),value)",
+      "context": {
+        "value": {
+          "a": "b"
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "{\"a\":\"b\"}"
+    }
+  },
+  {
+    "id": "json:stringify/apply(get(JSON,\"stringify\"),value)/[true,null,42,\"😀\"]",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(get(JSON,\"stringify\"),value)",
+      "context": {
+        "value": [
+          true,
+          null,
+          42,
+          "😀"
+        ]
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "[true,null,42,\"😀\"]"
+    }
+  },
+  {
+    "id": "json:stringify/apply(get(JSON,\"stringify\"),value)/{\"$lpe\":\"undefined\"}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(get(JSON,\"stringify\"),value)",
+      "context": {
+        "value": {
+          "$lpe": "undefined"
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "$lpe": "undefined"
+      }
+    }
+  },
+  {
+    "id": "json:stringify/apply(get(JSON,\"stringify\"),value)/{\"$lpe\":\"number\",\"value\":\"NaN\"}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(get(JSON,\"stringify\"),value)",
+      "context": {
+        "value": {
+          "$lpe": "number",
+          "value": "NaN"
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "null"
+    }
+  },
+  {
+    "id": "json:stringify/apply(get(JSON,\"stringify\"),value)/{\"$lpe\":\"number\",\"value\":\"-0\"}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(get(JSON,\"stringify\"),value)",
+      "context": {
+        "value": {
+          "$lpe": "number",
+          "value": "-0"
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "0"
+    }
+  },
+  {
+    "id": "json:stringify/apply(get(JSON,\"stringify\"),value)/{\"$lpe\":\"number\",\"value\":\"Infinity\"}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(get(JSON,\"stringify\"),value)",
+      "context": {
+        "value": {
+          "$lpe": "number",
+          "value": "Infinity"
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "null"
+    }
+  },
+  {
+    "id": "json:stringify/apply(get(JSON,\"stringify\"),value)/1e+21",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(get(JSON,\"stringify\"),value)",
+      "context": {
+        "value": 1e+21
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "1e+21"
+    }
+  },
+  {
+    "id": "json:stringify/apply(get(JSON,\"stringify\"),value)/1e-7",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(get(JSON,\"stringify\"),value)",
+      "context": {
+        "value": 1e-7
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "1e-7"
+    }
+  },
+  {
+    "id": "json:stringify/apply(get(JSON,\"stringify\"),value)/{\"a\":{\"$lpe\":\"undefined\"},\"b\":1}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(get(JSON,\"stringify\"),value)",
+      "context": {
+        "value": {
+          "a": {
+            "$lpe": "undefined"
+          },
+          "b": 1
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "{\"b\":1}"
+    }
+  },
+  {
+    "id": "json:stringify/apply(get(JSON,\"stringify\"),value)/[{\"$lpe\":\"undefined\"},{\"$lpe\":\"number\",\"value\":\"NaN\"},{\"$lpe\":\"number\",\"value\":\"Infinity\"}]",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(get(JSON,\"stringify\"),value)",
+      "context": {
+        "value": [
+          {
+            "$lpe": "undefined"
+          },
+          {
+            "$lpe": "number",
+            "value": "NaN"
+          },
+          {
+            "$lpe": "number",
+            "value": "Infinity"
+          }
+        ]
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "[null,null,null]"
+    }
+  },
+  {
+    "id": "json:stringify/apply(get(JSON,\"stringify\"),value)/{\"2\":3,\"10\":2,\"b\":1,\"a\":4}",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(get(JSON,\"stringify\"),value)",
+      "context": {
+        "value": {
+          "2": 3,
+          "10": 2,
+          "b": 1,
+          "a": 4
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "{\"2\":3,\"10\":2,\"b\":1,\"a\":4}"
+    }
+  },
+  {
+    "id": "json:stringify/apply(get(JSON,\"stringify\"),value)/\"\\\"\\n\\t\\\\\\b\\f\\r\\u0000\"",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "apply(get(JSON,\"stringify\"),value)",
+      "context": {
+        "value": "\"\n\t\\\b\f\r\u0000"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "\"\\\"\\n\\t\\\\\\b\\f\\r\\u0000\""
+    }
+  },
+  {
+    "id": "json:tags-are-data",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"stringify\",invoke(JSON,\"parse\",text))",
+      "context": {
+        "text": "{\"$lpe\":\"undefined\"}"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "{\"$lpe\":\"undefined\"}"
+    }
+  },
+  {
+    "id": "json:object-type",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "type(JSON)",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": "object"
+    }
+  },
+  {
+    "id": "json:object-keys",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "keys(JSON)",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": []
+    }
+  },
+  {
+    "id": "json:object-serialize",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"stringify\",JSON)",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": "{}"
+    }
+  },
+  {
+    "id": "json:method-metadata",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "[get(JSON,\"parse\").name,get(JSON,\"parse\").length,get(JSON,\"stringify\").name,get(JSON,\"stringify\").length]",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        "parse",
+        2,
+        "stringify",
+        3
+      ]
+    }
+  },
+  {
+    "id": "json:parse-coercion",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "[invoke(JSON,\"parse\",42),invoke(JSON,\"parse\",true),invoke(JSON,\"parse\",null)]",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": [
+        42,
+        true,
+        null
+      ]
+    }
+  },
+  {
+    "id": "json:reviver",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text,(key,value)=>if(isNumber(value),value*2,value))",
+      "context": {
+        "text": "{\"a\":1,\"b\":[2,3]}"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "a": 2,
+        "b": [
+          4,
+          6
+        ]
+      }
+    }
+  },
+  {
+    "id": "json:reviver-deletion",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text,(key,value)=>if(key=\"a\",undefined,value))",
+      "context": {
+        "text": "{\"a\":1,\"b\":2}"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "b": 2
+      }
+    }
+  },
+  {
+    "id": "json:reviver-root-deletion",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text,(key,value)=>undefined)",
+      "context": {
+        "text": "42"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "$lpe": "undefined"
+      }
+    }
+  },
+  {
+    "id": "json:reviver-source/1e400",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text,(key,value,context)=>context.source)",
+      "context": {
+        "text": "1e400"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "1e400"
+    }
+  },
+  {
+    "id": "json:reviver-source/-0",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text,(key,value,context)=>context.source)",
+      "context": {
+        "text": "-0"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "-0"
+    }
+  },
+  {
+    "id": "json:reviver-source/9007199254740993",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text,(key,value,context)=>context.source)",
+      "context": {
+        "text": "9007199254740993"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "9007199254740993"
+    }
+  },
+  {
+    "id": "json:reviver-source/true",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text,(key,value,context)=>context.source)",
+      "context": {
+        "text": "true"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "true"
+    }
+  },
+  {
+    "id": "json:reviver-source/null",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text,(key,value,context)=>context.source)",
+      "context": {
+        "text": "null"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "null"
+    }
+  },
+  {
+    "id": "json:reviver-source/\"\\u0061\"",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text,(key,value,context)=>context.source)",
+      "context": {
+        "text": "\"\\u0061\""
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "\"\\u0061\""
+    }
+  },
+  {
+    "id": "json:reviver-source-nested",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text,(key,value,context)=>if(isNumber(value),context.source,value))",
+      "context": {
+        "text": "{\"a\":1e2,\"b\":[-0,1.00]}"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": {
+        "a": "1e2",
+        "b": [
+          "-0",
+          "1.00"
+        ]
+      }
+    }
+  },
+  {
+    "id": "json:reviver-source-container",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",text,(key,value,context)=>if(key=\"\",keys(context),value))",
+      "context": {
+        "text": "{\"a\":1}"
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": []
+    }
+  },
+  {
+    "id": "json:replacer",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"stringify\",value,(key,item)=>if(key=\"a\",undefined,item))",
+      "context": {
+        "value": {
+          "a": 1,
+          "b": 2
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "{\"b\":2}"
+    }
+  },
+  {
+    "id": "json:property-list",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"stringify\",value,[\"b\",\"a\",\"b\",true,null])",
+      "context": {
+        "value": {
+          "a": 1,
+          "b": 2,
+          "c": 3
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "{\"b\":2,\"a\":1}"
+    }
+  },
+  {
+    "id": "json:pretty",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"stringify\",value,null,2)",
+      "context": {
+        "value": {
+          "a": [
+            1,
+            2
+          ]
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "{\n  \"a\": [\n    1,\n    2\n  ]\n}"
+    }
+  },
+  {
+    "id": "json:pretty-limit",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"stringify\",value,null,100)",
+      "context": {
+        "value": {
+          "a": 1
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "{\n          \"a\": 1\n}"
+    }
+  },
+  {
+    "id": "json:pretty-string",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"stringify\",value,null,\"--\")",
+      "context": {
+        "value": {
+          "a": 1
+        }
+      }
+    },
+    "expected": {
+      "ok": true,
+      "value": "{\n--\"a\": 1\n}"
+    }
+  },
+  {
+    "id": "json:function-omission",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"stringify\",{a=(x=>x),b=1})",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": "{\"b\":1}"
+    }
+  },
+  {
+    "id": "json:to-json",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"stringify\",{toJSON=(key=>[key,42])})",
+      "context": {}
+    },
+    "expected": {
+      "ok": true,
+      "value": "[\"\",42]"
+    }
+  },
+  {
+    "id": "json:circular",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "begin(obj:={=},obj.self:=obj,invoke(JSON,\"stringify\",obj))",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "TypeError"
+      }
+    }
+  },
+  {
+    "id": "json:set(JSON,\"parse\",x=>x)",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "set(JSON,\"parse\",x=>x)",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "json:del(JSON,\"parse\")",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "del(JSON,\"parse\")",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "json:get(JSON,\"constructor\")",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "get(JSON,\"constructor\")",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "json:invoke(JSON,\"parse\",\"1\",if)",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"parse\",\"1\",if)",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  },
+  {
+    "id": "json:invoke(JSON,\"stringify\",1,if)",
+    "group": "Portable JSON object",
+    "origin": "rust-impl/scripts/json-fixtures.mjs",
+    "evidence": "independent-expectation",
+    "request": {
+      "op": "eval",
+      "source": "invoke(JSON,\"stringify\",1,if)",
+      "context": {}
+    },
+    "expected": {
+      "ok": false,
+      "error": {
+        "kind": "LPESecurityError"
+      }
+    }
+  }
+]

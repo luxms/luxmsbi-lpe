@@ -1,6 +1,7 @@
 import { isArray, isHash, makeSF, isFunction } from "./lib/utils";
 import { except } from "./lib/exception";
 import { $IS_LIB$, $VAR$, EVAL } from "./lisp";
+import { evaluationPolicy } from './lib/evaluation-policy';
 
 
 const VAR_NOT_FOUND = { value: undefined, found: false };
@@ -50,13 +51,15 @@ export function $getvar$(ctx, varName, rs = {}, varSearchOptions = undefined) {
  * @param {EvalOptions} rs - options on how to resolve
  */
 export function $setvar$(ctx, varName, value, rs = {}) {
+  const {safeKey, safeSet} = evaluationPolicy(rs);
+  safeKey(varName);
   const result = varSetter(ctx, varName, value, rs);
 
   if (result.found) {
     return result.value;
   }
   if (result.firstNotlib !== undefined) {
-    return (result.firstNotlib[varName] = value);
+    return safeSet(result.firstNotlib, varName, value);
   }
   throw except("LPE_VAR_SCOPE_NOT_FOUND");
 }
@@ -72,6 +75,8 @@ export function $setvar$(ctx, varName, value, rs = {}) {
  * @returns {{value: *, found: boolean}}
  */
 export function varGetter(ctx, varName, rs, varSearchOptions) {
+  const {safeApply, safeGet, safeKey, safeSet, safeValue} = evaluationPolicy(rs);
+  safeKey(varName);
   varSearchOptions.currentCtxElement++;
 
   if (isArray(ctx)) {
@@ -90,24 +95,26 @@ export function varGetter(ctx, varName, rs, varSearchOptions) {
   }
 
   if (isFunction(ctx)) {
-    const res = ctx(varName, undefined, rs);
+    const res = safeApply(ctx, [varName, undefined, rs], undefined);
     return { value: res, found: res !== undefined };
   }
 
 
   if (isHash(ctx)) {                                                                              // получить значение
     if (Object.hasOwn(ctx, varName)) {                                                            // Нашлось в хэшмапе
-      if (!rs.wantCallable && ctx[$IS_LIB$] && rs.disallowLibFunctionsGetting && isFunction(ctx[varName])) {
+      const value = ctx[$IS_LIB$] ? safeValue(ctx[varName]) : safeGet(ctx, varName);
+      if (!rs.wantCallable && ctx[$IS_LIB$] && rs.disallowLibFunctionsGetting && isFunction(value)) {
         // Для sql строки могут быть заданы без кавычек.
         return VAR_NOT_FOUND;
       }
-      return { value: ctx[varName], found: true };
+      return { value, found: true };
     }
-    if (varName.slice(0, 3) !== 'sf:' && isFunction(ctx['sf:' + varName])) {                     // user-defined special form
-      return { value: makeSF(ctx['sf:' + varName]), found: true };
+    if (varName.slice(0, 3) !== 'sf:' && Object.hasOwn(ctx, 'sf:' + varName)) {
+      const special = safeGet(ctx, 'sf:' + varName);
+      if (isFunction(special)) return { value: makeSF(special), found: true };
     }
-    if ($VAR$ in ctx && isFunction(ctx[$VAR$])) {                                                                           // На хэшмапе может быть определена функция
-      const res = ctx[$VAR$](ctx, varName, undefined, rs, varSearchOptions);                      // вызываем ее
+    if (Object.hasOwn(ctx, $VAR$) && isFunction(ctx[$VAR$])) {
+      const res = safeApply(ctx[$VAR$], [ctx, varName, undefined, rs, varSearchOptions], ctx);
       if (res !== undefined) {                                                                    // Подходящее значение нашлось
         return { value: res, found: true };
       }
@@ -129,6 +136,7 @@ export function varGetter(ctx, varName, rs, varSearchOptions) {
  * @returns {{value: *, found: boolean, firstNotlib?: ContextObject}}
  */
 function varSetter(ctx, varName, value, rs) {
+  const {safeApply, safeSet} = evaluationPolicy(rs);
 
   if (isArray(ctx)) {
     let firstNotlib = undefined;
@@ -146,7 +154,7 @@ function varSetter(ctx, varName, value, rs) {
 
 
   if (isFunction(ctx)) {
-    const res = ctx(varName, undefined, rs);
+    const res = safeApply(ctx, [varName, undefined, rs], undefined);
     return { value: res, found: res !== undefined };
   }
 
@@ -156,7 +164,7 @@ function varSetter(ctx, varName, value, rs) {
       return VAR_NOT_FOUND;
     }
     if (Object.hasOwn(ctx, varName)) {
-      return { value: (ctx[varName] = value), found: true };
+      return { value: safeSet(ctx, varName, value), found: true };
     } else {
       return { ...VAR_NOT_FOUND, firstNotlib: ctx }
     }

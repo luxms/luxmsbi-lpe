@@ -2,17 +2,18 @@ import {readFileSync} from 'node:fs';
 import {artifact as writeFileSync} from './artifacts.mjs';
 import {resolve} from 'node:path';
 import {root, encode, require, args} from './shared.mjs';
-import {parseFile, parseExpression, callName, literal, sourceFiles, testFiles, RequestReference, compatibilityScope} from './source-analysis.mjs';
+import {parseFile, parseExpression, callName, literal, walk, sourceFiles, testFiles, RequestReference, StaticCallback, compatibilityScope} from './source-analysis.mjs';
 import {writeMetadata} from './metadata.mjs';
 
 const cli = args(process.argv.slice(2), [], ['--check']);
 writeMetadata(cli.check);
 
+const lpe = require(resolve(root, 'dist/lpe.js'));
 const cases = [];
 const skipped = [];
 const groups = [];
 const counts = new Map();
-const operation = {parse: 'parse', deparse: 'deparse', eval_lpe: 'eval', eval_lisp: 'evalAst', EVAL: 'evalAst'};
+const operation = {parse: 'parse', deparse: 'deparse', eval_lpe: 'eval', evaluate: 'eval', eval_lisp: 'evalAst', EVAL: 'evalAst'};
 
 function request(node, env) {
   if (node?.type === 'Identifier' && env.has(node.name)) {
@@ -22,6 +23,15 @@ function request(node, env) {
   if (node?.type === 'AwaitExpression') return request(node.argument, env);
   if (node?.type !== 'CallExpression') throw new Error('actual is not a direct API call');
   const name = callName(node.callee).replace(/^lpe\./, '');
+  const callback = env.get(name);
+  if (callback instanceof StaticCallback && node.arguments.length === 0) return request(callback.body, callback.env);
+  let calendarName = /^(calendar|time)\.(\w+)$/.exec(name)?.[2];
+  calendarName = ({toStartTime:'toStart', toEndTime:'toEnd', extractTime:'extract', extendTimeRange:'extend'})[calendarName] || calendarName;
+  if (node.callee.type === 'MemberExpression' && node.callee.computed && node.callee.object.name === 'calendar')
+    calendarName = literal(node.callee.property, env);
+  if (calendarName && typeof lpe.STDLIB[calendarName] === 'function') {
+    return {op: 'evalAst', ast: [calendarName, ...node.arguments.map(argument => ['$AST$', literal(argument, env)])], ...(env.has('fixedClock') ? {clockMillis: env.get('fixedClock')} : {})};
+  }
   const op = operation[name];
   if (!op) throw new Error(`unsupported API ${name || node.callee.type}`);
   let input;
@@ -36,6 +46,7 @@ function request(node, env) {
   } else if (node.arguments.length > 1) input.options = literal(node.arguments[1], env);
   if (input.context === undefined) delete input.context;
   if (input.options === undefined) delete input.options;
+  if (env.has('fixedClock')) input.clockMillis = env.get('fixedClock');
   return input;
 }
 
@@ -63,6 +74,36 @@ function visit(node, env, path, file) {
     }
     return;
   }
+  if (node.type === 'ForOfStatement') {
+    try {
+      const values = literal(node.right, env);
+      if (!Array.isArray(values) || values.length > 1000) throw new Error('loop requires a bounded literal table');
+      const pattern = node.left.declarations?.[0]?.id;
+      function bind(pattern, value, local) {
+        if (pattern?.type === 'Identifier') local.set(pattern.name, value);
+        else if (pattern?.type === 'ArrayPattern' && Array.isArray(value))
+          pattern.elements.forEach((part, index) => { if (part) bind(part, value[index], local); });
+        else throw new Error('unsupported loop binding');
+      }
+      for (const value of values) {
+        const local = new Map(env);
+        bind(pattern, value, local);
+        visit(node.body, local, path, file);
+      }
+    } catch (error) { skipped.push({origin:`${file}:${node.loc.start.line}`,group:path.join(' / '),reason:error.message}); }
+    return;
+  }
+  if (node.type === 'AssignmentExpression' && callName(node.left) === 'global.Date') {
+    if (node.right.type === 'ClassExpression') {
+      const timestamps = [];
+      walk(node.right, child => {
+        if (child.type === 'StringLiteral' && /^\d{4}-\d\d-\d\dT/.test(child.value)) timestamps.push(Date.parse(child.value));
+      });
+      if (timestamps.length !== 1 || !Number.isFinite(timestamps[0])) throw new Error('Unsupported mocked clock');
+      env.set('fixedClock', timestamps[0]);
+    } else env.delete('fixedClock');
+    return;
+  }
   if (node.type === 'AssignmentExpression' && node.operator === '=' && node.left.type === 'MemberExpression') {
     try {
       const object = literal(node.left.object, env);
@@ -80,9 +121,10 @@ function visit(node, env, path, file) {
     const name = callName(node.callee);
     if (['describe', 'it', 'describe.skip', 'it.skip'].includes(name)) {
       let label;
-      try { label = literal(node.arguments[0], env); } catch { label = '<dynamic>'; }
+      try { label = literal(node.arguments[0]); } catch { label = '<dynamic>'; }
       const next = [...path, label];
-      groups.push({file, line: node.loc.start.line, kind: name, name: next.join(' / ')});
+      if (!groups.some(group => group.file === file && group.line === node.loc.start.line))
+        groups.push({file, line: node.loc.start.line, kind: name, name: next.join(' / ')});
       if (name.endsWith('.skip')) return;
       const callback = node.arguments[1];
       if (callback?.body) visit(callback.body, new Map(env), next, file);
@@ -90,15 +132,31 @@ function visit(node, env, path, file) {
     }
     const wrapper = /^(deepEqual|strictEqual)(Parsed)?$/.exec(name);
     const assertion = /^assert\.(deepEqual|deepStrictEqual|equal|strictEqual)$/.test(name);
-    if (name === 'assert.throws' && callName(node.arguments[1]) === 'lpe.LPESyntaxError') {
+    if (name === 'assert.throws') {
       try {
-        const callback = node.arguments[0];
+        const expectedError = node.arguments[1];
+        const kind = callName(expectedError) === 'lpe.LPESyntaxError' ? 'SyntaxError'
+          : ['RangeError','TypeError'].includes(callName(expectedError)) ? callName(expectedError)
+          : expectedError?.type === 'ObjectExpression' ? literal(expectedError, env).name
+          : callName(expectedError) === 'denied' ? 'LPESecurityError' : undefined;
+        if (!kind) throw new Error('error predicate requires manual fixture');
+        let callback = node.arguments[0];
+        if (callback.type === 'Identifier' && env.get(callback.name) instanceof StaticCallback) callback = {type:'ArrowFunctionExpression',body:env.get(callback.name).body};
         if (callback.type !== 'ArrowFunctionExpression' || callback.body.type === 'BlockStatement') throw new Error('error assertion callback requires manual extraction');
         const req = request(callback.body, env);
         add(file, node, path.join(' / '), req, undefined);
-        cases.at(-1).expected = {ok: false, error: {kind: 'SyntaxError'}};
-        cases.at(-1).covers = {apis: ['LPESyntaxError']};
+        cases.at(-1).expected = {ok: false, error: {kind}};
+        if (kind === 'SyntaxError') cases.at(-1).covers = {apis: ['LPESyntaxError']};
       } catch (error) { skipped.push({origin: `${file}:${node.loc.start.line}`, group: path.join(' / '), reason: error.message}); }
+      return;
+    }
+    if (wrapper && file === 'test/test-deparse-lpe-functions.js') {
+      try {
+        const input = literal(node.arguments[0], env);
+        const source = wrapper[2] ? lpe.deparse(input) : input;
+        add(file, node, path.join(' / '), {op:'parse',source}, undefined, 'upstream-roundtrip');
+        Object.assign(cases.at(-1), {kind:'roundtrip', expected:{ok:true,relation:'three stable parse/deparse cycles'}});
+      } catch (error) { skipped.push({origin:`${file}:${node.loc.start.line}`,group:path.join(' / '),reason:error.message}); }
       return;
     }
     if (assertion || (wrapper && file === 'test/test-lpe-functions.js')) {
@@ -159,13 +217,14 @@ for (const file of sourceFiles) {
   }
 }
 
-const lpe = require(resolve(root, 'dist/lpe.js'));
 const reviewed = JSON.parse(readFileSync(resolve(root, 'rust-impl/fixtures/reviewed-exclusions.json'), 'utf8'));
 const exclusions = new Map(reviewed.flatMap(entry => entry.origins.map(origin => [origin, entry.reason])));
 const nativeCalls = new Set(['RegExp', 'invoke', '_call_obj_meth_', '_get_obj_meth_', '~>', 'new', 'Array', 'Object', 'Date']);
 function nativeInterop(ast) {
   if (!Array.isArray(ast)) return false;
+  if (['invoke', '_call_obj_meth_', '_get_obj_meth_', '~>'].includes(ast[0]) && ast[1] === 'JSON') return ast.slice(2).some(nativeInterop);
   if (nativeCalls.has(ast[0])) return true;
+  if (['.', '->'].includes(ast[0]) && ['Object', 'Array', 'Date', 'console'].includes(ast[1])) return true;
   if (['"', "'", 'q', '$AST$', '`'].includes(ast[0])) return false;
   return ast.some(nativeInterop);
 }
@@ -189,4 +248,7 @@ console.log(`Extracted ${accepted.length} independent assertions/examples; quara
 await import('./authored-fixtures.mjs');
 await import('./roundtrip-fixtures.mjs');
 await import('./production-layout-fixtures.mjs');
+await import('./release180-fixtures.mjs');
+await import('./json-fixtures.mjs');
+await import('./release180-source-fixtures.mjs');
 console.log(cli.check ? 'Generated artifacts are current (read-only check).' : 'Generated artifacts updated.');

@@ -60,6 +60,9 @@ async function traceMixedStreams() {
   const identities = new Map([
     ...streams.map(([name, stream]) => [stream, `stream:${name}`]),
     [payloadPromise, 'promise:payload'], [branchPromise, 'promise:branch'],
+    // Safe evaluation wraps native promises while preserving their payload.
+    [lpe.eval_lisp(payloadPromise), 'promise:payload'],
+    [lpe.eval_lisp(branchPromise), 'promise:branch'],
   ]);
   const normalize = value => {
     if (identities.has(value)) return identities.get(value);
@@ -140,6 +143,8 @@ async function traceMixedOperands() {
       let reject;
       const operand = new Promise((resolve, fail) => { fulfill = resolve; reject = fail; });
       // Rejection is an operand state, not an unhandled host error.
+      const guardedOperand = lpe.eval_lisp(operand);
+      guardedOperand.catch(() => {});
       const outcome = operand.then(value => value, error => ({error: error.message}));
       const settle = async () => {
         if (state.startsWith('rejected')) reject(new Error('promise operand rejected'));
@@ -159,7 +164,7 @@ async function traceMixedOperands() {
       }, {streamAdapter: adapter});
       if (!adapter.isStream(output)) throw new Error(`Expected immediate Stream: ${expression}, ${state}`);
       const normalize = value => {
-        if (value === operand) return 'promise:operand';
+        if (value === operand || value === guardedOperand) return 'promise:operand';
         if (Array.isArray(value)) return value.map(normalize);
         if (typeof value === 'number' && Number.isFinite(value)) return `scalar:${value}`;
         if (typeof value === 'string') return value;

@@ -6,9 +6,12 @@ macro_rules! builtin_names {
             &[$($name),*]
         }
         pub fn supports_sync(name: &str) -> bool {
+            sync_name(name).is_some()
+        }
+        pub(crate) fn sync_name(name: &str) -> Option<&'static str> {
             match name {
-                $($name => $immediate,)*
-                _ => false,
+                $($name => if $immediate { Some($name) } else { None },)*
+                _ => None,
             }
         }
     };

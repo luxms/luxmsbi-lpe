@@ -50,9 +50,484 @@
     "expected": 42
   },
   {
+    "id": "closure-create",
+    "source": "isFunction(fn(x,add(x,1)))",
+    "context": {},
+    "expected": true
+  },
+  {
+    "id": "closure-call",
+    "source": "f(41)",
+    "context": {},
+    "setup": {
+      "f": "fn(x,add(x,1))"
+    },
+    "expected": 42
+  },
+  {
+    "id": "closure-capture",
+    "source": "f(41)",
+    "context": {},
+    "setup": {
+      "f": "let([[increment,1]],fn(x,add(x,increment)))"
+    },
+    "expected": 42
+  },
+  {
+    "id": "closure-multi-arg",
+    "source": "f(1,2,3,4,5)",
+    "context": {},
+    "setup": {
+      "f": "fn([a,b,c,d,e],add(a,b,c,d,e))"
+    },
+    "expected": 15
+  },
+  {
+    "id": "closure-nested",
+    "source": "twice(40)",
+    "context": {},
+    "setup": {
+      "inc": "fn(x,add(x,1))",
+      "twice": "fn(x,inc(inc(x)))"
+    },
+    "expected": 42
+  },
+  {
     "id": "production-layout",
     "sourceFile": "production/layout.lpe",
     "parseOnly": true,
     "scale": 0.002
+  },
+  {
+    "id": "json-parse-small",
+    "source": "invoke(JSON,\"parse\",text)",
+    "context": {
+      "text": "{\"a\":\"b\",\"count\":42,\"ok\":true}"
+    },
+    "expected": {
+      "a": "b",
+      "count": 42,
+      "ok": true
+    },
+    "scale": 1
+  },
+  {
+    "id": "json-stringify-small",
+    "source": "invoke(JSON,\"stringify\",data)",
+    "context": {
+      "data": {
+        "a": "b",
+        "count": 42,
+        "ok": true
+      }
+    },
+    "expected": "{\"a\":\"b\",\"count\":42,\"ok\":true}",
+    "scale": 1
+  },
+  {
+    "id": "json-parse-rows",
+    "source": "invoke(JSON,\"parse\",text)",
+    "context": {
+      "text": "[{\"id\":0,\"name\":\"item 0\",\"active\":true,\"amount\":0.0},{\"id\":1,\"name\":\"item 1\",\"active\":false,\"amount\":1.25},{\"id\":2,\"name\":\"item 2\",\"active\":true,\"amount\":2.5},{\"id\":3,\"name\":\"item 3\",\"active\":false,\"amount\":3.75},{\"id\":4,\"name\":\"item 4\",\"active\":true,\"amount\":5.0},{\"id\":5,\"name\":\"item 5\",\"active\":false,\"amount\":6.25},{\"id\":6,\"name\":\"item 6\",\"active\":true,\"amount\":7.5},{\"id\":7,\"name\":\"item 7\",\"active\":false,\"amount\":8.75},{\"id\":8,\"name\":\"item 8\",\"active\":true,\"amount\":10.0},{\"id\":9,\"name\":\"item 9\",\"active\":false,\"amount\":11.25},{\"id\":10,\"name\":\"item 10\",\"active\":true,\"amount\":12.5},{\"id\":11,\"name\":\"item 11\",\"active\":false,\"amount\":13.75},{\"id\":12,\"name\":\"item 12\",\"active\":true,\"amount\":15.0},{\"id\":13,\"name\":\"item 13\",\"active\":false,\"amount\":16.25},{\"id\":14,\"name\":\"item 14\",\"active\":true,\"amount\":17.5},{\"id\":15,\"name\":\"item 15\",\"active\":false,\"amount\":18.75},{\"id\":16,\"name\":\"item 16\",\"active\":true,\"amount\":20.0},{\"id\":17,\"name\":\"item 17\",\"active\":false,\"amount\":21.25},{\"id\":18,\"name\":\"item 18\",\"active\":true,\"amount\":22.5},{\"id\":19,\"name\":\"item 19\",\"active\":false,\"amount\":23.75},{\"id\":20,\"name\":\"item 20\",\"active\":true,\"amount\":25.0},{\"id\":21,\"name\":\"item 21\",\"active\":false,\"amount\":26.25},{\"id\":22,\"name\":\"item 22\",\"active\":true,\"amount\":27.5},{\"id\":23,\"name\":\"item 23\",\"active\":false,\"amount\":28.75},{\"id\":24,\"name\":\"item 24\",\"active\":true,\"amount\":30.0},{\"id\":25,\"name\":\"item 25\",\"active\":false,\"amount\":31.25},{\"id\":26,\"name\":\"item 26\",\"active\":true,\"amount\":32.5},{\"id\":27,\"name\":\"item 27\",\"active\":false,\"amount\":33.75},{\"id\":28,\"name\":\"item 28\",\"active\":true,\"amount\":35.0},{\"id\":29,\"name\":\"item 29\",\"active\":false,\"amount\":36.25},{\"id\":30,\"name\":\"item 30\",\"active\":true,\"amount\":37.5},{\"id\":31,\"name\":\"item 31\",\"active\":false,\"amount\":38.75}]"
+    },
+    "expected": [
+      {
+        "id": 0,
+        "name": "item 0",
+        "active": true,
+        "amount": 0
+      },
+      {
+        "id": 1,
+        "name": "item 1",
+        "active": false,
+        "amount": 1.25
+      },
+      {
+        "id": 2,
+        "name": "item 2",
+        "active": true,
+        "amount": 2.5
+      },
+      {
+        "id": 3,
+        "name": "item 3",
+        "active": false,
+        "amount": 3.75
+      },
+      {
+        "id": 4,
+        "name": "item 4",
+        "active": true,
+        "amount": 5
+      },
+      {
+        "id": 5,
+        "name": "item 5",
+        "active": false,
+        "amount": 6.25
+      },
+      {
+        "id": 6,
+        "name": "item 6",
+        "active": true,
+        "amount": 7.5
+      },
+      {
+        "id": 7,
+        "name": "item 7",
+        "active": false,
+        "amount": 8.75
+      },
+      {
+        "id": 8,
+        "name": "item 8",
+        "active": true,
+        "amount": 10
+      },
+      {
+        "id": 9,
+        "name": "item 9",
+        "active": false,
+        "amount": 11.25
+      },
+      {
+        "id": 10,
+        "name": "item 10",
+        "active": true,
+        "amount": 12.5
+      },
+      {
+        "id": 11,
+        "name": "item 11",
+        "active": false,
+        "amount": 13.75
+      },
+      {
+        "id": 12,
+        "name": "item 12",
+        "active": true,
+        "amount": 15
+      },
+      {
+        "id": 13,
+        "name": "item 13",
+        "active": false,
+        "amount": 16.25
+      },
+      {
+        "id": 14,
+        "name": "item 14",
+        "active": true,
+        "amount": 17.5
+      },
+      {
+        "id": 15,
+        "name": "item 15",
+        "active": false,
+        "amount": 18.75
+      },
+      {
+        "id": 16,
+        "name": "item 16",
+        "active": true,
+        "amount": 20
+      },
+      {
+        "id": 17,
+        "name": "item 17",
+        "active": false,
+        "amount": 21.25
+      },
+      {
+        "id": 18,
+        "name": "item 18",
+        "active": true,
+        "amount": 22.5
+      },
+      {
+        "id": 19,
+        "name": "item 19",
+        "active": false,
+        "amount": 23.75
+      },
+      {
+        "id": 20,
+        "name": "item 20",
+        "active": true,
+        "amount": 25
+      },
+      {
+        "id": 21,
+        "name": "item 21",
+        "active": false,
+        "amount": 26.25
+      },
+      {
+        "id": 22,
+        "name": "item 22",
+        "active": true,
+        "amount": 27.5
+      },
+      {
+        "id": 23,
+        "name": "item 23",
+        "active": false,
+        "amount": 28.75
+      },
+      {
+        "id": 24,
+        "name": "item 24",
+        "active": true,
+        "amount": 30
+      },
+      {
+        "id": 25,
+        "name": "item 25",
+        "active": false,
+        "amount": 31.25
+      },
+      {
+        "id": 26,
+        "name": "item 26",
+        "active": true,
+        "amount": 32.5
+      },
+      {
+        "id": 27,
+        "name": "item 27",
+        "active": false,
+        "amount": 33.75
+      },
+      {
+        "id": 28,
+        "name": "item 28",
+        "active": true,
+        "amount": 35
+      },
+      {
+        "id": 29,
+        "name": "item 29",
+        "active": false,
+        "amount": 36.25
+      },
+      {
+        "id": 30,
+        "name": "item 30",
+        "active": true,
+        "amount": 37.5
+      },
+      {
+        "id": 31,
+        "name": "item 31",
+        "active": false,
+        "amount": 38.75
+      }
+    ],
+    "scale": 0.02,
+    "performanceGate": false
+  },
+  {
+    "id": "json-stringify-rows",
+    "source": "invoke(JSON,\"stringify\",data)",
+    "context": {
+      "data": [
+        {
+          "id": 0,
+          "name": "item 0",
+          "active": true,
+          "amount": 0
+        },
+        {
+          "id": 1,
+          "name": "item 1",
+          "active": false,
+          "amount": 1.25
+        },
+        {
+          "id": 2,
+          "name": "item 2",
+          "active": true,
+          "amount": 2.5
+        },
+        {
+          "id": 3,
+          "name": "item 3",
+          "active": false,
+          "amount": 3.75
+        },
+        {
+          "id": 4,
+          "name": "item 4",
+          "active": true,
+          "amount": 5
+        },
+        {
+          "id": 5,
+          "name": "item 5",
+          "active": false,
+          "amount": 6.25
+        },
+        {
+          "id": 6,
+          "name": "item 6",
+          "active": true,
+          "amount": 7.5
+        },
+        {
+          "id": 7,
+          "name": "item 7",
+          "active": false,
+          "amount": 8.75
+        },
+        {
+          "id": 8,
+          "name": "item 8",
+          "active": true,
+          "amount": 10
+        },
+        {
+          "id": 9,
+          "name": "item 9",
+          "active": false,
+          "amount": 11.25
+        },
+        {
+          "id": 10,
+          "name": "item 10",
+          "active": true,
+          "amount": 12.5
+        },
+        {
+          "id": 11,
+          "name": "item 11",
+          "active": false,
+          "amount": 13.75
+        },
+        {
+          "id": 12,
+          "name": "item 12",
+          "active": true,
+          "amount": 15
+        },
+        {
+          "id": 13,
+          "name": "item 13",
+          "active": false,
+          "amount": 16.25
+        },
+        {
+          "id": 14,
+          "name": "item 14",
+          "active": true,
+          "amount": 17.5
+        },
+        {
+          "id": 15,
+          "name": "item 15",
+          "active": false,
+          "amount": 18.75
+        },
+        {
+          "id": 16,
+          "name": "item 16",
+          "active": true,
+          "amount": 20
+        },
+        {
+          "id": 17,
+          "name": "item 17",
+          "active": false,
+          "amount": 21.25
+        },
+        {
+          "id": 18,
+          "name": "item 18",
+          "active": true,
+          "amount": 22.5
+        },
+        {
+          "id": 19,
+          "name": "item 19",
+          "active": false,
+          "amount": 23.75
+        },
+        {
+          "id": 20,
+          "name": "item 20",
+          "active": true,
+          "amount": 25
+        },
+        {
+          "id": 21,
+          "name": "item 21",
+          "active": false,
+          "amount": 26.25
+        },
+        {
+          "id": 22,
+          "name": "item 22",
+          "active": true,
+          "amount": 27.5
+        },
+        {
+          "id": 23,
+          "name": "item 23",
+          "active": false,
+          "amount": 28.75
+        },
+        {
+          "id": 24,
+          "name": "item 24",
+          "active": true,
+          "amount": 30
+        },
+        {
+          "id": 25,
+          "name": "item 25",
+          "active": false,
+          "amount": 31.25
+        },
+        {
+          "id": 26,
+          "name": "item 26",
+          "active": true,
+          "amount": 32.5
+        },
+        {
+          "id": 27,
+          "name": "item 27",
+          "active": false,
+          "amount": 33.75
+        },
+        {
+          "id": 28,
+          "name": "item 28",
+          "active": true,
+          "amount": 35
+        },
+        {
+          "id": 29,
+          "name": "item 29",
+          "active": false,
+          "amount": 36.25
+        },
+        {
+          "id": 30,
+          "name": "item 30",
+          "active": true,
+          "amount": 37.5
+        },
+        {
+          "id": 31,
+          "name": "item 31",
+          "active": false,
+          "amount": 38.75
+        }
+      ]
+    },
+    "expected": "[{\"id\":0,\"name\":\"item 0\",\"active\":true,\"amount\":0},{\"id\":1,\"name\":\"item 1\",\"active\":false,\"amount\":1.25},{\"id\":2,\"name\":\"item 2\",\"active\":true,\"amount\":2.5},{\"id\":3,\"name\":\"item 3\",\"active\":false,\"amount\":3.75},{\"id\":4,\"name\":\"item 4\",\"active\":true,\"amount\":5},{\"id\":5,\"name\":\"item 5\",\"active\":false,\"amount\":6.25},{\"id\":6,\"name\":\"item 6\",\"active\":true,\"amount\":7.5},{\"id\":7,\"name\":\"item 7\",\"active\":false,\"amount\":8.75},{\"id\":8,\"name\":\"item 8\",\"active\":true,\"amount\":10},{\"id\":9,\"name\":\"item 9\",\"active\":false,\"amount\":11.25},{\"id\":10,\"name\":\"item 10\",\"active\":true,\"amount\":12.5},{\"id\":11,\"name\":\"item 11\",\"active\":false,\"amount\":13.75},{\"id\":12,\"name\":\"item 12\",\"active\":true,\"amount\":15},{\"id\":13,\"name\":\"item 13\",\"active\":false,\"amount\":16.25},{\"id\":14,\"name\":\"item 14\",\"active\":true,\"amount\":17.5},{\"id\":15,\"name\":\"item 15\",\"active\":false,\"amount\":18.75},{\"id\":16,\"name\":\"item 16\",\"active\":true,\"amount\":20},{\"id\":17,\"name\":\"item 17\",\"active\":false,\"amount\":21.25},{\"id\":18,\"name\":\"item 18\",\"active\":true,\"amount\":22.5},{\"id\":19,\"name\":\"item 19\",\"active\":false,\"amount\":23.75},{\"id\":20,\"name\":\"item 20\",\"active\":true,\"amount\":25},{\"id\":21,\"name\":\"item 21\",\"active\":false,\"amount\":26.25},{\"id\":22,\"name\":\"item 22\",\"active\":true,\"amount\":27.5},{\"id\":23,\"name\":\"item 23\",\"active\":false,\"amount\":28.75},{\"id\":24,\"name\":\"item 24\",\"active\":true,\"amount\":30},{\"id\":25,\"name\":\"item 25\",\"active\":false,\"amount\":31.25},{\"id\":26,\"name\":\"item 26\",\"active\":true,\"amount\":32.5},{\"id\":27,\"name\":\"item 27\",\"active\":false,\"amount\":33.75},{\"id\":28,\"name\":\"item 28\",\"active\":true,\"amount\":35},{\"id\":29,\"name\":\"item 29\",\"active\":false,\"amount\":36.25},{\"id\":30,\"name\":\"item 30\",\"active\":true,\"amount\":37.5},{\"id\":31,\"name\":\"item 31\",\"active\":false,\"amount\":38.75}]",
+    "scale": 0.02,
+    "performanceGate": false
   }
 ]

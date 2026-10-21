@@ -459,6 +459,11 @@ fn process(request: &Json) -> Result<Json> {
         }
     }
     let mut rt = Runtime::new();
+    if let Some(clock) = request.get("clockMillis") {
+        rt.set_clock_millis(Some(clock.as_i64().ok_or_else(|| {
+            Error::new("ProtocolError", "clockMillis must be an integer")
+        })?))?;
+    }
     if let Some(fixtures) = request.get("hostFixtures").and_then(Json::as_array) {
         for fixture in fixtures {
             match fixture.as_str().unwrap_or("") {

@@ -1,11 +1,25 @@
+import { evaluationPolicy } from './lib/evaluation-policy';
+
+// whenReady is a host callback too. Never invoke it through an unchecked
+// property read, even when it is nested inside an otherwise ordinary value.
+function whenReady(value, options) {
+  if (options?.unsafe === true) return value?.whenReady;
+  const {safeGet} = evaluationPolicy(options);
+  return value && typeof value === 'object' && Object.hasOwn(value, 'whenReady')
+    ? safeGet(value, 'whenReady') : undefined;
+}
+
 /**
  * Unwrap values if they are promise or stream
  * @param {any[]} args inputs that may be streams, promises or values
  * @param {(arg: any[]) => any} resolve callback to run when all ready
  * @param {StreamAdapter?} streamAdapter
+ * @param {EvalOptions=} options
  */
-export default function unbox(args, resolve, streamAdapter) {
-  const hasPromise = args.find(a => a instanceof Promise || a?.whenReady);      // Стримы некоторых видов могут делать вид, что они промисы, имея метод whenReady
+export default function unbox(args, resolve, streamAdapter, options) {
+  const {safeApply, safeValue} = evaluationPolicy(options);
+  const resolveValues = values => safeValue(resolve(values.map(safeValue)));
+  const hasPromise = args.find(a => a instanceof Promise || whenReady(a, options));      // Стримы некоторых видов могут делать вид, что они промисы, имея метод whenReady
   const hasStreams = !!streamAdapter && !!args.find(streamAdapter.isStream);
 
   if (hasStreams) {
@@ -50,7 +64,7 @@ export default function unbox(args, resolve, streamAdapter) {
      * @param value
      */
     const onNextValue = (value) => {                                                                // when we have extracted value from result
-      streamAdapter.next(outputStream, value);
+      streamAdapter.next(outputStream, safeValue(value));
     }
 
     const onNextResult = (result) => {                                                              // will be called on next result to be pushed into stream
@@ -70,7 +84,7 @@ export default function unbox(args, resolve, streamAdapter) {
     }
 
     outputStream = streamAdapter.createStream(undefined, dispose);
-    onNextResult(resolve(evaluatedArgs));
+    onNextResult(resolveValues(evaluatedArgs));
 
     args.forEach((a, idx) => {
       if (streamAdapter.isStream(a)) {
@@ -78,7 +92,7 @@ export default function unbox(args, resolve, streamAdapter) {
             streamAdapter.subscribe(a, (value) => {
               evaluatedArgs = [...evaluatedArgs];                                                   // We pass this array to user function, and want it to be immutable
               evaluatedArgs[idx] = value;                                                           // update arguments
-              onNextResult(resolve(evaluatedArgs))
+              onNextResult(resolveValues(evaluatedArgs))
             }));
       }
     });
@@ -87,9 +101,12 @@ export default function unbox(args, resolve, streamAdapter) {
 
   } else if (hasPromise) {
     // Возможно, пришли стримы. Постулируем что может быть метод whenReady у стримов, который работает как пропим
-    return Promise.all(args.map(r => r?.whenReady?.() ?? r)).then(resolve);
+    return Promise.all(args.map(value => {
+      const ready = whenReady(value, options);
+      return ready ? safeApply(ready, [], value) ?? value : value;
+    })).then(resolveValues);
 
   } else {
-    return resolve(args);                                                                           // TODO check if stream or promise returned
+    return resolveValues(args);                                                                    // TODO check if stream or promise returned
   }
 }

@@ -202,9 +202,123 @@ impl Lexer {
             syntax("Invalid Unicode string: unpaired surrogate escape; UTF-8 requires a valid Unicode scalar value.")
         })
     }
+    fn format_string(
+        &mut self,
+        raw: bool,
+        flags: Vec<String>,
+        square: bool,
+        legacy: bool,
+        depth: usize,
+    ) -> Result<Value> {
+        let opener = self.peek().unwrap();
+        let closer = if opener == '[' { ']' } else { opener };
+        self.pos += 1;
+        if depth >= MAX_DEPTH {
+            return Err(syntax("Format string nesting limit exceeded."));
+        }
+        let mut units = Vec::new();
+        let mut parts = vec![json!(format!("f{opener}")), json!(flags)];
+        loop {
+            let mut c = self.peek().ok_or_else(|| syntax("Unterminated string."))?;
+            if c < ' ' {
+                return Err(syntax("Control character or newline in string."));
+            }
+            self.pos += 1;
+            if c == closer {
+                break;
+            }
+            if c == '\\' && opener != '[' && !raw {
+                c = self.peek().ok_or_else(|| syntax("Unterminated string."))?;
+                self.pos += 1;
+                c = match c {
+                    'b' => '\u{0008}',
+                    'f' => '\u{000c}',
+                    'n' => '\n',
+                    'r' => '\r',
+                    't' => '\t',
+                    'u' => {
+                        // JS parseInt accepts a hexadecimal prefix of the next four characters.
+                        let raw: String = self.chars.iter().skip(self.pos).take(4).collect();
+                        let raw =
+                            raw.trim_start_matches(|c: char| c.is_whitespace() || c == '\u{feff}');
+                        let negative = raw.starts_with('-');
+                        let raw = raw.strip_prefix(['+', '-']).unwrap_or(raw);
+                        let raw = raw
+                            .strip_prefix("0x")
+                            .or_else(|| raw.strip_prefix("0X"))
+                            .unwrap_or(raw);
+                        let mut value = 0u16;
+                        let mut digits = 0;
+                        for ch in raw.chars() {
+                            if let Some(digit) = ch.to_digit(16) {
+                                value = value * 16 + digit as u16;
+                                digits += 1;
+                            } else {
+                                break;
+                            }
+                        }
+                        if digits == 0 || (negative && value != 0) {
+                            return Err(syntax("Invalid Unicode escape."));
+                        }
+                        self.pos = self.pos.saturating_add(4);
+                        units.push(value);
+                        continue;
+                    }
+                    other => other,
+                };
+            }
+            if c == '{' {
+                if self.peek() == Some('{') {
+                    self.pos += 1;
+                } else {
+                    let text = String::from_utf16(&units)
+                        .map_err(|_| syntax("Invalid Unicode string."))?;
+                    parts.push(json!([opener.to_string(), text]));
+                    units.clear();
+                    let remainder: String = self.chars[self.pos..].iter().collect();
+                    let (tokens, used) =
+                        tokenize_inner(&remainder, square, legacy, true, depth + 1)?;
+                    let mut parser = Parser {
+                        tokens,
+                        pos: 0,
+                        logical: true,
+                        depth: 0,
+                        diagnostic_source: None,
+                        diagnostic: RefCell::new(None),
+                    };
+                    while parser.current().kind == Kind::Lf {
+                        parser.advance()?;
+                    }
+                    parts.push(parser.expression(0)?.ast);
+                    while parser.current().kind == Kind::Lf {
+                        parser.advance()?;
+                    }
+                    if parser.current().kind != Kind::End {
+                        return Err(syntax("Invalid format expression."));
+                    }
+                    self.pos += used + 1;
+                    continue;
+                }
+            }
+            units.extend(c.encode_utf16(&mut [0; 2]).iter().copied());
+        }
+        let text = String::from_utf16(&units).map_err(|_| syntax("Invalid Unicode string."))?;
+        parts.push(json!([opener.to_string(), text]));
+        Ok(Value::Array(parts))
+    }
 }
 
 fn tokenize(source: &str, square: bool, legacy_line_breaks: bool) -> Result<Vec<Token>> {
+    tokenize_inner(source, square, legacy_line_breaks, false, 0).map(|v| v.0)
+}
+
+fn tokenize_inner(
+    source: &str,
+    square: bool,
+    legacy_line_breaks: bool,
+    interpolation: bool,
+    depth: usize,
+) -> Result<(Vec<Token>, usize)> {
     if source.len() > MAX_SOURCE {
         return Err(syntax("Source size limit exceeded."));
     }
@@ -217,6 +331,9 @@ fn tokenize(source: &str, square: bool, legacy_line_breaks: bool) -> Result<Vec<
     let mut tokens = Vec::new();
     let mut nesting = 0usize;
     while let Some(c) = lexer.peek() {
+        if interpolation && c == '}' && nesting == 0 {
+            break;
+        }
         let offset = lexer.pos;
         let mut text = String::new();
         let mut ast = Value::Null;
@@ -241,7 +358,26 @@ fn tokenize(source: &str, square: bool, legacy_line_breaks: bool) -> Result<Vec<
             }
             if matches!(lexer.peek(), Some('\'' | '"')) {
                 let quote = lexer.peek().unwrap().to_string();
-                ast = json!([quote, lexer.string(text == "r")?, text]);
+                let mut flags = Vec::new();
+                let mut flag = String::new();
+                for c in text.chars().chain(std::iter::once(' ')) {
+                    if c.is_ascii_uppercase() || c == '_' {
+                        flag.push(c);
+                    } else if !flag.is_empty() {
+                        if !flags.contains(&flag) {
+                            flags.push(flag.clone());
+                        }
+                        flag.clear();
+                    }
+                }
+                let raw = text.contains('r');
+                ast = if text.contains('f') {
+                    lexer.format_string(raw, flags, square, legacy_line_breaks, depth)?
+                } else {
+                    let mut parts = vec![json!(quote), json!(lexer.string(raw)?)];
+                    parts.extend(flags.into_iter().map(Value::String));
+                    Value::Array(parts)
+                };
                 kind = Kind::String;
                 text.clear();
             } else {
@@ -351,6 +487,10 @@ fn tokenize(source: &str, square: bool, legacy_line_breaks: bool) -> Result<Vec<
             return Err(syntax("Token limit exceeded."));
         }
     }
+    if interpolation && lexer.peek() != Some('}') {
+        return Err(syntax("Unterminated format string."));
+    }
+    let consumed = lexer.pos;
     // Legacy JS joins after a dot, but a newline before it starts a statement.
     let mut filtered: Vec<Token> = Vec::with_capacity(tokens.len() + 1);
     let mut i = 0;
@@ -381,7 +521,7 @@ fn tokenize(source: &str, square: bool, legacy_line_breaks: bool) -> Result<Vec<
         end: source.len(),
         logical: true,
     });
-    Ok(filtered)
+    Ok((filtered, consumed))
 }
 
 fn canonical(op: &str) -> &str {
@@ -744,7 +884,9 @@ impl Parser<'_> {
                 let mut args = Vec::new();
                 if !self.is(close) {
                     loop {
-                        args.push(self.expression(0)?);
+                        if text != "{" || !self.is(close) {
+                            args.push(self.expression(0)?);
+                        }
                         if !(self.is(",") || text == "{" && self.is(";")) {
                             break;
                         }

@@ -29,6 +29,18 @@ Rust `EvalOptions::default()` matches omitted JavaScript evaluation options;
 `EvalOptions::from_json` preserves the different JS behavior of explicitly
 passing an empty options object.
 
+The compatibility target is JavaScript LPE 1.8.0's
+**safe evaluation semantics only**. Its unsafe mode is not supported.
+`EvalOptions::from_json` rejects `{"unsafe": true}` with `OptionsError`, including
+JSON protocol requests. Expression-level `set_options({unsafe=true})` fails
+with `LPESecurityError`, matching safe JS evaluation. Only the
+boolean `true` requests unsafe mode; omitting the option or supplying another
+value does not enable it. Native `EvalOptions` has no unsafe switch.
+This policy does not by itself establish complete 1.8.0 compatibility: portable
+property, binding, callback, and data-traversal behavior must also match the safe
+JavaScript evaluator. The absence of a JavaScript runtime does not remove those
+observable language requirements.
+
 `parser::parse_with_diagnostics(source, options)` preserves the ordinary parse
 result and error while returning `ParseError { error, diagnostic }` on failure.
 The optional JSON diagnostic includes token spans, carets (`crs`), and direct
@@ -37,6 +49,40 @@ lexer/resource errors may have no diagnostic. This is not a reconstruction of
 the complete JS error tree or all diagnostic wording. UTF-16 span indices match
 JS internally; source and JSON input/output remain UTF-8. Ordinary `parse` and
 `parse_with_options` retain their existing error interface.
+
+## Portable JSON
+
+The library provides a protected `JSON` object with `parse` and `stringify`:
+
+```lpe
+invoke(JSON, 'parse', '{"a":"b"}')
+invoke(JSON, 'stringify', {a='b'})
+JSON ~> parse('{"a":"b"}')
+```
+
+The first expression returns an LPE object; the second returns `'{"a":"b"}'`.
+These expressions also work in JS LPE. LPE's `.` operator is a threading
+operator; use `invoke` or `~>` for native-style method calls.
+
+Parsing preserves ordinary JSON data, including a literal `$lpe` field: it
+never interprets the CLI transport tags. The optional reviver receives
+`(key, value, context)`; `context.source` retains the original primitive token.
+Stringification supports replacer callbacks or property lists, indentation,
+`toJSON` callbacks, JavaScript number formatting, omitted undefined/function
+object fields, null array slots, and circular-reference errors. Callbacks use
+the normal safe call policy and remain alive across host-triggered collection.
+Promises returned by JSON callbacks are values, not implicitly awaited.
+
+Native builds use [sonic-rs](https://github.com/cloudwego/sonic-rs) for SIMD JSON
+parsing and string escaping. WASI uses `serde_json`. Exceptional numeric and
+surrogate inputs retain compatibility fallbacks. Ordinary strings stay UTF-8;
+JavaScript code-unit semantics remain where observable. JSON is data parsing,
+never source-code evaluation. Neither method can be replaced from LPE.
+
+`Runtime::register_sync_host` registers a synchronous host callback that also
+receives the runtime, for integrations needing native values or collection.
+`Runtime::set_clock_millis` supplies a fixed trusted clock for deterministic
+`now`, `today`, and relative-time evaluation; passing `None` restores wall time.
 
 ## Assignment And Call Dispatch
 
@@ -195,7 +241,7 @@ regular expressions:
 | `RegExp()` objects and native `.test()`/`.exec()` methods | String patterns in `re_match`, `words`, `update_in`, and vararg types, using `regress` |
 | JS `new`, native `Array`/`Object`/`Date` constructors and prototypes | LPE arrays, hashes, tuples, dates, conversions, and datetime functions |
 | `invoke`, `_call_obj_meth_`, `_get_obj_meth_`, and `~>` receiver dispatch with JS `this` binding | LPE member access, assignment, registered Rust callbacks, and parsing/deparsing that syntax |
-| Native `console`/`JSON` host objects and arbitrary JS execution/reflection | Portable JSON functions and LPE AST evaluation (`eval`, `eval_ast`, `eval_lpe`, `rep`) |
+| Native `console`, arbitrary JS host objects, execution and reflection | Portable JSON functions and LPE AST evaluation (`eval`, `eval_ast`, `eval_lpe`, `rep`) |
 
 `fixtures/scope.json` lists excluded runtime names and reviewed source-test
 declarations with reasons. The coverage checker validates each runtime test's

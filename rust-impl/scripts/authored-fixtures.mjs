@@ -73,11 +73,15 @@ for (const [id, source, expected, line] of [
   ['extend-zero', 'extend("2023-01-01",0,"w")', ['2023-01-01', '2023-01-01'], 281],
   ['extend-month', 'extend("2023-01-01",2,"m")', ['2023-01-01', '2023-03-01'], 287],
   ['extend-year', 'extend("2023-01-01",1,"y")', ['2023-01-01', '2024-01-01'], 293],
-  // dateShift has no 'h' branch; unknown units leave the date unchanged.
-  ['extend-unknown-unit', 'extend("2023-01-01",1,"h")', ['2023-01-01', '2023-01-01'], 307],
+  // JS 1.8 time units produce a date and time.
+  ['extend-hour-unit', 'extend("2023-01-01",1,"h")', ['2023-01-01', '2023-01-01 01:00:00'], 307],
   ['extend-quarter', 'extend("2023-01-01",1,"q")', ['2023-01-01', '2023-04-01'], 313],
   ['extend-negative-month', 'extend("2023-03-15",-1,"m")', ['2023-03-15', '2023-02-15'], 319],
-]) add(`calendar-boundaries/${id}`, {op: 'eval', source}, expected, {origin: `test/test-datetime.js:${line}`, covers: {groups: [`test/test-datetime.js:${line}`, `test/test-datetime.js:${id.startsWith('bound') ? 221 : 253}`]}});
+]) {
+  const file = line === 307 ? 'test/date/time.js' : 'test/date/date.js';
+  const currentLine = line === 307 ? 293 : line < 307 ? line + 2 : line - 4;
+  add(`calendar-boundaries/${id}`, {op: 'eval', source}, expected, {origin: `${file}:${currentLine}`, covers: {groups: [`${file}:${currentLine}`]}});
+}
 for (const [id, source, expected] of [
   ['sort-mutates', 'VAR a = {3,1,2} RETURN begin(sort(a),a)', [1, 2, 3]],
   ['sort-by-key', 'sortBy({{k=3},{k=1},{k=2}}, x => x.k)', [{k: 1}, {k: 2}, {k: 3}]],
@@ -121,7 +125,7 @@ evalCase('options/default-string-resolution', 'unknownFixtureVariable', 'unknown
 evalCase('options/explicit-empty-options', 'unknownFixtureVariable', undefined, {options: {}});
 evalCase('options/explicit-resolve-string', 'unknownFixtureVariable', 'unknownFixtureVariable', {options: {resolveString: true}});
 evalCase('options/set-options', 'set_options({resolveString = true}, unknownFixtureVariable)', 'unknownFixtureVariable', {options: {resolveString: false}});
-for (const name of ['today', 'now']) evalCase(`dates/${name}-iso-shape`, `count(re_match(${name}(), "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "g"))`, 1);
+for (const name of ['today', 'now']) evalCase(`dates/${name}-iso-shape`, `count(re_match(${name}(), "^[0-9]{4}-[0-9]{2}-[0-9]{2}${name === 'now' ? ' [0-9]{2}:[0-9]{2}:[0-9]{2}' : ''}$", "g"))`, 1);
 for (const name of ['print', 'prn', 'println']) evalCase(`output/${name}-return`, `${name}("fixture output")`, undefined);
 
 for (const [name, values, expected] of [
@@ -198,7 +202,7 @@ function streamCase(id, request, snapshots, lines = []) {
   add(`streams/${id}`, {op: 'stream', ...request}, {snapshots: snapshots.map(([value, sources, events = []]) => ({
     value, sources: Object.fromEntries(Object.entries(sources).map(([name, [value, refs, listeners]]) => [name, {value, refs, listeners}])), events,
   }))}, {covers: {
-    groups: [32, ...lines].map(line => `test/test-streams.js:${line}`),
+    groups: [32, ...lines].map(line => `test/test-streams.js:${line === 32 ? 32 : line + 62}`),
     ...(request.unboxReturn !== undefined ? {apis: ['unbox']} : {}),
   }});
 }

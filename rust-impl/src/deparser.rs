@@ -232,16 +232,54 @@ impl Renderer {
                 .and_then(Value::as_str)
                 .ok_or_else(|| syntax("String literal requires a string payload."))?;
             let prefix = args
-                .get(1)
-                .filter(|v| !v.is_null())
-                .map(js_string)
-                .unwrap_or_default();
-            let text = if prefix == "r" {
+                .iter()
+                .skip(1)
+                .map(|v| {
+                    if v.is_null() {
+                        String::new()
+                    } else {
+                        js_string(v)
+                    }
+                })
+                .collect::<Vec<_>>()
+                .join("Δ");
+            let text = if prefix.contains('r') {
                 text.to_owned()
             } else {
                 escaped(text)
             };
             return Ok(format!("{prefix}{op}{text}{op}"));
+        }
+        if matches!(op, "f'" | "f\"") {
+            let flags = args
+                .first()
+                .and_then(Value::as_array)
+                .ok_or_else(|| syntax("Format string flags must be an array."))?;
+            let prefix = flags.iter().map(js_string).collect::<Vec<_>>().join("Δ");
+            let quote = &op[1..];
+            let mut text = String::new();
+            for (index, part) in args.iter().skip(1).enumerate() {
+                if index % 2 == 0
+                    && part
+                        .as_array()
+                        .is_some_and(|a| a.len() == 2 && a[0] == quote)
+                {
+                    let part = part[1]
+                        .as_str()
+                        .ok_or_else(|| syntax("String literal requires a string payload."))?;
+                    let part = if prefix.contains('r') {
+                        part.to_owned()
+                    } else {
+                        escaped(part)
+                    };
+                    text.push_str(&part.replace('{', "{{"));
+                } else {
+                    text.push('{');
+                    text.push_str(&self.render(part, false)?);
+                    text.push('}');
+                }
+            }
+            return Ok(format!("{prefix}{op}{text}{quote}"));
         }
         if op == "[]" {
             let text = args
@@ -366,6 +404,19 @@ impl Renderer {
         let text = match value {
             Value::Array(a) if a.is_empty() => "[]".into(),
             Value::Array(a) => self.sexpr(a, word_names)?,
+            Value::Object(o) if !omitted(value) => {
+                let fields = o
+                    .iter()
+                    .map(|(key, value)| {
+                        Ok(format!(
+                            "\"{}\" = {}",
+                            key.replace('"', "\\\""),
+                            self.render(value, false)?
+                        ))
+                    })
+                    .collect::<Result<Vec<_>>>()?;
+                format!("makeHash({})", fields.join(", "))
+            }
             _ => js_string(value),
         };
         if text.len() > MAX_OUTPUT {

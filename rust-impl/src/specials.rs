@@ -12,6 +12,11 @@ pub fn names() -> &'static [&'static str] {
         "\"",
         "'",
         "q",
+        "f\"",
+        "f'",
+        "formatString",
+        "str>EVAL",
+        "strToEVAL",
         ".",
         "->",
         "threadFirst",
@@ -261,8 +266,14 @@ pub async fn call(
             }
         }
         "\"" | "'" | "q" => {
-            if args.get(1).and_then(Ast::as_str) == Some("_") {
-                let name = raw_string(rt, &arg(args, 0));
+            if args.iter().skip(1).any(|v| v.as_str() == Some("_")) {
+                let ast = arg(args, 0);
+                let name = if ast.get("$lpeInternalLiteral").is_some() {
+                    let value = rt.eval_in(&ast, env, options).await?;
+                    rt.to_string(&value)
+                } else {
+                    raw_string(rt, &ast)
+                };
                 lookup(rt, env, &name, options).await
             } else {
                 let ast = arg(args, 0);
@@ -271,8 +282,45 @@ pub async fn call(
                 } else {
                     rt.checked_from_json(&ast)?
                 };
-                rt.checked_string_from_utf16(rt.checked_to_utf16(&value)?)
+                let value = rt.checked_string_from_utf16(rt.checked_to_utf16(&value)?)?;
+                for flag in args.iter().skip(1) {
+                    let name = format!("str>{}", raw_string(rt, flag));
+                    if lookup(rt, env, &name, options).await?.is_callable() {
+                        let literal = rt.ast_literal(value);
+                        return rt.eval_in(&json!([name, literal]), env, options).await;
+                    }
+                }
+                Ok(value)
             }
+        }
+        "f\"" | "f'" | "formatString" => {
+            let flags = arg(args, 0)
+                .as_array()
+                .cloned()
+                .ok_or_else(|| Error::new("TypeError", "Format string flags must be an array"))?;
+            let mut values = Vec::new();
+            for ast in args.iter().skip(1) {
+                values.push(rt.eval_in(ast, env, options).await?);
+            }
+            rt.unbox(
+                values,
+                StreamContext::new(env, options).with_asts(args),
+                Rc::new(move |rt, values, env, options| {
+                    let flags = flags.clone();
+                    Box::pin(async move {
+                        let mut text = Vec::new();
+                        for value in &values {
+                            text.extend(rt.checked_to_utf16(value)?);
+                        }
+                        let value = rt.checked_string_from_utf16(text)?;
+                        let literal = rt.ast_literal(value);
+                        let mut quoted = vec![json!("'"), literal];
+                        quoted.extend(flags);
+                        rt.eval_in(&Ast::Array(quoted), env, &options).await
+                    })
+                }),
+            )
+            .await
         }
         "." | "->" | "threadFirst" | ".." | "->>" | "threadLast" => {
             let first = matches!(name, "." | "->" | "threadFirst");
@@ -316,12 +364,12 @@ pub async fn call(
                 StreamContext::new(env, options).with_asts(args),
                 Rc::new(|rt, values, _, _| {
                     Box::pin(async move {
-                        let key = rt.to_string(&values[1]);
+                        let key = rt.safe_key(&values[1])?;
                         let value = values[2].clone();
                         if value == Value::Undefined {
-                            Ok(rt.get(&values[0], &key))
+                            rt.safe_get(&values[0], &key)
                         } else {
-                            Ok(rt.set(&values[0], &key, value.clone()).unwrap_or(value))
+                            rt.set(&values[0], &key, value)
                         }
                     })
                 }),
@@ -638,7 +686,7 @@ pub async fn call(
                             Rc::new(move |rt, values, env, options| {
                                 let rest = rest.clone();
                                 Box::pin(async move {
-                                    let key = rt.to_string(&values[0]);
+                                    let key = rt.safe_key(&values[0])?;
                                     let local = rt.new_env(
                                         IndexMap::from([(key, values[1].clone())]),
                                         vec![env],
@@ -649,7 +697,7 @@ pub async fn call(
                         )
                         .await;
                 }
-                local = rt.new_env(IndexMap::from([(rt.to_string(&key), value)]), vec![local]);
+                local = rt.new_env(IndexMap::from([(rt.safe_key(&key)?, value)]), vec![local]);
             }
             sequence(rt, args.get(1..).unwrap_or(&[]), local, options).await
         }
@@ -691,8 +739,8 @@ pub async fn call(
                             let mut obj = values[0].clone();
                             let keys: Vec<_> = values[1..values.len() - 1]
                                 .iter()
-                                .map(|key| rt.to_string(key))
-                                .collect();
+                                .map(|key| rt.safe_key(key))
+                                .collect::<Result<_>>()?;
                             for key in keys.iter().take(keys.len().saturating_sub(1)) {
                                 let mut next = rt.get(&obj, key);
                                 if next.is_nullish() {
@@ -727,17 +775,22 @@ pub async fn call(
                 } else {
                     rt.eval_in(&arg(args, 1), env, options).await?
                 };
-                let key = raw_string(rt, &target);
+                let key = if name == "def" && target.is_array() && !rt.legacy_context_enabled() {
+                    rt.eval_in(&target, env, options).await?
+                } else {
+                    rt.from_json(&target)
+                };
                 if rt.legacy_context_enabled() {
+                    let key = rt.to_string(&key);
                     rt.assign_async(env, &key, value, options).await
                 } else if name == "def" {
                     rt.unbox(
-                        vec![value],
+                        vec![key, value],
                         StreamContext::new(env, options).with_asts(args),
                         Rc::new(move |rt, values, env, options| {
-                            let key = key.clone();
                             Box::pin(async move {
-                                rt.assign_async(env, &key, values[0].clone(), &options)
+                                let key = rt.safe_key(&values[0])?;
+                                rt.assign_async(env, &key, values[1].clone(), &options)
                                     .await
                             })
                         }),
@@ -745,6 +798,7 @@ pub async fn call(
                     .await
                 } else {
                     // Unlike def, JS assignment to a variable stores the stream itself.
+                    let key = rt.safe_key(&key)?;
                     rt.assign_async(env, &key, value, options).await
                 }
             }
@@ -760,7 +814,7 @@ pub async fn call(
                 vec![key],
                 StreamContext::new(env, options).with_asts(args),
                 Rc::new(|rt, values, env, _| {
-                    Box::pin(async move { Ok(rt.undefine(env, &rt.to_string(&values[0]))) })
+                    Box::pin(async move { Ok(rt.undefine(env, &rt.safe_key(&values[0])?)) })
                 }),
             )
             .await
@@ -813,11 +867,12 @@ pub async fn call(
                         let mut named = IndexMap::new();
                         if name == "makeHash" {
                             for pair in values.as_chunks::<2>().0 {
-                                named.insert(rt.to_string(&pair[0]), pair[1].clone());
+                                named.insert(rt.safe_key(&pair[0])?, pair[1].clone());
                             }
                         } else {
                             for (key, value) in names.into_iter().zip(values) {
                                 if let Some(key) = key {
+                                    crate::security::key(&key)?;
                                     named.insert(key, value);
                                 } else {
                                     positional.push(value);
@@ -969,25 +1024,33 @@ pub async fn call(
         }
         "get_in" => {
             let origin = arg(args, 0);
-            let evaluated = origin.is_array() || origin.get("$lpeInternalLiteral").is_some();
-            let value = if evaluated {
-                rt.eval_in(&origin, env, options).await?
-            } else {
-                rt.from_json(&origin)
-            };
-            let path = path_ast(args, 1);
-            let path = rt.eval_in(&path, env, options).await?;
+            let quoted = origin
+                .as_array()
+                .is_some_and(|a| matches!(a.first().and_then(Ast::as_str), Some("q" | "'" | "\"")));
+            let mut values = vec![rt.eval_in(&origin, env, options).await?];
+            for key in args.iter().skip(1) {
+                values.push(rt.eval_in(key, env, options).await?);
+            }
             rt.unbox(
-                vec![value, path],
+                values,
                 StreamContext::new(env, options).with_asts(args),
-                Rc::new(|rt, values, env, options| {
+                Rc::new(move |rt, values, env, options| {
                     Box::pin(async move {
-                        let path = rt.array_values(&values[1])?;
-                        let mut expression = vec![json!("."), value_ast(rt, values[0].clone())?];
-                        for value in path {
-                            expression.push(value_ast(rt, value)?);
+                        let mut origin = values[0].clone();
+                        if quoted {
+                            if let Value::String(name) = &origin {
+                                let binding = lookup(rt, env, name, &options).await?;
+                                if binding != Value::Undefined {
+                                    origin = binding;
+                                }
+                            }
                         }
-                        rt.eval_in(&Ast::Array(expression), env, &options).await
+                        let path = if values.len() == 2 && matches!(values[1], Value::Array(_)) {
+                            rt.array_values(&values[1])?
+                        } else {
+                            values[1..].to_vec()
+                        };
+                        rt.safe_get_in(origin, &path)
                     })
                 }),
             )
@@ -1027,18 +1090,20 @@ pub async fn call(
                     Box::pin(async move {
                         let from = rt.array_values(&values[0])?;
                         let to = rt.array_values(&values[1])?;
-                        let source =
-                            value_ast(rt, from.first().cloned().unwrap_or(Value::Undefined))?;
-                        let target =
-                            value_ast(rt, to.first().cloned().unwrap_or(Value::Undefined))?;
-                        let mut from_path = vec![json!("[")];
-                        for value in from.into_iter().skip(1) {
-                            from_path.push(value_ast(rt, value)?);
+                        let mut source = from.first().cloned().unwrap_or(Value::Undefined);
+                        let mut target = to.first().cloned().unwrap_or(Value::Undefined);
+                        if let Value::String(name) = &source {
+                            source = rt.lookup_async(env, name, &options, false).await?;
                         }
-                        let mut to_path = vec![json!("[")];
-                        for value in to.into_iter().skip(1) {
-                            to_path.push(value_ast(rt, value)?);
+                        if let Value::String(name) = &target {
+                            target = rt.lookup_async(env, name, &options, false).await?;
                         }
+                        let source = rt.ast_literal(source);
+                        let target = rt.ast_literal(target);
+                        let from_path = rt.array(from.into_iter().skip(1).collect());
+                        let from_path = rt.ast_literal(from_path);
+                        let to_path = rt.array(to.into_iter().skip(1).collect());
+                        let to_path = rt.ast_literal(to_path);
                         let ast =
                             json!(["assoc_in", target, to_path, ["get_in", source, from_path]]);
                         rt.eval_in(&ast, env, &options).await
@@ -1047,7 +1112,7 @@ pub async fn call(
             )
             .await
         }
-        "eval_ast" | "eval_lpe" | "rep" => {
+        "eval_ast" | "eval_lpe" | "str>EVAL" | "strToEVAL" | "rep" => {
             let input = rt.eval_in(&arg(args, 0), env, options).await?;
             let name = name.to_owned();
             rt.unbox(
@@ -1059,7 +1124,9 @@ pub async fn call(
                         let input = values[0].clone();
                         let ast = match name.as_str() {
                             "eval_ast" => value_ast(rt, input)?,
-                            "eval_lpe" => rt.parse_source(&rt.to_string(&input))?,
+                            "eval_lpe" | "str>EVAL" | "strToEVAL" => {
+                                rt.parse_source(&rt.to_string(&input))?
+                            }
                             _ => serde_json::from_str(&rt.to_string(&input))
                                 .map_err(|e| Error::new("SyntaxError", e.to_string()))?,
                         };
@@ -1107,7 +1174,15 @@ pub async fn call(
                         for (key, value) in values {
                             json[&key] = rt.to_json(&value)?;
                         }
-                        let options = EvalOptions::from_json(&json)?;
+                        let options = EvalOptions::from_json(&json).map_err(|error| {
+                            if json.get("unsafe") == Some(&Ast::Bool(true)) {
+                                crate::security::error(
+                                    "Unsafe evaluation cannot be enabled from LPE",
+                                )
+                            } else {
+                                error
+                            }
+                        })?;
                         rt.eval_in(&body, env, &options).await
                     })
                 }),
@@ -1195,19 +1270,6 @@ async fn do_loop(
     }
 }
 
-fn path_ast(args: &[Ast], start: usize) -> Ast {
-    if let Some(path) = args.get(start).filter(|a| {
-        a.as_array()
-            .is_some_and(|a| a.first().is_some_and(array_constructor))
-    }) {
-        path.clone()
-    } else {
-        let mut path = vec![json!("[")];
-        path.extend_from_slice(args.get(start..).unwrap_or(&[]));
-        Ast::Array(path)
-    }
-}
-
 async fn associate(
     rt: &mut Runtime,
     origin: Value,
@@ -1216,27 +1278,35 @@ async fn associate(
     env: EnvId,
     options: &EvalOptions,
 ) -> Result<Value> {
-    let mut keys = rt.array_values(&path)?;
+    let keys = rt.array_values(&path)?;
+    if keys.is_empty() {
+        return Err(Error::new(
+            "TypeError",
+            "assoc_in path must be a nonempty array",
+        ));
+    }
+    let checked = keys
+        .iter()
+        .map(|key| rt.safe_key(key))
+        .collect::<Result<Vec<_>>>()?;
     let mut focus = origin.clone();
     for index in 0..keys.len().saturating_sub(1) {
         rt.tick()?;
-        let key = rt.to_string(&keys[index]);
-        let mut value = rt.get(&focus, &key);
+        let key = &checked[index];
+        let mut value = rt.get(&focus, key);
         if value == Value::Undefined {
             value = if matches!(keys[index + 1], Value::String(_)) {
                 rt.object(IndexMap::new())
             } else {
                 rt.array(vec![])
             };
-            rt.set(&focus, &key, value.clone())?;
+            rt.set(&focus, key, value.clone())?;
         }
         focus = value;
     }
-    let key = keys.pop().unwrap_or(Value::Undefined);
-    // JS path.pop() mutates the supplied path before evaluating the assigned value.
-    rt.replace_array(&path, keys)?;
+    let key = keys.last().unwrap().clone();
     let focus = rt.ast_literal(focus);
-    let key = value_ast(rt, key)?;
+    let key = rt.ast_literal(key);
     let origin = rt.ast_literal(origin);
     rt.eval_in(
         &json!(["begin", ["set", focus, key, expr], origin]),
@@ -1370,7 +1440,7 @@ pub(crate) fn make_closure(
                 .unwrap_or_else(|| format!("##ignored-parameter-{i}"))
         })
         .collect();
-    let body = body.clone();
+    let body = rt.share_closure_body(body);
     // Legacy fn binds only supplied arguments and returns callable results directly.
     // Other constructors keep filling missing slots, regardless of the profile.
     let legacy_fn = name == "fn" && rt.legacy_context_enabled();
@@ -1397,6 +1467,7 @@ fn let_scope(rt: &mut Runtime, values: Vec<Value>, kv_array: bool, env: EnvId) -
         let Value::String(key) = &pair[0] else {
             return Err(wrong_type("let binding name must be a string"));
         };
+        crate::security::key(key)?;
         bindings.insert(key.clone(), pair[1].clone());
     }
     drop(borrowed);

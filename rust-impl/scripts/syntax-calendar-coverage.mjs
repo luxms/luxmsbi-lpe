@@ -12,6 +12,7 @@
 // No clocks, LPE evaluation, artifact writes, or Rust-derived expectations here.
 export function addSyntaxCalendarCoverage(add) {
   function check(id, file, line, request, value, extra = {}) {
+    if (file === 'test/date/date.js') line += line < 307 ? 2 : -4;
     const origin = `${file}:${line}`;
     add(`syntax-calendar/${id}`, request, value, {
       origin,
@@ -19,7 +20,7 @@ export function addSyntaxCalendarCoverage(add) {
       ...extra,
     });
   }
-  const calendarFile = 'test/test-datetime.js';
+  const calendarFile = 'test/date/date.js';
   const parserFile = 'test/test.js';
   const calendar = (id, line, source, value) => check(`calendar/${id}`, calendarFile, line, {op: 'eval', source}, value);
   const parse = (id, line, source, ast) => check(`parser/${id}`, parserFile, line, {op: 'parse', source}, ast);

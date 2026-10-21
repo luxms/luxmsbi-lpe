@@ -3,10 +3,13 @@ mod builtins;
 mod collections;
 mod datetime;
 pub mod deparser;
+mod json;
 pub mod parser;
 mod regexp;
 pub mod runtime;
+mod security;
 mod specials;
+mod time;
 pub mod value;
 
 pub use deparser::deparse;

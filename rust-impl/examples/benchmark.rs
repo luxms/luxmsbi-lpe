@@ -55,6 +55,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let options = EvalOptions::default();
     if !parse_only {
         runtime.set_context(&case["context"])?;
+        // Setup is outside both timed regions. Global bindings keep captured
+        // environments alive through the collections in repeated-call cases.
+        if let Some(setup) = case["setup"].as_object() {
+            for (name, source) in setup {
+                let value = runtime.eval(source.as_str().ok_or("setup must be source strings")?)?;
+                runtime.set_global(name, value);
+            }
+        }
         let value = runtime.eval_ast(&ast, &options)?;
         assert!(
             equivalent(&runtime.to_json(&value)?, &case["expected"]),

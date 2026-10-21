@@ -125,6 +125,52 @@ fn cancellation_and_limits_are_errors() {
 }
 
 #[test]
+fn unsafe_evaluation_cannot_be_requested() {
+    let error = EvalOptions::from_json(&json!({"unsafe": true})).unwrap_err();
+    assert_eq!(error.kind, "OptionsError");
+    assert_eq!(
+        error.message,
+        "Unsafe evaluation is not supported; Rust LPE only supports safe evaluation"
+    );
+
+    // JavaScript only enables unsafe evaluation for the boolean true.
+    for options in [
+        json!({}),
+        json!({"unsafe": false}),
+        json!({"unsafe": null}),
+        json!({"unsafe": "true"}),
+        json!({"unsafe": 1}),
+    ] {
+        let options = EvalOptions::from_json(&options).unwrap();
+        let mut rt = Runtime::new();
+        assert_eq!(
+            rt.eval_with_options("20 + 22", &options).unwrap(),
+            Value::Number(42.0)
+        );
+    }
+}
+
+#[test]
+fn set_options_cannot_enable_unsafe_evaluation_or_run_its_body() {
+    for settings in [
+        json!({"unsafe": true}),
+        json!(["list", ["list", ["q", "unsafe"], true]]),
+    ] {
+        let mut rt = Runtime::new();
+        rt.eval("called := 0").unwrap();
+        let error = rt
+            .eval_ast(
+                &json!(["set_options", settings, [":=", "called", 1]]),
+                &EvalOptions::default(),
+            )
+            .unwrap_err();
+        assert_eq!(error.kind, "LPESecurityError");
+        assert_eq!(rt.eval("called").unwrap(), Value::Number(0.0));
+        assert_eq!(rt.eval("20 + 22").unwrap(), Value::Number(42.0));
+    }
+}
+
+#[test]
 fn native_and_async_host_functions() {
     let mut rt = Runtime::new();
     rt.register("double", |args| match args.first() {

@@ -115,14 +115,7 @@ fn has(rt: &Runtime, value: &Value, key: &str) -> bool {
 }
 
 fn property_key(rt: &Runtime, value: &Value) -> Result<String> {
-    // Runtime object keys are UTF-8; reject unpaired UTF-16 instead of conflating
-    // distinct JS keys with the replacement character. String values are lossless.
-    String::from_utf16(&rt.to_utf16(value)).map_err(|_| {
-        Error::new(
-            "UnsupportedFeature",
-            "Object keys containing unpaired UTF-16 surrogates are not supported",
-        )
-    })
+    rt.safe_key(value)
 }
 
 fn length(rt: &Runtime, value: &Value) -> usize {
@@ -344,9 +337,9 @@ fn clone_graph(rt: &mut Runtime, root: &Value) -> Result<Value> {
             let len = rt.get(&source, "length");
             rt.set(&target, "length", len)?;
         }
-        for key in rt.keys(&source) {
+        for key in rt.safe_keys(&source)? {
             rt.tick()?;
-            let child = rt.get(&source, &key);
+            let child = rt.safe_get(&source, &key)?;
             let copy = shell(rt, &child, &mut seen, &mut work)?;
             rt.set(&target, &key, copy)?;
         }
@@ -376,9 +369,9 @@ fn splice_one(rt: &mut Runtime, array: &Value, key: &str) -> Result<()> {
 
 fn selections(rt: &mut Runtime, spec: &Value) -> Result<IndexMap<String, Value>> {
     let mut result = IndexMap::new();
-    for key in rt.keys(spec) {
+    for key in rt.safe_keys(spec)? {
         rt.tick()?;
-        let v = rt.get(spec, &key);
+        let v = rt.safe_get(spec, &key)?;
         if is_array(spec) && numeric_key(rt, &key) {
             result.insert(property_key(rt, &v)?, Value::Bool(true));
         } else {
@@ -411,7 +404,7 @@ fn selection(
         if !has(rt, obj, &key) {
             continue;
         }
-        let old = rt.get(obj, &key);
+        let old = rt.safe_get(obj, &key)?;
         if is_collection(&need) && !is_collection(&old) {
             continue;
         }
@@ -444,9 +437,9 @@ fn compact(rt: &mut Runtime, obj: &Value, depth: f64, nesting: usize) -> Result<
     }
     depth_guard(nesting)?;
     rt.tick()?;
-    for key in rt.keys(obj).into_iter().rev() {
+    for key in rt.safe_keys(obj)?.into_iter().rev() {
         rt.tick()?;
-        let value = rt.get(obj, &key);
+        let value = rt.safe_get(obj, &key)?;
         if value.is_nullish() {
             if is_array(obj) && numeric_key(rt, &key) {
                 splice_one(rt, obj, &key)?;
@@ -467,15 +460,15 @@ fn make_struct(rt: &mut Runtime, from: &Value, spec: &Value, depth: usize) -> Re
         return clone_graph(rt, spec);
     }
     let result = blank(rt, is_array(from) || is_array(spec));
-    let mut keys: IndexSet<_> = rt.keys(spec).into_iter().collect();
-    for key in rt.keys(from) {
+    let mut keys: IndexSet<_> = rt.safe_keys(spec)?.into_iter().collect();
+    for key in rt.safe_keys(from)? {
         rt.tick()?;
         keys.insert(key);
     }
     for key in keys {
         rt.tick()?;
-        let default = rt.get(spec, &key);
-        let old = rt.get(from, &key);
+        let default = rt.safe_get(spec, &key)?;
+        let old = rt.safe_get(from, &key)?;
         let value = if is_collection(&default) {
             make_struct(rt, &old, &default, depth + 1)?
         } else if has(rt, from, &key) {
@@ -500,15 +493,15 @@ fn merge_deep<'a>(
         depth_guard(path.len())?;
         rt.tick()?;
         let result = blank(rt, is_array(&a) || is_array(&b));
-        let mut keys: IndexSet<_> = rt.keys(&a).into_iter().collect();
-        for key in rt.keys(&b) {
+        let mut keys: IndexSet<_> = rt.safe_keys(&a)?.into_iter().collect();
+        for key in rt.safe_keys(&b)? {
             rt.tick()?;
             keys.insert(key);
         }
         for key in keys {
             rt.tick()?;
-            let av = rt.get(&a, &key);
-            let bv = rt.get(&b, &key);
+            let av = rt.safe_get(&a, &key)?;
+            let bv = rt.safe_get(&b, &key)?;
             let mut next = path.clone();
             next.push(Value::String(key.clone()));
             let value = if is_collection(&av) && is_collection(&bv) {
@@ -550,7 +543,7 @@ fn update_in<'a>(
         {
             let re = crate::regexp::RegExp::new(rt, &key[1..key.len() - 1], "")?;
             let mut keys = Vec::new();
-            for k in rt.keys(&obj) {
+            for k in rt.safe_keys(&obj)? {
                 rt.tick()?;
                 if re.is_match(rt, &k)? {
                     keys.push(k);
@@ -566,7 +559,7 @@ fn update_in<'a>(
         };
         for key in keys {
             rt.tick()?;
-            let value = rt.get(&obj, &key);
+            let value = rt.safe_get(&obj, &key)?;
             let mut next = was.clone();
             if path.len() == 1 {
                 // The source passes the original final path expression, even for regex keys.
@@ -615,7 +608,7 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
                     continue;
                 }
                 // Read live values: callbacks can mutate later slots, but not the iteration length.
-                let item = rt.get(&a, &key);
+                let item = rt.safe_get(&a, &key)?;
                 let mut argv = match name {
                     "reduce" | "reduceArr" => vec![acc.clone(), item.clone()],
                     _ => vec![item.clone()],
@@ -846,9 +839,9 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
             let mut output = Vec::new();
             let mut first = true;
             if is_collection(&a) {
-                for key in rt.keys(&a) {
+                for key in rt.safe_keys(&a)? {
                     rt.tick()?;
-                    let v = rt.get(&a, &key);
+                    let v = rt.safe_get(&a, &key)?;
                     let part = if c.is_callable() {
                         let v = invoke(rt, &c, vec![Value::String(key), v]).await?;
                         if v.is_nullish() {
@@ -866,7 +859,19 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
             rt.checked_string_from_utf16(output)?
         }
         "update_in" => {
-            let path = array_or_empty(rt, &b)?;
+            let path = rt.array_values(&b)?;
+            if path.is_empty() {
+                return Err(Error::new(
+                    "TypeError",
+                    "update_in path must be a nonempty array",
+                ));
+            }
+            for key in &path {
+                rt.safe_key(key)?;
+            }
+            if !c.is_callable() {
+                return Err(Error::new("TypeError", "LPE callable must be a function"));
+            }
             update_in(rt, a.clone(), &path, &c, arg(args, 3).truthy(), Vec::new()).await?;
             a
         }
@@ -877,7 +882,7 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
             if mode == "full" && b.is_callable() {
                 let mut keys = IndexSet::new();
                 for hash in &hashes {
-                    for key in rt.keys(hash) {
+                    for key in rt.safe_keys(hash)? {
                         rt.tick()?;
                         keys.insert(key);
                     }
@@ -888,7 +893,7 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
                     let mut present = Vec::new();
                     for hash in &hashes {
                         rt.tick()?;
-                        values.push(rt.get(hash, &key));
+                        values.push(rt.safe_get(hash, &key)?);
                         present.push(Value::Bool(has(rt, hash, &key)));
                     }
                     let values = rt.array(values);
@@ -899,12 +904,12 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
                 }
             } else {
                 for hash in hashes {
-                    for key in rt.keys(&hash) {
+                    for key in rt.safe_keys(&hash)? {
                         rt.tick()?;
-                        let next = rt.get(&hash, &key);
+                        let next = rt.safe_get(&hash, &key)?;
                         let first = !has(rt, &result, &key);
                         let value = if b.is_callable() && (!first || mode == "sequenceWithFirst") {
-                            let old = rt.get(&result, &key);
+                            let old = rt.safe_get(&result, &key)?;
                             let mut argv = vec![Value::String(key.clone()), old, next];
                             if mode == "sequenceWithFirst" {
                                 argv.push(Value::Bool(first));
@@ -1033,9 +1038,9 @@ pub fn call_sync(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option<
                 }
             }
             let result = rt.array(Vec::new());
-            for key in rt.keys(&a).into_iter().rev() {
+            for key in rt.safe_keys(&a)?.into_iter().rev() {
                 rt.tick()?;
-                let value = rt.get(&a, &key);
+                let value = rt.safe_get(&a, &key)?;
                 let dest = if numeric_key(rt, &key) {
                     length(rt, &result).to_string()
                 } else {
@@ -1168,7 +1173,13 @@ pub fn call_sync(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option<
                 if !has(rt, &a, &i.to_string()) {
                     continue;
                 }
-                let key = property_key(rt, &rt.get(&a, &i.to_string()))?;
+                let label = rt.get(&a, &i.to_string());
+                let label = if matches!(label, Value::Bool(_) | Value::Null | Value::Undefined) {
+                    Value::String(rt.to_string(&label))
+                } else {
+                    label
+                };
+                let key = property_key(rt, &label)?;
                 let count = match result.get(&key) {
                     Some(Value::Number(n)) => *n,
                     _ => 0.0,
@@ -1243,7 +1254,7 @@ pub fn call_sync(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option<
             for i in 0..len {
                 rt.tick()?;
                 if has(rt, &a, &i.to_string()) {
-                    let v = rt.get(&rt.get(&a, &i.to_string()), &key);
+                    let v = rt.safe_get(&rt.get(&a, &i.to_string()), &key)?;
                     rt.set(&result, &i.to_string(), v)?;
                 }
             }
@@ -1276,8 +1287,9 @@ pub fn call_sync(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option<
         "contains?" | "containsKey" => Value::Bool(has(rt, &a, &property_key(rt, &b)?)),
         "get" | "nth" => {
             let key = property_key(rt, &b)?;
-            if has(rt, &a, &key) {
-                rt.get(&a, &key)
+            let value = rt.safe_get(&a, &key)?;
+            if has(rt, &a, &key) || !matches!(value, Value::Undefined) {
+                value
             } else {
                 c
             }
@@ -1293,9 +1305,9 @@ pub fn call_sync(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option<
         }
         "keys" | "vals" | "values" | "entries" => {
             let mut result = Vec::new();
-            for key in rt.keys(&a) {
+            for key in rt.safe_keys(&a)? {
                 rt.tick()?;
-                let value = rt.get(&a, &key);
+                let value = rt.safe_get(&a, &key)?;
                 result.push(match name {
                     "keys" => Value::String(key),
                     "entries" => rt.array(vec![Value::String(key), value]),
