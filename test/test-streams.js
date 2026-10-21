@@ -30,6 +30,29 @@ function createAdapter() {
 }
 
 describe('Streams through an external adapter', () => {
+  it('preserves safe and unsafe modes in later f-string evaluations', () => {
+    const adapter = createAdapter();
+    const restrictedCode = adapter.createStream('42');
+    const trustedCode = adapter.createStream('42');
+    const restricted = lpe.eval_lpe('fEVAL"{code}"', {code: restrictedCode, window: globalThis}, {streamAdapter: adapter});
+    const trusted = lpe.eval_lpe('fEVAL"{code}"', {code: trustedCode, window: globalThis}, {streamAdapter: adapter, unsafe: true});
+    try {
+      assert.strictEqual(restricted.value, 42);
+      assert.strictEqual(trusted.value, 42);
+      adapter.next(trustedCode, 'window');
+      assert.strictEqual(trusted.value, globalThis);
+      assert.throws(() => adapter.next(restrictedCode, 'window'), error => error.code === 'LPE_SECURITY');
+      assert.strictEqual(restricted.value, 42);
+    } finally {
+      adapter.release(restricted);
+      adapter.release(trusted);
+    }
+    assert.strictEqual(restrictedCode.refs, 1);
+    assert.strictEqual(trustedCode.refs, 1);
+    assert.strictEqual(restrictedCode.listeners.size, 0);
+    assert.strictEqual(trustedCode.listeners.size, 0);
+  });
+
   it('keeps safe and unsafe modes isolated across later stream emissions', () => {
     const adapter = createAdapter();
     const safeInput = adapter.createStream(1), unsafeInput = adapter.createStream(1);
