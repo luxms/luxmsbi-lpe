@@ -1,7 +1,7 @@
 import { isArray, isHash, makeSF, isFunction } from "./lib/utils";
 import { except } from "./lib/exception";
 import { $IS_LIB$, $VAR$, EVAL } from "./lisp";
-import { safeApply, safeGet, safeKey, safeSet, safeValue } from './lib/security';
+import { evaluationPolicy } from './lib/evaluation-policy';
 
 
 const VAR_NOT_FOUND = { value: undefined, found: false };
@@ -51,6 +51,7 @@ export function $getvar$(ctx, varName, rs = {}, varSearchOptions = undefined) {
  * @param {EvalOptions} rs - options on how to resolve
  */
 export function $setvar$(ctx, varName, value, rs = {}) {
+  const {safeKey, safeSet} = evaluationPolicy(rs);
   safeKey(varName);
   const result = varSetter(ctx, varName, value, rs);
 
@@ -74,6 +75,7 @@ export function $setvar$(ctx, varName, value, rs = {}) {
  * @returns {{value: *, found: boolean}}
  */
 export function varGetter(ctx, varName, rs, varSearchOptions) {
+  const {safeApply, safeGet, safeKey, safeSet, safeValue} = evaluationPolicy(rs);
   safeKey(varName);
   varSearchOptions.currentCtxElement++;
 
@@ -134,6 +136,7 @@ export function varGetter(ctx, varName, rs, varSearchOptions) {
  * @returns {{value: *, found: boolean, firstNotlib?: ContextObject}}
  */
 function varSetter(ctx, varName, value, rs) {
+  const {safeApply, safeSet} = evaluationPolicy(rs);
 
   if (isArray(ctx)) {
     let firstNotlib = undefined;

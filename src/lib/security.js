@@ -16,6 +16,12 @@ const forbiddenKeys = new Set([
 const functionDataKeys = new Set(['name', 'length', 'lpeName']);
 const nativeFunctions = new WeakSet();
 const checkedFunctions = new WeakSet();
+const unsafeFunctions = new WeakSet();
+
+export function markUnsafe(fn) {
+  unsafeFunctions.add(fn);
+  return fn;
+}
 const nativeChecks = new WeakMap();
 const protectedObjects = new WeakSet();
 const intrinsicPrototypes = new WeakSet();
@@ -109,6 +115,7 @@ export function isNativeFunction(fn) {
 }
 
 export function safeFunction(fn) {
+  if (unsafeFunctions.has(fn)) throw securityError('Unsafe LPE functions cannot enter safe evaluation');
   if (typeof fn !== 'function') throw new TypeError('LPE callable must be a function');
   if (!nativeFunctions.has(fn) && !checkedFunctions.has(fn)) {
     if (isNativeFunction(fn)) {

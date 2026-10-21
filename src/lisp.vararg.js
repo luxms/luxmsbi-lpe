@@ -11,7 +11,7 @@
 
 import { EVAL } from "./lisp";
 import unbox from "./lisp.unbox";
-import { safeApply, safeKey } from './lib/security';
+import { evaluationPolicy } from './lib/evaluation-policy';
 
 function parseTemplate(template) {
   if (!Array.isArray(template)) {
@@ -83,6 +83,7 @@ export default function makeVararg(template, fn) {
   const { varnames, getType } = parseTemplate(template);
 
   function varargHandler(astArgs, ctx, opt, ast) {
+    const {safeApply, safeKey} = evaluationPolicy(opt);
     /**
      * Индексы позиционных аргументов в массиве реально пришедших аргементов
      * @type {number[]}
@@ -153,7 +154,7 @@ export default function makeVararg(template, fn) {
           // и запускаем
           return safeApply(fn, [...positionalArgs, args, kwargs], self);
         },
-        opt?.streamAdapter);
+        opt?.streamAdapter, opt);
   }
 
   varargHandler.__isSpecialForm = true;

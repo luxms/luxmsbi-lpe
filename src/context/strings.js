@@ -1,11 +1,14 @@
 import { except } from "../lib/exception.js";
 import { isFunction, isString } from "../lib/utils.js";
-import { safeApply } from '../lib/security';
+import { evaluationPolicy } from '../lib/evaluation-policy';
+import { markUnsafe } from '../lib/security';
 
 
+export function createContext(unsafe = false) {
+const { safeApply } = evaluationPolicy({unsafe});
 /** @type {ContextFunctionsObject} */
 const _context = {};
-export default _context;
+
 
 
 
@@ -334,3 +337,13 @@ _context["includes"] = (str, search) => {
    */
   return str.includes(search);
 };
+
+if (unsafe) {
+  for (const value of Object.values(_context)) {
+    if (typeof value === 'function') markUnsafe(value);
+  }
+}
+return _context;
+}
+
+export default createContext();

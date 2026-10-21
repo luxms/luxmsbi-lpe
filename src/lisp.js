@@ -25,18 +25,19 @@ export const $IS_LIB$ = Symbol.for('__islib__');
 import unbox from "./lisp.unbox";
 import { varGetter } from './lisp.var';
 import { except } from './lib/exception';
-import CONTEXT_STD from './context/std';
+import CONTEXT_STD, { createContext as createStdContext } from './context/std';
 import CONTEXT_TYPES from './context/types';
-import CONTEXT_VARIABLES from './context/variables';
+import CONTEXT_VARIABLES, { createContext as createVariablesContext } from './context/variables';
 import CONTEXT_LOGICAL from './context/logical';
 import CONTEXT_MATH from './context/math';
-import CONTEXT_STRINGS from './context/strings';
-import CONTEXT_OBJECTS from './context/objects';
+import CONTEXT_STRINGS, { createContext as createStringsContext } from './context/strings';
+import CONTEXT_OBJECTS, { createContext as createObjectsContext } from './context/objects';
 import { DATE_FUNCTIONS } from "./lib/date/date";
 import { TIME_FUNCTIONS } from "./lib/date/time";
 import { findDoc, makeDoc, selectPerfectFunctionName } from "./lib/doc";
 import { isArray, isArrayFunction, isFunction, isHash, isSF, isSkip, isString } from "./lib/utils";
-import { isNativeFunction, safeApply, safeFunction, safeValue } from './lib/security';
+import { isNativeFunction } from './lib/security';
+import { evaluationPolicy } from './lib/evaluation-policy';
 
 
 
@@ -88,6 +89,12 @@ export const STDLIB = {
 };
 
 prepareContext(STDLIB);
+
+const UNSAFE_STDLIB = {
+  ...STDLIB,
+  get Hashmap() { return {}; },
+  ...createStdContext(true), ...createVariablesContext(true), ...createStringsContext(true), ...createObjectsContext(true),
+};
 
 
 /**
@@ -162,6 +169,9 @@ export function prepareContext(ctx) {
  * @returns {Promise<Awaited<unknown>[] | void>|*|null|undefined}
  */
 export function EVAL(ast, ctx, rs) {
+  // Snapshot host options so delayed work cannot change privilege later.
+  if (!rs || !Object.isFrozen(rs)) rs = Object.freeze({...rs, unsafe: rs?.unsafe === true});
+  const {safeApply} = evaluationPolicy(rs);
   // В этой функции задаем параметры поиска и обрабатываем skip результат
   // после чего перенаправляем в исходную функцию, которая теперь называется EVAL_IMPLEMENTATION
   /** @type {VarSearchOptions} */
@@ -206,6 +216,7 @@ export function EVAL(ast, ctx, rs) {
  * @returns {Promise<Awaited<unknown>[] | void>|*|null|undefined}
  */
 function EVAL_IMPLEMENTATION(ast, ctx, rs, evalOptions) {
+  const {safeApply, safeFunction, safeValue} = evaluationPolicy(rs);
 
   if (!isArray(ast)) {
     if (isString(ast)) {
@@ -254,7 +265,7 @@ function EVAL_IMPLEMENTATION(ast, ctx, rs, evalOptions) {
       const fnResult = safeApply(op, args, op);
       return fnResult;
     },
-    rs?.streamAdapter,
+    rs?.streamAdapter, rs,
   );
 
 } // EVAL
@@ -269,6 +280,6 @@ function EVAL_IMPLEMENTATION(ast, ctx, rs, evalOptions) {
  * @returns {*}
  */
 export function eval_lisp(ast, ctx, rs) {
-  const result = EVAL(ast, [ctx || {}, STDLIB, {}], rs || {resolveString: true});
+  const result = EVAL(ast, [ctx || {}, rs?.unsafe === true ? UNSAFE_STDLIB : STDLIB, {}], rs || {resolveString: true});
   return result;
 }

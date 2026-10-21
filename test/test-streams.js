@@ -30,6 +30,30 @@ function createAdapter() {
 }
 
 describe('Streams through an external adapter', () => {
+  it('keeps safe and unsafe modes isolated across later stream emissions', () => {
+    const adapter = createAdapter();
+    const safeInput = adapter.createStream(1), unsafeInput = adapter.createStream(1);
+    const safeOptions = {streamAdapter: adapter, unsafe: false};
+    const unsafeOptions = {streamAdapter: adapter, unsafe: true};
+    const restricted = lpe.eval_lpe('identity(value)', {value: safeInput}, safeOptions);
+    const trusted = lpe.eval_lpe('identity(value)', {value: unsafeInput}, unsafeOptions);
+    safeOptions.unsafe = true;
+    unsafeOptions.unsafe = false;
+    try {
+      adapter.next(unsafeInput, Function);
+      assert.strictEqual(trusted.value, Function);
+      assert.throws(() => adapter.next(safeInput, Function), error => error.code === 'LPE_SECURITY');
+      assert.strictEqual(restricted.value, 1);
+      adapter.next(unsafeInput, globalThis);
+      assert.strictEqual(trusted.value, globalThis);
+    } finally {
+      adapter.release(restricted);
+      adapter.release(trusted);
+    }
+    assert.strictEqual(safeInput.refs, 1);
+    assert.strictEqual(unsafeInput.refs, 1);
+  });
+
   it('rejects native code generation capabilities in later stream updates', () => {
     const adapter = createAdapter();
     const value = adapter.createStream(42);

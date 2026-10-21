@@ -1,14 +1,18 @@
 import { except } from "../lib/exception.js";
-import { catchReturn, isArray, isArrayFunction, isFunction, isHash, isNumber, isNumberLike, isObj, isString, makeSF } from "../lib/utils.js";
+import { catchReturn, isArray, isArrayFunction, isFunction, isHash, isNumber, isNumberLike, isObj, isString, makeSF as makeSpecialForm } from "../lib/utils.js";
 import { EVAL } from "../lisp";
 import unbox from "../lisp.unbox.js";
 import makeVararg from "../lisp.vararg.js";
 import { $getvar$ } from '../lisp.var';
-import { safeApply, safeConstruct, safeDelete, safeEntries, safeFromEntries, safeFunction, safeGet, safeGetIn, safeKey, safeSet } from '../lib/security';
+import { evaluationPolicy } from '../lib/evaluation-policy';
+import { markUnsafe } from '../lib/security';
 
+export function createContext(unsafe = false) {
+const makeSF = fn => unsafe ? markUnsafe(makeSpecialForm(fn)) : makeSpecialForm(fn);
+const { safeApply, safeConstruct, safeDelete, safeEntries, safeFromEntries, safeFunction, safeGet, safeGetIn, safeKey, safeSet } = evaluationPolicy({unsafe});
 /** @type {ContextFunctionsObject} */
 const _context = {};
-export default _context;
+
 
 
 
@@ -142,7 +146,7 @@ _context["makeHash"] = makeSF((ast, ctx, rs) => {
       }, [])
     ),
 
-    rs?.streamAdapter,
+    rs?.streamAdapter, rs,
   );
 });
 
@@ -216,10 +220,10 @@ _context["repeat"] = makeSF((ast, ctx, rs) => {
       return unbox(
         [...Array(n)].map(() => EVAL(ast[1], ctx, rs)),
         (result) => result,
-        rs?.streamAdapter,
+        rs?.streamAdapter, rs,
       );
     },
-    rs?.streamAdapter,
+    rs?.streamAdapter, rs,
   )
 });
 
@@ -342,7 +346,7 @@ _context["->fn"] = _context["toFn"] = _context["defFn"] = makeSF((ast, ctx, rs) 
     return result;
   });
 
-  return func;
+  return rs?.unsafe === true ? markUnsafe(func) : func;
 });
 
 
@@ -648,10 +652,10 @@ _context["mapit"] = makeSF((ast, ctx, rs) => {
       return unbox(
         Array.prototype.map.call(array, (it, idx) => EVAL(conditionAST, [{ it, idx }, ctx], rs)),
         (result) => result,
-        rs?.streamAdapter,
+        rs?.streamAdapter, rs,
       );
     },
-    rs?.streamAdapter,
+    rs?.streamAdapter, rs,
   );
 });
 
@@ -724,10 +728,10 @@ _context["filterit"] = makeSF((ast, ctx, rs) => {
       return unbox(
         Array.prototype.filter.call(array, (it, idx) => !!EVAL(conditionAST, [{ it, idx }, ctx], rs)),
         (result) => result,
-        rs?.streamAdapter,
+        rs?.streamAdapter, rs,
       );
     },
-    rs?.streamAdapter,
+    rs?.streamAdapter, rs,
   );
 });
 
@@ -1550,7 +1554,7 @@ _context["get_in"] = makeSF((ast, ctx, rs) => {
       const path = args.length === 1 && isArray(args[0]) ? args[0] : args;
       return safeGetIn(obj, path);
     },
-    rs?.streamAdapter,
+    rs?.streamAdapter, rs,
   );
 
 });
@@ -1596,7 +1600,7 @@ _context["assoc_in"] = makeSF((ast, ctx, rs) => {
       // Чтобы стрим гарантированно выполнился, сперва выполняем его, а потом просто берем изначальный объект
       return EVAL(["begin", expr, ["$AST$", origin]], ctx, rs);
     },
-    rs?.streamAdapter
+    rs?.streamAdapter, rs
   );
 });
 
@@ -1699,7 +1703,7 @@ _context["cp"] = makeSF((ast, ctx, rs) => {
         ["get_in", ["$AST$", root(safeGet(from, 0))], ["$AST$", from.slice(1)]]];
       return EVAL(lpe, ctx, rs);
     },
-    rs?.streamAdapter,
+    rs?.streamAdapter, rs,
   );
 });
 
@@ -1884,3 +1888,13 @@ _context["makeStruct"] = (from, struct) => {
 
   return restruct(struct, from);
 };
+
+if (unsafe) {
+  for (const value of Object.values(_context)) {
+    if (typeof value === 'function') markUnsafe(value);
+  }
+}
+return _context;
+}
+
+export default createContext();

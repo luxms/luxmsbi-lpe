@@ -1,8 +1,10 @@
-import { safeApply, safeGet, safeValue } from './lib/security';
+import { evaluationPolicy } from './lib/evaluation-policy';
 
 // whenReady is a host callback too. Never invoke it through an unchecked
 // property read, even when it is nested inside an otherwise ordinary value.
-function whenReady(value) {
+function whenReady(value, options) {
+  if (options?.unsafe === true) return value?.whenReady;
+  const {safeGet} = evaluationPolicy(options);
   return value && typeof value === 'object' && Object.hasOwn(value, 'whenReady')
     ? safeGet(value, 'whenReady') : undefined;
 }
@@ -12,10 +14,12 @@ function whenReady(value) {
  * @param {any[]} args inputs that may be streams, promises or values
  * @param {(arg: any[]) => any} resolve callback to run when all ready
  * @param {StreamAdapter?} streamAdapter
+ * @param {EvalOptions=} options
  */
-export default function unbox(args, resolve, streamAdapter) {
+export default function unbox(args, resolve, streamAdapter, options) {
+  const {safeApply, safeValue} = evaluationPolicy(options);
   const resolveValues = values => safeValue(resolve(values.map(safeValue)));
-  const hasPromise = args.find(a => a instanceof Promise || whenReady(a));      // Стримы некоторых видов могут делать вид, что они промисы, имея метод whenReady
+  const hasPromise = args.find(a => a instanceof Promise || whenReady(a, options));      // Стримы некоторых видов могут делать вид, что они промисы, имея метод whenReady
   const hasStreams = !!streamAdapter && !!args.find(streamAdapter.isStream);
 
   if (hasStreams) {
@@ -98,7 +102,7 @@ export default function unbox(args, resolve, streamAdapter) {
   } else if (hasPromise) {
     // Возможно, пришли стримы. Постулируем что может быть метод whenReady у стримов, который работает как пропим
     return Promise.all(args.map(value => {
-      const ready = whenReady(value);
+      const ready = whenReady(value, options);
       return ready ? safeApply(ready, [], value) ?? value : value;
     })).then(resolveValues);
 

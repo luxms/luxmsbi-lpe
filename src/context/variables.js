@@ -1,17 +1,21 @@
 import { parse } from '../lpep';
 // @ts-check
-import { isArray, isHash, isString, makeSF, isFunction, isArrayFunction, isObj } from "../lib/utils";
+import { isArray, isHash, isString, makeSF as makeSpecialForm, isFunction, isArrayFunction, isObj } from "../lib/utils";
 import { $getvar$, $setvar$ } from "../lisp.var";
 import { EVAL } from "../lisp";
 import { except } from "../lib/exception";
 import unbox from "../lisp.unbox";
-import { safeDelete, safeGet, safeKey, safeSet, securityError } from '../lib/security';
+import { evaluationPolicy } from '../lib/evaluation-policy';
+import { markUnsafe } from '../lib/security';
 
 
 
+export function createContext(unsafe = false) {
+const makeSF = fn => unsafe ? markUnsafe(makeSpecialForm(fn)) : makeSpecialForm(fn);
+const { safeDelete, safeGet, safeKey, safeSet, securityError } = evaluationPolicy({unsafe});
 /** @type {ContextFunctionsObject} */
 const _context = {};
-export default _context;
+
 
 
 
@@ -74,7 +78,7 @@ _context[":="] = _context["assign"] = makeSF((ast, ctx, rs) => {
         }
         return safeSet(varObj, keys[keys.length - 1], value);
       },
-      rs?.streamAdapter,
+      rs?.streamAdapter, rs,
     )
 
   }
@@ -159,7 +163,7 @@ _context["let"] = makeSF((ast, ctx, rs) => {
       // На случай, если newCtx - функция, передаем {}, чтобы в него записывались локальные переменные
       return EVAL(['begin', ...ast.slice(1)], [newCtx, {}, ctx], rs);
     },
-    rs?.streamAdapter,
+    rs?.streamAdapter, rs,
   );
 });
 
@@ -209,7 +213,7 @@ const letStarSF = _context["let*"] = _context["letseq"] = _context["letstar"] = 
       [bindings.slice(1), ...ast.slice(1)],
       [{[safeKey(name)]: resolved}, ctx],
       rs),
-    rs?.streamAdapter);
+    rs?.streamAdapter, rs);
 });
 
 
@@ -234,7 +238,7 @@ _context["def"] = makeSF((ast, ctx, rs) => {
       const result = $setvar$(ctx, ast[0], value, rs);
       return result;
     },
-    rs?.streamAdapter,
+    rs?.streamAdapter, rs,
   );
 });
 
@@ -307,7 +311,7 @@ _context["undef"] = makeSF((ast, ctx, rs) => {
     ([varName]) => {
       return undefFunc(safeKey(varName), ctx).value;
     },
-    rs?.streamAdapter,
+    rs?.streamAdapter, rs,
   );
 });
 
@@ -385,7 +389,7 @@ _context[".-"] = _context["property"] = makeSF((ast, ctx, options) => {
         return value;                                                             // undefined when 'get'
       }
     },
-    options?.streamAdapter);
+    options?.streamAdapter, options);
 });
 
 
@@ -475,3 +479,13 @@ _context["define"] = makeSF((ast, ctx, rs) => {
   }
   return EVAL(['let', [["##static", statics]], ...ast.slice(ind)], [context, ctx], rs)
 });
+
+if (unsafe) {
+  for (const value of Object.values(_context)) {
+    if (typeof value === 'function') markUnsafe(value);
+  }
+}
+return _context;
+}
+
+export default createContext();
