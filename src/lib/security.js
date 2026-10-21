@@ -315,8 +315,12 @@ function safeJSONStringify(value, replacer, space) {
   };
   let properties;
   if (Array.isArray(replacer)) {
-    properties = [...new Set(replacer.map(unbox)
-      .filter(key => typeof key === 'string' || typeof key === 'number').map(String))];
+    const names = new Set();
+    for (let i = 0; i < replacer.length; i++) {
+      const key = unbox(safeGet(replacer, i));
+      if (typeof key === 'string' || typeof key === 'number') names.add(String(key));
+    }
+    properties = [...names];
   }
   const parents = new Set();
   const read = (object, key) => {

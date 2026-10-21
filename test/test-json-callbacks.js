@@ -53,4 +53,15 @@ describe('JSON callback boundaries', () => {
     value.self = value;
     assert.throws(() => stringify(value), TypeError);
   });
+
+  it('reads replacer lists as data and preserves their property order', () => {
+    const value = {'2': 'two', '1': 'one', a: 42};
+    const replacer = ['2', '1', 'a'];
+    replacer.map = () => { throw new Error('not a method call'); };
+    assert.strictEqual(lpe.eval_lpe('invoke(JSON,"stringify",value,replacer)', {value,replacer}), '{"2":"two","1":"one","a":42}');
+    let reads = 0;
+    Object.defineProperty(replacer, 0, {get() { reads++; return 'a'; }});
+    assert.throws(() => lpe.eval_lpe('invoke(JSON,"stringify",value,replacer)', {value,replacer}), denied);
+    assert.strictEqual(reads, 0);
+  });
 });
