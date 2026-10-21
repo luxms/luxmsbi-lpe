@@ -253,7 +253,7 @@ function EVAL_IMPLEMENTATION(ast, ctx, rs, evalOptions) {
   safeFunction(op);
 
   if (isSF(op)) {
-    const sfResult = safeApply(op, [argsAst, ctx, rs, ast], undefined);
+    const sfResult = safeApply(op, [argsAst, ctx, rs, ast], undefined, true);
     return sfResult;
   }
 

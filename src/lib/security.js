@@ -152,8 +152,11 @@ export function safeValue(value) {
   return value;
 }
 
-export function safeApply(fn, args, receiver) {
+export function safeApply(fn, args, receiver, specialForm = false) {
   safeFunction(fn);
+  if (fn.__isSpecialForm && !specialForm) {
+    throw securityError('Special forms can only be called by the evaluator');
+  }
   args = args.map(safeValue);
   // These native helpers otherwise bypass guarded property reads, e.g. by
   // extracting a special form's private callback or invoking an accessor.
@@ -177,6 +180,7 @@ export function safeApply(fn, args, receiver) {
 
 export function safeConstruct(fn, args) {
   safeFunction(fn);
+  if (fn.__isSpecialForm) throw securityError('Special forms cannot be used as constructors');
   args = args.map(safeValue);
   return safeValue(reflectConstruct(fn, args));
 }

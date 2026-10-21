@@ -28,6 +28,10 @@ methods. Native callables are limited to approved built-ins; native code
 generation, reflection, and opaque bound functions are unsupported. The LPE
 functions `eval`, `rep`, and `define` continue to interpret LPE expressions.
 
+Special forms can only be dispatched by the evaluator; they cannot be invoked
+through ordinary callbacks, `apply`, or construction with caller-supplied
+contexts and evaluation options.
+
 The same checks apply to higher-order callbacks, promise results, stream
 values, and own `whenReady` callbacks. Rejected operations raise an error with
 name `LPESecurityError` and code `LPE_SECURITY`.

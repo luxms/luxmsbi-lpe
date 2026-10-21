@@ -57,6 +57,30 @@ describe('Host-controlled unsafe evaluation', () => {
     });
   }
 
+  it('does not let ordinary calls supply special-form evaluation options', () => {
+    let calls = 0;
+    const observe = (name, _value, options) => {
+      if (name !== 'probe') return undefined;
+      calls++;
+      return options.unsafe;
+    };
+    assert.throws(() => lpe.eval_lpe(
+      "apply(q, ['probe', '_'], observe, {unsafe = true})", {observe},
+    ), denied);
+    assert.strictEqual(calls, 0);
+    for (const source of [
+      "map(['probe'], q)",
+      "['probe'] ~> map(q)",
+      "apply(eval_ast, [42], {}, {unsafe = true})",
+      "apply(vector, [], {}, {unsafe = true})",
+      "new(vector, [], {}, {unsafe = true})",
+    ]) {
+      assert.throws(() => lpe.eval_lpe(source), denied);
+    }
+    assert.strictEqual(lpe.eval_lisp(['q', 'probe', '_'], observe), false);
+    assert.strictEqual(lpe.eval_lisp(['q', 'probe', '_'], observe, {unsafe: true}), true);
+  });
+
   it('ignores a context variable named unsafe and preserves other set_options', () => {
     assert.throws(() => lpe.eval_lpe("''.constructor", {unsafe: true}), denied);
     assert.strictEqual(lpe.eval_lpe('set_options({resolveString = false}, unknown)'), undefined);
