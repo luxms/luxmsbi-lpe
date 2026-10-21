@@ -688,7 +688,7 @@ pub async fn call(
                                 Box::pin(async move {
                                     let key = rt.safe_key(&values[0])?;
                                     let local = rt.new_env(
-                                        IndexMap::from([(key, values[1].clone())]),
+                                        IndexMap::from([(key.into_owned(), values[1].clone())]),
                                         vec![env],
                                     );
                                     call(rt, "let*", &rest, local, &options).await
@@ -697,7 +697,10 @@ pub async fn call(
                         )
                         .await;
                 }
-                local = rt.new_env(IndexMap::from([(rt.safe_key(&key)?, value)]), vec![local]);
+                local = rt.new_env(
+                    IndexMap::from([(rt.safe_key(&key)?.into_owned(), value)]),
+                    vec![local],
+                );
             }
             sequence(rt, args.get(1..).unwrap_or(&[]), local, options).await
         }
@@ -762,7 +765,7 @@ pub async fn call(
                             }
                             rt.set(
                                 &obj,
-                                keys.last().map(String::as_str).unwrap_or("undefined"),
+                                keys.last().map(|key| key.as_ref()).unwrap_or("undefined"),
                                 values.last().unwrap().clone(),
                             )
                         })
@@ -867,7 +870,7 @@ pub async fn call(
                         let mut named = IndexMap::new();
                         if name == "makeHash" {
                             for pair in values.as_chunks::<2>().0 {
-                                named.insert(rt.safe_key(&pair[0])?, pair[1].clone());
+                                named.insert(rt.safe_key(&pair[0])?.into_owned(), pair[1].clone());
                             }
                         } else {
                             for (key, value) in names.into_iter().zip(values) {

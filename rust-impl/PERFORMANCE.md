@@ -16,6 +16,9 @@ against shared expected values, warms both implementations, runs five samples
 sequentially with alternating implementation order, and records medians and
 ranges. The suite covers arithmetic, bindings, strings, conditional evaluation,
 collections, Unicode strings, closure construction/invocation, and parsing a production layout.
+It also covers property/path lookup, mapping/filtering/reduction over rows,
+pluck, zip, numeric object-key ordering, string joins, and formatted strings.
+These added collection workloads use a 0.1 iteration scale.
 Closure cases also isolate construction, repeated calls, lexical captures,
 five-argument calls, and nested closure calls. A fixture's optional `setup` map
 evaluates named bindings once, before validation, warm-up, and timing in both
@@ -42,6 +45,51 @@ host, compiler, Node, revision, dirty state, raw samples, and JS time divided by
 Rust time. Ratios above one favor Rust. Do not run builds or other benchmarks
 alongside an acceptance measurement. Report variation rather than interpreting
 a small difference on a busy machine as a universal speed guarantee.
+
+## Safe runtime optimization comparison
+
+CI compares three implementations in the same job: the candidate Rust runtime,
+the released `r1.8.0` Rust runtime, and JS 1.8.0. The release baseline is built
+with the same compiler, release profile, benchmark driver and expanded fixtures
+in a separate Cargo target directory. No candidate runtime source is copied into
+that build. All 27 workloads run; the two bulk JSON cases retain their documented
+informational status. Measurements rotate execution order across nine samples.
+
+`BENCH_BASELINE_BINARY` enables the third implementation locally;
+`BENCH_BASELINE_REVISION` records its source commit. Each phase includes
+`baselineMedianUs`, `baselineRangeUs`, and `baselineSpeedup` (released Rust time /
+candidate time). The existing `speedup` continues to mean JS time / candidate
+time. Keep the raw samples and compare on the same host; release-note timings
+from another machine are not a before/after baseline.
+
+The optimization uses existing properties of native safe execution:
+
+- Native data arrays have no getters or prototype lookup. Collection loops
+  access numeric slots directly, without formatting and reparsing each index.
+  They still read each slot live and distinguish holes from present undefined
+  values, preserving mutations made by callbacks.
+- Property validation borrows UTF-8 names. Only numeric/UTF-16 conversion or
+  storing a key needs owned text. Short data paths keep their validated keys
+  inline; every segment is checked before traversal, including segments after
+  a missing value. Canonical array-index recognition and object-key ordering
+  no longer allocate formatted numbers.
+- Scalar/name evaluation and registered synchronous builtins use small futures,
+  avoiding the general dispatcher's continuation state. Dispatch only classifies
+  immutable AST/function kinds. Validation, limits, depth changes, and GC roots
+  remain at poll time; no code is executed when a future is merely created.
+
+This does not assume all LPE calls are synchronous: host callbacks, promises,
+streams, special forms, and asynchronous collection functions retain their
+existing execution rules. The immediate evaluator's eligibility rules are not
+relaxed. Boundary tests cover sparse/live arrays, canonical property names,
+complete path validation, lazy calls, rejected values and call limits; the full
+native/WASI corpus and controlled/legacy/async tests remain required.
+
+The allocation approach follows the [Rust Performance Book](https://nnethercote.github.io/perf-book/heap-allocations.html)
+and uses standard [`Cow`](https://doc.rust-lang.org/std/borrow/enum.Cow.html)
+borrowing. A local `sample` profile of `array-map` on the released runtime showed
+the nested `eval_in`/`call_with_options` dispatch paths and allocator activity;
+performance acceptance uses the paired CI measurements, not profiling samples.
 
 ## Release 1.8.0 measurements
 

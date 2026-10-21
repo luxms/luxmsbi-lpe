@@ -119,10 +119,18 @@ impl<T> Clone for Arena<T> {
 }
 const SHIFT: u32 = usize::BITS / 2;
 const INDEX_MASK: usize = (1usize << SHIFT) - 1;
-fn array_index(key: &str) -> Option<usize> {
+pub(crate) fn array_index(key: &str) -> Option<usize> {
+    // JS array indexes use canonical unsigned decimal spelling. Check the
+    // prefix instead of allocating a second string to compare with the input.
+    if key == "0" {
+        return Some(0);
+    }
+    if !matches!(key.as_bytes().first(), Some(b'1'..=b'9')) {
+        return None;
+    }
     key.parse::<u32>()
         .ok()
-        .filter(|n| *n != u32::MAX && n.to_string() == key)
+        .filter(|n| *n != u32::MAX)
         .map(|n| n as usize)
 }
 // Count JavaScript code units without materializing a UTF-16 buffer.
@@ -1484,6 +1492,49 @@ impl Runtime {
     pub(crate) fn is_json_object(&self, value: &Value) -> bool {
         matches!(value, Value::Object(id) if *id == self.json_object)
     }
+    // Indexed reads of native data cannot invoke getters or prototype code.
+    // Keep holes separate from present undefined slots, and read each slot live
+    // so a collection callback may still change a later element.
+    pub(crate) fn get_index(&self, value: &Value, index: usize) -> Value {
+        match value {
+            Value::Array(id) if index < u32::MAX as usize => self
+                .arrays
+                .borrow(*id)
+                .and_then(|a| a.get(index).cloned())
+                .unwrap_or(Value::Undefined),
+            Value::String(s) if index < u32::MAX as usize && s.is_ascii() => s
+                .as_bytes()
+                .get(index)
+                .map(|b| Value::String(char::from(*b).to_string()))
+                .unwrap_or(Value::Undefined),
+            Value::String(s) if index < u32::MAX as usize => s
+                .encode_utf16()
+                .nth(index)
+                .map(|u| self.string_from_utf16(vec![u]))
+                .unwrap_or(Value::Undefined),
+            Value::Utf16(s) if index < u32::MAX as usize => s
+                .get(index)
+                .map(|u| self.string_from_utf16(vec![*u]))
+                .unwrap_or(Value::Undefined),
+            _ => self.get(value, itoa::Buffer::new().format(index)),
+        }
+    }
+    pub(crate) fn has_index(&self, value: &Value, index: usize) -> bool {
+        match value {
+            Value::Array(id) if index < u32::MAX as usize => {
+                self.arrays.borrow(*id).is_some_and(|a| index < a.len())
+                    && !self
+                        .array_holes
+                        .borrow()
+                        .get(id)
+                        .is_some_and(|h| h.contains(&index))
+            }
+            Value::String(_) | Value::Utf16(_) if index < u32::MAX as usize => {
+                index < string_length(value)
+            }
+            _ => self.has_own(value, itoa::Buffer::new().format(index)),
+        }
+    }
     pub fn get(&self, value: &Value, key: &str) -> Value {
         if self.is_json_object(value) {
             return match key {
@@ -1726,13 +1777,7 @@ impl Runtime {
                     .borrow(*id)
                     .map(|o| o.keys().cloned().collect())
                     .unwrap_or_default();
-                keys.sort_by_key(|k| {
-                    k.parse::<u32>()
-                        .ok()
-                        .filter(|n| *n != u32::MAX && n.to_string() == *k)
-                        .map(|n| (0, n))
-                        .unwrap_or((1, 0))
-                });
+                keys.sort_by_key(|k| array_index(k).map(|n| (0, n)).unwrap_or((1, 0)));
                 keys
             }
             Value::Array(id) => (0..self.arrays.borrow(*id).map(|a| a.len()).unwrap_or(0))
@@ -2164,26 +2209,62 @@ impl Runtime {
         }
         result
     }
+    fn enter_eval(&self, options: &EvalOptions) -> Result<DepthGuard> {
+        self.tick()?;
+        self.control_depth(options)?;
+        if self.depth.get() >= options.max_depth {
+            return Err(Error::new(
+                "LimitError",
+                "Evaluation nesting limit exceeded",
+            ));
+        }
+        self.depth.set(self.depth.get() + 1);
+        Ok(DepthGuard(self.depth.clone()))
+    }
+
+    fn eval_atom<'a>(
+        &'a mut self,
+        ast: &'a Ast,
+        env: EnvId,
+        options: &'a EvalOptions,
+    ) -> LocalBoxFuture<'a, Result<Value>> {
+        // No AST execution during dispatch. Keep the same poll-time checks and
+        // roots, without carrying expression/continuation state in every leaf.
+        Box::pin(async move {
+            let _guard = self.enter_eval(options)?;
+            if let Json::String(name) = ast {
+                let _roots = self.roots(ast, env);
+                let value = self.lookup_async(env, name, options, false).await?;
+                if self.legacy_context
+                    && value.is_callable()
+                    && !matches!(&value, Value::Builtin(name) if matches!(name.as_str(), "Array" | "Object" | "Date"))
+                {
+                    Ok(Value::String(name.clone()))
+                } else if self.preserve_promises.get() {
+                    self.safe_value(value)
+                } else {
+                    self.resolve_value(value).await
+                }
+            } else {
+                self.checked_from_json(ast)
+            }
+        })
+    }
+
     pub fn eval_in<'a>(
         &'a mut self,
         ast: &'a Ast,
         env: EnvId,
         options: &'a EvalOptions,
     ) -> LocalBoxFuture<'a, Result<Value>> {
+        if matches!(
+            ast,
+            Json::Null | Json::Bool(_) | Json::Number(_) | Json::String(_)
+        ) {
+            return self.eval_atom(ast, env, options);
+        }
         Box::pin(async move {
-            self.tick()?;
-            self.control_depth(options)?;
-            if self.depth.get() >= options.max_depth {
-                return Err(Error::new(
-                    "LimitError",
-                    "Evaluation nesting limit exceeded",
-                ));
-            }
-            self.depth.set(self.depth.get() + 1);
-            let _guard = DepthGuard(self.depth.clone());
-            if matches!(ast, Json::Null | Json::Bool(_) | Json::Number(_)) {
-                return self.checked_from_json(ast);
-            }
+            let _guard = self.enter_eval(options)?;
             // Host special forms may collect while this lexical scope is active.
             let roots = self.roots(ast, env);
             if let Some(id) = ast.get("$lpeInternalLiteral").and_then(Json::as_u64) {
@@ -2194,19 +2275,6 @@ impl Runtime {
                 return self.safe_value(value);
             }
             match ast {
-                Json::String(name) => {
-                    let value = self.lookup_async(env, name, options, false).await?;
-                    if self.legacy_context
-                        && value.is_callable()
-                        && !matches!(&value, Value::Builtin(name) if matches!(name.as_str(), "Array" | "Object" | "Date"))
-                    {
-                        Ok(Value::String(name.clone()))
-                    } else if self.preserve_promises.get() {
-                        self.safe_value(value)
-                    } else {
-                        self.resolve_value(value).await
-                    }
-                }
                 Json::Array(list) if list.is_empty() => Ok(Value::Null),
                 Json::Array(list) => {
                     let mut next = 0;
@@ -2582,6 +2650,32 @@ impl Runtime {
         })
     }
 
+    fn call_sync_builtin<'a>(
+        &'a mut self,
+        function: Value,
+        name: &'static str,
+        collection: bool,
+        args: Vec<Value>,
+        env: EnvId,
+        options: &'a EvalOptions,
+    ) -> LocalBoxFuture<'a, Result<Value>> {
+        // Classification is effect-free. Validation, limits and roots are
+        // established when polled, just as in the general call dispatcher.
+        Box::pin(async move {
+            for value in &args {
+                self.validate_value(value)?;
+            }
+            let _guard = self.enter_call(options)?;
+            let _roots = self.call_roots(&function, &args, env);
+            let value = if collection {
+                crate::collections::call_sync(self, name, &args)?
+            } else {
+                crate::builtins::call_sync(self, name, &args)?
+            };
+            Ok(value.expect("classified synchronous builtin"))
+        })
+    }
+
     pub fn call_with_options<'a>(
         &'a mut self,
         function: Value,
@@ -2589,6 +2683,14 @@ impl Runtime {
         env: EnvId,
         options: &'a EvalOptions,
     ) -> LocalBoxFuture<'a, Result<Value>> {
+        if let Value::Builtin(name) = &function {
+            if let Some(name) = crate::builtins::sync_name(name) {
+                return self.call_sync_builtin(function, name, false, args, env, options);
+            }
+            if let Some(name) = crate::collections::sync_name(name) {
+                return self.call_sync_builtin(function, name, true, args, env, options);
+            }
+        }
         if let Value::Function(id) = &function {
             if self
                 .functions
@@ -2730,7 +2832,7 @@ impl Runtime {
                             }
                             return Ok(Value::Function(self.functions.insert(Function::Bound {
                                 receiver: first,
-                                name,
+                                name: name.into_owned(),
                             })));
                         }
                         "invoke" | "_call_obj_meth_" => {

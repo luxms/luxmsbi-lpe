@@ -115,7 +115,7 @@ fn has(rt: &Runtime, value: &Value, key: &str) -> bool {
 }
 
 fn property_key(rt: &Runtime, value: &Value) -> Result<String> {
-    rt.safe_key(value)
+    rt.safe_key(value).map(std::borrow::Cow::into_owned)
 }
 
 fn length(rt: &Runtime, value: &Value) -> usize {
@@ -598,8 +598,7 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
             let len = if is_array(&a) { length(rt, &a) } else { 0 };
             for i in 0..len {
                 rt.tick()?;
-                let key = i.to_string();
-                if !matches!(name, "find" | "findIndex") && !has(rt, &a, &key) {
+                if !matches!(name, "find" | "findIndex") && !rt.has_index(&a, i) {
                     if matches!(name, "map" | "mapArr") {
                         rt.charge_items::<Value>(1)?;
                         result.push(Value::Undefined);
@@ -608,7 +607,7 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
                     continue;
                 }
                 // Read live values: callbacks can mutate later slots, but not the iteration length.
-                let item = rt.safe_get(&a, &key)?;
+                let item = rt.safe_value(rt.get_index(&a, i))?;
                 let mut argv = match name {
                     "reduce" | "reduceArr" => vec![acc.clone(), item.clone()],
                     _ => vec![item.clone()],
@@ -672,8 +671,8 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
             let mut undefined = 0;
             for i in 0..len {
                 rt.tick()?;
-                if has(rt, &a, &i.to_string()) {
-                    let v = rt.get(&a, &i.to_string());
+                if rt.has_index(&a, i) {
+                    let v = rt.get_index(&a, i);
                     if matches!(v, Value::Undefined) {
                         undefined += 1;
                     } else {
@@ -761,7 +760,7 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
                 for (source, array) in &arrays {
                     for (i, v) in array.iter().enumerate() {
                         rt.tick()?;
-                        if has(rt, source, &i.to_string()) {
+                        if rt.has_index(source, i) {
                             all.push(v.clone());
                         }
                     }
@@ -776,7 +775,7 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
                 for (source, array) in &arrays {
                     for (i, item) in array.iter().enumerate() {
                         rt.tick()?;
-                        if !has(rt, source, &i.to_string()) {
+                        if !rt.has_index(source, i) {
                             continue;
                         }
                         if first_match(rt, &b, array, item, false).await? == Some(i) {
@@ -800,7 +799,7 @@ pub async fn call(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option
             } else if let Some((source, first)) = arrays.first() {
                 for (i, item) in first.iter().enumerate() {
                     rt.tick()?;
-                    if !has(rt, source, &i.to_string()) {
+                    if !rt.has_index(source, i) {
                         continue;
                     }
                     if name != "difference"
@@ -1017,7 +1016,7 @@ pub fn call_sync(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option<
                 let mut row = Vec::new();
                 for array in &arrays {
                     rt.tick()?;
-                    let value = rt.get(array, &i.to_string());
+                    let value = rt.get_index(array, i);
                     rt.charge_value(&value)?;
                     row.push(value);
                 }
@@ -1076,8 +1075,8 @@ pub fn call_sync(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option<
                 let result = rt.array(Vec::new());
                 for i in lo..hi {
                     rt.tick()?;
-                    if has(rt, &a, &i.to_string()) {
-                        let value = rt.get(&a, &i.to_string());
+                    if rt.has_index(&a, i) {
+                        let value = rt.get_index(&a, i);
                         rt.set(&result, &(i - lo).to_string(), value)?;
                     }
                 }
@@ -1105,8 +1104,8 @@ pub fn call_sync(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option<
                     let len = length(rt, input);
                     for i in 0..len {
                         rt.tick()?;
-                        if has(rt, input, &i.to_string()) {
-                            let value = rt.get(input, &i.to_string());
+                        if rt.has_index(input, i) {
+                            let value = rt.get_index(input, i);
                             rt.set(&result, &(offset + i).to_string(), value)?;
                         }
                     }
@@ -1154,10 +1153,10 @@ pub fn call_sync(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option<
                     continue;
                 }
                 stack.push((array.clone(), index + 1, depth));
-                if !has(rt, &array, &index.to_string()) {
+                if !rt.has_index(&array, index) {
                     continue;
                 }
-                let value = rt.get(&array, &index.to_string());
+                let value = rt.get_index(&array, index);
                 if depth > 0.0 && is_array(&value) {
                     stack.push((value, 0, depth - 1.0));
                 } else {
@@ -1170,10 +1169,10 @@ pub fn call_sync(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option<
             let mut result = IndexMap::new();
             for i in 0..if is_array(&a) { length(rt, &a) } else { 0 } {
                 rt.tick()?;
-                if !has(rt, &a, &i.to_string()) {
+                if !rt.has_index(&a, i) {
                     continue;
                 }
-                let label = rt.get(&a, &i.to_string());
+                let label = rt.get_index(&a, i);
                 let label = if matches!(label, Value::Bool(_) | Value::Null | Value::Undefined) {
                     Value::String(rt.to_string(&label))
                 } else {
@@ -1195,7 +1194,7 @@ pub fn call_sync(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option<
             let mut group: Option<Vec<Value>> = None;
             for (i, item) in values.into_iter().enumerate() {
                 rt.tick()?;
-                if !has(rt, &a, &i.to_string()) {
+                if !rt.has_index(&a, i) {
                     continue;
                 }
                 if (i as f64) % n == 0.0 {
@@ -1221,8 +1220,8 @@ pub fn call_sync(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option<
             let mut values = Vec::new();
             for i in 0..len {
                 rt.tick()?;
-                if has(rt, &a, &i.to_string()) {
-                    values.push(rt.get(&a, &i.to_string()));
+                if rt.has_index(&a, i) {
+                    values.push(rt.get_index(&a, i));
                 }
             }
             let mut rng = rand::thread_rng();
@@ -1248,13 +1247,13 @@ pub fn call_sync(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option<
             }
         }
         "pluck" => {
-            let key = property_key(rt, &b)?;
+            let key = rt.safe_key(&b)?;
             let result = rt.array(Vec::new());
             let len = if is_array(&a) { length(rt, &a) } else { 0 };
             for i in 0..len {
                 rt.tick()?;
-                if has(rt, &a, &i.to_string()) {
-                    let v = rt.safe_get(&rt.get(&a, &i.to_string()), &key)?;
+                if rt.has_index(&a, i) {
+                    let v = rt.safe_get(&rt.get_index(&a, i), &key)?;
                     rt.set(&result, &i.to_string(), v)?;
                 }
             }
@@ -1284,9 +1283,9 @@ pub fn call_sync(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option<
             }
             rt.checked_string_from_utf16(output)?
         }
-        "contains?" | "containsKey" => Value::Bool(has(rt, &a, &property_key(rt, &b)?)),
+        "contains?" | "containsKey" => Value::Bool(has(rt, &a, &rt.safe_key(&b)?)),
         "get" | "nth" => {
-            let key = property_key(rt, &b)?;
+            let key = rt.safe_key(&b)?;
             let value = rt.safe_get(&a, &key)?;
             if has(rt, &a, &key) || !matches!(value, Value::Undefined) {
                 value
@@ -1295,12 +1294,12 @@ pub fn call_sync(rt: &mut Runtime, name: &str, args: &[Value]) -> Result<Option<
             }
         }
         "set" => {
-            let key = property_key(rt, &b)?;
+            let key = rt.safe_key(&b)?;
             rt.set(&a, &key, c)?;
             a
         }
         "del" => {
-            let key = property_key(rt, &b)?;
+            let key = rt.safe_key(&b)?;
             Value::Bool(rt.delete(&a, &key)?)
         }
         "keys" | "vals" | "values" | "entries" => {

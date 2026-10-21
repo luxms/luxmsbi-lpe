@@ -169,6 +169,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0
       - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
         with:
           toolchain: stable
@@ -183,6 +184,17 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
       - run: npm ci
+      - name: Build released Rust baseline with the same benchmark workloads
+        shell: bash
+        run: |
+          baseline_source="$RUNNER_TEMP/lpe-r1.8.0-baseline"
+          mkdir -p "$baseline_source"
+          git archive r1.8.0 | tar -x -C "$baseline_source"
+          cp rust-impl/examples/benchmark.rs "$baseline_source/rust-impl/examples/benchmark.rs"
+          cp rust-impl/fixtures/benchmark-inputs.json "$baseline_source/rust-impl/fixtures/benchmark-inputs.json"
+          CARGO_TARGET_DIR="$RUNNER_TEMP/lpe-baseline-target" cargo build --locked --release --manifest-path "$baseline_source/rust-impl/Cargo.toml" --example benchmark
+          echo "BENCH_BASELINE_BINARY=$RUNNER_TEMP/lpe-baseline-target/release/examples/benchmark" >> "$GITHUB_ENV"
+          echo "BENCH_BASELINE_REVISION=$(git rev-parse 'r1.8.0^{commit}')" >> "$GITHUB_ENV"
       - name: Compare warmed repeated benchmarks
         env:
           BENCH_ITERATIONS: "100000"
