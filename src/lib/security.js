@@ -183,6 +183,7 @@ export function safeApply(fn, args, receiver, specialForm = false) {
   if (fn === Object.entries) return safeEntries(args[0]);
   if (fn === Object.fromEntries) return safeFromEntries(args[0]);
   if (fn === Object.hasOwn) return memberDescriptor(args[0], safeKey(args[1])) !== undefined;
+  if (fn === JSON.stringify) return safeJSONStringify(...args);
   const positions = callbackArguments.get(fn);
   if (positions) {
     args = args.slice();
@@ -294,4 +295,60 @@ export function safeGetIn(object, path) {
     object = safeGet(object, key);
   }
   return safeValue(object);
+}
+
+// JSON invokes toJSON before its replacer. Guard both callbacks while building
+// a plain data snapshot so native serialization cannot bypass safeApply.
+function safeJSONStringify(value, replacer, space) {
+  const numberValue = Number.prototype.valueOf;
+  const stringValue = String.prototype.valueOf;
+  const booleanValue = Boolean.prototype.valueOf;
+  const unbox = value => {
+    if (!value || typeof value !== 'object') return value;
+    const tag = reflectApply(objectTag, value, []);
+    const fn = tag === '[object Number]' ? numberValue : tag === '[object String]' ? stringValue
+      : tag === '[object Boolean]' ? booleanValue : undefined;
+    if (fn) {
+      try { return reflectApply(fn, value, []); } catch (_) { /* A custom tag is not a boxed primitive. */ }
+    }
+    return value;
+  };
+  let properties;
+  if (Array.isArray(replacer)) {
+    properties = [...new Set(replacer.map(unbox)
+      .filter(key => typeof key === 'string' || typeof key === 'number').map(String))];
+  }
+  const parents = new Set();
+  const read = (object, key) => {
+    const descriptor = ownDescriptor(object, key);
+    if (descriptor && !('value' in descriptor)) throw securityError('Property accessors are forbidden');
+    return descriptor?.value;
+  };
+  const visit = (holder, key) => {
+    let current = safeValue(read(holder, key));
+    if (current && typeof current === 'object' && !protectedObjects.has(current)) {
+      const method = safeMethod(current, 'toJSON');
+      if (typeof method === 'function') current = safeApply(method, [key], current);
+    }
+    if (typeof replacer === 'function') current = safeApply(replacer, [key, current], holder);
+    current = unbox(current);
+    if (typeof current === 'bigint') throw new TypeError('Cannot serialize a BigInt');
+    if (!current || typeof current !== 'object') return typeof current === 'function' ? undefined : current;
+    if (parents.has(current)) throw new TypeError('Converting circular structure to JSON');
+    parents.add(current);
+    let result;
+    if (Array.isArray(current)) {
+      result = [];
+      for (let i = 0; i < current.length; i++) result.push(visit(current, String(i)));
+    } else {
+      result = Object.create(null);
+      for (const name of properties || ownKeys(current)) {
+        const item = visit(current, name);
+        if (item !== undefined) result[name] = item;
+      }
+    }
+    parents.delete(current);
+    return result;
+  };
+  return JSON.stringify(visit({'': value}, ''), properties, unbox(space));
 }
