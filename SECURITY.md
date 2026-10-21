@@ -66,7 +66,11 @@ The mode belongs to the evaluation, not global state. LPE `set_options` cannot
 change it. Nested evaluation, closures, promises and stream updates retain the
 original mode; changing the caller's options object after the call has no effect.
 Unsafe LPE closures and unsafe library functions cannot be passed into checked
-evaluation. Ordinary host callbacks remain trusted: a callback that explicitly
+evaluation, including application objects with an unsafe `then` callback.
+Checked evaluation rejects inherited `then` callbacks and `then` accessors.
+Promises already created by trusted host code may have invoked their callbacks
+before reaching LPE; the evaluator cannot undo those host-side effects.
+Ordinary host callbacks remain trusted: a callback that explicitly
 starts an unsafe evaluator grants that capability to its caller.
 
 Exported `STDLIB` remains checked. Custom special forms must forward their

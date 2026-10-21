@@ -149,6 +149,24 @@ export function safeValue(value) {
     guardedPromises.set(guarded, guarded);
     return guarded;
   }
+  // Native promise resolution invokes `then` without going through safeApply.
+  // Inspect its descriptor before handing application data to that machinery.
+  if (value && (typeof value === 'object' || typeof value === 'function')) {
+    for (let object = value; object; object = getPrototypeOf(object)) {
+      const descriptor = ownDescriptor(object, 'then');
+      if (!descriptor) continue;
+      if (object !== value || !('value' in descriptor)) {
+        throw securityError('Inherited then callbacks and then accessors are forbidden');
+      }
+      if (typeof descriptor.value === 'function') {
+        safeFunction(descriptor.value);
+        if (descriptor.value.__isSpecialForm) {
+          throw securityError('Special forms cannot be used as then callbacks');
+        }
+      }
+      break;
+    }
+  }
   return value;
 }
 

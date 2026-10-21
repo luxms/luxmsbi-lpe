@@ -98,6 +98,35 @@ describe('Host-controlled unsafe evaluation', () => {
     assert.throws(() => unsafe('fn()', {fn: safeFn}), denied);
   });
 
+  it('rejects unsafe then callbacks before native promise assimilation', async () => {
+    let calls = 0;
+    const then = unsafe('(resolve) => begin(tick(), resolve(42))', {tick: () => { calls++; }});
+    for (const box of [{then}, Object.create({then})]) {
+      await assert.rejects(async () => lpe.eval_lpe('begin(p, box)', {
+        p: Promise.resolve(1), box,
+      }), denied);
+    }
+    assert.strictEqual(calls, 0);
+    assert.strictEqual(await unsafe('begin(p, box)', {p: Promise.resolve(1), box: {then}}), 42);
+    assert.strictEqual(calls, 1);
+  });
+
+  it('rejects then accessors without running them and rejects special-form then callbacks', async () => {
+    let calls = 0;
+    const accessor = Object.defineProperty({}, 'then', {get() { calls++; return () => {}; }});
+    for (const box of [accessor, {then: lpe.STDLIB.q}, {then: lpe.STDLIB.vector}]) {
+      await assert.rejects(async () => lpe.eval_lpe('begin(p, box)', {p: Promise.resolve(1), box}), denied);
+    }
+    assert.strictEqual(calls, 0);
+  });
+
+  it('preserves ordinary trusted own then callbacks', async () => {
+    let calls = 0;
+    const box = {then(resolve) { calls++; resolve(42); }};
+    assert.strictEqual(await lpe.eval_lpe('begin(p, box)', {p: Promise.resolve(1), box}), 42);
+    assert.strictEqual(calls, 1);
+  });
+
   it('isolates interleaved promises and snapshots host options', async () => {
     let resolve;
     const value = new Promise(done => { resolve = done; });
