@@ -32773,9 +32773,9 @@
     }
   },
   {
-    "id": "upstream-assertion:test/test-unsafe.js:15:1",
+    "id": "upstream-assertion:test/test-unsafe.js:35:1",
     "group": "Host-controlled unsafe evaluation / <dynamic>",
-    "origin": "test/test-unsafe.js:15",
+    "origin": "test/test-unsafe.js:35",
     "evidence": "upstream-assertion",
     "request": {
       "op": "eval",
@@ -32789,9 +32789,9 @@
     }
   },
   {
-    "id": "upstream-assertion:test/test-unsafe.js:16:1",
+    "id": "upstream-assertion:test/test-unsafe.js:36:1",
     "group": "Host-controlled unsafe evaluation / <dynamic>",
-    "origin": "test/test-unsafe.js:16",
+    "origin": "test/test-unsafe.js:36",
     "evidence": "upstream-assertion",
     "request": {
       "op": "eval",
@@ -32809,9 +32809,9 @@
     }
   },
   {
-    "id": "upstream-assertion:test/test-unsafe.js:17:1",
+    "id": "upstream-assertion:test/test-unsafe.js:37:1",
     "group": "Host-controlled unsafe evaluation / <dynamic>",
-    "origin": "test/test-unsafe.js:17",
+    "origin": "test/test-unsafe.js:37",
     "evidence": "upstream-assertion",
     "request": {
       "op": "eval",
@@ -32829,9 +32829,9 @@
     }
   },
   {
-    "id": "upstream-assertion:test/test-unsafe.js:15:2",
+    "id": "upstream-assertion:test/test-unsafe.js:35:2",
     "group": "Host-controlled unsafe evaluation / <dynamic>",
-    "origin": "test/test-unsafe.js:15",
+    "origin": "test/test-unsafe.js:35",
     "evidence": "upstream-assertion",
     "request": {
       "op": "eval",
@@ -32845,9 +32845,9 @@
     }
   },
   {
-    "id": "upstream-assertion:test/test-unsafe.js:16:2",
+    "id": "upstream-assertion:test/test-unsafe.js:36:2",
     "group": "Host-controlled unsafe evaluation / <dynamic>",
-    "origin": "test/test-unsafe.js:16",
+    "origin": "test/test-unsafe.js:36",
     "evidence": "upstream-assertion",
     "request": {
       "op": "eval",
@@ -32865,9 +32865,9 @@
     }
   },
   {
-    "id": "upstream-assertion:test/test-unsafe.js:17:2",
+    "id": "upstream-assertion:test/test-unsafe.js:37:2",
     "group": "Host-controlled unsafe evaluation / <dynamic>",
-    "origin": "test/test-unsafe.js:17",
+    "origin": "test/test-unsafe.js:37",
     "evidence": "upstream-assertion",
     "request": {
       "op": "eval",
@@ -32885,9 +32885,9 @@
     }
   },
   {
-    "id": "upstream-assertion:test/test-unsafe.js:41:1",
+    "id": "upstream-assertion:test/test-unsafe.js:61:1",
     "group": "Host-controlled unsafe evaluation / allows native compilation in trusted higher-order calls",
-    "origin": "test/test-unsafe.js:41",
+    "origin": "test/test-unsafe.js:61",
     "evidence": "upstream-assertion",
     "request": {
       "op": "eval",
@@ -32901,9 +32901,9 @@
     }
   },
   {
-    "id": "upstream-assertion:test/test-unsafe.js:56:1",
+    "id": "upstream-assertion:test/test-unsafe.js:76:1",
     "group": "Host-controlled unsafe evaluation / <dynamic>",
-    "origin": "test/test-unsafe.js:56",
+    "origin": "test/test-unsafe.js:76",
     "evidence": "upstream-assertion",
     "request": {
       "op": "eval",
@@ -32917,9 +32917,9 @@
     }
   },
   {
-    "id": "upstream-assertion:test/test-unsafe.js:56:2",
+    "id": "upstream-assertion:test/test-unsafe.js:76:2",
     "group": "Host-controlled unsafe evaluation / <dynamic>",
-    "origin": "test/test-unsafe.js:56",
+    "origin": "test/test-unsafe.js:76",
     "evidence": "upstream-assertion",
     "request": {
       "op": "eval",
@@ -32933,9 +32933,9 @@
     }
   },
   {
-    "id": "upstream-assertion:test/test-unsafe.js:56:3",
+    "id": "upstream-assertion:test/test-unsafe.js:76:3",
     "group": "Host-controlled unsafe evaluation / <dynamic>",
-    "origin": "test/test-unsafe.js:56",
+    "origin": "test/test-unsafe.js:76",
     "evidence": "upstream-assertion",
     "request": {
       "op": "eval",
@@ -32949,9 +32949,9 @@
     }
   },
   {
-    "id": "upstream-assertion:test/test-unsafe.js:56:4",
+    "id": "upstream-assertion:test/test-unsafe.js:76:4",
     "group": "Host-controlled unsafe evaluation / <dynamic>",
-    "origin": "test/test-unsafe.js:56",
+    "origin": "test/test-unsafe.js:76",
     "evidence": "upstream-assertion",
     "request": {
       "op": "eval",
@@ -32965,9 +32965,9 @@
     }
   },
   {
-    "id": "upstream-assertion:test/test-unsafe.js:56:5",
+    "id": "upstream-assertion:test/test-unsafe.js:76:5",
     "group": "Host-controlled unsafe evaluation / <dynamic>",
-    "origin": "test/test-unsafe.js:56",
+    "origin": "test/test-unsafe.js:76",
     "evidence": "upstream-assertion",
     "request": {
       "op": "eval",
@@ -32981,9 +32981,9 @@
     }
   },
   {
-    "id": "upstream-assertion:test/test-unsafe.js:56:6",
+    "id": "upstream-assertion:test/test-unsafe.js:76:6",
     "group": "Host-controlled unsafe evaluation / <dynamic>",
-    "origin": "test/test-unsafe.js:56",
+    "origin": "test/test-unsafe.js:76",
     "evidence": "upstream-assertion",
     "request": {
       "op": "eval",
@@ -32997,9 +32997,9 @@
     }
   },
   {
-    "id": "upstream-assertion:test/test-unsafe.js:56:7",
+    "id": "upstream-assertion:test/test-unsafe.js:76:7",
     "group": "Host-controlled unsafe evaluation / <dynamic>",
-    "origin": "test/test-unsafe.js:56",
+    "origin": "test/test-unsafe.js:76",
     "evidence": "upstream-assertion",
     "request": {
       "op": "eval",
@@ -33013,9 +33013,9 @@
     }
   },
   {
-    "id": "upstream-assertion:test/test-unsafe.js:78:1",
+    "id": "upstream-assertion:test/test-unsafe.js:98:1",
     "group": "Host-controlled unsafe evaluation / does not let ordinary calls supply special-form evaluation options",
-    "origin": "test/test-unsafe.js:78",
+    "origin": "test/test-unsafe.js:98",
     "evidence": "upstream-assertion",
     "request": {
       "op": "eval",
@@ -33029,9 +33029,9 @@
     }
   },
   {
-    "id": "upstream-assertion:test/test-unsafe.js:78:3",
+    "id": "upstream-assertion:test/test-unsafe.js:98:3",
     "group": "Host-controlled unsafe evaluation / does not let ordinary calls supply special-form evaluation options",
-    "origin": "test/test-unsafe.js:78",
+    "origin": "test/test-unsafe.js:98",
     "evidence": "upstream-assertion",
     "request": {
       "op": "eval",
@@ -33045,9 +33045,9 @@
     }
   },
   {
-    "id": "upstream-assertion:test/test-unsafe.js:78:4",
+    "id": "upstream-assertion:test/test-unsafe.js:98:4",
     "group": "Host-controlled unsafe evaluation / does not let ordinary calls supply special-form evaluation options",
-    "origin": "test/test-unsafe.js:78",
+    "origin": "test/test-unsafe.js:98",
     "evidence": "upstream-assertion",
     "request": {
       "op": "eval",
@@ -33061,9 +33061,9 @@
     }
   },
   {
-    "id": "upstream-assertion:test/test-unsafe.js:85:1",
+    "id": "upstream-assertion:test/test-unsafe.js:105:1",
     "group": "Host-controlled unsafe evaluation / ignores a context variable named unsafe and preserves other set_options",
-    "origin": "test/test-unsafe.js:85",
+    "origin": "test/test-unsafe.js:105",
     "evidence": "upstream-assertion",
     "request": {
       "op": "eval",
@@ -33080,9 +33080,9 @@
     }
   },
   {
-    "id": "upstream-assertion:test/test-unsafe.js:86:1",
+    "id": "upstream-assertion:test/test-unsafe.js:106:1",
     "group": "Host-controlled unsafe evaluation / ignores a context variable named unsafe and preserves other set_options",
-    "origin": "test/test-unsafe.js:86",
+    "origin": "test/test-unsafe.js:106",
     "evidence": "upstream-assertion",
     "request": {
       "op": "eval",
@@ -33096,9 +33096,9 @@
     }
   },
   {
-    "id": "upstream-assertion:test/test-unsafe.js:142:1",
+    "id": "upstream-assertion:test/test-unsafe.js:162:1",
     "group": "Host-controlled unsafe evaluation / isolates interleaved promises and snapshots host options",
-    "origin": "test/test-unsafe.js:142",
+    "origin": "test/test-unsafe.js:162",
     "evidence": "upstream-assertion",
     "request": {
       "op": "eval",

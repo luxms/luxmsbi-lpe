@@ -58,6 +58,6 @@ for(const source of ['set(vector,"__isSpecialForm",true)','vector.__ast := [1]',
   add(`internals/${source}`,'test/test-security.js:168',{op:'eval',source},null,'LPESecurityError');
 add('assoc-path','test/test-security.js:238',{op:'eval',source:'begin(assoc_in(obj,path,42),[obj,path])',context:{obj:{},path:['items',0,'value']}},[{items:[{value:42}]},['items',0,'value']]);
 add('copy-array','test/test-security.js:245',{op:'eval',source:'begin(cp([source,sourceKey],[target,targetKey]),target.value)',context:{source:['probe',42],target:[],sourceKey:1,targetKey:'value',value:'wrong'}},42);
-add('then-special','test/test-unsafe.js:114',{op:'eval',source:'{then=q}'},null,'LPESecurityError');
+add('then-special','test/test-unsafe.js:134',{op:'eval',source:'{then=q}'},null,'LPESecurityError');
 artifact(resolve(root,'rust-impl/fixtures/release180-source.cases.json'),JSON.stringify(cases,null,2)+'\n');
 console.log(`Prepared ${cases.length} explicit source expansions.`);

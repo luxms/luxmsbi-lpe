@@ -1,7 +1,7 @@
 import {parse, LPESyntaxError} from './lpep';
 import {deparse} from './lped';
 import makeVararg from './lisp.vararg';
-import { eval_lisp, EVAL, STDLIB, $VAR$, $IS_LIB$, prepareContext } from './lisp';
+import { eval_lisp, EVAL, STDLIB, getStdlib, $VAR$, $IS_LIB$, prepareContext } from './lisp';
 import { isString, isArray, isHash, isFunction, makeSF, makeSkipForm, isNumber, isNumberLike } from './lib/utils';
 import { $var$, $getvar$, $setvar$ } from './lisp.var';
 import { findDoc, makeDoc, makeDocForContextes, selectPerfectFunctionName, generateSimpleHash, DOC_WARNINGS, DOC } from './lib/doc'
@@ -41,6 +41,7 @@ export {
   makeVararg,
   makeSkipForm,
   STDLIB,
+  getStdlib,
   $VAR$,
   $IS_LIB$,
   unbox,

@@ -78,6 +78,14 @@ received options to nested evaluation and to `unbox(args, resolve, adapter,
 options)` when opting into unsafe behavior. There is no change to the default
 behavior of the existing three-argument `unbox` API.
 
+To delegate a custom form to the matching built-in implementation, use
+`getStdlib(options)[name]` instead of `STDLIB[name]`. For example:
+
+```js
+const context = {'sf:.-': (ast, ctx, options) =>
+  lpe.eval_lisp([lpe.getStdlib(options)['.-'], ...ast], ctx, options)};
+```
+
 ## Build and validation
 
 Run `npm run build` before `npm test`; tests consume `dist/lpe.js`. Boundary

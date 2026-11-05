@@ -657,9 +657,9 @@
     "reason": "Excluded native RegExp or JavaScript object/method interop."
   },
   {
-    "id": "upstream-assertion:test/test-unsafe.js:15:3",
+    "id": "upstream-assertion:test/test-unsafe.js:35:3",
     "group": "Host-controlled unsafe evaluation / <dynamic>",
-    "origin": "test/test-unsafe.js:15",
+    "origin": "test/test-unsafe.js:35",
     "evidence": "upstream-assertion",
     "request": {
       "op": "eval",
@@ -674,9 +674,9 @@
     "reason": "Excluded native RegExp or JavaScript object/method interop."
   },
   {
-    "id": "upstream-assertion:test/test-unsafe.js:16:3",
+    "id": "upstream-assertion:test/test-unsafe.js:36:3",
     "group": "Host-controlled unsafe evaluation / <dynamic>",
-    "origin": "test/test-unsafe.js:16",
+    "origin": "test/test-unsafe.js:36",
     "evidence": "upstream-assertion",
     "request": {
       "op": "eval",
@@ -695,9 +695,9 @@
     "reason": "Excluded native RegExp or JavaScript object/method interop."
   },
   {
-    "id": "upstream-assertion:test/test-unsafe.js:17:3",
+    "id": "upstream-assertion:test/test-unsafe.js:37:3",
     "group": "Host-controlled unsafe evaluation / <dynamic>",
-    "origin": "test/test-unsafe.js:17",
+    "origin": "test/test-unsafe.js:37",
     "evidence": "upstream-assertion",
     "request": {
       "op": "eval",
@@ -716,9 +716,9 @@
     "reason": "Excluded native RegExp or JavaScript object/method interop."
   },
   {
-    "id": "upstream-assertion:test/test-unsafe.js:15:4",
+    "id": "upstream-assertion:test/test-unsafe.js:35:4",
     "group": "Host-controlled unsafe evaluation / <dynamic>",
-    "origin": "test/test-unsafe.js:15",
+    "origin": "test/test-unsafe.js:35",
     "evidence": "upstream-assertion",
     "request": {
       "op": "eval",
@@ -733,9 +733,9 @@
     "reason": "Excluded native RegExp or JavaScript object/method interop."
   },
   {
-    "id": "upstream-assertion:test/test-unsafe.js:16:4",
+    "id": "upstream-assertion:test/test-unsafe.js:36:4",
     "group": "Host-controlled unsafe evaluation / <dynamic>",
-    "origin": "test/test-unsafe.js:16",
+    "origin": "test/test-unsafe.js:36",
     "evidence": "upstream-assertion",
     "request": {
       "op": "eval",
@@ -754,9 +754,9 @@
     "reason": "Excluded native RegExp or JavaScript object/method interop."
   },
   {
-    "id": "upstream-assertion:test/test-unsafe.js:17:4",
+    "id": "upstream-assertion:test/test-unsafe.js:37:4",
     "group": "Host-controlled unsafe evaluation / <dynamic>",
-    "origin": "test/test-unsafe.js:17",
+    "origin": "test/test-unsafe.js:37",
     "evidence": "upstream-assertion",
     "request": {
       "op": "eval",
@@ -775,9 +775,9 @@
     "reason": "Excluded native RegExp or JavaScript object/method interop."
   },
   {
-    "id": "upstream-assertion:test/test-unsafe.js:78:2",
+    "id": "upstream-assertion:test/test-unsafe.js:98:2",
     "group": "Host-controlled unsafe evaluation / does not let ordinary calls supply special-form evaluation options",
-    "origin": "test/test-unsafe.js:78",
+    "origin": "test/test-unsafe.js:98",
     "evidence": "upstream-assertion",
     "request": {
       "op": "eval",
@@ -792,9 +792,9 @@
     "reason": "Excluded native RegExp or JavaScript object/method interop."
   },
   {
-    "id": "upstream-assertion:test/test-unsafe.js:78:5",
+    "id": "upstream-assertion:test/test-unsafe.js:98:5",
     "group": "Host-controlled unsafe evaluation / does not let ordinary calls supply special-form evaluation options",
-    "origin": "test/test-unsafe.js:78",
+    "origin": "test/test-unsafe.js:98",
     "evidence": "upstream-assertion",
     "request": {
       "op": "eval",

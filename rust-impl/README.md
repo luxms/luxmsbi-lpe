@@ -1,6 +1,6 @@
 # Rust LPE implementation
 
-Rust LPE targets JavaScript LPE **1.8.0 safe semantics** without a JavaScript
+Rust LPE targets JavaScript LPE **1.8.1 safe semantics** without a JavaScript
 engine. It includes portable `JSON` methods, formatted strings, time operations,
 and optimized closure calls. Unsafe evaluation is rejected.
 

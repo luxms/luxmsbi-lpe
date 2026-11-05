@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.8.1](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.8.0...v1.8.1) (2026-11-05)
+
+
+### Bug Fixes
+
+* preserve evaluation mode when delegating standard forms ([5b1f5c9](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/commit/5b1f5c9b004e6785dbc52f0980e52527d8aab9c7))
+
 ## [1.8.0](https://gito.luxms.com/luxmsbi/luxmsbi-lpe/compare/v1.7.3...v1.8.0) (2026-10-21)
 
 

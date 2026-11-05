@@ -4,6 +4,26 @@ const denied = error => error?.code === 'LPE_SECURITY';
 const unsafe = (source, context) => lpe.eval_lpe(source, context, {unsafe: true});
 
 describe('Host-controlled unsafe evaluation', () => {
+  it('selects the standard context only from an explicit unsafe option', () => {
+    assert.strictEqual(lpe.getStdlib(), lpe.STDLIB);
+    assert.strictEqual(lpe.getStdlib({unsafe: false}), lpe.STDLIB);
+    assert.strictEqual(lpe.getStdlib({unsafe: 'true'}), lpe.STDLIB);
+    assert.notStrictEqual(lpe.getStdlib({unsafe: true}), lpe.STDLIB);
+  });
+
+  it('preserves the mode when a host form delegates member access', () => {
+    const service = Object.create({value: 42});
+    const context = {service, 'sf:.-': (ast, ctx, options) =>
+      lpe.eval_lisp([lpe.getStdlib(options)['.-'], ...ast], ctx, options)};
+    assert.strictEqual(unsafe('service.value', context), 42);
+    assert.strictEqual(lpe.eval_lpe('service.value', context), undefined);
+    assert.strictEqual(lpe.eval_lisp([lpe.STDLIB['.-'], 'service', 'value'], {service}, {unsafe: true}), undefined);
+  });
+
+  it('does not allow checked evaluation to call unsafe standard functions supplied by a host', () => {
+    const get = lpe.getStdlib({unsafe: true}).get;
+    assert.throws(() => lpe.eval_lpe('get(value, key)', {get, value: {}, key: 'answer'}), denied);
+  });
   for (const source of [
     "get_in('', 'constructor', 'constructor')",
     "''.constructor.constructor",

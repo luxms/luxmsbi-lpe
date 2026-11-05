@@ -1,6 +1,6 @@
 # Implementation status
 
-Compatibility target: **JavaScript LPE 1.8.0, safe evaluation only**.
+Compatibility target: **JavaScript LPE 1.8.1, safe evaluation only**.
 Release verification is tracked by the Rust CI checks and attached release
 reports; local results alone do not mark a release complete.
 
@@ -10,13 +10,25 @@ callbacks, and tracing collection run without a JavaScript engine. New 1.8
 behavior includes formatted strings and UTC/fixed-offset time operations.
 `unsafe: true` is rejected; the native API exposes no unsafe switch.
 
+JS 1.8.1 adds `getStdlib(options)` for host custom-form delegation. Its
+default returns the existing safe standard context, so portable safe evaluation
+semantics are unchanged. Native Rust continues to reject unsafe evaluation;
+the three new JS tests exercise JS context identity and unsafe host function
+objects and are explicitly tracked in `fixtures/scope.json`.
+
+Local Linux validation on 2026-11-05 uses Node 24.22.2 and Rust 1.97.1.
+The JS reference passes 1,551 tests; the harness passes 362 tests; all 7,228
+shared fixtures match JS 1.8.1 and the strict coverage gate passes. The default
+Rust suite, formatting and strict all-target Clippy pass. These are native local
+results, not hosted CI or a fresh WASI run.
+
 ## Verification and scope
 
-The recursive JavaScript suite contains 1,548 tests. Shared fixtures exercise
+The recursive JavaScript suite contains 1,551 tests. Shared fixtures exercise
 native Rust and WASI against that reference, including the newly nested date
 tests, fixed-clock calendar cases, invalid-input boundaries, safe data access,
-and JSON. The fixture inventory tracks 1,044 source-test declarations and 370
-suites, with 82 individually documented exclusions in `fixtures/scope.json`.
+and JSON. The fixture inventory tracks 1,047 source-test declarations and 370
+suites, with 85 individually documented exclusions in `fixtures/scope.json`.
 The strict gate rejects missing observations, stale exclusions, and unlinked
 source tests. Fixture totals and observations are recorded in `coverage.json`
 and the generated parity reports, rather than inferred from a passing suite.

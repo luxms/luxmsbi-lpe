@@ -7796,79 +7796,97 @@
     },
     {
       "file": "test/test-unsafe.js",
-      "line": 13,
+      "line": 7,
+      "kind": "it",
+      "name": "Host-controlled unsafe evaluation / selects the standard context only from an explicit unsafe option"
+    },
+    {
+      "file": "test/test-unsafe.js",
+      "line": 14,
+      "kind": "it",
+      "name": "Host-controlled unsafe evaluation / preserves the mode when a host form delegates member access"
+    },
+    {
+      "file": "test/test-unsafe.js",
+      "line": 23,
+      "kind": "it",
+      "name": "Host-controlled unsafe evaluation / does not allow checked evaluation to call unsafe standard functions supplied by a host"
+    },
+    {
+      "file": "test/test-unsafe.js",
+      "line": 33,
       "kind": "it",
       "name": "Host-controlled unsafe evaluation / <dynamic>"
     },
     {
       "file": "test/test-unsafe.js",
-      "line": 21,
+      "line": 41,
       "kind": "it",
       "name": "Host-controlled unsafe evaluation / supports globals, accessors, inherited methods and bound callbacks"
     },
     {
       "file": "test/test-unsafe.js",
-      "line": 38,
+      "line": 58,
       "kind": "it",
       "name": "Host-controlled unsafe evaluation / allows native compilation in trusted higher-order calls"
     },
     {
       "file": "test/test-unsafe.js",
-      "line": 55,
+      "line": 75,
       "kind": "it",
       "name": "Host-controlled unsafe evaluation / <dynamic>"
     },
     {
       "file": "test/test-unsafe.js",
-      "line": 60,
+      "line": 80,
       "kind": "it",
       "name": "Host-controlled unsafe evaluation / does not let ordinary calls supply special-form evaluation options"
     },
     {
       "file": "test/test-unsafe.js",
-      "line": 84,
+      "line": 104,
       "kind": "it",
       "name": "Host-controlled unsafe evaluation / ignores a context variable named unsafe and preserves other set_options"
     },
     {
       "file": "test/test-unsafe.js",
-      "line": 90,
+      "line": 110,
       "kind": "it",
       "name": "Host-controlled unsafe evaluation / retains closure mode and refuses unsafe closures or library functions in safe calls"
     },
     {
       "file": "test/test-unsafe.js",
-      "line": 101,
+      "line": 121,
       "kind": "it",
       "name": "Host-controlled unsafe evaluation / rejects unsafe then callbacks before native promise assimilation"
     },
     {
       "file": "test/test-unsafe.js",
-      "line": 114,
+      "line": 134,
       "kind": "it",
       "name": "Host-controlled unsafe evaluation / rejects then accessors without running them and rejects special-form then callbacks"
     },
     {
       "file": "test/test-unsafe.js",
-      "line": 123,
+      "line": 143,
       "kind": "it",
       "name": "Host-controlled unsafe evaluation / preserves ordinary trusted own then callbacks"
     },
     {
       "file": "test/test-unsafe.js",
-      "line": 130,
+      "line": 150,
       "kind": "it",
       "name": "Host-controlled unsafe evaluation / isolates interleaved promises and snapshots host options"
     },
     {
       "file": "test/test-unsafe.js",
-      "line": 145,
+      "line": 165,
       "kind": "it",
       "name": "Host-controlled unsafe evaluation / retains unsafe mode in nested LPE evaluation after a promise"
     },
     {
       "file": "test/test-unsafe.js",
-      "line": 153,
+      "line": 173,
       "kind": "it",
       "name": "Host-controlled unsafe evaluation / does not leak mode into reentrant safe evaluation from a host callback"
     },
@@ -11542,167 +11560,202 @@
       "reason": "actual is not a direct API call"
     },
     {
-      "origin": "test/test-unsafe.js:14",
+      "origin": "test/test-unsafe.js:8",
+      "group": "Host-controlled unsafe evaluation / selects the standard context only from an explicit unsafe option",
+      "reason": "unsupported API getStdlib"
+    },
+    {
+      "origin": "test/test-unsafe.js:9",
+      "group": "Host-controlled unsafe evaluation / selects the standard context only from an explicit unsafe option",
+      "reason": "unsupported API getStdlib"
+    },
+    {
+      "origin": "test/test-unsafe.js:10",
+      "group": "Host-controlled unsafe evaluation / selects the standard context only from an explicit unsafe option",
+      "reason": "unsupported API getStdlib"
+    },
+    {
+      "origin": "test/test-unsafe.js:18",
+      "group": "Host-controlled unsafe evaluation / preserves the mode when a host form delegates member access",
+      "reason": "unsupported API unsafe"
+    },
+    {
+      "origin": "test/test-unsafe.js:19",
+      "group": "Host-controlled unsafe evaluation / preserves the mode when a host form delegates member access",
+      "reason": "nonliteral identifier context"
+    },
+    {
+      "origin": "test/test-unsafe.js:20",
+      "group": "Host-controlled unsafe evaluation / preserves the mode when a host form delegates member access",
+      "reason": "nonliteral identifier lpe"
+    },
+    {
+      "origin": "test/test-unsafe.js:25",
+      "group": "Host-controlled unsafe evaluation / does not allow checked evaluation to call unsafe standard functions supplied by a host",
+      "reason": "nonliteral identifier get"
+    },
+    {
+      "origin": "test/test-unsafe.js:34",
       "group": "Host-controlled unsafe evaluation / <dynamic>",
       "reason": "unsupported API CallExpression"
     },
     {
-      "origin": "test/test-unsafe.js:14",
+      "origin": "test/test-unsafe.js:34",
       "group": "Host-controlled unsafe evaluation / <dynamic>",
       "reason": "unsupported API CallExpression"
     },
     {
-      "origin": "test/test-unsafe.js:14",
+      "origin": "test/test-unsafe.js:34",
       "group": "Host-controlled unsafe evaluation / <dynamic>",
       "reason": "unsupported API CallExpression"
     },
     {
-      "origin": "test/test-unsafe.js:14",
+      "origin": "test/test-unsafe.js:34",
       "group": "Host-controlled unsafe evaluation / <dynamic>",
       "reason": "unsupported API CallExpression"
     },
     {
-      "origin": "test/test-unsafe.js:28",
+      "origin": "test/test-unsafe.js:48",
       "group": "Host-controlled unsafe evaluation / supports globals, accessors, inherited methods and bound callbacks",
       "reason": "unsupported API unsafe"
     },
     {
-      "origin": "test/test-unsafe.js:29",
+      "origin": "test/test-unsafe.js:49",
       "group": "Host-controlled unsafe evaluation / supports globals, accessors, inherited methods and bound callbacks",
       "reason": "unsupported API unsafe"
     },
     {
-      "origin": "test/test-unsafe.js:32",
+      "origin": "test/test-unsafe.js:52",
       "group": "Host-controlled unsafe evaluation / supports globals, accessors, inherited methods and bound callbacks",
       "reason": "unsupported API unsafe"
     },
     {
-      "origin": "test/test-unsafe.js:33",
+      "origin": "test/test-unsafe.js:53",
       "group": "Host-controlled unsafe evaluation / supports globals, accessors, inherited methods and bound callbacks",
       "reason": "unsupported API unsafe"
     },
     {
-      "origin": "test/test-unsafe.js:35",
+      "origin": "test/test-unsafe.js:55",
       "group": "Host-controlled unsafe evaluation / supports globals, accessors, inherited methods and bound callbacks",
       "reason": "actual is not a direct API call"
     },
     {
-      "origin": "test/test-unsafe.js:40",
+      "origin": "test/test-unsafe.js:60",
       "group": "Host-controlled unsafe evaluation / allows native compilation in trusted higher-order calls",
       "reason": "unsupported API unsafe"
     },
     {
-      "origin": "test/test-unsafe.js:42",
+      "origin": "test/test-unsafe.js:62",
       "group": "Host-controlled unsafe evaluation / allows native compilation in trusted higher-order calls",
       "reason": "nonliteral identifier globalThis"
     },
     {
-      "origin": "test/test-unsafe.js:43",
+      "origin": "test/test-unsafe.js:63",
       "group": "Host-controlled unsafe evaluation / allows native compilation in trusted higher-order calls",
       "reason": "unsupported API unsafe"
     },
     {
-      "origin": "test/test-unsafe.js:67",
+      "origin": "test/test-unsafe.js:87",
       "group": "Host-controlled unsafe evaluation / does not let ordinary calls supply special-form evaluation options",
       "reason": "nonliteral identifier observe"
     },
     {
-      "origin": "test/test-unsafe.js:70",
+      "origin": "test/test-unsafe.js:90",
       "group": "Host-controlled unsafe evaluation / does not let ordinary calls supply special-form evaluation options",
       "reason": "actual is not a direct API call"
     },
     {
-      "origin": "test/test-unsafe.js:80",
+      "origin": "test/test-unsafe.js:100",
       "group": "Host-controlled unsafe evaluation / does not let ordinary calls supply special-form evaluation options",
       "reason": "nonliteral identifier observe"
     },
     {
-      "origin": "test/test-unsafe.js:81",
+      "origin": "test/test-unsafe.js:101",
       "group": "Host-controlled unsafe evaluation / does not let ordinary calls supply special-form evaluation options",
       "reason": "nonliteral identifier observe"
     },
     {
-      "origin": "test/test-unsafe.js:87",
+      "origin": "test/test-unsafe.js:107",
       "group": "Host-controlled unsafe evaluation / ignores a context variable named unsafe and preserves other set_options",
       "reason": "unsupported API unsafe"
     },
     {
-      "origin": "test/test-unsafe.js:92",
+      "origin": "test/test-unsafe.js:112",
       "group": "Host-controlled unsafe evaluation / retains closure mode and refuses unsafe closures or library functions in safe calls",
       "reason": "unsupported API fn"
     },
     {
-      "origin": "test/test-unsafe.js:93",
+      "origin": "test/test-unsafe.js:113",
       "group": "Host-controlled unsafe evaluation / retains closure mode and refuses unsafe closures or library functions in safe calls",
       "reason": "nonliteral identifier fn"
     },
     {
-      "origin": "test/test-unsafe.js:94",
+      "origin": "test/test-unsafe.js:114",
       "group": "Host-controlled unsafe evaluation / retains closure mode and refuses unsafe closures or library functions in safe calls",
       "reason": "nonliteral identifier fn"
     },
     {
-      "origin": "test/test-unsafe.js:96",
+      "origin": "test/test-unsafe.js:116",
       "group": "Host-controlled unsafe evaluation / retains closure mode and refuses unsafe closures or library functions in safe calls",
       "reason": "nonliteral identifier unsafeApply"
     },
     {
-      "origin": "test/test-unsafe.js:98",
+      "origin": "test/test-unsafe.js:118",
       "group": "Host-controlled unsafe evaluation / retains closure mode and refuses unsafe closures or library functions in safe calls",
       "reason": "unsupported API unsafe"
     },
     {
-      "origin": "test/test-unsafe.js:104",
+      "origin": "test/test-unsafe.js:124",
       "group": "Host-controlled unsafe evaluation / rejects unsafe then callbacks before native promise assimilation",
       "reason": "nonliteral identifier then"
     },
     {
-      "origin": "test/test-unsafe.js:109",
+      "origin": "test/test-unsafe.js:129",
       "group": "Host-controlled unsafe evaluation / rejects unsafe then callbacks before native promise assimilation",
       "reason": "actual is not a direct API call"
     },
     {
-      "origin": "test/test-unsafe.js:110",
+      "origin": "test/test-unsafe.js:130",
       "group": "Host-controlled unsafe evaluation / rejects unsafe then callbacks before native promise assimilation",
       "reason": "unsupported API unsafe"
     },
     {
-      "origin": "test/test-unsafe.js:111",
+      "origin": "test/test-unsafe.js:131",
       "group": "Host-controlled unsafe evaluation / rejects unsafe then callbacks before native promise assimilation",
       "reason": "actual is not a direct API call"
     },
     {
-      "origin": "test/test-unsafe.js:117",
+      "origin": "test/test-unsafe.js:137",
       "group": "Host-controlled unsafe evaluation / rejects then accessors without running them and rejects special-form then callbacks",
       "reason": "nonliteral identifier accessor"
     },
     {
-      "origin": "test/test-unsafe.js:120",
+      "origin": "test/test-unsafe.js:140",
       "group": "Host-controlled unsafe evaluation / rejects then accessors without running them and rejects special-form then callbacks",
       "reason": "actual is not a direct API call"
     },
     {
-      "origin": "test/test-unsafe.js:126",
+      "origin": "test/test-unsafe.js:146",
       "group": "Host-controlled unsafe evaluation / preserves ordinary trusted own then callbacks",
       "reason": "nonliteral identifier Promise"
     },
     {
-      "origin": "test/test-unsafe.js:127",
+      "origin": "test/test-unsafe.js:147",
       "group": "Host-controlled unsafe evaluation / preserves ordinary trusted own then callbacks",
       "reason": "actual is not a direct API call"
     },
     {
-      "origin": "test/test-unsafe.js:141",
+      "origin": "test/test-unsafe.js:161",
       "group": "Host-controlled unsafe evaluation / isolates interleaved promises and snapshots host options",
       "reason": "actual is not a direct API call"
     },
     {
-      "origin": "test/test-unsafe.js:146",
+      "origin": "test/test-unsafe.js:166",
       "group": "Host-controlled unsafe evaluation / retains unsafe mode in nested LPE evaluation after a promise",
       "reason": "unsupported API unsafe"
     },
     {
-      "origin": "test/test-unsafe.js:155",
+      "origin": "test/test-unsafe.js:175",
       "group": "Host-controlled unsafe evaluation / does not leak mode into reentrant safe evaluation from a host callback",
       "reason": "unsupported API unsafe"
     },

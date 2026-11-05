@@ -28,6 +28,7 @@
   ],
   "v8OnlyReason": "Documentation APIs, data, context preparation and localization tooling remain exclusively in the JS/V8 implementation by agreement; they are not Rust implementation gaps.",
   "v8OnlyApis": [
+    "getStdlib",
     "makeDoc",
     "makeDocForContextes",
     "prepareContext",
@@ -396,37 +397,37 @@
     },
     {
       "file": "test/test-unsafe.js",
-      "line": 21,
+      "line": 41,
       "name": "Host-controlled unsafe evaluation / supports globals, accessors, inherited methods and bound callbacks",
       "reason": "Requires native JavaScript host objects, thenable assimilation or unsafe closures. Rust supports explicit promises and safe closures only, with unsafe:true rejected at its API boundary."
     },
     {
       "file": "test/test-unsafe.js",
-      "line": 90,
+      "line": 110,
       "name": "Host-controlled unsafe evaluation / retains closure mode and refuses unsafe closures or library functions in safe calls",
       "reason": "Requires native JavaScript host objects, thenable assimilation or unsafe closures. Rust supports explicit promises and safe closures only, with unsafe:true rejected at its API boundary."
     },
     {
       "file": "test/test-unsafe.js",
-      "line": 101,
+      "line": 121,
       "name": "Host-controlled unsafe evaluation / rejects unsafe then callbacks before native promise assimilation",
       "reason": "Requires native JavaScript host objects, thenable assimilation or unsafe closures. Rust supports explicit promises and safe closures only, with unsafe:true rejected at its API boundary."
     },
     {
       "file": "test/test-unsafe.js",
-      "line": 123,
+      "line": 143,
       "name": "Host-controlled unsafe evaluation / preserves ordinary trusted own then callbacks",
       "reason": "Requires native JavaScript host objects, thenable assimilation or unsafe closures. Rust supports explicit promises and safe closures only, with unsafe:true rejected at its API boundary."
     },
     {
       "file": "test/test-unsafe.js",
-      "line": 145,
+      "line": 165,
       "name": "Host-controlled unsafe evaluation / retains unsafe mode in nested LPE evaluation after a promise",
       "reason": "Requires native JavaScript host objects, thenable assimilation or unsafe closures. Rust supports explicit promises and safe closures only, with unsafe:true rejected at its API boundary."
     },
     {
       "file": "test/test-unsafe.js",
-      "line": 153,
+      "line": 173,
       "name": "Host-controlled unsafe evaluation / does not leak mode into reentrant safe evaluation from a host callback",
       "reason": "Requires native JavaScript host objects, thenable assimilation or unsafe closures. Rust supports explicit promises and safe closures only, with unsafe:true rejected at its API boundary."
     },
@@ -441,6 +442,24 @@
       "line": 1005,
       "name": "LPE Full Test Suite / String Operations / RegExp / создаёт RegExp",
       "reason": "Direct evaluation of native JavaScript constructors or RegExp instances, outside the portable host-object scope. Syntax and string-pattern regular expressions remain covered."
+    },
+    {
+      "file": "test/test-unsafe.js",
+      "line": 7,
+      "name": "Host-controlled unsafe evaluation / selects the standard context only from an explicit unsafe option",
+      "reason": "Tests JavaScript standard-context identity, host custom-form delegation or unsafe standard function objects. Rust exposes safe evaluation only and no unsafe standard context; portable safe evaluation remains covered."
+    },
+    {
+      "file": "test/test-unsafe.js",
+      "line": 14,
+      "name": "Host-controlled unsafe evaluation / preserves the mode when a host form delegates member access",
+      "reason": "Tests JavaScript standard-context identity, host custom-form delegation or unsafe standard function objects. Rust exposes safe evaluation only and no unsafe standard context; portable safe evaluation remains covered."
+    },
+    {
+      "file": "test/test-unsafe.js",
+      "line": 23,
+      "name": "Host-controlled unsafe evaluation / does not allow checked evaluation to call unsafe standard functions supplied by a host",
+      "reason": "Tests JavaScript standard-context identity, host custom-form delegation or unsafe standard function objects. Rust exposes safe evaluation only and no unsafe standard context; portable safe evaluation remains covered."
     }
   ],
   "deferred": [],

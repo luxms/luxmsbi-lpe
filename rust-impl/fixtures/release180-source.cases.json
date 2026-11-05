@@ -35595,11 +35595,11 @@
   {
     "id": "release180-source:then-special",
     "group": "Expanded JS 1.8 source tests",
-    "origin": "test/test-unsafe.js:114",
+    "origin": "test/test-unsafe.js:134",
     "evidence": "independent-expectation",
     "covers": {
       "groups": [
-        "test/test-unsafe.js:114"
+        "test/test-unsafe.js:134"
       ]
     },
     "request": {
