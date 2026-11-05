@@ -96,6 +96,11 @@ const UNSAFE_STDLIB = {
   ...createStdContext(true), ...createVariablesContext(true), ...createStringsContext(true), ...createObjectsContext(true),
 };
 
+/** Return the standard context matching the host's evaluation options. */
+export function getStdlib(options) {
+  return options?.unsafe === true ? UNSAFE_STDLIB : STDLIB;
+}
+
 
 /**
  * Подготавливает контекст для выполнения Lisp-выражений.
@@ -280,6 +285,6 @@ function EVAL_IMPLEMENTATION(ast, ctx, rs, evalOptions) {
  * @returns {*}
  */
 export function eval_lisp(ast, ctx, rs) {
-  const result = EVAL(ast, [ctx || {}, rs?.unsafe === true ? UNSAFE_STDLIB : STDLIB, {}], rs || {resolveString: true});
+  const result = EVAL(ast, [ctx || {}, getStdlib(rs), {}], rs || {resolveString: true});
   return result;
 }

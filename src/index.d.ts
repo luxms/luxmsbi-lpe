@@ -64,4 +64,7 @@ export function makeVararg(template: (string | {[pattern: string]: string})[], c
 
 export const STDLIB: any;
 
+/** Standard context for delegating custom forms with the current evaluation options. */
+export function getStdlib(options?: EvalOptions): typeof STDLIB;
+
 export const $VAR$: Symbol;
