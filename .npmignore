@@ -9,3 +9,4 @@ webpack.config.js
 .travis.yml
 run.md
 docs
+/AGENTS.md

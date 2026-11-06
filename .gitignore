@@ -3,3 +3,4 @@ npm-debug.log
 pg_deploy.log
 .idea
 dist
+/AGENTS.md
