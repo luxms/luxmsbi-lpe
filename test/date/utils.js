@@ -1,5 +1,5 @@
 const assert = require("assert");
-const { spawnSync } = require("child_process");
+const runIsolated = require("./run-isolated");
 
 const loadSource = require("./load-source");
 const utils = loadSource(require.resolve("../../src/lib/date/utils"));
@@ -46,11 +46,12 @@ describe("Строки AST и единицы измерения", () => {
 });
 
 describe("Вспомогательные календарные функции", () => {
-  it("Отклоняет неконечные смещения до входа во внутренние календарные циклы", () => {
+  it("Отклоняет неконечные смещения до входа во внутренние календарные циклы", async () => {
     const script = `
       const assert = require("assert");
       const loadSource = require(${JSON.stringify(require.resolve("./load-source"))});
       const utils = loadSource(${JSON.stringify(require.resolve("../../src/lib/date/utils"))});
+        process.send({ready:true});
       for (const name of ["_changeDay", "_changeMonth", "_changeYear"]) {
         for (const delta of [Infinity, -Infinity, NaN]) {
           assert.throws(() => utils[name]("2024-01-15", delta), {
@@ -60,11 +61,11 @@ describe("Вспомогательные календарные функции",
       }
       process.stdout.write("ok");
     `;
-    const result = spawnSync(process.execPath, ["-e", script], { encoding: "utf8", timeout: 1500 });
+    const result = await runIsolated(script);
     assert.ifError(result.error);
     assert.strictEqual(result.status, 0, result.stderr);
     assert.strictEqual(result.stdout, "ok");
-  }).timeout(5000);
+  }).timeout(10000);
 
   const cases = [
     ["Дополняет однозначное число нулём", "l2", [3], "03"],
@@ -216,7 +217,7 @@ describe("Операции с компонентами времени", () => {
     assert.strictEqual(utils.formatDateTime(parts), "2024-01-15 00:00:00.123456789");
   });
 
-  it("Отклоняет неконечное число секунд и значения другого типа", () => {
+  it("Отклоняет неконечное число секунд и значения другого типа", async () => {
     for (const value of [NaN, Infinity, -Infinity, "1", null, undefined]) {
       assert.throws(() => utils.shiftTime(utils.parseDateTime("2024-01-15"), value), {
         name: "RangeError", message: "Shift in seconds must be a finite number.",

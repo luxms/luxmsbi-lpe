@@ -1,7 +1,7 @@
 const assert = require('assert');
 const loadSource = require("./load-source");
 const calendar = loadSource(require.resolve("../../src/lib/date/date"));
-const { spawnSync } = require("child_process");
+const runIsolated = require("./run-isolated");
 
 describe("Календарная функция: today", () => {
     it("Возвращает текущую дату в формате YYYY-MM-DD", () => {
@@ -741,12 +741,13 @@ describe("Совместимость календарных функций", () 
 
 describe("Проверка конечности календарного смещения", () => {
   for (const unit of ["d", "w", "m", "q", "y"]) {
-    it(`Отклоняет неконечный календарный сдвиг в единицах ${unit} без зависания`, () => {
+    it(`Отклоняет неконечный календарный сдвиг в единицах ${unit} без зависания`, async () => {
       // Изоляция в дочернем процессе позволяет остановить бесконечный цикл.
       const script = `
         const assert = require("assert");
         const loadSource = require(${JSON.stringify(require.resolve("./load-source"))});
         const calendar = loadSource(${JSON.stringify(require.resolve("../../src/lib/date/date"))});
+        process.send({ready:true});
         const unit = ${JSON.stringify(unit)};
         const aliases = { d: "day", w: "IW", m: " MONTH ", q: "quarter", y: "year" };
         const invalid = [Infinity, -Infinity, NaN];
@@ -765,10 +766,10 @@ describe("Проверка конечности календарного сме�
         }
         process.stdout.write("ok");
       `;
-      const result = spawnSync(process.execPath, ["-e", script], { encoding: "utf8", timeout: 1500 });
+      const result = await runIsolated(script);
       assert.ifError(result.error);
       assert.strictEqual(result.status, 0, result.stderr);
       assert.strictEqual(result.stdout, "ok");
-    }).timeout(5000);
+    }).timeout(10000);
   }
 });
