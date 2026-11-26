@@ -101,6 +101,23 @@ argument as the assigned value (undefined for a read), but `varSetter` in
 second argument therefore runs its getter branch. Rust preserves this behavior
 pending a separate JS fix.
 
+`undef` and `Runtime::undefine` remove the first own property in context order,
+including library bindings in the default profile, and return its previous
+value. An own undefined value stops deletion; it does not delete a later
+binding. Lookup hooks and function-backed resolvers are not called. The LPE
+form validates literal and dynamic property keys before deletion. This does
+not change assignment policy or invalidate copies of removed functions or
+special forms. The legacy profile retains its existing deletion policy:
+marked library value frames are skipped; object-backed frames are unchanged.
+
+The library belongs to each `Runtime::new()` instance. Deletion persists across
+evaluations in that runtime, including its internal asynchronous task facades,
+but does not affect another runtime. Hosts requiring query isolation must use
+a fresh runtime per query, not just a fresh environment in a reused runtime.
+`Runtime` has no public `Clone` implementation. Existing `library_env`, `new_env`
+and `eval_in` APIs suffice for library-before-request context ordering; no
+additional deletion option is required.
+
 Non-callable expression operators fail before argument evaluation, including
 argument side effects and errors. Immediate planning declines unsupported calls
 without executing a partial plan, so ordinary, closure, and full async dispatch
