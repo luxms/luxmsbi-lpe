@@ -1378,6 +1378,10 @@ impl Runtime {
             }
         }
     }
+    /// Remove the first own binding, including an own undefined value.
+    /// Default-profile library deletion is local to this runtime; the legacy
+    /// profile retains its policy of skipping marked library value frames.
+    /// The expression-level `undef` validates keys before calling this helper.
     pub fn undefine(&mut self, env: EnvId, name: &str) -> Value {
         let frames = self.env_frames(env);
         for id in frames.iter().copied() {
@@ -1391,7 +1395,7 @@ impl Runtime {
                 }
             }
             let mut e = self.envs.get_mut(id).unwrap();
-            if !e.library {
+            if !e.library || !self.legacy_context {
                 if let Some(v) = e.values.shift_remove(name) {
                     return v;
                 }
